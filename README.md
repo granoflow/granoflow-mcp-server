@@ -42,6 +42,9 @@ file; keep `GRANOFLOW_API_TOKEN` in the MCP client environment.
 npm install -g @granoflow/mcp-server
 ```
 
+For a user-facing setup walkthrough, see
+[Granoflow MCP User Install And Demo Guide](docs/user-install-demo.md).
+
 For local development:
 
 ```bash
