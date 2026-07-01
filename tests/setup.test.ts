@@ -7,6 +7,7 @@ import {
   detectLocalApi,
   getSetupStatus,
   installOrUpdateCli,
+  openGranoflowApp,
   parseComparableVersion,
 } from "../src/setup.js";
 import type { CliResult } from "../src/cli.js";
@@ -163,6 +164,50 @@ describe("setup diagnostics", () => {
     );
   });
 
+  it("warns when a configured local API is unreachable and Granoflow is not running", async () => {
+    const result = await getSetupStatus({
+      env: {
+        GRANOFLOW_API_BASE_URL: "http://127.0.0.1:56789",
+      },
+      runCli: async (args) => {
+        if (args[0] === "--version") {
+          return {
+            exitCode: 0,
+            stdout: "granoflow 0.1.0\n",
+            stderr: "",
+            json: null,
+          };
+        }
+        return {
+          exitCode: 5,
+          stdout: "",
+          stderr: "network error",
+          json: { ok: false, code: "network_error" },
+        };
+      },
+      runCommand: async () => ({
+        exitCode: 1,
+        stdout: "",
+        stderr: "",
+      }),
+    });
+
+    expect(result.health).toMatchObject({
+      ok: false,
+      appProcess: expect.objectContaining({ checked: true, running: false, count: 0 }),
+    });
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "granoflow_app_not_running",
+        }),
+      ]),
+    );
+    expect(result.nextActions).toEqual(
+      expect.arrayContaining(["Ask the user whether they want to open Granoflow."]),
+    );
+  });
+
   it("asks for CLI install/update approval when the CLI is missing", async () => {
     const missingCliError = new Error("spawn granoflow ENOENT") as Error & { code: string };
     missingCliError.code = "ENOENT";
@@ -204,5 +249,17 @@ describe("setup diagnostics", () => {
       command: "npm",
       args: ["install", "--global", "https://example.com/granoflow-cli.tgz"],
     });
+  });
+
+  it("previews opening the installed Granoflow app by default", async () => {
+    const result = await openGranoflowApp({
+      appName: "Granoflow",
+    });
+
+    expect(result).toMatchObject({
+      dryRun: true,
+      appName: "Granoflow",
+    });
+    expect(JSON.stringify(result)).toContain("Granoflow");
   });
 });

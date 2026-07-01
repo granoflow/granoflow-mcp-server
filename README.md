@@ -87,6 +87,7 @@ Initial tools:
 - `granoflow_setup_write_config`
 - `granoflow_setup_install_or_update_cli`
 - `granoflow_setup_open_config`
+- `granoflow_setup_open_app`
 - `granoflow_health`
 - `granoflow_capabilities`
 - `granoflow_ai_agent_tools`
@@ -120,6 +121,12 @@ Granoflow app without hand-editing every setting first:
   dry-run.
 - `granoflow_setup_open_config` creates and optionally opens the config file for
   manual editing.
+- `granoflow_setup_open_app` previews or opens the installed Granoflow app after
+  user approval. It defaults to dry-run.
+
+When setup status sees a configured localhost API URL that is unreachable, it
+checks whether a local Granoflow process appears to be running. If not, it
+returns a warning and asks the agent to confirm before opening the app.
 
 ## Client support
 

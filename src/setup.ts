@@ -12,6 +12,14 @@ import {
 } from "./config.js";
 import { type CliResult, runGranoflowCli } from "./cli.js";
 
+type CommandRunResult = {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+};
+
+type CommandRunner = (command: string, args: string[]) => Promise<CommandRunResult>;
+
 export interface SetupOptions {
   env?: NodeJS.ProcessEnv;
   runCli?: (
@@ -20,6 +28,7 @@ export interface SetupOptions {
     options?: { env?: NodeJS.ProcessEnv },
   ) => Promise<CliResult>;
   fetch?: typeof fetch;
+  runCommand?: CommandRunner;
 }
 
 export interface LocalApiDetectionInput {
@@ -30,6 +39,11 @@ export interface LocalApiDetectionInput {
 export interface InstallCliInput {
   packageSpec?: string;
   packageManager?: "npm";
+  dryRun?: boolean;
+}
+
+export interface OpenAppInput {
+  appName?: string;
   dryRun?: boolean;
 }
 
@@ -76,6 +90,18 @@ function looksLikeGranoflowJson(value: unknown): boolean {
     return false;
   }
   return GRANOFLOW_JSON_KEYS.some((key) => key in value);
+}
+
+function isLocalApiBaseUrl(apiBaseUrl: string | undefined): boolean {
+  if (!apiBaseUrl) {
+    return false;
+  }
+  try {
+    const url = new URL(apiBaseUrl);
+    return ["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
 export function parseComparableVersion(versionText: string): VersionCore | null {
@@ -159,14 +185,7 @@ async function openPath(path: string): Promise<{ attempted: boolean; error?: str
   });
 }
 
-async function runCommand(
-  command: string,
-  args: string[],
-): Promise<{
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-}> {
+async function runCommand(command: string, args: string[]): Promise<CommandRunResult> {
   return await new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
@@ -187,9 +206,37 @@ async function runCommand(
   });
 }
 
+async function checkGranoflowProcess(
+  runCommandImpl: CommandRunner,
+): Promise<Record<string, unknown>> {
+  if (process.platform !== "darwin" && process.platform !== "linux") {
+    return {
+      checked: false,
+      running: null,
+      reason: "Process check is only implemented for macOS/Linux.",
+    };
+  }
+  try {
+    const result = await runCommandImpl("pgrep", ["-ifl", "Granoflow"]);
+    const count = result.exitCode === 0 ? result.stdout.split("\n").filter(Boolean).length : 0;
+    return {
+      checked: true,
+      running: count > 0,
+      count,
+    };
+  } catch (error) {
+    return {
+      checked: false,
+      running: null,
+      error: safeError(error),
+    };
+  }
+}
+
 export async function getSetupStatus(options: SetupOptions = {}) {
   const env = options.env ?? process.env;
   const runCli = options.runCli ?? runGranoflowCli;
+  const runCommandImpl = options.runCommand ?? runCommand;
   const runtime = await resolveMcpRuntime(env);
   let health: Record<string, unknown>;
   const warnings: Array<Record<string, unknown>> = [];
@@ -211,6 +258,34 @@ export async function getSetupStatus(options: SetupOptions = {}) {
       cliMissing: isCliMissingError(error),
       error: safeError(error),
     };
+  }
+
+  if (health.ok !== true && health.cliMissing !== true && isLocalApiBaseUrl(runtime.apiBaseUrl)) {
+    const appProcess = await checkGranoflowProcess(runCommandImpl);
+    health.appProcess = appProcess;
+    if (appProcess.running === false) {
+      warnings.push({
+        code: "granoflow_app_not_running",
+        message:
+          "The configured Granoflow API is local, but the API is unreachable and no Granoflow app process was found.",
+        apiBaseUrl: runtime.apiBaseUrl,
+        nextActions: [
+          "Ask the user whether they want to open Granoflow.",
+          "Call granoflow_setup_open_app with dryRun=true before opening the app.",
+        ],
+      });
+    } else if (appProcess.running === true) {
+      warnings.push({
+        code: "local_api_unreachable_app_running",
+        message:
+          "A Granoflow process appears to be running, but the configured local API is unreachable.",
+        apiBaseUrl: runtime.apiBaseUrl,
+        nextActions: [
+          "Ask the user to verify that the Granoflow Local HTTP API is enabled.",
+          "Call granoflow_setup_detect_local_api to check bounded localhost candidates.",
+        ],
+      });
+    }
   }
 
   if (health.cliMissing !== true) {
@@ -285,26 +360,31 @@ export async function getSetupStatus(options: SetupOptions = {}) {
     health,
     versionCheck,
     warnings,
-    nextActions: warnings.some((warning) => warning.code === "cli_version_behind_rest_api")
+    nextActions: warnings.some((warning) => warning.code === "granoflow_app_not_running")
       ? [
-          "Ask the user whether they want to update granoflow-cli.",
-          "Call granoflow_setup_install_or_update_cli with dryRun=true and a packageSpec.",
+          "Ask the user whether they want to open Granoflow.",
+          "Call granoflow_setup_open_app with dryRun=true before opening the app.",
         ]
-      : health.cliMissing === true
+      : warnings.some((warning) => warning.code === "cli_version_behind_rest_api")
         ? [
-            "Ask the user whether they want to install or update granoflow-cli.",
+            "Ask the user whether they want to update granoflow-cli.",
             "Call granoflow_setup_install_or_update_cli with dryRun=true and a packageSpec.",
-            "If the CLI is already installed elsewhere, call granoflow_setup_write_config with cliPath.",
           ]
-        : runtime.configExists
+        : health.cliMissing === true
           ? [
-              "If health is not ok, call granoflow_setup_detect_local_api.",
-              "Verify the Granoflow app Local HTTP API is enabled.",
+              "Ask the user whether they want to install or update granoflow-cli.",
+              "Call granoflow_setup_install_or_update_cli with dryRun=true and a packageSpec.",
+              "If the CLI is already installed elsewhere, call granoflow_setup_write_config with cliPath.",
             ]
-          : [
-              "Call granoflow_setup_detect_local_api to look for a local Granoflow API.",
-              "Call granoflow_setup_write_config with dryRun=true before writing config.",
-            ],
+          : runtime.configExists
+            ? [
+                "If health is not ok, call granoflow_setup_detect_local_api.",
+                "Verify the Granoflow app Local HTTP API is enabled.",
+              ]
+            : [
+                "Call granoflow_setup_detect_local_api to look for a local Granoflow API.",
+                "Call granoflow_setup_write_config with dryRun=true before writing config.",
+              ],
   };
 }
 
@@ -382,6 +462,7 @@ export async function writeSetupConfig(input: WriteConfigInput, options: SetupOp
 
 export async function installOrUpdateCli(input: InstallCliInput = {}, options: SetupOptions = {}) {
   const env = options.env ?? process.env;
+  const runCommandImpl = options.runCommand ?? runCommand;
   const packageSpec = input.packageSpec ?? env.GRANOFLOW_CLI_INSTALL_SPEC;
   const packageManager = input.packageManager ?? "npm";
   const dryRun = input.dryRun !== false;
@@ -419,7 +500,7 @@ export async function installOrUpdateCli(input: InstallCliInput = {}, options: S
     };
   }
 
-  const result = await runCommand(command, args);
+  const result = await runCommandImpl(command, args);
   return {
     ok: result.exitCode === 0,
     dryRun,
@@ -437,6 +518,54 @@ export async function installOrUpdateCli(input: InstallCliInput = {}, options: S
             "Review the packageSpec and package manager availability.",
             "If the CLI installed elsewhere, call granoflow_setup_write_config with cliPath.",
           ],
+  };
+}
+
+export async function openGranoflowApp(input: OpenAppInput = {}, options: SetupOptions = {}) {
+  const runCommandImpl = options.runCommand ?? runCommand;
+  const appName = input.appName ?? "Granoflow";
+  const dryRun = input.dryRun !== false;
+
+  if (process.platform !== "darwin") {
+    return {
+      ok: false,
+      dryRun,
+      appName,
+      error:
+        "Opening the installed Granoflow app is only implemented for macOS in this MCP server.",
+      nextActions: ["Open Granoflow manually, then call granoflow_setup_status again."],
+    };
+  }
+
+  const command = "open";
+  const args = ["-a", appName];
+  if (dryRun) {
+    return {
+      ok: true,
+      dryRun,
+      appName,
+      command,
+      args,
+      nextActions: [
+        "Ask the user to confirm opening Granoflow.",
+        "Call this tool again with dryRun=false only after the user approves.",
+      ],
+    };
+  }
+
+  const result = await runCommandImpl(command, args);
+  return {
+    ok: result.exitCode === 0,
+    dryRun,
+    appName,
+    command,
+    args,
+    exitCode: result.exitCode,
+    stderr: result.stderr.trim() ? "[present]" : "[empty]",
+    nextActions:
+      result.exitCode === 0
+        ? ["Wait briefly for Granoflow to start, then call granoflow_setup_status again."]
+        : ["Open Granoflow manually, then call granoflow_setup_status again."],
   };
 }
 

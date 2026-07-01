@@ -7,6 +7,7 @@ import {
   getSetupStatus,
   installOrUpdateCli,
   isCliMissingError,
+  openGranoflowApp,
   openSetupConfig,
   writeSetupConfig,
 } from "./setup.js";
@@ -137,6 +138,22 @@ export function registerGranoflowTools(server: {
         await openSetupConfig({
           createIfMissing: createIfMissing !== false,
           open: open === true,
+        }),
+      ),
+  );
+
+  server.tool(
+    "granoflow_setup_open_app",
+    "Preview or open the installed Granoflow app after user approval. Defaults to dry-run.",
+    {
+      appName: z.string().min(1).optional(),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ appName, dryRun }) =>
+      jsonTextResult(
+        await openGranoflowApp({
+          appName: typeof appName === "string" ? appName : undefined,
+          dryRun: dryRun !== false,
         }),
       ),
   );
