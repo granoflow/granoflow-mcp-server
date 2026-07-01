@@ -16,7 +16,7 @@
     "access": "public"
   },
   "bin": {
-    "granoflow-mcp-server": "./dist/index.js"
+    "granoflow-mcp-server": "dist/index.js"
   },
   "files": [
     "dist",
