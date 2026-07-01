@@ -5,3 +5,4 @@ docs-temp/
 .env
 .DS_Store
 npm-debug.log*
+.npm_recovery_codes.txt
