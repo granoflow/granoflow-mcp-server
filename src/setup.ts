@@ -33,6 +33,12 @@ export interface InstallCliInput {
   dryRun?: boolean;
 }
 
+interface VersionCore {
+  major: number;
+  minor: number;
+  patch: number;
+}
+
 const DEFAULT_PORTS = [56789, 47631, 38080];
 const MAX_PORT_CANDIDATES = 20;
 const PROBE_PATHS = ["/health", "/api/capabilities", "/v1/health"];
@@ -70,6 +76,58 @@ function looksLikeGranoflowJson(value: unknown): boolean {
     return false;
   }
   return GRANOFLOW_JSON_KEYS.some((key) => key in value);
+}
+
+export function parseComparableVersion(versionText: string): VersionCore | null {
+  const match = versionText.match(/(\d+)\.(\d+)\.(\d+)(?:[+.]\d+)?/);
+  if (!match) {
+    return null;
+  }
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3]),
+  };
+}
+
+export function compareComparableVersions(leftText: string, rightText: string): number | null {
+  const left = parseComparableVersion(leftText);
+  const right = parseComparableVersion(rightText);
+  if (!left || !right) {
+    return null;
+  }
+  for (const key of ["major", "minor", "patch"] as const) {
+    if (left[key] !== right[key]) {
+      return left[key] < right[key] ? -1 : 1;
+    }
+  }
+  return 0;
+}
+
+function extractVersionFromJson(json: unknown): string | null {
+  if (!isObject(json)) {
+    return null;
+  }
+  if (typeof json.version === "string") {
+    return json.version;
+  }
+  if (isObject(json.data) && typeof json.data.version === "string") {
+    return json.data.version;
+  }
+  return null;
+}
+
+function extractReleaseDateFromJson(json: unknown): string | null {
+  if (!isObject(json)) {
+    return null;
+  }
+  if (typeof json.releaseDate === "string") {
+    return json.releaseDate;
+  }
+  if (isObject(json.data) && typeof json.data.releaseDate === "string") {
+    return json.data.releaseDate;
+  }
+  return null;
 }
 
 async function fetchWithTimeout(
@@ -134,6 +192,10 @@ export async function getSetupStatus(options: SetupOptions = {}) {
   const runCli = options.runCli ?? runGranoflowCli;
   const runtime = await resolveMcpRuntime(env);
   let health: Record<string, unknown>;
+  const warnings: Array<Record<string, unknown>> = [];
+  const versionCheck: Record<string, unknown> = {
+    comparableRule: "Compare x.y.z only; ignore +n and fourth .n suffixes.",
+  };
 
   try {
     const result = await runCli(["health"], undefined, { env: runtime.env });
@@ -151,6 +213,63 @@ export async function getSetupStatus(options: SetupOptions = {}) {
     };
   }
 
+  if (health.cliMissing !== true) {
+    try {
+      const cliVersionResult = await runCli(["--version"], undefined, { env: runtime.env });
+      const cliVersion = cliVersionResult.stdout.trim();
+      versionCheck.cli = {
+        ok: cliVersionResult.exitCode === 0,
+        version: cliVersion || null,
+      };
+    } catch (error) {
+      versionCheck.cli = {
+        ok: false,
+        error: safeError(error),
+      };
+    }
+
+    try {
+      const restVersionResult = await runCli(["api", "version"], undefined, { env: runtime.env });
+      const restVersion = extractVersionFromJson(restVersionResult.json);
+      versionCheck.rest = {
+        ok: restVersionResult.exitCode === 0 && restVersion !== null,
+        version: restVersion,
+        releaseDate: extractReleaseDateFromJson(restVersionResult.json),
+        exitCode: restVersionResult.exitCode,
+      };
+    } catch (error) {
+      versionCheck.rest = {
+        ok: false,
+        error: safeError(error),
+      };
+    }
+
+    const cliVersion =
+      isObject(versionCheck.cli) && typeof versionCheck.cli.version === "string"
+        ? versionCheck.cli.version
+        : null;
+    const restVersion =
+      isObject(versionCheck.rest) && typeof versionCheck.rest.version === "string"
+        ? versionCheck.rest.version
+        : null;
+    if (cliVersion && restVersion) {
+      const comparison = compareComparableVersions(cliVersion, restVersion);
+      versionCheck.comparison = comparison;
+      if (comparison !== null && comparison < 0) {
+        warnings.push({
+          code: "cli_version_behind_rest_api",
+          message: "granoflow-cli appears older than the running Granoflow REST API.",
+          cliVersion,
+          restVersion,
+          nextActions: [
+            "Ask the user whether they want to update granoflow-cli.",
+            "Call granoflow_setup_install_or_update_cli with dryRun=true and a packageSpec.",
+          ],
+        });
+      }
+    }
+  }
+
   return {
     configPath: runtime.configPath,
     configExists: runtime.configExists,
@@ -164,8 +283,14 @@ export async function getSetupStatus(options: SetupOptions = {}) {
       source: runtime.apiTokenSource,
     },
     health,
-    nextActions:
-      health.cliMissing === true
+    versionCheck,
+    warnings,
+    nextActions: warnings.some((warning) => warning.code === "cli_version_behind_rest_api")
+      ? [
+          "Ask the user whether they want to update granoflow-cli.",
+          "Call granoflow_setup_install_or_update_cli with dryRun=true and a packageSpec.",
+        ]
+      : health.cliMissing === true
         ? [
             "Ask the user whether they want to install or update granoflow-cli.",
             "Call granoflow_setup_install_or_update_cli with dryRun=true and a packageSpec.",
