@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { detectLocalApi, getSetupStatus } from "../src/setup.js";
+import { detectLocalApi, getSetupStatus, installOrUpdateCli } from "../src/setup.js";
 import type { CliResult } from "../src/cli.js";
 
 const servers: Array<{ close: () => Promise<void> }> = [];
@@ -94,5 +94,48 @@ describe("setup diagnostics", () => {
     expect(result.apiToken).toEqual({ present: true, source: "env" });
     expect(JSON.stringify(result)).not.toContain("secret-token");
     expect(result.health).toMatchObject({ ok: true, exitCode: 0 });
+  });
+
+  it("asks for CLI install/update approval when the CLI is missing", async () => {
+    const missingCliError = new Error("spawn granoflow ENOENT") as Error & { code: string };
+    missingCliError.code = "ENOENT";
+
+    const result = await getSetupStatus({
+      env: {},
+      runCli: async () => {
+        throw missingCliError;
+      },
+    });
+
+    expect(result.health).toMatchObject({ ok: false, cliMissing: true });
+    expect(result.nextActions).toEqual(
+      expect.arrayContaining([
+        "Ask the user whether they want to install or update granoflow-cli.",
+      ]),
+    );
+  });
+
+  it("requires an explicit install source before installing or updating the CLI", async () => {
+    const result = await installOrUpdateCli({}, { env: {} });
+
+    expect(result).toMatchObject({
+      ok: false,
+      dryRun: true,
+      packageSpec: null,
+    });
+    expect(JSON.stringify(result)).toContain("GRANOFLOW_CLI_INSTALL_SPEC");
+  });
+
+  it("previews the CLI install/update command by default", async () => {
+    const result = await installOrUpdateCli({
+      packageSpec: "https://example.com/granoflow-cli.tgz",
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      dryRun: true,
+      command: "npm",
+      args: ["install", "--global", "https://example.com/granoflow-cli.tgz"],
+    });
   });
 });

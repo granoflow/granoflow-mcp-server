@@ -28,6 +28,18 @@ If the CLI is not on `PATH`, point the MCP server at it:
 export GRANOFLOW_CLI_PATH="/absolute/path/to/granoflow"
 ```
 
+If the CLI is missing, setup tools report that clearly and ask the agent/user to
+confirm whether to install or update it. The install/update tool requires an
+explicit source, for example:
+
+```bash
+export GRANOFLOW_CLI_INSTALL_SPEC="https://example.com/granoflow-cli.tgz"
+```
+
+You can also pass `packageSpec` directly to
+`granoflow_setup_install_or_update_cli`. The tool defaults to dry-run and only
+runs `npm install --global <packageSpec>` when called with `dryRun=false`.
+
 The MCP server can also keep non-secret local connection defaults in:
 
 ```text
@@ -73,6 +85,7 @@ Initial tools:
 - `granoflow_setup_status`
 - `granoflow_setup_detect_local_api`
 - `granoflow_setup_write_config`
+- `granoflow_setup_install_or_update_cli`
 - `granoflow_setup_open_config`
 - `granoflow_health`
 - `granoflow_capabilities`
@@ -102,6 +115,9 @@ Granoflow app without hand-editing every setting first:
   only.
 - `granoflow_setup_write_config` previews or writes non-secret config. It
   defaults to dry-run.
+- `granoflow_setup_install_or_update_cli` previews or runs an explicit
+  install/update of `granoflow-cli`. It requires a package spec and defaults to
+  dry-run.
 - `granoflow_setup_open_config` creates and optionally opens the config file for
   manual editing.
 

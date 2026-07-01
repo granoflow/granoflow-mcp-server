@@ -21,6 +21,7 @@ Environment:
   GRANOFLOW_API_BASE_URL   Optional Granoflow Local HTTP API base URL.
   GRANOFLOW_API_TOKEN      Optional Granoflow Local HTTP API token.
   GRANOFLOW_MCP_CONFIG_PATH Optional path for MCP-owned non-secret config.
+  GRANOFLOW_CLI_INSTALL_SPEC Optional npm package spec for explicit CLI install/update.
 `);
 }
 

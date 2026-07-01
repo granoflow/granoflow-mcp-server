@@ -27,6 +27,12 @@ export interface LocalApiDetectionInput {
   timeoutMs?: number;
 }
 
+export interface InstallCliInput {
+  packageSpec?: string;
+  packageManager?: "npm";
+  dryRun?: boolean;
+}
+
 const DEFAULT_PORTS = [56789, 47631, 38080];
 const MAX_PORT_CANDIDATES = 20;
 const PROBE_PATHS = ["/health", "/api/capabilities", "/v1/health"];
@@ -34,6 +40,14 @@ const GRANOFLOW_JSON_KEYS = ["ok", "status", "capabilities", "tools", "version",
 
 function safeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function getErrorCode(error: unknown): string | undefined {
+  return isObject(error) && typeof error.code === "string" ? error.code : undefined;
+}
+
+export function isCliMissingError(error: unknown): boolean {
+  return getErrorCode(error) === "ENOENT";
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -87,6 +101,34 @@ async function openPath(path: string): Promise<{ attempted: boolean; error?: str
   });
 }
 
+async function runCommand(
+  command: string,
+  args: string[],
+): Promise<{
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+}> {
+  return await new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk: string) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk: string) => {
+      stderr += chunk;
+    });
+    child.on("error", reject);
+    child.on("close", (exitCode) => {
+      resolve({ exitCode: exitCode ?? 1, stdout, stderr });
+    });
+  });
+}
+
 export async function getSetupStatus(options: SetupOptions = {}) {
   const env = options.env ?? process.env;
   const runCli = options.runCli ?? runGranoflowCli;
@@ -104,6 +146,7 @@ export async function getSetupStatus(options: SetupOptions = {}) {
   } catch (error) {
     health = {
       ok: false,
+      cliMissing: isCliMissingError(error),
       error: safeError(error),
     };
   }
@@ -121,15 +164,22 @@ export async function getSetupStatus(options: SetupOptions = {}) {
       source: runtime.apiTokenSource,
     },
     health,
-    nextActions: runtime.configExists
-      ? [
-          "If health is not ok, call granoflow_setup_detect_local_api.",
-          "Verify the Granoflow app Local HTTP API is enabled.",
-        ]
-      : [
-          "Call granoflow_setup_detect_local_api to look for a local Granoflow API.",
-          "Call granoflow_setup_write_config with dryRun=true before writing config.",
-        ],
+    nextActions:
+      health.cliMissing === true
+        ? [
+            "Ask the user whether they want to install or update granoflow-cli.",
+            "Call granoflow_setup_install_or_update_cli with dryRun=true and a packageSpec.",
+            "If the CLI is already installed elsewhere, call granoflow_setup_write_config with cliPath.",
+          ]
+        : runtime.configExists
+          ? [
+              "If health is not ok, call granoflow_setup_detect_local_api.",
+              "Verify the Granoflow app Local HTTP API is enabled.",
+            ]
+          : [
+              "Call granoflow_setup_detect_local_api to look for a local Granoflow API.",
+              "Call granoflow_setup_write_config with dryRun=true before writing config.",
+            ],
   };
 }
 
@@ -203,6 +253,66 @@ export async function detectLocalApi(
 
 export async function writeSetupConfig(input: WriteConfigInput, options: SetupOptions = {}) {
   return await writeMcpConfig(input, options.env);
+}
+
+export async function installOrUpdateCli(input: InstallCliInput = {}, options: SetupOptions = {}) {
+  const env = options.env ?? process.env;
+  const packageSpec = input.packageSpec ?? env.GRANOFLOW_CLI_INSTALL_SPEC;
+  const packageManager = input.packageManager ?? "npm";
+  const dryRun = input.dryRun !== false;
+
+  if (!packageSpec) {
+    return {
+      ok: false,
+      dryRun,
+      packageManager,
+      packageSpec: null,
+      error:
+        "No granoflow-cli install source is configured. Provide packageSpec or set GRANOFLOW_CLI_INSTALL_SPEC.",
+      nextActions: [
+        "Confirm the official granoflow-cli install source with the user.",
+        "Call this tool with dryRun=true and that packageSpec.",
+        "Call again with dryRun=false only after the user approves installation or update.",
+      ],
+    };
+  }
+
+  const command = packageManager;
+  const args = ["install", "--global", packageSpec];
+  if (dryRun) {
+    return {
+      ok: true,
+      dryRun,
+      packageManager,
+      packageSpec,
+      command,
+      args,
+      nextActions: [
+        "Review the install or update command with the user.",
+        "Call this tool again with dryRun=false only after the user approves.",
+      ],
+    };
+  }
+
+  const result = await runCommand(command, args);
+  return {
+    ok: result.exitCode === 0,
+    dryRun,
+    packageManager,
+    packageSpec,
+    command,
+    args,
+    exitCode: result.exitCode,
+    stdout: result.stdout.trim() ? "[present]" : "[empty]",
+    stderr: result.stderr.trim() ? "[present]" : "[empty]",
+    nextActions:
+      result.exitCode === 0
+        ? ["Call granoflow_setup_status to verify granoflow-cli is now available."]
+        : [
+            "Review the packageSpec and package manager availability.",
+            "If the CLI installed elsewhere, call granoflow_setup_write_config with cliPath.",
+          ],
+  };
 }
 
 export async function openSetupConfig(

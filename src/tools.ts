@@ -2,7 +2,14 @@ import { z } from "zod";
 
 import { resolveMcpRuntime } from "./config.js";
 import { resultToText, runGranoflowCli } from "./cli.js";
-import { detectLocalApi, getSetupStatus, openSetupConfig, writeSetupConfig } from "./setup.js";
+import {
+  detectLocalApi,
+  getSetupStatus,
+  installOrUpdateCli,
+  isCliMissingError,
+  openSetupConfig,
+  writeSetupConfig,
+} from "./setup.js";
 
 const jsonInputSchema = z
   .record(z.string(), z.unknown())
@@ -16,8 +23,25 @@ function textResult(text: string) {
 
 async function cliTool(args: string[], input?: unknown) {
   const runtime = await resolveMcpRuntime();
-  const result = await runGranoflowCli(args, input, { env: runtime.env });
-  return textResult(resultToText(result));
+  try {
+    const result = await runGranoflowCli(args, input, { env: runtime.env });
+    return textResult(resultToText(result));
+  } catch (error) {
+    if (isCliMissingError(error)) {
+      return jsonTextResult({
+        ok: false,
+        error: "granoflow-cli was not found.",
+        cliPath: runtime.cliPath ?? "granoflow",
+        cliPathSource: runtime.cliPathSource,
+        nextActions: [
+          "Ask the user whether they want to install or update granoflow-cli.",
+          "Call granoflow_setup_install_or_update_cli with dryRun=true and a packageSpec.",
+          "If the CLI is already installed elsewhere, call granoflow_setup_write_config with cliPath.",
+        ],
+      });
+    }
+    throw error;
+  }
 }
 
 function jsonTextResult(value: unknown) {
@@ -72,6 +96,30 @@ export function registerGranoflowTools(server: {
         await writeSetupConfig({
           apiBaseUrl: typeof apiBaseUrl === "string" ? apiBaseUrl : undefined,
           cliPath: typeof cliPath === "string" ? cliPath : undefined,
+          dryRun: dryRun !== false,
+        }),
+      ),
+  );
+
+  server.tool(
+    "granoflow_setup_install_or_update_cli",
+    "Preview or run an explicit granoflow-cli install/update command. Defaults to dry-run.",
+    {
+      packageSpec: z
+        .string()
+        .min(1)
+        .optional()
+        .describe(
+          "npm package spec, tarball URL, git URL, or local package path for granoflow-cli.",
+        ),
+      packageManager: z.literal("npm").default("npm"),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ packageSpec, packageManager, dryRun }) =>
+      jsonTextResult(
+        await installOrUpdateCli({
+          packageSpec: typeof packageSpec === "string" ? packageSpec : undefined,
+          packageManager: packageManager === "npm" ? "npm" : undefined,
           dryRun: dryRun !== false,
         }),
       ),
