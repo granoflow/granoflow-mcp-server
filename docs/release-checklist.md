@@ -2,12 +2,29 @@
 
 Use this checklist before publishing a new `@granoflow/mcp-server` version.
 
+## 0. Release Branch Policy
+
+Publish npm `latest` only from `main`.
+
+- `develop` is for active integration and may be unstable.
+- `main` is the release branch users should associate with npm `latest`.
+- Before publishing, merge or fast-forward the intended `develop` commit into
+  `main`, then run this checklist on `main`.
+- Do not run `npm publish --access public` from `develop` unless the user
+  explicitly overrides this policy for an emergency release.
+
 ## 1. Source State
 
 - Confirm the worktree is clean or only contains intended release changes:
 
   ```bash
   git status --short --branch
+  ```
+
+- Confirm the current branch is `main` before publish:
+
+  ```bash
+  git branch --show-current
   ```
 
 - Confirm the package version, runtime metadata, and tests agree:

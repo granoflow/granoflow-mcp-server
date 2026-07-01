@@ -48,6 +48,14 @@ For a user-facing setup walkthrough, see
 For maintainers, see
 [Granoflow MCP Release Checklist](docs/release-checklist.md).
 
+## Release Branch Policy
+
+- `develop` is the active integration branch. It may contain unverified or
+  unreleased changes.
+- `main` is the npm release branch. Publish `@granoflow/mcp-server` latest only
+  from `main`.
+- Merge or fast-forward `develop` into `main` only after release preflight passes.
+
 For local development:
 
 ```bash
