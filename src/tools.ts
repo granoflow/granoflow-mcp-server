@@ -1,12 +1,9 @@
 import { z } from "zod";
 
-import { resolveMcpRuntime } from "./config.js";
-import { resultToText, runGranoflowCli } from "./cli.js";
+import { requestGranoflowApi, type ApiRequestOptions } from "./api.js";
 import {
   detectLocalApi,
   getSetupStatus,
-  installOrUpdateCli,
-  isCliMissingError,
   openGranoflowApp,
   openSetupConfig,
   writeSetupConfig,
@@ -14,7 +11,7 @@ import {
 
 const jsonInputSchema = z
   .record(z.string(), z.unknown())
-  .describe("JSON object passed to granoflow-cli stdin.");
+  .describe("JSON object sent to the Granoflow Local HTTP API.");
 
 function textResult(text: string) {
   return {
@@ -22,31 +19,12 @@ function textResult(text: string) {
   };
 }
 
-async function cliTool(args: string[], input?: unknown) {
-  const runtime = await resolveMcpRuntime();
-  try {
-    const result = await runGranoflowCli(args, input, { env: runtime.env });
-    return textResult(resultToText(result));
-  } catch (error) {
-    if (isCliMissingError(error)) {
-      return jsonTextResult({
-        ok: false,
-        error: "granoflow-cli was not found.",
-        cliPath: runtime.cliPath ?? "granoflow",
-        cliPathSource: runtime.cliPathSource,
-        nextActions: [
-          "Ask the user whether they want to install or update granoflow-cli.",
-          "Call granoflow_setup_install_or_update_cli with dryRun=true and a packageSpec.",
-          "If the CLI is already installed elsewhere, call granoflow_setup_write_config with cliPath.",
-        ],
-      });
-    }
-    throw error;
-  }
-}
-
 function jsonTextResult(value: unknown) {
   return textResult(JSON.stringify(value, null, 2));
+}
+
+async function apiTool(options: ApiRequestOptions) {
+  return jsonTextResult(await requestGranoflowApi(options));
 }
 
 export function registerGranoflowTools(server: {
@@ -59,7 +37,7 @@ export function registerGranoflowTools(server: {
 }) {
   server.tool(
     "granoflow_setup_status",
-    "Inspect Granoflow MCP config, environment resolution, and CLI health without printing secrets.",
+    "Inspect Granoflow MCP config and Local HTTP API health without printing secrets.",
     {},
     async () => jsonTextResult(await getSetupStatus()),
   );
@@ -89,38 +67,12 @@ export function registerGranoflowTools(server: {
     "Preview or write MCP-owned non-secret Granoflow connection config. Defaults to dry-run.",
     {
       apiBaseUrl: z.string().url().optional(),
-      cliPath: z.string().min(1).optional(),
       dryRun: z.boolean().default(true),
     },
-    async ({ apiBaseUrl, cliPath, dryRun }) =>
+    async ({ apiBaseUrl, dryRun }) =>
       jsonTextResult(
         await writeSetupConfig({
           apiBaseUrl: typeof apiBaseUrl === "string" ? apiBaseUrl : undefined,
-          cliPath: typeof cliPath === "string" ? cliPath : undefined,
-          dryRun: dryRun !== false,
-        }),
-      ),
-  );
-
-  server.tool(
-    "granoflow_setup_install_or_update_cli",
-    "Preview or run an explicit granoflow-cli install/update command. Defaults to dry-run.",
-    {
-      packageSpec: z
-        .string()
-        .min(1)
-        .optional()
-        .describe(
-          "npm package spec, tarball URL, git URL, or local package path for granoflow-cli.",
-        ),
-      packageManager: z.literal("npm").default("npm"),
-      dryRun: z.boolean().default(true),
-    },
-    async ({ packageSpec, packageManager, dryRun }) =>
-      jsonTextResult(
-        await installOrUpdateCli({
-          packageSpec: typeof packageSpec === "string" ? packageSpec : undefined,
-          packageManager: packageManager === "npm" ? "npm" : undefined,
           dryRun: dryRun !== false,
         }),
       ),
@@ -160,38 +112,46 @@ export function registerGranoflowTools(server: {
 
   server.tool(
     "granoflow_health",
-    "Check whether the Granoflow local API is reachable.",
+    "Check whether the Granoflow Local HTTP API is reachable.",
     {},
-    async () => cliTool(["health"]),
+    async () => apiTool({ path: "/v1/health" }),
+  );
+
+  server.tool(
+    "granoflow_version",
+    "Show Granoflow app and Local HTTP API version metadata.",
+    {},
+    async () => apiTool({ path: "/v1/version" }),
   );
 
   server.tool(
     "granoflow_capabilities",
     "List capabilities exposed by the running Granoflow app.",
     {},
-    async () => cliTool(["api", "capabilities"]),
+    async () => apiTool({ path: "/v1/capabilities" }),
   );
 
   server.tool("granoflow_ai_agent_tools", "List Granoflow AI-agent tool contracts.", {}, async () =>
-    cliTool(["ai-agent", "tools"]),
+    apiTool({ path: "/v1/ai-agent/tools" }),
   );
 
   server.tool("granoflow_task_list", "List tasks from Granoflow.", {}, async () =>
-    cliTool(["task", "list"]),
+    apiTool({ path: "/v1/tasks" }),
   );
 
   server.tool(
     "granoflow_task_export",
     "Export a task context for an AI agent.",
     { taskId: z.string().min(1).describe("Granoflow task id.") },
-    async ({ taskId }) => cliTool(["ai-agent", "task", "export", "--id", String(taskId)]),
+    async ({ taskId }) => apiTool({ path: `/v1/ai-agent/tasks/${String(taskId)}/export` }),
   );
 
   server.tool(
     "granoflow_task_validate",
     "Validate an AI-agent task result before importing it into Granoflow.",
     { input: jsonInputSchema },
-    async ({ input }) => cliTool(["ai-agent", "task", "validate", "--input", "-"], input),
+    async ({ input }) =>
+      apiTool({ method: "POST", path: "/v1/ai-agent/tasks/validate", body: input }),
   );
 
   server.tool(
@@ -199,13 +159,18 @@ export function registerGranoflowTools(server: {
     "Import an AI-agent task result into Granoflow. Use dryRun first unless the user explicitly asks to write.",
     {
       input: jsonInputSchema,
-      dryRun: z.boolean().default(true).describe("When true, validates import without writing."),
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
     },
     async ({ input, dryRun }) =>
-      cliTool(
-        ["ai-agent", "task", "import", "--input", "-", ...(dryRun === false ? [] : ["--dry-run"])],
-        input,
-      ),
+      apiTool({
+        method: "POST",
+        path: "/v1/ai-agent/tasks/import",
+        body: input,
+        dryRun: dryRun !== false,
+      }),
   );
 
   server.tool(
@@ -219,10 +184,32 @@ export function registerGranoflowTools(server: {
         .describe("When true, previews the request without writing."),
     },
     async ({ input, dryRun }) =>
-      cliTool(
-        ["task", "create", "--input", "-", ...(dryRun === false ? [] : ["--dry-run"])],
-        input,
-      ),
+      apiTool({
+        method: "POST",
+        path: "/v1/tasks",
+        body: input,
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  server.tool(
+    "granoflow_task_update",
+    "Update a Granoflow task through the Local HTTP API.",
+    {
+      taskId: z.string().min(1).describe("Granoflow task id."),
+      input: jsonInputSchema,
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ taskId, input, dryRun }) =>
+      apiTool({
+        method: "PATCH",
+        path: `/v1/tasks/${String(taskId)}`,
+        body: input,
+        dryRun: dryRun !== false,
+      }),
   );
 
   server.tool(
@@ -237,40 +224,43 @@ export function registerGranoflowTools(server: {
         .describe("When true, previews the request without writing."),
     },
     async ({ taskId, input, dryRun }) =>
-      cliTool(
-        [
-          "task",
-          "complete",
-          "--id",
-          String(taskId),
-          ...(input === undefined ? [] : ["--input", "-"]),
-          ...(dryRun === false ? [] : ["--dry-run"]),
-        ],
-        input,
-      ),
+      apiTool({
+        method: "POST",
+        path: `/v1/tasks/${String(taskId)}/complete`,
+        body: input,
+        dryRun: dryRun !== false,
+      }),
   );
 
   server.tool("granoflow_project_list", "List Granoflow projects.", {}, async () =>
-    cliTool(["project", "list"]),
+    apiTool({ path: "/v1/projects" }),
   );
 
   server.tool(
     "granoflow_review_day_show",
     "Show a Granoflow daily review by date.",
     { date: z.string().describe("Date in YYYY-MM-DD format.") },
-    async ({ date }) => cliTool(["review", "day", "show", "--date", String(date)]),
+    async ({ date }) => apiTool({ path: `/v1/reviews/days/${String(date)}` }),
   );
 
   server.tool(
-    "granoflow_cli",
-    "Run an allowed granoflow-cli JSON command. Prefer dedicated tools when available.",
+    "granoflow_api_request",
+    "Run an allowed Granoflow Local HTTP API request. Prefer dedicated tools when available.",
     {
-      args: z
-        .array(z.string())
+      method: z.enum(["GET", "POST", "PATCH", "DELETE"]).default("GET"),
+      path: z
+        .string()
         .min(1)
-        .describe("granoflow-cli arguments, without the leading binary name."),
+        .refine((path) => path.startsWith("/v1/"), "path must start with /v1/"),
       input: jsonInputSchema.optional(),
+      dryRun: z.boolean().default(true).describe("When true, previews write requests."),
     },
-    async ({ args, input }) => cliTool((args as string[]).map(String), input),
+    async ({ method, path, input, dryRun }) =>
+      apiTool({
+        method: method as ApiRequestOptions["method"],
+        path: String(path),
+        body: input,
+        dryRun: method === "GET" ? false : dryRun !== false,
+      }),
   );
 }

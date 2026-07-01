@@ -23,9 +23,11 @@ describe("MCP tool registration", () => {
         "granoflow_setup_status",
         "granoflow_setup_detect_local_api",
         "granoflow_setup_write_config",
-        "granoflow_setup_install_or_update_cli",
         "granoflow_setup_open_config",
         "granoflow_setup_open_app",
+        "granoflow_version",
+        "granoflow_task_update",
+        "granoflow_api_request",
       ]),
     );
   });

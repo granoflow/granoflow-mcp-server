@@ -4,7 +4,6 @@ import { dirname, join } from "node:path";
 
 export interface GranoflowMcpConfig {
   apiBaseUrl?: string;
-  cliPath?: string;
   [key: string]: unknown;
 }
 
@@ -19,18 +18,15 @@ export interface RuntimeResolution {
   configPath: string;
   configExists: boolean;
   configError?: string;
-  apiBaseUrl?: string;
+  apiBaseUrl: string;
   apiBaseUrlSource: "env" | "config" | "default";
-  cliPath?: string;
-  cliPathSource: "env" | "config" | "default";
   hasApiToken: boolean;
   apiTokenSource: "env" | "none";
-  env: NodeJS.ProcessEnv;
+  apiToken?: string;
 }
 
 export interface WriteConfigInput {
   apiBaseUrl?: string;
-  cliPath?: string;
   dryRun?: boolean;
 }
 
@@ -46,6 +42,7 @@ export interface WriteConfigResult {
 }
 
 const SECRET_KEY_PATTERN = /(token|secret|password|credential|key)/i;
+const DEFAULT_API_BASE_URL = "http://127.0.0.1:56789";
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -116,29 +113,22 @@ export async function resolveMcpRuntime(
   const config = configResult.config;
   const apiBaseUrl =
     env.GRANOFLOW_API_BASE_URL ??
-    (typeof config.apiBaseUrl === "string" ? config.apiBaseUrl : undefined);
-  const cliPath =
-    env.GRANOFLOW_CLI_PATH ?? (typeof config.cliPath === "string" ? config.cliPath : undefined);
-  const resolvedEnv: NodeJS.ProcessEnv = { ...env };
-
-  if (apiBaseUrl) {
-    resolvedEnv.GRANOFLOW_API_BASE_URL = apiBaseUrl;
-  }
-  if (cliPath) {
-    resolvedEnv.GRANOFLOW_CLI_PATH = cliPath;
-  }
+    (typeof config.apiBaseUrl === "string" ? config.apiBaseUrl : undefined) ??
+    DEFAULT_API_BASE_URL;
 
   return {
     configPath: configResult.configPath,
     configExists: configResult.exists,
     configError: configResult.error,
     apiBaseUrl,
-    apiBaseUrlSource: env.GRANOFLOW_API_BASE_URL ? "env" : apiBaseUrl ? "config" : "default",
-    cliPath,
-    cliPathSource: env.GRANOFLOW_CLI_PATH ? "env" : cliPath ? "config" : "default",
+    apiBaseUrlSource: env.GRANOFLOW_API_BASE_URL
+      ? "env"
+      : typeof config.apiBaseUrl === "string"
+        ? "config"
+        : "default",
     hasApiToken: Boolean(env.GRANOFLOW_API_TOKEN),
     apiTokenSource: env.GRANOFLOW_API_TOKEN ? "env" : "none",
-    env: resolvedEnv,
+    apiToken: env.GRANOFLOW_API_TOKEN,
   };
 }
 
@@ -153,9 +143,6 @@ export async function writeMcpConfig(
   const nextConfig: GranoflowMcpConfig = { ...readResult.config };
   if (input.apiBaseUrl !== undefined) {
     nextConfig.apiBaseUrl = input.apiBaseUrl;
-  }
-  if (input.cliPath !== undefined) {
-    nextConfig.cliPath = input.cliPath;
   }
 
   const previousConfig = redactConfig(readResult.config);

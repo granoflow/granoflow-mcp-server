@@ -2,15 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import {
-  compareComparableVersions,
-  detectLocalApi,
-  getSetupStatus,
-  installOrUpdateCli,
-  openGranoflowApp,
-  parseComparableVersion,
-} from "../src/setup.js";
-import type { CliResult } from "../src/cli.js";
+import { detectLocalApi, getSetupStatus, openGranoflowApp } from "../src/setup.js";
 
 const servers: Array<{ close: () => Promise<void> }> = [];
 
@@ -44,17 +36,6 @@ afterEach(async () => {
 });
 
 describe("setup diagnostics", () => {
-  it("compares versions using x.y.z while ignoring +n and fourth .n suffixes", () => {
-    expect(parseComparableVersion("granoflow 1.2.3+4")).toEqual({
-      major: 1,
-      minor: 2,
-      patch: 3,
-    });
-    expect(compareComparableVersions("1.2.3+4", "1.2.3.99")).toBe(0);
-    expect(compareComparableVersions("1.2.3.99", "1.2.4+1")).toBe(-1);
-    expect(compareComparableVersions("1.3.0", "1.2.99+100")).toBe(1);
-  });
-
   it("detects a Granoflow-shaped localhost health response", async () => {
     const port = await startServer((_request, response) => {
       response.setHeader("content-type", "application/json");
@@ -93,97 +74,45 @@ describe("setup diagnostics", () => {
     );
   });
 
-  it("reports setup status without exposing token values", async () => {
-    const cliResult: CliResult = {
-      exitCode: 0,
-      stdout: "{}",
-      stderr: "",
-      json: {},
-    };
+  it("reports setup status from the Local HTTP API without exposing token values", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/health") {
+        response.end(JSON.stringify({ ok: true, code: "ok", data: { status: "ready" } }));
+        return;
+      }
+      if (request.url === "/v1/version") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            code: "ok",
+            data: { version: "0.1.0+7", releaseDate: "2026-07-01" },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false, code: "not_found" }));
+    });
 
     const result = await getSetupStatus({
       env: {
-        GRANOFLOW_API_BASE_URL: "http://127.0.0.1:56789",
+        GRANOFLOW_API_BASE_URL: `http://127.0.0.1:${port}`,
         GRANOFLOW_API_TOKEN: "secret-token",
-      },
-      runCli: async (args) => {
-        if (args[0] === "--version") {
-          return { ...cliResult, stdout: "granoflow 0.1.0\n", json: null };
-        }
-        if (args.join(" ") === "api version") {
-          return {
-            ...cliResult,
-            json: { ok: true, data: { version: "0.1.0+7", releaseDate: "2026-07-01" } },
-          };
-        }
-        return cliResult;
       },
     });
 
     expect(result.apiToken).toEqual({ present: true, source: "env" });
     expect(JSON.stringify(result)).not.toContain("secret-token");
-    expect(result.health).toMatchObject({ ok: true, exitCode: 0 });
+    expect(result.health).toMatchObject({ ok: true, code: "ok" });
+    expect(result.version).toMatchObject({ ok: true, code: "ok" });
     expect(result.warnings).toEqual([]);
-  });
-
-  it("warns when the CLI version is behind the REST API version", async () => {
-    const cliResult: CliResult = {
-      exitCode: 0,
-      stdout: "{}",
-      stderr: "",
-      json: {},
-    };
-
-    const result = await getSetupStatus({
-      env: {},
-      runCli: async (args) => {
-        if (args[0] === "--version") {
-          return { ...cliResult, stdout: "granoflow 0.1.0+99\n", json: null };
-        }
-        if (args.join(" ") === "api version") {
-          return {
-            ...cliResult,
-            json: { ok: true, data: { version: "0.1.1.4", releaseDate: "2026-07-01" } },
-          };
-        }
-        return cliResult;
-      },
-    });
-
-    expect(result.warnings).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: "cli_version_behind_rest_api",
-          cliVersion: "granoflow 0.1.0+99",
-          restVersion: "0.1.1.4",
-        }),
-      ]),
-    );
-    expect(result.nextActions).toEqual(
-      expect.arrayContaining(["Ask the user whether they want to update granoflow-cli."]),
-    );
   });
 
   it("warns when a configured local API is unreachable and Granoflow is not running", async () => {
     const result = await getSetupStatus({
       env: {
-        GRANOFLOW_API_BASE_URL: "http://127.0.0.1:56789",
-      },
-      runCli: async (args) => {
-        if (args[0] === "--version") {
-          return {
-            exitCode: 0,
-            stdout: "granoflow 0.1.0\n",
-            stderr: "",
-            json: null,
-          };
-        }
-        return {
-          exitCode: 5,
-          stdout: "",
-          stderr: "network error",
-          json: { ok: false, code: "network_error" },
-        };
+        GRANOFLOW_API_BASE_URL: "http://127.0.0.1:9",
       },
       runCommand: async () => ({
         exitCode: 1,
@@ -206,49 +135,6 @@ describe("setup diagnostics", () => {
     expect(result.nextActions).toEqual(
       expect.arrayContaining(["Ask the user whether they want to open Granoflow."]),
     );
-  });
-
-  it("asks for CLI install/update approval when the CLI is missing", async () => {
-    const missingCliError = new Error("spawn granoflow ENOENT") as Error & { code: string };
-    missingCliError.code = "ENOENT";
-
-    const result = await getSetupStatus({
-      env: {},
-      runCli: async () => {
-        throw missingCliError;
-      },
-    });
-
-    expect(result.health).toMatchObject({ ok: false, cliMissing: true });
-    expect(result.nextActions).toEqual(
-      expect.arrayContaining([
-        "Ask the user whether they want to install or update granoflow-cli.",
-      ]),
-    );
-  });
-
-  it("requires an explicit install source before installing or updating the CLI", async () => {
-    const result = await installOrUpdateCli({}, { env: {} });
-
-    expect(result).toMatchObject({
-      ok: false,
-      dryRun: true,
-      packageSpec: null,
-    });
-    expect(JSON.stringify(result)).toContain("GRANOFLOW_CLI_INSTALL_SPEC");
-  });
-
-  it("previews the CLI install/update command by default", async () => {
-    const result = await installOrUpdateCli({
-      packageSpec: "https://example.com/granoflow-cli.tgz",
-    });
-
-    expect(result).toMatchObject({
-      ok: true,
-      dryRun: true,
-      command: "npm",
-      args: ["install", "--global", "https://example.com/granoflow-cli.tgz"],
-    });
   });
 
   it("previews opening the installed Granoflow app by default", async () => {

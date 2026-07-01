@@ -1,46 +1,32 @@
 # Granoflow MCP Server
 
-MCP server for Granoflow: exposes the local REST API and `granoflow` CLI as
-tools for AI agents, IDEs, and automation.
+MCP server for Granoflow: exposes the Granoflow Local HTTP API as tools for AI
+agents, IDEs, and automation.
 
-This server is intentionally thin. It delegates core operations to
-[`granoflow-cli`](https://github.com/granoflow/granoflow-cli), which owns the
-Granoflow Local HTTP API contract, JSON envelopes, configuration loading, token
-handling, and OpenAPI drift checks.
+This server is intentionally thin. It does not own Granoflow business logic,
+database access, app orchestration, or release workflows. It resolves a local API
+endpoint, forwards structured requests to the running Granoflow app, and returns
+predictable MCP tool results.
 
 ## Requirements
 
 - Node.js 20 or newer.
-- `granoflow-cli` installed and available as `granoflow`.
 - A running Granoflow app with the Local HTTP API enabled.
 
-The default Granoflow API URL is owned by `granoflow-cli`. You can override it
-with:
+The default Granoflow API URL is:
+
+```text
+http://127.0.0.1:56789
+```
+
+You can override it with:
 
 ```bash
 export GRANOFLOW_API_BASE_URL="http://127.0.0.1:56789"
 export GRANOFLOW_API_TOKEN="..."
 ```
 
-If the CLI is not on `PATH`, point the MCP server at it:
-
-```bash
-export GRANOFLOW_CLI_PATH="/absolute/path/to/granoflow"
-```
-
-If the CLI is missing, setup tools report that clearly and ask the agent/user to
-confirm whether to install or update it. The install/update tool requires an
-explicit source, for example:
-
-```bash
-export GRANOFLOW_CLI_INSTALL_SPEC="https://example.com/granoflow-cli.tgz"
-```
-
-You can also pass `packageSpec` directly to
-`granoflow_setup_install_or_update_cli`. The tool defaults to dry-run and only
-runs `npm install --global <packageSpec>` when called with `dryRun=false`.
-
-The MCP server can also keep non-secret local connection defaults in:
+The MCP server can keep non-secret local connection defaults in:
 
 ```text
 ~/.config/granoflow-mcp/config.json
@@ -85,10 +71,10 @@ Initial tools:
 - `granoflow_setup_status`
 - `granoflow_setup_detect_local_api`
 - `granoflow_setup_write_config`
-- `granoflow_setup_install_or_update_cli`
 - `granoflow_setup_open_config`
 - `granoflow_setup_open_app`
 - `granoflow_health`
+- `granoflow_version`
 - `granoflow_capabilities`
 - `granoflow_ai_agent_tools`
 - `granoflow_task_list`
@@ -96,14 +82,14 @@ Initial tools:
 - `granoflow_task_validate`
 - `granoflow_task_import`
 - `granoflow_task_create`
+- `granoflow_task_update`
 - `granoflow_task_complete`
 - `granoflow_project_list`
 - `granoflow_review_day_show`
-- `granoflow_cli`
+- `granoflow_api_request`
 
-`granoflow_task_import`, `granoflow_task_create`, and
-`granoflow_task_complete` default to dry-run behavior. Ask the tool to write
-only after you have reviewed the preview.
+Write tools default to dry-run behavior. Ask the tool to write only after you
+have reviewed the preview or the user has explicitly requested a write.
 
 ## Setup Diagnostics
 
@@ -111,14 +97,12 @@ Use the setup tools when an agent or MCP client needs to connect to a local
 Granoflow app without hand-editing every setting first:
 
 - `granoflow_setup_status` reports config path, env/config precedence, token
-  presence, and CLI health without printing secrets.
+  presence, Local HTTP API health, and version metadata without printing
+  secrets.
 - `granoflow_setup_detect_local_api` probes a small bounded localhost port list
   only.
 - `granoflow_setup_write_config` previews or writes non-secret config. It
   defaults to dry-run.
-- `granoflow_setup_install_or_update_cli` previews or runs an explicit
-  install/update of `granoflow-cli`. It requires a package spec and defaults to
-  dry-run.
 - `granoflow_setup_open_config` creates and optionally opens the config file for
   manual editing.
 - `granoflow_setup_open_app` previews or opens the installed Granoflow app after
@@ -128,7 +112,7 @@ When setup status sees a configured localhost API URL that is unreachable, it
 checks whether a local Granoflow process appears to be running. If not, it
 returns a warning and asks the agent to confirm before opening the app.
 
-## Client support
+## Client Support
 
 This package implements a standard MCP stdio server. The primary compatibility
 contract is the MCP protocol plus the npm executable:
@@ -203,6 +187,5 @@ npm run check
 - This server does not read or write Granoflow's SQLite/Drift database.
 - This server does not run Granoflow app builds, screenshots, release jobs, or
   scenario orchestration.
-- Core operations go through `granoflow-cli` and the running app's Local HTTP
-  API.
+- Core operations go through the running app's Local HTTP API.
 - API tokens are passed through environment variables and must not be logged.

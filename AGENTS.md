@@ -3,13 +3,13 @@
 ## Project Role
 
 This repository is the public Granoflow MCP server. It exposes Granoflow's
-local REST API to AI agents by delegating core operations to `granoflow-cli`.
+Local HTTP API to AI agents.
 
 ## Hard Rules
 
 - Keep the MCP server thin. Do not reimplement Granoflow business logic here.
-- Prefer `granoflow-cli` for task, project, review, backup, sync, and AI-agent
-  operations.
+- Call the Granoflow Local HTTP API directly. Do not add an execution dependency
+  on external command-line wrappers.
 - Do not print API tokens or secrets in logs, tool results, test snapshots, or
   documentation.
 - Keep tool results structured and predictable for Cursor, Codex, Claude Code,

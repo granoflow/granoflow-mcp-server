@@ -1,4 +1,4 @@
-import { mkdir, readFile, stat } from "node:fs/promises";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -26,7 +26,6 @@ describe("MCP config", () => {
     await writeMcpConfig(
       {
         apiBaseUrl: "http://127.0.0.1:56789",
-        cliPath: "/config/granoflow",
         dryRun: false,
       },
       { GRANOFLOW_MCP_CONFIG_PATH: configPath },
@@ -36,20 +35,16 @@ describe("MCP config", () => {
       GRANOFLOW_MCP_CONFIG_PATH: configPath,
       GRANOFLOW_API_BASE_URL: "http://127.0.0.1:60000",
       GRANOFLOW_API_TOKEN: "secret-token",
-      GRANOFLOW_CLI_PATH: "/env/granoflow",
     });
 
     expect(runtime.apiBaseUrl).toBe("http://127.0.0.1:60000");
     expect(runtime.apiBaseUrlSource).toBe("env");
-    expect(runtime.cliPath).toBe("/env/granoflow");
-    expect(runtime.cliPathSource).toBe("env");
     expect(runtime.hasApiToken).toBe(true);
     expect(runtime.apiTokenSource).toBe("env");
   });
 
   it("does not treat config token fields as usable API tokens", async () => {
     const configPath = await tempConfigPath("token");
-    await mkdir(join(configPath, ".."), { recursive: true });
     await writeMcpConfig(
       {
         apiBaseUrl: "http://127.0.0.1:56789",
@@ -58,24 +53,17 @@ describe("MCP config", () => {
       { GRANOFLOW_MCP_CONFIG_PATH: configPath },
     );
 
-    const text = await readFile(configPath, "utf8");
-    await writeMcpConfig(
-      {
-        cliPath: "granoflow",
-        dryRun: false,
-      },
-      { GRANOFLOW_MCP_CONFIG_PATH: configPath },
-    );
-    const configWithToken = JSON.parse(text) as Record<string, unknown>;
+    const configWithToken = JSON.parse(await readFile(configPath, "utf8")) as Record<
+      string,
+      unknown
+    >;
     configWithToken.apiToken = "should-not-be-used";
-    await import("node:fs/promises").then(({ writeFile }) =>
-      writeFile(configPath, JSON.stringify(configWithToken, null, 2)),
-    );
+    await writeFile(configPath, JSON.stringify(configWithToken, null, 2));
 
     const runtime = await resolveMcpRuntime({ GRANOFLOW_MCP_CONFIG_PATH: configPath });
 
     expect(runtime.hasApiToken).toBe(false);
-    expect(runtime.env.GRANOFLOW_API_TOKEN).toBeUndefined();
+    expect(runtime.apiToken).toBeUndefined();
   });
 
   it("redacts secret-looking config keys in write results", async () => {
@@ -89,13 +77,11 @@ describe("MCP config", () => {
     );
     const raw = JSON.parse(await readFile(configPath, "utf8")) as Record<string, unknown>;
     raw.refreshToken = "secret-value";
-    await import("node:fs/promises").then(({ writeFile }) =>
-      writeFile(configPath, JSON.stringify(raw, null, 2)),
-    );
+    await writeFile(configPath, JSON.stringify(raw, null, 2));
 
     const result = await writeMcpConfig(
       {
-        cliPath: "granoflow",
+        apiBaseUrl: "http://127.0.0.1:60000",
         dryRun: true,
       },
       { GRANOFLOW_MCP_CONFIG_PATH: configPath },

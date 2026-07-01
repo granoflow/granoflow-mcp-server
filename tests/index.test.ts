@@ -20,7 +20,8 @@ describe("granoflow MCP server executable", () => {
     const { stdout, stderr } = await execFileAsync(process.execPath, ["dist/index.js", "--help"]);
 
     expect(stdout).toContain("granoflow-mcp-server 0.1.0");
-    expect(stdout).toContain("GRANOFLOW_CLI_PATH");
+    expect(stdout).toContain("GRANOFLOW_API_BASE_URL");
+    expect(stdout).toContain("GRANOFLOW_MCP_CONFIG_PATH");
     expect(stderr).toBe("");
   });
 });
