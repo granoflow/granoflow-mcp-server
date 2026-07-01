@@ -11,6 +11,7 @@ import {
   writeMcpConfig,
   type WriteConfigInput,
 } from "./config.js";
+import { SERVER_NAME, SERVER_VERSION } from "./metadata.js";
 
 type CommandRunResult = {
   exitCode: number;
@@ -164,12 +165,46 @@ async function checkGranoflowProcess(
   }
 }
 
+function summarizeCapabilities(value: unknown): Record<string, unknown> {
+  const data = isObject(value) ? value.data : null;
+  const payload = isObject(data) && isObject(data.data) ? data.data : data;
+  if (!isObject(payload)) {
+    return {
+      available: false,
+    };
+  }
+  const tools = Array.isArray(payload.tools) ? payload.tools : [];
+  const aiAgent = isObject(payload.aiAgent) ? payload.aiAgent : {};
+  const aiAgentTools = Array.isArray(aiAgent.tools) ? aiAgent.tools : [];
+  const capabilities = Array.isArray(payload.capabilities) ? payload.capabilities : [];
+  const resources = isObject(payload.resources) ? Object.keys(payload.resources) : [];
+  return {
+    available: true,
+    apiVersion: payload.apiVersion,
+    appVersion: payload.appVersion,
+    resourceCount: resources.length,
+    resources,
+    toolCount: tools.length + aiAgentTools.length,
+    capabilityCount: capabilities.length,
+    tools: [...tools, ...aiAgentTools].slice(0, 20),
+    truncated: tools.length + aiAgentTools.length > 20,
+  };
+}
+
+function mcpRuntimeSummary() {
+  return {
+    serverName: SERVER_NAME,
+    serverVersion: SERVER_VERSION,
+  };
+}
+
 export async function getSetupStatus(options: SetupOptions = {}) {
   const env = options.env ?? process.env;
   const runCommandImpl = options.runCommand ?? runCommand;
   const runtime = await resolveMcpRuntime(env);
   const health = await requestGranoflowApi({ path: "/v1/health" }, env);
   const version = await requestGranoflowApi({ path: "/v1/version" }, env);
+  const capabilities = await requestGranoflowApi({ path: "/v1/capabilities" }, env);
   const warnings: Array<Record<string, unknown>> = [];
   const appProcess = isLocalApiBaseUrl(runtime.apiBaseUrl)
     ? await checkGranoflowProcess(runCommandImpl)
@@ -213,11 +248,13 @@ export async function getSetupStatus(options: SetupOptions = {}) {
         present: runtime.hasApiToken,
         source: runtime.apiTokenSource,
       },
+      mcp: mcpRuntimeSummary(),
       health: {
         ...health,
         appProcess,
       },
       version,
+      capabilities: summarizeCapabilities(capabilities),
       warnings,
       nextActions: warnings.some((warning) => warning.code === "granoflow_app_not_running")
         ? [
@@ -241,8 +278,10 @@ export async function getSetupStatus(options: SetupOptions = {}) {
       present: runtime.hasApiToken,
       source: runtime.apiTokenSource,
     },
+    mcp: mcpRuntimeSummary(),
     health,
     version,
+    capabilities: summarizeCapabilities(capabilities),
     appProcess,
     warnings,
     nextActions: health.ok

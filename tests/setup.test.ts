@@ -91,6 +91,16 @@ describe("setup diagnostics", () => {
         );
         return;
       }
+      if (request.url === "/v1/capabilities") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            code: "ok",
+            data: { tools: ["task.list", "task.finish"], capabilities: ["tasks"] },
+          }),
+        );
+        return;
+      }
       response.statusCode = 404;
       response.end(JSON.stringify({ ok: false, code: "not_found" }));
     });
@@ -111,6 +121,15 @@ describe("setup diagnostics", () => {
     expect(JSON.stringify(result)).not.toContain("secret-token");
     expect(result.health).toMatchObject({ ok: true, code: "ok" });
     expect(result.version).toMatchObject({ ok: true, code: "ok" });
+    expect(result.mcp).toMatchObject({
+      serverName: "granoflow-mcp-server",
+      serverVersion: expect.stringMatching(/^\d+\.\d+\.\d+/),
+    });
+    expect(result.capabilities).toMatchObject({
+      available: true,
+      toolCount: 2,
+      capabilityCount: 1,
+    });
     expect(result.appProcess).toMatchObject({
       checked: true,
       running: true,

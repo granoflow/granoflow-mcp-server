@@ -66,8 +66,7 @@ npx -y @granoflow/mcp-server --help
 Before publishing a release, verify the package contents:
 
 ```bash
-npm run check
-npm pack --dry-run
+npm run release:preflight
 ```
 
 ## Tools
@@ -92,12 +91,18 @@ Initial tools:
 - `granoflow_task_update`
 - `granoflow_task_update_structured`
 - `granoflow_task_complete`
+- `granoflow_task_finish`
+- `granoflow_task_resolve`
 - `granoflow_project_list`
+- `granoflow_project_resolve`
 - `granoflow_project_create`
 - `granoflow_project_update`
+- `granoflow_project_delete`
 - `granoflow_milestone_list`
+- `granoflow_milestone_resolve`
 - `granoflow_milestone_create`
 - `granoflow_milestone_update`
+- `granoflow_milestone_delete`
 - `granoflow_review_day_show`
 - `granoflow_api_request`
 
@@ -107,6 +112,8 @@ running app exposes newer fields before this package has first-class schemas.
 
 Write tools default to dry-run behavior. Ask the tool to write only after you
 have reviewed the preview or the user has explicitly requested a write.
+Delete tools also require the current resource title before writing, and refuse
+linked tasks unless the caller explicitly accepts that impact.
 
 ## Setup Diagnostics
 
@@ -114,8 +121,9 @@ Use the setup tools when an agent or MCP client needs to connect to a local
 Granoflow app without hand-editing every setting first:
 
 - `granoflow_setup_status` reports config path, env/config precedence, token
-  presence, Local HTTP API health, version metadata, and local Granoflow process
-  evidence without printing secrets.
+  presence, MCP server version, Local HTTP API health, version metadata,
+  capability summary, and local Granoflow process evidence without printing
+  secrets.
 - `granoflow_setup_detect_local_api` probes a small bounded localhost port list
   only.
 - `granoflow_setup_write_config` previews or writes non-secret config. It

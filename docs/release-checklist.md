@@ -14,7 +14,7 @@ Use this checklist before publishing a new `@granoflow/mcp-server` version.
 
   ```bash
   node -p "require('./package.json').version"
-  npm run check
+  npm run release:preflight
   node dist/index.js --version
   ```
 
@@ -23,10 +23,10 @@ Use this checklist before publishing a new `@granoflow/mcp-server` version.
 Run the project gate:
 
 ```bash
-npm run check
+npm run release:preflight
 ```
 
-The gate must pass:
+The preflight includes `npm run check`, so these gates must pass:
 
 - Prettier
 - ESLint
@@ -38,7 +38,7 @@ The gate must pass:
 Inspect the packed files:
 
 ```bash
-npm pack --json
+npm run release:preflight
 ```
 
 Verify:

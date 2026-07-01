@@ -1,12 +1,64 @@
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+
+import { afterEach } from "vitest";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 
 import { registerGranoflowTools } from "../src/tools.js";
 
+const servers: Array<{ close: () => Promise<void> }> = [];
+
+async function startServer(
+  handler: (request: IncomingMessage, response: ServerResponse) => void,
+): Promise<number> {
+  const server = createServer(handler);
+  await new Promise<void>((resolve) => {
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  servers.push({
+    close: () =>
+      new Promise((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+      }),
+  });
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Expected TCP test server address.");
+  }
+  return address.port;
+}
+
 function parseToolText(result: unknown): unknown {
   const content = (result as { content: Array<{ text: string }> }).content;
   return JSON.parse(content[0].text);
 }
+
+function collectHandlers() {
+  const handlers = new Map<string, (args: Record<string, unknown>) => Promise<unknown>>();
+
+  registerGranoflowTools({
+    tool: (
+      name: string,
+      _description: string,
+      _schema: Record<string, z.ZodTypeAny>,
+      handler: (args: Record<string, unknown>) => Promise<unknown>,
+    ) => {
+      handlers.set(name, handler);
+    },
+  });
+
+  return handlers;
+}
+
+afterEach(async () => {
+  delete process.env.GRANOFLOW_API_BASE_URL;
+  while (servers.length > 0) {
+    const server = servers.pop();
+    if (server) {
+      await server.close();
+    }
+  }
+});
 
 describe("MCP tool registration", () => {
   it("registers setup tools on the MCP server surface", () => {
@@ -34,29 +86,24 @@ describe("MCP tool registration", () => {
         "granoflow_task_create_structured",
         "granoflow_task_update",
         "granoflow_task_update_structured",
+        "granoflow_task_finish",
+        "granoflow_task_resolve",
+        "granoflow_project_resolve",
         "granoflow_project_create",
         "granoflow_project_update",
+        "granoflow_project_delete",
         "granoflow_milestone_list",
+        "granoflow_milestone_resolve",
         "granoflow_milestone_create",
         "granoflow_milestone_update",
+        "granoflow_milestone_delete",
         "granoflow_api_request",
       ]),
     );
   });
 
   it("previews structured task creation through the Local HTTP API", async () => {
-    const handlers = new Map<string, (args: Record<string, unknown>) => Promise<unknown>>();
-
-    registerGranoflowTools({
-      tool: (
-        name: string,
-        _description: string,
-        _schema: Record<string, z.ZodTypeAny>,
-        handler: (args: Record<string, unknown>) => Promise<unknown>,
-      ) => {
-        handlers.set(name, handler);
-      },
-    });
+    const handlers = collectHandlers();
 
     const result = await handlers.get("granoflow_task_create_structured")?.({
       title: "Ship MCP v0",
@@ -79,18 +126,7 @@ describe("MCP tool registration", () => {
   });
 
   it("previews milestone creation through the Local HTTP API", async () => {
-    const handlers = new Map<string, (args: Record<string, unknown>) => Promise<unknown>>();
-
-    registerGranoflowTools({
-      tool: (
-        name: string,
-        _description: string,
-        _schema: Record<string, z.ZodTypeAny>,
-        handler: (args: Record<string, unknown>) => Promise<unknown>,
-      ) => {
-        handlers.set(name, handler);
-      },
-    });
+    const handlers = collectHandlers();
 
     const result = await handlers.get("granoflow_milestone_create")?.({
       projectId: "project-1",
@@ -105,6 +141,110 @@ describe("MCP tool registration", () => {
         path: "/v1/milestones",
         body: {
           projectId: "project-1",
+        },
+      },
+    });
+  });
+
+  it("previews finishing a task as a multi-step dry-run", async () => {
+    const handlers = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_finish")?.({
+      taskId: "task-1",
+      taskReview: "Done with evidence.",
+      endedAt: "2026-07-02T10:15:00.000",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        previewMode: "local_request_sequence_only",
+        steps: expect.arrayContaining([
+          expect.objectContaining({ method: "PATCH", path: "/v1/tasks/task-1" }),
+          expect.objectContaining({ method: "POST", path: "/v1/tasks/task-1/complete" }),
+          expect.objectContaining({ method: "GET", path: "/v1/tasks" }),
+        ]),
+      },
+    });
+  });
+
+  it("resolves task candidates without writing data", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      expect(request.method).toBe("GET");
+      expect(request.url).toBe("/v1/tasks");
+      response.end(
+        JSON.stringify({
+          ok: true,
+          data: {
+            items: [
+              { id: "task-1", title: "Ship MCP", status: "pending", projectId: "project-1" },
+              { id: "task-2", title: "Ship docs", status: "done", projectId: "project-1" },
+            ],
+          },
+        }),
+      );
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const handlers = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_resolve")?.({
+      query: "Ship",
+      matchMode: "contains",
+      projectId: "project-1",
+      includeDone: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "resolved",
+      data: {
+        entityType: "task",
+        count: 1,
+        matches: [expect.objectContaining({ id: "task-1", title: "Ship MCP" })],
+      },
+    });
+  });
+
+  it("previews safe project deletion and reports linked tasks", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/projects") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: { items: [{ id: "project-1", title: "Granoflow MCP", status: "pending" }] },
+          }),
+        );
+        return;
+      }
+      if (request.url === "/v1/tasks") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: { items: [{ id: "task-1", title: "Linked", projectId: "project-1" }] },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const handlers = collectHandlers();
+
+    const result = await handlers.get("granoflow_project_delete")?.({
+      projectId: "project-1",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        path: "/v1/projects/project-1",
+        impact: {
+          resource: { id: "project-1", title: "Granoflow MCP" },
+          linkedTaskCount: 1,
         },
       },
     });
