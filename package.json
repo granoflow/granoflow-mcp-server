@@ -1,6 +1,6 @@
 {
   "name": "@granoflow/mcp-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for Granoflow: exposes the Local HTTP API as tools for AI agents, IDEs, and automation.",
   "license": "MIT",
   "type": "module",
@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsc -p tsconfig.json",
+    "build": "npm run clean && tsc -p tsconfig.json && chmod +x dist/index.js",
     "dev": "tsx src/index.ts",
     "lint": "eslint .",
     "format": "prettier --check .",
