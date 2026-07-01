@@ -12,6 +12,11 @@ import {
 const jsonInputSchema = z
   .record(z.string(), z.unknown())
   .describe("JSON object sent to the Granoflow Local HTTP API.");
+const resourceStatusSchema = z.string().min(1).optional();
+
+function compactRecord(record: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
+}
 
 function textResult(text: string) {
   return {
@@ -98,12 +103,14 @@ export function registerGranoflowTools(server: {
     "granoflow_setup_open_app",
     "Preview or open the installed Granoflow app after user approval. Defaults to dry-run.",
     {
+      appPath: z.string().min(1).optional(),
       appName: z.string().min(1).optional(),
       dryRun: z.boolean().default(true),
     },
-    async ({ appName, dryRun }) =>
+    async ({ appName, appPath, dryRun }) =>
       jsonTextResult(
         await openGranoflowApp({
+          appPath: typeof appPath === "string" ? appPath : undefined,
           appName: typeof appName === "string" ? appName : undefined,
           dryRun: dryRun !== false,
         }),
@@ -193,6 +200,37 @@ export function registerGranoflowTools(server: {
   );
 
   server.tool(
+    "granoflow_task_create_structured",
+    "Create a Granoflow task with common structured fields. Defaults to dry-run.",
+    {
+      title: z.string().min(1),
+      description: z.string().optional(),
+      dueAt: z.string().optional(),
+      projectId: z.string().min(1).optional(),
+      milestoneId: z.string().min(1).optional(),
+      status: resourceStatusSchema,
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ title, description, dueAt, projectId, milestoneId, status, dryRun }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/tasks",
+        body: compactRecord({
+          title,
+          description,
+          dueAt,
+          projectId,
+          milestoneId,
+          status,
+        }),
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  server.tool(
     "granoflow_task_update",
     "Update a Granoflow task through the Local HTTP API.",
     {
@@ -208,6 +246,38 @@ export function registerGranoflowTools(server: {
         method: "PATCH",
         path: `/v1/tasks/${String(taskId)}`,
         body: input,
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  server.tool(
+    "granoflow_task_update_structured",
+    "Update a Granoflow task with common structured fields. Defaults to dry-run.",
+    {
+      taskId: z.string().min(1).describe("Granoflow task id."),
+      title: z.string().min(1).optional(),
+      description: z.string().optional(),
+      dueAt: z.string().optional(),
+      projectId: z.string().min(1).optional(),
+      milestoneId: z.string().min(1).optional(),
+      status: resourceStatusSchema,
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ taskId, title, description, dueAt, projectId, milestoneId, status, dryRun }) =>
+      apiTool({
+        method: "PATCH",
+        path: `/v1/tasks/${String(taskId)}`,
+        body: compactRecord({
+          title,
+          description,
+          dueAt,
+          projectId,
+          milestoneId,
+          status,
+        }),
         dryRun: dryRun !== false,
       }),
   );
@@ -234,6 +304,124 @@ export function registerGranoflowTools(server: {
 
   server.tool("granoflow_project_list", "List Granoflow projects.", {}, async () =>
     apiTool({ path: "/v1/projects" }),
+  );
+
+  server.tool(
+    "granoflow_project_create",
+    "Create a Granoflow project with common structured fields. Defaults to dry-run.",
+    {
+      title: z.string().min(1),
+      description: z.string().optional(),
+      domainTag: z.string().min(1).optional(),
+      status: resourceStatusSchema,
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ title, description, domainTag, status, dryRun }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/projects",
+        body: compactRecord({
+          title,
+          description,
+          domainTag,
+          status,
+        }),
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  server.tool(
+    "granoflow_project_update",
+    "Update a Granoflow project with common structured fields. Defaults to dry-run.",
+    {
+      projectId: z.string().min(1).describe("Granoflow project id."),
+      title: z.string().min(1).optional(),
+      description: z.string().optional(),
+      domainTag: z.string().min(1).optional(),
+      status: resourceStatusSchema,
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ projectId, title, description, domainTag, status, dryRun }) =>
+      apiTool({
+        method: "PATCH",
+        path: `/v1/projects/${String(projectId)}`,
+        body: compactRecord({
+          title,
+          description,
+          domainTag,
+          status,
+        }),
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  server.tool("granoflow_milestone_list", "List Granoflow milestones.", {}, async () =>
+    apiTool({ path: "/v1/milestones" }),
+  );
+
+  server.tool(
+    "granoflow_milestone_create",
+    "Create a Granoflow milestone with common structured fields. Defaults to dry-run.",
+    {
+      projectId: z.string().min(1).describe("Granoflow project id."),
+      title: z.string().min(1),
+      description: z.string().optional(),
+      dueAt: z.string().optional(),
+      status: resourceStatusSchema,
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ projectId, title, description, dueAt, status, dryRun }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/milestones",
+        body: compactRecord({
+          projectId,
+          title,
+          description,
+          dueAt,
+          status,
+        }),
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  server.tool(
+    "granoflow_milestone_update",
+    "Update a Granoflow milestone with common structured fields. Defaults to dry-run.",
+    {
+      milestoneId: z.string().min(1).describe("Granoflow milestone id."),
+      projectId: z.string().min(1).optional(),
+      title: z.string().min(1).optional(),
+      description: z.string().optional(),
+      dueAt: z.string().optional(),
+      status: resourceStatusSchema,
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ milestoneId, projectId, title, description, dueAt, status, dryRun }) =>
+      apiTool({
+        method: "PATCH",
+        path: `/v1/milestones/${String(milestoneId)}`,
+        body: compactRecord({
+          projectId,
+          title,
+          description,
+          dueAt,
+          status,
+        }),
+        dryRun: dryRun !== false,
+      }),
   );
 
   server.tool(

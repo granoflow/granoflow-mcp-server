@@ -32,6 +32,7 @@ export interface LocalApiDetectionInput {
 }
 
 export interface OpenAppInput {
+  appPath?: string;
   appName?: string;
   dryRun?: boolean;
 }
@@ -140,12 +141,19 @@ async function checkGranoflowProcess(
     };
   }
   try {
-    const result = await runCommandImpl("pgrep", ["-ifl", "Granoflow"]);
-    const count = result.exitCode === 0 ? result.stdout.split("\n").filter(Boolean).length : 0;
+    const result = await runCommandImpl("pgrep", ["-ifl", "granoflow"]);
+    const matches =
+      result.exitCode === 0
+        ? result.stdout
+            .split("\n")
+            .filter(Boolean)
+            .filter((line) => !line.toLowerCase().includes("granoflow-mcp-server"))
+        : [];
     return {
       checked: true,
-      running: count > 0,
-      count,
+      running: matches.length > 0,
+      count: matches.length,
+      matches: matches.map((line) => line.trim()),
     };
   } catch (error) {
     return {
@@ -163,9 +171,15 @@ export async function getSetupStatus(options: SetupOptions = {}) {
   const health = await requestGranoflowApi({ path: "/v1/health" }, env);
   const version = await requestGranoflowApi({ path: "/v1/version" }, env);
   const warnings: Array<Record<string, unknown>> = [];
+  const appProcess = isLocalApiBaseUrl(runtime.apiBaseUrl)
+    ? await checkGranoflowProcess(runCommandImpl)
+    : {
+        checked: false,
+        running: null,
+        reason: "Process check is only run for local API base URLs.",
+      };
 
   if (!health.ok && isLocalApiBaseUrl(runtime.apiBaseUrl)) {
-    const appProcess = await checkGranoflowProcess(runCommandImpl);
     if (appProcess.running === false) {
       warnings.push({
         code: "granoflow_app_not_running",
@@ -229,6 +243,7 @@ export async function getSetupStatus(options: SetupOptions = {}) {
     },
     health,
     version,
+    appProcess,
     warnings,
     nextActions: health.ok
       ? ["Granoflow Local HTTP API is reachable."]
@@ -328,14 +343,21 @@ export async function openGranoflowApp(input: OpenAppInput = {}, options: SetupO
   }
 
   const command = "open";
-  const args = ["-a", appName];
+  const attempts = [
+    ...(input.appPath ? [{ kind: "path", args: [input.appPath] }] : []),
+    { kind: "path", args: ["/Applications/granoflow.app"] },
+    { kind: "path", args: ["/Applications/Granoflow.app"] },
+    { kind: "appName", args: ["-a", appName] },
+    { kind: "appName", args: ["-a", "granoflow"] },
+  ];
   if (dryRun) {
     return {
       ok: true,
       dryRun,
       appName,
+      appPath: input.appPath ?? null,
       command,
-      args,
+      attempts,
       nextActions: [
         "Ask the user to confirm opening Granoflow.",
         "Call this tool again with dryRun=false only after the user approves.",
@@ -343,19 +365,38 @@ export async function openGranoflowApp(input: OpenAppInput = {}, options: SetupO
     };
   }
 
-  const result = await runCommandImpl(command, args);
+  const results = [];
+  for (const attempt of attempts) {
+    const result = await runCommandImpl(command, attempt.args);
+    results.push({
+      kind: attempt.kind,
+      args: attempt.args,
+      exitCode: result.exitCode,
+      stderr: result.stderr.trim() ? "[present]" : "[empty]",
+    });
+    if (result.exitCode === 0) {
+      return {
+        ok: true,
+        dryRun,
+        appName,
+        appPath: input.appPath ?? null,
+        command,
+        attempts: results,
+        nextActions: [
+          "Wait briefly for Granoflow to start, then call granoflow_setup_status again.",
+        ],
+      };
+    }
+  }
+
   return {
-    ok: result.exitCode === 0,
+    ok: false,
     dryRun,
     appName,
+    appPath: input.appPath ?? null,
     command,
-    args,
-    exitCode: result.exitCode,
-    stderr: result.stderr.trim() ? "[present]" : "[empty]",
-    nextActions:
-      result.exitCode === 0
-        ? ["Wait briefly for Granoflow to start, then call granoflow_setup_status again."]
-        : ["Open Granoflow manually, then call granoflow_setup_status again."],
+    attempts: results,
+    nextActions: ["Open Granoflow manually, then call granoflow_setup_status again."],
   };
 }
 

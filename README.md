@@ -82,11 +82,22 @@ Initial tools:
 - `granoflow_task_validate`
 - `granoflow_task_import`
 - `granoflow_task_create`
+- `granoflow_task_create_structured`
 - `granoflow_task_update`
+- `granoflow_task_update_structured`
 - `granoflow_task_complete`
 - `granoflow_project_list`
+- `granoflow_project_create`
+- `granoflow_project_update`
+- `granoflow_milestone_list`
+- `granoflow_milestone_create`
+- `granoflow_milestone_update`
 - `granoflow_review_day_show`
 - `granoflow_api_request`
+
+Prefer the structured task, project, and milestone tools for common resource
+operations. The JSON payload tools remain available as escape hatches when the
+running app exposes newer fields before this package has first-class schemas.
 
 Write tools default to dry-run behavior. Ask the tool to write only after you
 have reviewed the preview or the user has explicitly requested a write.
@@ -97,8 +108,8 @@ Use the setup tools when an agent or MCP client needs to connect to a local
 Granoflow app without hand-editing every setting first:
 
 - `granoflow_setup_status` reports config path, env/config precedence, token
-  presence, Local HTTP API health, and version metadata without printing
-  secrets.
+  presence, Local HTTP API health, version metadata, and local Granoflow process
+  evidence without printing secrets.
 - `granoflow_setup_detect_local_api` probes a small bounded localhost port list
   only.
 - `granoflow_setup_write_config` previews or writes non-secret config. It
@@ -106,7 +117,8 @@ Granoflow app without hand-editing every setting first:
 - `granoflow_setup_open_config` creates and optionally opens the config file for
   manual editing.
 - `granoflow_setup_open_app` previews or opens the installed Granoflow app after
-  user approval. It defaults to dry-run.
+  user approval. On macOS it tries the formal `/Applications/granoflow.app`
+  path before app-name fallbacks. It defaults to dry-run.
 
 When setup status sees a configured localhost API URL that is unreachable, it
 checks whether a local Granoflow process appears to be running. If not, it
