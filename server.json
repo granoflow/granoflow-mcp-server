@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.granoflow/mcp-server",
+  "title": "Granoflow",
+  "description": "Extract experience from work and life, turning it into your own capability.",
+  "repository": {
+    "url": "https://github.com/granoflow/granoflow-mcp-server",
+    "source": "github"
+  },
+  "version": "0.1.6",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@granoflow/mcp-server",
+      "version": "0.1.6",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

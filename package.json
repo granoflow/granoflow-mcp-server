@@ -1,6 +1,7 @@
 {
   "name": "@granoflow/mcp-server",
-  "version": "0.1.5",
+  "version": "0.1.6",
+  "mcpName": "com.granoflow/mcp-server",
   "description": "MCP server for Granoflow: exposes the Local HTTP API as tools for AI agents, IDEs, and automation.",
   "license": "MIT",
   "type": "module",
