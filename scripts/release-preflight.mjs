@@ -79,6 +79,14 @@ if (!skipPack) {
     record(binFile?.mode === 493, "dist/index.js is executable in npm package");
     record(fileNames.has("docs/user-install-demo.md"), "package contains user install guide");
     record(fileNames.has("docs/release-checklist.md"), "package contains release checklist");
+    record(
+      fileNames.has("skills/granoflow-agent-workflow/SKILL.md"),
+      "package contains Granoflow agent workflow skill",
+    );
+    record(
+      fileNames.has("skills/granoflow-agent-workflow/agents/openai.yaml"),
+      "package contains Granoflow agent workflow agents metadata",
+    );
     record(!fileNames.has("dist/cli.js"), "package does not contain obsolete dist/cli.js");
   } catch (error) {
     record(false, "npm pack --dry-run --json failed", error instanceof Error ? error.message : "");
@@ -95,6 +103,7 @@ const scanTargets = [
   "src/setup.ts",
   "src/api.ts",
   "docs/user-install-demo.md",
+  "skills/granoflow-agent-workflow/SKILL.md",
 ];
 const existingScanTargets = scanTargets.filter((target) => existsSync(target));
 const obsoleteCliHits = [];
@@ -110,6 +119,36 @@ for (const target of existingScanTargets) {
 }
 record(obsoleteCliHits.length === 0, "release docs/runtime files have no obsolete CLI references");
 record(secretHits.length === 0, "release docs/runtime files have no likely secret literals");
+
+const workflowSkillPath = "skills/granoflow-agent-workflow/SKILL.md";
+const workflowSkillAgentsPath = "skills/granoflow-agent-workflow/agents/openai.yaml";
+if (existsSync(workflowSkillPath)) {
+  const skillText = readFileSync(workflowSkillPath, "utf8");
+  record(
+    /^---\nname: granoflow-agent-workflow\n/m.test(skillText) &&
+      /^description: .+/m.test(skillText),
+    "Granoflow agent workflow skill has required frontmatter",
+  );
+  record(
+    /## Trigger Conditions/.test(skillText) &&
+      /## Connection First/.test(skillText) &&
+      /## Completing Tasks/.test(skillText) &&
+      /## User Dissatisfaction/.test(skillText) &&
+      /Success criteria:/.test(skillText),
+    "Granoflow agent workflow skill carries triggers, workflow branches, and success criteria",
+  );
+  record(
+    /wrapper skill/.test(skillText) &&
+      /Polite disagreement receives the same care as angry feedback/.test(skillText),
+    "Granoflow agent workflow skill covers wrapper-skill feedback guidance",
+  );
+} else {
+  record(false, "Granoflow agent workflow skill exists");
+}
+record(
+  existsSync(workflowSkillAgentsPath),
+  "Granoflow agent workflow skill has agents/openai.yaml metadata",
+);
 
 if (failures.length > 0) {
   console.error(`\nRelease preflight failed: ${failures.length} issue(s).`);

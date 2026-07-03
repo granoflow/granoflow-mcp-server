@@ -1,5 +1,16 @@
 # Granoflow MCP Server
 
+Granoflow is an app for planning and reviewing work tasks. It helps extract
+knowledge and experience worth remembering from completed work, turn those
+insights into review cards, and make them available for quick retrieval or
+spaced review at reasonable intervals.
+
+Granoflow's local features are free to use forever. If privacy is your concern,
+do not subscribe: without membership, your data never leaves your device or gets
+uploaded to the cloud.
+
+Learn more at [granoflow.com](https://granoflow.com).
+
 MCP server for Granoflow: exposes the Granoflow Local HTTP API as tools for AI
 agents, IDEs, and automation.
 
@@ -47,6 +58,10 @@ For a user-facing setup walkthrough, see
 
 For maintainers, see
 [Granoflow MCP Release Checklist](docs/release-checklist.md).
+
+Agents can also reuse the bundled
+[Granoflow Agent Workflow skill](skills/granoflow-agent-workflow/SKILL.md) for
+task completion, review-card drafting, and user-feedback handling conventions.
 
 ## Release Branch Policy
 
@@ -122,6 +137,15 @@ Write tools default to dry-run behavior. Ask the tool to write only after you
 have reviewed the preview or the user has explicitly requested a write.
 Delete tools also require the current resource title before writing, and refuse
 linked tasks unless the caller explicitly accepts that impact.
+
+When a user asks to complete, finish, close, mark done, wrap up, or otherwise
+end a task, prefer `granoflow_task_finish` over the low-level
+`granoflow_task_complete` endpoint. Before writing, infer `startedAt` and
+`endedAt` from the current agent conversation when evidence is available. Write
+`taskReview` only when there is a meaningful decision, lesson, failure mode, or
+reusable process detail; leave it empty when it would only say what happened.
+Create one `reviewCardDrafts` item per durable knowledge point worth long-term
+memory, and omit cards when there is nothing worth remembering.
 
 ## Setup Diagnostics
 

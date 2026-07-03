@@ -6,3 +6,4 @@ docs-temp/
 .DS_Store
 npm-debug.log*
 .npm_recovery_codes.txt
+.local-ai/

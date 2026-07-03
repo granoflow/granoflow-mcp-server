@@ -78,6 +78,7 @@ describe("MCP tool registration", () => {
     expect(names).toEqual(
       expect.arrayContaining([
         "granoflow_setup_status",
+        "granoflow_agent_workflow_skill",
         "granoflow_setup_detect_local_api",
         "granoflow_setup_write_config",
         "granoflow_setup_open_config",
@@ -100,6 +101,22 @@ describe("MCP tool registration", () => {
         "granoflow_api_request",
       ]),
     );
+  });
+
+  it("exposes the bundled public Granoflow workflow skill", async () => {
+    const handlers = collectHandlers();
+
+    const result = await handlers.get("granoflow_agent_workflow_skill")?.({});
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      code: "ok",
+      data: {
+        path: "skills/granoflow-agent-workflow/SKILL.md",
+        skill: expect.stringContaining("User Dissatisfaction"),
+      },
+    });
+    expect(JSON.stringify(parseToolText(result))).toContain("wrapper skill");
   });
 
   it("previews structured task creation through the Local HTTP API", async () => {
@@ -151,7 +168,19 @@ describe("MCP tool registration", () => {
 
     const result = await handlers.get("granoflow_task_finish")?.({
       taskId: "task-1",
+      projectId: "project-1",
+      milestoneId: "milestone-1",
+      summary: "Finished with durable learning.",
+      startedAt: "2026-07-02T09:00:00.000",
       taskReview: "Done with evidence.",
+      reviewCardDrafts: [
+        {
+          clientCardId: "card-1",
+          cardType: "basic_qa",
+          front: "What should be remembered?",
+          back: "The durable lesson.",
+        },
+      ],
       endedAt: "2026-07-02T10:15:00.000",
       dryRun: true,
     });
@@ -163,8 +192,57 @@ describe("MCP tool registration", () => {
         steps: expect.arrayContaining([
           expect.objectContaining({ method: "PATCH", path: "/v1/tasks/task-1" }),
           expect.objectContaining({ method: "POST", path: "/v1/tasks/task-1/complete" }),
+          expect.objectContaining({
+            method: "POST",
+            path: "/v1/ai-agent/tasks/import",
+            body: expect.objectContaining({
+              "agent-id": "granoflow",
+              "tool-id": "single_task_ai",
+              data: expect.objectContaining({
+                task_id: "task-1",
+                project_id: "project-1",
+                milestone_id: "milestone-1",
+                task_review_update: {
+                  mode: "replace",
+                  content: "Done with evidence.",
+                },
+                review_card_drafts: [
+                  expect.objectContaining({
+                    client_card_id: "card-1",
+                    card_type: "basic_qa",
+                  }),
+                ],
+              }),
+            }),
+          }),
           expect.objectContaining({ method: "GET", path: "/v1/tasks" }),
         ]),
+        finishGuidance: expect.arrayContaining([
+          expect.stringContaining("startedAt and endedAt"),
+          expect.stringContaining("Only pass taskReview"),
+          expect.stringContaining("one reviewCardDraft"),
+        ]),
+      },
+    });
+  });
+
+  it("requires project and milestone ids before importing review data", async () => {
+    const handlers = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_finish")?.({
+      taskId: "task-1",
+      taskReview: "Worth keeping.",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "review_import_context_required",
+      data: {
+        requiredInput: {
+          projectId: "Granoflow project id",
+          milestoneId: "Granoflow milestone id",
+        },
       },
     });
   });

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { z } from "zod";
 
 import { requestGranoflowApi, type ApiRequestOptions } from "./api.js";
@@ -14,6 +16,21 @@ const jsonInputSchema = z
   .describe("JSON object sent to the Granoflow Local HTTP API.");
 const resourceStatusSchema = z.string().min(1).optional();
 const resolveMatchModeSchema = z.enum(["exact", "contains"]).default("exact");
+const reviewCardDraftSchema = z.object({
+  clientCardId: z
+    .string()
+    .min(1)
+    .describe("Stable caller-generated id for this draft, unique within the finish request."),
+  cardType: z.enum(["basic_qa", "reverse_qa", "keyword_cloze"]).default("basic_qa"),
+  front: z.string().min(1).describe("Front of the review card."),
+  back: z.string().min(1).describe("Back of the review card."),
+  sourceSummary: z
+    .string()
+    .optional()
+    .describe("Short source note tying this card to the completed task."),
+});
+
+type ReviewCardDraft = z.infer<typeof reviewCardDraftSchema>;
 
 type ResourceKind = "project" | "milestone" | "task";
 
@@ -25,6 +42,11 @@ type GranoflowRecord = {
   milestoneId?: unknown;
   [key: string]: unknown;
 };
+
+const AGENT_WORKFLOW_SKILL_URL = new URL(
+  "../skills/granoflow-agent-workflow/SKILL.md",
+  import.meta.url,
+);
 
 function compactRecord(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
@@ -38,6 +60,10 @@ function textResult(text: string) {
 
 function jsonTextResult(value: unknown) {
   return textResult(JSON.stringify(value, null, 2));
+}
+
+function readAgentWorkflowSkill(): string {
+  return readFileSync(AGENT_WORKFLOW_SKILL_URL, "utf8");
 }
 
 async function apiTool(options: ApiRequestOptions) {
@@ -251,15 +277,75 @@ async function safeDeleteResource(
 
 async function finishTask(input: {
   taskId: string;
+  projectId?: string;
+  milestoneId?: string;
+  summary?: string;
+  startedAt?: string;
   taskReview?: string;
+  reviewCardDrafts?: ReviewCardDraft[];
   endedAt?: string;
   confirmComplete?: boolean;
   dryRun?: boolean;
 }) {
   const updateBody = compactRecord({
-    taskReview: input.taskReview,
+    startedAt: input.startedAt,
     endedAt: input.endedAt,
   });
+  const normalizedCardDrafts = input.reviewCardDrafts?.map((draft) =>
+    compactRecord({
+      client_card_id: draft.clientCardId,
+      card_type: draft.cardType,
+      front: draft.front,
+      back: draft.back,
+      source_summary: draft.sourceSummary,
+    }),
+  );
+  const hasReviewImport =
+    typeof input.taskReview === "string" ||
+    (normalizedCardDrafts !== undefined && normalizedCardDrafts.length > 0);
+  if (
+    hasReviewImport &&
+    (typeof input.projectId !== "string" ||
+      input.projectId.length === 0 ||
+      typeof input.milestoneId !== "string" ||
+      input.milestoneId.length === 0)
+  ) {
+    const runtime = await requestGranoflowApi({ path: "/v1/health", dryRun: true });
+    return {
+      ok: false,
+      code: "review_import_context_required",
+      data: {
+        requiredInput: { projectId: "Granoflow project id", milestoneId: "Granoflow milestone id" },
+      },
+      error: {
+        message:
+          "projectId and milestoneId are required when writing taskReview or reviewCardDrafts.",
+      },
+      runtime: runtime.runtime,
+    };
+  }
+  const reviewImportBody = hasReviewImport
+    ? {
+        "agent-id": "granoflow",
+        "tool-id": "single_task_ai",
+        ver: "2.0",
+        status: "success",
+        data: compactRecord({
+          task_id: input.taskId,
+          project_id: input.projectId,
+          milestone_id: input.milestoneId,
+          summary: input.summary ?? "Task completed.",
+          task_review_update:
+            typeof input.taskReview === "string"
+              ? {
+                  mode: "replace",
+                  content: input.taskReview,
+                }
+              : undefined,
+          review_card_drafts: normalizedCardDrafts,
+        }),
+      }
+    : undefined;
   const steps = [
     ...(Object.keys(updateBody).length > 0
       ? [{ method: "PATCH", path: `/v1/tasks/${input.taskId}`, body: updateBody }]
@@ -269,6 +355,15 @@ async function finishTask(input: {
       path: `/v1/tasks/${input.taskId}/complete`,
       body: compactRecord({ endedAt: input.endedAt }),
     },
+    ...(reviewImportBody
+      ? [
+          {
+            method: "POST",
+            path: "/v1/ai-agent/tasks/import",
+            body: reviewImportBody,
+          },
+        ]
+      : []),
     { method: "GET", path: "/v1/tasks", verify: "status=done and endedAt present when available" },
   ];
 
@@ -284,6 +379,11 @@ async function finishTask(input: {
       data: {
         steps,
         previewMode: "local_request_sequence_only",
+        finishGuidance: [
+          "Before writing, infer startedAt and endedAt from the current agent conversation when evidence is available.",
+          "Only pass taskReview when there is durable learning or a meaningful decision; omit it for a plain activity log.",
+          "Create one reviewCardDraft per long-lived knowledge point worth remembering.",
+        ],
       },
     };
   }
@@ -325,6 +425,18 @@ async function finishTask(input: {
     return completeResult;
   }
 
+  if (reviewImportBody) {
+    const importResult = await requestGranoflowApi({
+      method: "POST",
+      path: "/v1/ai-agent/tasks/import",
+      body: reviewImportBody,
+    });
+    applied.push({ step: "import_task_review_and_cards", result: importResult });
+    if (!importResult.ok) {
+      return importResult;
+    }
+  }
+
   const readback = await requestGranoflowApi({ path: "/v1/tasks" });
   const task = extractItems(readback).find((item) => item.id === input.taskId);
   const verified = task?.status === "done";
@@ -349,6 +461,21 @@ export function registerGranoflowTools(server: {
     handler: (args: Record<string, unknown>) => Promise<ReturnType<typeof textResult>>,
   ) => void;
 }) {
+  server.tool(
+    "granoflow_agent_workflow_skill",
+    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for task reviews or review cards, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Do not call it for unrelated venting or unrelated disagreement.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-agent-workflow/SKILL.md",
+          skill: readAgentWorkflowSkill(),
+        },
+      }),
+  );
+
   server.tool(
     "granoflow_setup_status",
     "Inspect Granoflow MCP config and Local HTTP API health without printing secrets.",
@@ -593,7 +720,7 @@ export function registerGranoflowTools(server: {
 
   server.tool(
     "granoflow_task_complete",
-    "Complete a Granoflow task.",
+    "Low-level compatibility endpoint to complete a Granoflow task. Prefer granoflow_task_finish for any user-facing completion request so startedAt, endedAt, review, and review cards can be captured.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       input: jsonInputSchema.optional(),
@@ -613,22 +740,76 @@ export function registerGranoflowTools(server: {
 
   server.tool(
     "granoflow_task_finish",
-    "Write a task review, complete a Granoflow task, and read back status=done verification.",
+    "Finish a Granoflow task from the current agent conversation: infer startedAt and endedAt, write only meaningful review content, create one review card per durable knowledge point, complete the task, and verify status=done.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
-      taskReview: z.string().optional(),
-      endedAt: z.string().optional(),
+      projectId: z
+        .string()
+        .min(1)
+        .optional()
+        .describe("Required when taskReview or reviewCardDrafts are provided."),
+      milestoneId: z
+        .string()
+        .min(1)
+        .optional()
+        .describe("Required when taskReview or reviewCardDrafts are provided."),
+      summary: z
+        .string()
+        .optional()
+        .describe("Short import summary for the completion, review, and card write."),
+      startedAt: z
+        .string()
+        .optional()
+        .describe(
+          "Task start time inferred from the current agent conversation, preferably ISO-like.",
+        ),
+      taskReview: z
+        .string()
+        .optional()
+        .describe(
+          "Meaningful task review only. Omit this when the content would be a mere activity log.",
+        ),
+      reviewCardDrafts: z
+        .array(reviewCardDraftSchema)
+        .optional()
+        .describe(
+          "One card per durable knowledge point worth long-term memory; omit when there is nothing worth remembering.",
+        ),
+      endedAt: z
+        .string()
+        .optional()
+        .describe(
+          "Task end time inferred from the current agent conversation, preferably ISO-like.",
+        ),
       confirmComplete: z.boolean().default(false).describe("Must be true when dryRun=false."),
       dryRun: z
         .boolean()
         .default(true)
-        .describe("When true, previews the update/complete/readback sequence."),
+        .describe("When true, previews the update/complete/import/readback sequence."),
     },
-    async ({ taskId, taskReview, endedAt, confirmComplete, dryRun }) =>
+    async ({
+      taskId,
+      projectId,
+      milestoneId,
+      summary,
+      startedAt,
+      taskReview,
+      reviewCardDrafts,
+      endedAt,
+      confirmComplete,
+      dryRun,
+    }) =>
       jsonTextResult(
         await finishTask({
           taskId: String(taskId),
+          projectId: typeof projectId === "string" ? projectId : undefined,
+          milestoneId: typeof milestoneId === "string" ? milestoneId : undefined,
+          summary: typeof summary === "string" ? summary : undefined,
+          startedAt: typeof startedAt === "string" ? startedAt : undefined,
           taskReview: typeof taskReview === "string" ? taskReview : undefined,
+          reviewCardDrafts: Array.isArray(reviewCardDrafts)
+            ? (reviewCardDrafts as ReviewCardDraft[])
+            : undefined,
           endedAt: typeof endedAt === "string" ? endedAt : undefined,
           confirmComplete: confirmComplete === true,
           dryRun: dryRun !== false,

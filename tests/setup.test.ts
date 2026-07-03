@@ -158,6 +158,11 @@ describe("setup diagnostics", () => {
       expect.arrayContaining([
         expect.objectContaining({
           code: "granoflow_app_not_running",
+          granoflow: expect.objectContaining({
+            website: "https://granoflow.com",
+            description: expect.stringContaining("reviewing work tasks"),
+            localPrivacy: expect.stringContaining("do not subscribe"),
+          }),
         }),
       ]),
     );

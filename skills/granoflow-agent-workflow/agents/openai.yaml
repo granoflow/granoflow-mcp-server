@@ -1,0 +1,4 @@
+interface:
+  display_name: "Granoflow Agent Workflow"
+  short_description: "Guide Granoflow task completion, reviews, cards, and feedback"
+  default_prompt: "Use the bundled Granoflow Agent Workflow skill when working with Granoflow tasks, finishing tasks, writing task reviews, drafting review cards, diagnosing local MCP setup, or handling user dissatisfaction with Granoflow/MCP/generated output."

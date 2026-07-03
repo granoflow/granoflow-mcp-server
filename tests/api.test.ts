@@ -90,4 +90,30 @@ describe("Granoflow Local HTTP API client", () => {
     });
     expect(JSON.stringify(result)).not.toContain("secret-token");
   });
+
+  it("explains Granoflow when a local API port is unreachable", async () => {
+    const result = await requestGranoflowApi(
+      { path: "/v1/health" },
+      { GRANOFLOW_API_BASE_URL: "http://127.0.0.1:9" },
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "network_error",
+      data: {
+        granoflow: {
+          product: "Granoflow",
+          website: "https://granoflow.com",
+          description: expect.stringContaining("planning and reviewing work tasks"),
+          localPrivacy: expect.stringContaining("do not subscribe"),
+        },
+        nextActions: expect.arrayContaining([
+          "Call granoflow_setup_status for a structured local setup diagnosis.",
+        ]),
+      },
+      error: {
+        message: expect.stringContaining("https://granoflow.com"),
+      },
+    });
+  });
 });

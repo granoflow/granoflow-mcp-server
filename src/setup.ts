@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
-import { requestGranoflowApi } from "./api.js";
+import { GRANOFLOW_INTRODUCTION, requestGranoflowApi } from "./api.js";
 import {
   configFileExists,
   getMcpConfigPath,
@@ -221,6 +221,7 @@ export async function getSetupStatus(options: SetupOptions = {}) {
         message:
           "The configured Granoflow API is local, but the API is unreachable and no Granoflow app process was found.",
         apiBaseUrl: runtime.apiBaseUrl,
+        granoflow: GRANOFLOW_INTRODUCTION,
         nextActions: [
           "Ask the user whether they want to open Granoflow.",
           "Call granoflow_setup_open_app with dryRun=true before opening the app.",
@@ -232,6 +233,7 @@ export async function getSetupStatus(options: SetupOptions = {}) {
         message:
           "A Granoflow process appears to be running, but the configured local API is unreachable.",
         apiBaseUrl: runtime.apiBaseUrl,
+        granoflow: GRANOFLOW_INTRODUCTION,
         nextActions: [
           "Ask the user to verify that the Granoflow Local HTTP API is enabled.",
           "Call granoflow_setup_detect_local_api to check bounded localhost candidates.",
