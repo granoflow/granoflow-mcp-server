@@ -61,7 +61,8 @@ For maintainers, see
 
 Agents can also reuse the bundled
 [Granoflow Agent Workflow skill](skills/granoflow-agent-workflow/SKILL.md) for
-task completion, review-card drafting, and user-feedback handling conventions.
+task completion, daily review drafting, mood and efficiency note suggestions,
+review-card drafting, and user-feedback handling conventions.
 
 ## Release Branch Policy
 
@@ -146,6 +147,32 @@ end a task, prefer `granoflow_task_finish` over the low-level
 reusable process detail; leave it empty when it would only say what happened.
 Create one `reviewCardDrafts` item per durable knowledge point worth long-term
 memory, and omit cards when there is nothing worth remembering.
+
+After 16:30 local time, tool results may include a `dailyReviewSuggestion`. It is
+stored in the non-secret MCP config and appears at most once per local day. When
+present, agents should mention it only after the user's current request has been
+handled.
+
+On Friday, Saturday, Sunday, and Monday, that suggestion may also include a
+`weeklyReviewSuggestion`. The MCP server checks the Granoflow weekly review log:
+Friday through Sunday check the current week, and Monday checks the previous
+week. If the weekly log has no written content or values yet, agents should add
+the weekly-review nudge after the daily-review nudge.
+
+On the last day of a month, the same suggestion may include a
+`monthlyReviewSuggestion` for the current month. On the first day of a month, it
+checks the previous month. If the monthly review has no visible written content
+or values yet, agents should add the monthly-review nudge too.
+
+The bundled Granoflow Agent Workflow skill also defines how agents should help
+with reviews. For daily reviews, agents may draft concise mood and efficiency
+notes from the day's tasks, timing, reviews, project context, flow time,
+interruptions, and user-confirmed signals, but save scores and notes only after
+user confirmation. Saved `moodNote` and `efficiencyNote` content should be short
+personal review notes, not scoring explanations, interaction text, or fixed
+templates. For weekly reviews, agents should focus on patterns across the week
+and user-confirmed value scores/notes. For monthly reviews, agents may draft and
+write confirmed `content`, while monthly aggregate metrics remain read-only.
 
 ## Setup Diagnostics
 

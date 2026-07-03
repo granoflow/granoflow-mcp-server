@@ -1,6 +1,9 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { mkdtemp } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 
-import { afterEach } from "vitest";
+import { afterEach, beforeEach } from "vitest";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 
@@ -52,12 +55,18 @@ function collectHandlers() {
 
 afterEach(async () => {
   delete process.env.GRANOFLOW_API_BASE_URL;
+  delete process.env.GRANOFLOW_MCP_CONFIG_PATH;
   while (servers.length > 0) {
     const server = servers.pop();
     if (server) {
       await server.close();
     }
   }
+});
+
+beforeEach(async () => {
+  const dir = await mkdtemp(join(tmpdir(), `granoflow-mcp-tools-${process.pid}-`));
+  process.env.GRANOFLOW_MCP_CONFIG_PATH = join(dir, "config.json");
 });
 
 describe("MCP tool registration", () => {

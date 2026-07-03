@@ -2,6 +2,11 @@ import { readFileSync } from "node:fs";
 
 import { z } from "zod";
 
+import {
+  maybeCreateDailyReviewSuggestion,
+  type MonthlyReviewSuggestion,
+  type WeeklyReviewSuggestion,
+} from "./config.js";
 import { requestGranoflowApi, type ApiRequestOptions } from "./api.js";
 import {
   detectLocalApi,
@@ -64,6 +69,109 @@ function jsonTextResult(value: unknown) {
 
 function readAgentWorkflowSkill(): string {
   return readFileSync(AGENT_WORKFLOW_SKILL_URL, "utf8");
+}
+
+function periodicReviewHasLog(value: unknown): boolean {
+  if (!isObject(value)) {
+    return false;
+  }
+  const data = isObject(value.data) ? value.data : null;
+  const entity = data && isObject(data.entity) ? data.entity : null;
+  if (!entity) {
+    return false;
+  }
+  const content = typeof entity.content === "string" ? entity.content.trim() : "";
+  const values = Array.isArray(entity.values) ? entity.values : [];
+  return content.length > 0 || values.length > 0;
+}
+
+async function checkPeriodicReviewSuggestion(
+  kind: "week" | "month",
+  date: string,
+  target: WeeklyReviewSuggestion["target"] | MonthlyReviewSuggestion["target"],
+  env: NodeJS.ProcessEnv,
+): Promise<WeeklyReviewSuggestion | MonthlyReviewSuggestion | null> {
+  const result = await requestGranoflowApi({ path: `/v1/reviews/${kind}s/${date}` }, env);
+  if (!result.ok || periodicReviewHasLog(result)) {
+    return null;
+  }
+  const data = isObject(result.data) ? result.data : null;
+  const entity = data && isObject(data.entity) ? data.entity : {};
+  if (kind === "month") {
+    return {
+      code: "monthly_review_suggested",
+      year: typeof entity.year === "number" ? entity.year : undefined,
+      month: typeof entity.month === "number" ? entity.month : undefined,
+      target: target as MonthlyReviewSuggestion["target"],
+      checkedDate: date,
+      message:
+        target === "last_month"
+          ? "Last month's Granoflow monthly review does not appear to have a written log yet. Consider writing it after today's review."
+          : "This month's Granoflow monthly review does not appear to have a written log yet. Consider writing it after today's review.",
+      messageZh:
+        target === "last_month"
+          ? "上月的 Granoflow 本月回顾看起来还没有写日志。完成今日回顾后，建议顺手补一下上月月回顾。"
+          : "本月的 Granoflow 本月回顾看起来还没有写日志。完成今日回顾后，建议顺手写一下本月月回顾。",
+      nextActions: [
+        "Open the Granoflow monthly review.",
+        "Summarize the month's completed work, lessons, and unresolved risks.",
+        "Extract durable lessons and decide which ones deserve review cards.",
+      ],
+    };
+  }
+  return {
+    code: "weekly_review_suggested",
+    weekStart: typeof entity.weekStart === "string" ? entity.weekStart : undefined,
+    weekEnd: typeof entity.weekEnd === "string" ? entity.weekEnd : undefined,
+    target: target as WeeklyReviewSuggestion["target"],
+    checkedDate: date,
+    message:
+      target === "last_week"
+        ? "Last week's Granoflow weekly review does not appear to have a written log yet. Consider writing it after today's review."
+        : "This week's Granoflow weekly review does not appear to have a written log yet. Consider writing it after today's review.",
+    messageZh:
+      target === "last_week"
+        ? "上周的 Granoflow 每周回顾看起来还没有写日志。完成今日回顾后，建议顺手补一下上周周回顾。"
+        : "本周的 Granoflow 每周回顾看起来还没有写日志。完成今日回顾后，建议顺手写一下本周周回顾。",
+    nextActions: [
+      "Open the Granoflow weekly review.",
+      "Summarize the week's completed work and unresolved risks.",
+      "Extract durable lessons and decide which ones deserve review cards.",
+    ],
+  };
+}
+
+async function withDailyReviewSuggestion(
+  toolName: string,
+  result: ReturnType<typeof textResult>,
+): Promise<ReturnType<typeof textResult>> {
+  if (toolName === "granoflow_review_day_show") {
+    return result;
+  }
+  const content = result.content[0];
+  if (content.type !== "text") {
+    return result;
+  }
+  try {
+    const parsed: unknown = JSON.parse(content.text);
+    if (!isObject(parsed)) {
+      return result;
+    }
+    const suggestion = await maybeCreateDailyReviewSuggestion(
+      process.env,
+      new Date(),
+      checkPeriodicReviewSuggestion,
+    );
+    if (!suggestion) {
+      return result;
+    }
+    return jsonTextResult({
+      ...parsed,
+      dailyReviewSuggestion: suggestion,
+    });
+  } catch {
+    return result;
+  }
 }
 
 async function apiTool(options: ApiRequestOptions) {
@@ -461,9 +569,20 @@ export function registerGranoflowTools(server: {
     handler: (args: Record<string, unknown>) => Promise<ReturnType<typeof textResult>>,
   ) => void;
 }) {
-  server.tool(
+  const registerTool = (
+    name: string,
+    description: string,
+    schema: Record<string, z.ZodTypeAny>,
+    handler: (args: Record<string, unknown>) => Promise<ReturnType<typeof textResult>>,
+  ) => {
+    server.tool(name, description, schema, async (args) =>
+      withDailyReviewSuggestion(name, await handler(args)),
+    );
+  };
+
+  registerTool(
     "granoflow_agent_workflow_skill",
-    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for task reviews or review cards, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Do not call it for unrelated venting or unrelated disagreement.",
+    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, or review cards, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Do not call it for unrelated venting or unrelated disagreement.",
     {},
     async () =>
       jsonTextResult({
@@ -476,14 +595,14 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_setup_status",
     "Inspect Granoflow MCP config and Local HTTP API health without printing secrets.",
     {},
     async () => jsonTextResult(await getSetupStatus()),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_setup_detect_local_api",
     "Probe a bounded localhost port list for a running Granoflow Local HTTP API.",
     {
@@ -503,7 +622,7 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_setup_write_config",
     "Preview or write MCP-owned non-secret Granoflow connection config. Defaults to dry-run.",
     {
@@ -519,7 +638,7 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_setup_open_config",
     "Create and optionally open the MCP-owned non-secret Granoflow config file.",
     {
@@ -535,7 +654,7 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_setup_open_app",
     "Preview or open the installed Granoflow app after user approval. Defaults to dry-run.",
     {
@@ -553,43 +672,46 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_health",
     "Check whether the Granoflow Local HTTP API is reachable.",
     {},
     async () => apiTool({ path: "/v1/health" }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_version",
     "Show Granoflow app and Local HTTP API version metadata.",
     {},
     async () => apiTool({ path: "/v1/version" }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_capabilities",
     "List capabilities exposed by the running Granoflow app.",
     {},
     async () => apiTool({ path: "/v1/capabilities" }),
   );
 
-  server.tool("granoflow_ai_agent_tools", "List Granoflow AI-agent tool contracts.", {}, async () =>
-    apiTool({ path: "/v1/ai-agent/tools" }),
+  registerTool(
+    "granoflow_ai_agent_tools",
+    "List Granoflow AI-agent tool contracts.",
+    {},
+    async () => apiTool({ path: "/v1/ai-agent/tools" }),
   );
 
-  server.tool("granoflow_task_list", "List tasks from Granoflow.", {}, async () =>
+  registerTool("granoflow_task_list", "List tasks from Granoflow.", {}, async () =>
     apiTool({ path: "/v1/tasks" }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_export",
     "Export a task context for an AI agent.",
     { taskId: z.string().min(1).describe("Granoflow task id.") },
     async ({ taskId }) => apiTool({ path: `/v1/ai-agent/tasks/${String(taskId)}/export` }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_validate",
     "Validate an AI-agent task result before importing it into Granoflow.",
     { input: jsonInputSchema },
@@ -597,7 +719,7 @@ export function registerGranoflowTools(server: {
       apiTool({ method: "POST", path: "/v1/ai-agent/tasks/validate", body: input }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_import",
     "Import an AI-agent task result into Granoflow. Use dryRun first unless the user explicitly asks to write.",
     {
@@ -616,7 +738,7 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_create",
     "Create a Granoflow task from a JSON payload.",
     {
@@ -635,7 +757,7 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_create_structured",
     "Create a Granoflow task with common structured fields. Defaults to dry-run.",
     {
@@ -666,7 +788,7 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_update",
     "Update a Granoflow task through the Local HTTP API.",
     {
@@ -686,7 +808,7 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_update_structured",
     "Update a Granoflow task with common structured fields. Defaults to dry-run.",
     {
@@ -718,7 +840,7 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_complete",
     "Low-level compatibility endpoint to complete a Granoflow task. Prefer granoflow_task_finish for any user-facing completion request so startedAt, endedAt, review, and review cards can be captured.",
     {
@@ -738,7 +860,7 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_finish",
     "Finish a Granoflow task from the current agent conversation: infer startedAt and endedAt, write only meaningful review content, create one review card per durable knowledge point, complete the task, and verify status=done.",
     {
@@ -817,7 +939,7 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_task_resolve",
     "Resolve Granoflow task candidates by title without creating or updating data.",
     {
@@ -839,11 +961,11 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool("granoflow_project_list", "List Granoflow projects.", {}, async () =>
+  registerTool("granoflow_project_list", "List Granoflow projects.", {}, async () =>
     apiTool({ path: "/v1/projects" }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_project_resolve",
     "Resolve Granoflow project candidates by title without creating or updating data.",
     {
@@ -861,7 +983,7 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_project_create",
     "Create a Granoflow project with common structured fields. Defaults to dry-run.",
     {
@@ -888,7 +1010,7 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_project_update",
     "Update a Granoflow project with common structured fields. Defaults to dry-run.",
     {
@@ -916,7 +1038,7 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_project_delete",
     "Safely delete a Granoflow project. Defaults to dry-run and requires confirmTitle for writes.",
     {
@@ -936,11 +1058,11 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool("granoflow_milestone_list", "List Granoflow milestones.", {}, async () =>
+  registerTool("granoflow_milestone_list", "List Granoflow milestones.", {}, async () =>
     apiTool({ path: "/v1/milestones" }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_milestone_resolve",
     "Resolve Granoflow milestone candidates by title without creating or updating data.",
     {
@@ -960,7 +1082,7 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_milestone_create",
     "Create a Granoflow milestone with common structured fields. Defaults to dry-run.",
     {
@@ -989,7 +1111,7 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_milestone_delete",
     "Safely delete a Granoflow milestone. Defaults to dry-run and requires confirmTitle for writes.",
     {
@@ -1009,7 +1131,7 @@ export function registerGranoflowTools(server: {
       ),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_milestone_update",
     "Update a Granoflow milestone with common structured fields. Defaults to dry-run.",
     {
@@ -1039,14 +1161,14 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_review_day_show",
     "Show a Granoflow daily review by date.",
     { date: z.string().describe("Date in YYYY-MM-DD format.") },
     async ({ date }) => apiTool({ path: `/v1/reviews/days/${String(date)}` }),
   );
 
-  server.tool(
+  registerTool(
     "granoflow_api_request",
     "Run an allowed Granoflow Local HTTP API request. Prefer dedicated tools when available.",
     {

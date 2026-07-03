@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 
 export interface GranoflowMcpConfig {
   apiBaseUrl?: string;
+  dailyReviewSuggestionLastShownDate?: string;
   [key: string]: unknown;
 }
 
@@ -41,6 +42,39 @@ export interface WriteConfigResult {
   nextActions: string[];
 }
 
+export interface DailyReviewSuggestion {
+  code: "daily_review_suggested";
+  date: string;
+  thresholdLocalTime: "16:30";
+  message: string;
+  messageZh: string;
+  nextActions: string[];
+  weeklyReviewSuggestion?: WeeklyReviewSuggestion;
+  monthlyReviewSuggestion?: MonthlyReviewSuggestion;
+}
+
+export interface WeeklyReviewSuggestion {
+  code: "weekly_review_suggested";
+  weekStart?: string;
+  weekEnd?: string;
+  target: "this_week" | "last_week";
+  checkedDate: string;
+  message: string;
+  messageZh: string;
+  nextActions: string[];
+}
+
+export interface MonthlyReviewSuggestion {
+  code: "monthly_review_suggested";
+  year?: number;
+  month?: number;
+  target: "this_month" | "last_month";
+  checkedDate: string;
+  message: string;
+  messageZh: string;
+  nextActions: string[];
+}
+
 const SECRET_KEY_PATTERN = /(token|secret|password|credential|key)/i;
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:56789";
 
@@ -57,6 +91,28 @@ function validateApiBaseUrl(apiBaseUrl: string): void {
 
 function stableJson(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
+}
+
+function localDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isAfterDailyReviewThreshold(date: Date): boolean {
+  const minutes = date.getHours() * 60 + date.getMinutes();
+  return minutes >= 16 * 60 + 30;
+}
+
+async function writeConfigFile(configPath: string, config: GranoflowMcpConfig): Promise<void> {
+  await mkdir(dirname(configPath), { recursive: true });
+  const tempPath = `${configPath}.tmp-${process.pid}`;
+  await writeFile(tempPath, stableJson(config), { mode: 0o600 });
+  await rename(tempPath, configPath);
+  const handle = await open(configPath, "r+");
+  await handle.chmod(0o600);
+  await handle.close();
 }
 
 export function getMcpConfigPath(env: NodeJS.ProcessEnv = process.env): string {
@@ -168,19 +224,13 @@ export async function writeMcpConfig(
     };
   }
 
-  await mkdir(dirname(readResult.configPath), { recursive: true });
   let backupPath: string | null = null;
   if (readResult.exists) {
     backupPath = `${readResult.configPath}.bak-${new Date().toISOString().replace(/[:.]/g, "-")}`;
     await writeFile(backupPath, stableJson(readResult.config), { mode: 0o600 });
   }
 
-  const tempPath = `${readResult.configPath}.tmp-${process.pid}`;
-  await writeFile(tempPath, stableJson(nextConfig), { mode: 0o600 });
-  await rename(tempPath, readResult.configPath);
-  const handle = await open(readResult.configPath, "r+");
-  await handle.chmod(0o600);
-  await handle.close();
+  await writeConfigFile(readResult.configPath, nextConfig);
 
   return {
     configPath: readResult.configPath,
@@ -195,6 +245,128 @@ export async function writeMcpConfig(
       "Call granoflow_setup_status to verify the resolved configuration.",
     ],
   };
+}
+
+export async function maybeCreateDailyReviewSuggestion(
+  env: NodeJS.ProcessEnv = process.env,
+  now: Date = new Date(),
+  periodicReviewChecker?: (
+    kind: "week" | "month",
+    date: string,
+    target: WeeklyReviewSuggestion["target"] | MonthlyReviewSuggestion["target"],
+    env: NodeJS.ProcessEnv,
+  ) => Promise<WeeklyReviewSuggestion | MonthlyReviewSuggestion | null>,
+): Promise<DailyReviewSuggestion | null> {
+  if (!isAfterDailyReviewThreshold(now)) {
+    return null;
+  }
+
+  const today = localDateKey(now);
+  const readResult = await readMcpConfig(env);
+  if (readResult.error) {
+    return null;
+  }
+  if (readResult.config.dailyReviewSuggestionLastShownDate === today) {
+    return null;
+  }
+
+  await writeConfigFile(readResult.configPath, {
+    ...readResult.config,
+    dailyReviewSuggestionLastShownDate: today,
+  });
+
+  const weeklyReviewTarget = weeklyReviewTargetForDate(now);
+  let weeklyReviewSuggestion: WeeklyReviewSuggestion | null = null;
+  if (periodicReviewChecker && weeklyReviewTarget) {
+    try {
+      const checked = await periodicReviewChecker(
+        "week",
+        weeklyReviewCheckDate(now),
+        weeklyReviewTarget,
+        env,
+      );
+      weeklyReviewSuggestion = checked?.code === "weekly_review_suggested" ? checked : null;
+    } catch {
+      weeklyReviewSuggestion = null;
+    }
+  }
+  const monthlyReviewTarget = monthlyReviewTargetForDate(now);
+  let monthlyReviewSuggestion: MonthlyReviewSuggestion | null = null;
+  if (periodicReviewChecker && monthlyReviewTarget) {
+    try {
+      const checked = await periodicReviewChecker(
+        "month",
+        monthlyReviewCheckDate(now),
+        monthlyReviewTarget,
+        env,
+      );
+      monthlyReviewSuggestion = checked?.code === "monthly_review_suggested" ? checked : null;
+    } catch {
+      monthlyReviewSuggestion = null;
+    }
+  }
+
+  return {
+    code: "daily_review_suggested",
+    date: today,
+    thresholdLocalTime: "16:30",
+    message:
+      "It is after 16:30. After finishing the current request, consider doing today's Granoflow review: summarize completed work, lessons, and knowledge worth turning into review cards. This reminder appears at most once per day.",
+    messageZh:
+      "现在已经过了 16:30。完成当前需求后，建议你做一次 Granoflow 今日回顾：整理今天完成的工作、经验教训，以及值得做成复习卡片的知识点。这个提醒每天最多出现一次。",
+    nextActions: [
+      "Open today's Granoflow review.",
+      "Review completed tasks and extract durable lessons.",
+      "Turn worthwhile lessons into review cards.",
+    ],
+    weeklyReviewSuggestion: weeklyReviewSuggestion ?? undefined,
+    monthlyReviewSuggestion: monthlyReviewSuggestion ?? undefined,
+  };
+}
+
+export function weeklyReviewCheckDate(now: Date): string {
+  const day = now.getDay();
+  if (day === 1) {
+    const lastWeek = new Date(now);
+    lastWeek.setDate(now.getDate() - 2);
+    return localDateKey(lastWeek);
+  }
+  return localDateKey(now);
+}
+
+export function isWeeklyReviewSuggestionDay(now: Date): boolean {
+  return [0, 1, 5, 6].includes(now.getDay());
+}
+
+export function weeklyReviewTargetForDate(now: Date): WeeklyReviewSuggestion["target"] | null {
+  if (!isWeeklyReviewSuggestionDay(now)) {
+    return null;
+  }
+  return now.getDay() === 1 ? "last_week" : "this_week";
+}
+
+export function monthlyReviewCheckDate(now: Date): string {
+  const monthKey = (date: Date): string =>
+    `${date.getFullYear().toString().padStart(4, "0")}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+  if (now.getDate() === 1) {
+    const lastMonth = new Date(now);
+    lastMonth.setDate(0);
+    return monthKey(lastMonth);
+  }
+  return monthKey(now);
+}
+
+export function isLastDayOfMonth(now: Date): boolean {
+  const nextDay = new Date(now);
+  nextDay.setDate(now.getDate() + 1);
+  return nextDay.getDate() === 1;
+}
+
+export function monthlyReviewTargetForDate(now: Date): MonthlyReviewSuggestion["target"] | null {
+  if (now.getDate() === 1) {
+    return "last_month";
+  }
+  return isLastDayOfMonth(now) ? "this_month" : null;
 }
 
 export async function configFileExists(configPath: string): Promise<boolean> {
