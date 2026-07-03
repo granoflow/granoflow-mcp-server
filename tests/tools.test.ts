@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -53,6 +53,13 @@ function collectHandlers() {
   return handlers;
 }
 
+function localDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 afterEach(async () => {
   delete process.env.GRANOFLOW_API_BASE_URL;
   delete process.env.GRANOFLOW_MCP_CONFIG_PATH;
@@ -67,6 +74,10 @@ afterEach(async () => {
 beforeEach(async () => {
   const dir = await mkdtemp(join(tmpdir(), `granoflow-mcp-tools-${process.pid}-`));
   process.env.GRANOFLOW_MCP_CONFIG_PATH = join(dir, "config.json");
+  await writeFile(
+    process.env.GRANOFLOW_MCP_CONFIG_PATH,
+    `${JSON.stringify({ dailyReviewSuggestionLastShownDate: localDateKey(new Date()) }, null, 2)}\n`,
+  );
 });
 
 describe("MCP tool registration", () => {

@@ -3,16 +3,17 @@
   "name": "com.granoflow/mcp-server",
   "title": "Granoflow",
   "description": "Connect AI agents to Granoflow for tasks, reviews, and spaced-review memory cards.",
+  "websiteUrl": "https://github.com/granoflow/granoflow-mcp-server#readme",
   "repository": {
     "url": "https://github.com/granoflow/granoflow-mcp-server",
     "source": "github"
   },
-  "version": "0.1.9",
+  "version": "0.1.10",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@granoflow/mcp-server",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "transport": {
         "type": "stdio"
       }
