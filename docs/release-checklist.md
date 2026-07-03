@@ -158,4 +158,28 @@ Run one MCP stdio smoke against the published version:
 - call `granoflow_health`
 - call one dry-run write tool
 
+## 10. Directory Platform Closure
+
+After npm and the official MCP Registry are current, verify the directory
+platforms that users may discover from:
+
+- `Glama`: open or search the Granoflow listing and confirm the repository,
+  install command, description, and source-code metadata are still accurate. If
+  any of those changed, submit the listing update and wait for the review state
+  to prove the update was accepted or queued.
+- `mcp.so`: open or search the Granoflow listing and confirm the repository,
+  install command, server config, short description, and privacy positioning are
+  still accurate. If any of those changed, submit the listing update and record
+  the platform state before closing the release.
+- `mcpservers.org`: open or search the Granoflow listing and confirm the
+  repository, category, and short description are still accurate. If any of
+  those changed, submit the listing update and wait for the review state to
+  prove the update was accepted or queued.
+- `Awesome MCP Servers`: confirm the Granoflow row or pull request still points
+  to `https://github.com/granoflow/granoflow-mcp-server` and uses current
+  positioning. If the project name, repository, category, or run command changed,
+  open or update the pull request and wait for checks to pass.
+
+Use `docs/directory-listings.md` as the canonical copy for these platforms.
+
 Only then write release notes or mark the release task done.

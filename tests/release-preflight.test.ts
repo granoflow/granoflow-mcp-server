@@ -16,6 +16,9 @@ describe("release preflight script", () => {
     expect(stdout).toContain("[ok] package.json version matches src/metadata.ts");
     expect(stdout).toContain("[ok] npm run check skipped by flag");
     expect(stdout).toContain("[ok] npm pack dry-run skipped by flag");
+    expect(stdout).toContain(
+      "[ok] release checklist requires Glama, mcp.so, mcpservers.org, and Awesome MCP Servers closure",
+    );
     expect(stdout).toContain("Release preflight passed.");
     expect(stderr).toBe("");
   });

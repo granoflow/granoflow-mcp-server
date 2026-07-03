@@ -79,6 +79,7 @@ if (!skipPack) {
     record(binFile?.mode === 493, "dist/index.js is executable in npm package");
     record(fileNames.has("docs/user-install-demo.md"), "package contains user install guide");
     record(fileNames.has("docs/release-checklist.md"), "package contains release checklist");
+    record(fileNames.has("docs/directory-listings.md"), "package contains directory listing copy");
     record(
       fileNames.has("skills/granoflow-agent-workflow/SKILL.md"),
       "package contains Granoflow agent workflow skill",
@@ -103,6 +104,7 @@ const scanTargets = [
   "src/setup.ts",
   "src/api.ts",
   "docs/user-install-demo.md",
+  "docs/directory-listings.md",
   "skills/granoflow-agent-workflow/SKILL.md",
 ];
 const existingScanTargets = scanTargets.filter((target) => existsSync(target));
@@ -119,6 +121,17 @@ for (const target of existingScanTargets) {
 }
 record(obsoleteCliHits.length === 0, "release docs/runtime files have no obsolete CLI references");
 record(secretHits.length === 0, "release docs/runtime files have no likely secret literals");
+
+if (existsSync("docs/release-checklist.md")) {
+  const releaseChecklistText = readFileSync("docs/release-checklist.md", "utf8");
+  record(
+    /Glama/.test(releaseChecklistText) &&
+      /mcp\.so/.test(releaseChecklistText) &&
+      /mcpservers\.org/.test(releaseChecklistText) &&
+      /Awesome MCP Servers/.test(releaseChecklistText),
+    "release checklist requires Glama, mcp.so, mcpservers.org, and Awesome MCP Servers closure",
+  );
+}
 
 const workflowSkillPath = "skills/granoflow-agent-workflow/SKILL.md";
 const workflowSkillAgentsPath = "skills/granoflow-agent-workflow/agents/openai.yaml";
