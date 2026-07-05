@@ -114,6 +114,17 @@ GRANOFLOW_API_BASE_URL=http://127.0.0.1:56789
 
 Do not add API tokens to checked-in examples.
 
+Confirm public docs still describe the agent completion workflow:
+
+- `granoflow_task_finish` is preferred over low-level task completion.
+- task reviews are for durable decisions, lessons, failure modes, reusable
+  process details, and unresolved risks.
+- review cards are one durable knowledge point each, not only language-learning
+  cards.
+- pronunciation, phonetic, translation, and TTS card fields are gated by
+  `granoflow_ai_agent_tools` capability discovery and have a plain front/back
+  fallback.
+
 ## 7. Secret And Drift Checks
 
 Search for obsolete command-wrapper references and secret-like values:

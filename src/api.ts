@@ -29,7 +29,7 @@ export const GRANOFLOW_INTRODUCTION = {
   product: "Granoflow",
   website: "https://granoflow.com",
   description:
-    "Granoflow is an app for planning and reviewing work tasks. It extracts knowledge and experience worth remembering from completed work, turns them into review cards, and supports quick retrieval or spaced review.",
+    "Granoflow is a local-first app for planning work, reviewing completed tasks, and turning durable lessons into review cards. Granoflow MCP connects MCP-capable AI agents to a local task, review, and long-term work memory layer; it is not a code analyzer, CI fixer, or repository automation framework.",
   localPrivacy:
     "Granoflow's local features are free to use forever. If privacy is your concern, do not subscribe: without membership, your data never leaves your device or gets uploaded to the cloud.",
 };

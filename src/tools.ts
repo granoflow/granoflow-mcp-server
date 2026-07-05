@@ -21,6 +21,17 @@ const jsonInputSchema = z
   .describe("JSON object sent to the Granoflow Local HTTP API.");
 const resourceStatusSchema = z.string().min(1).optional();
 const resolveMatchModeSchema = z.enum(["exact", "contains"]).default("exact");
+const reviewCardDraftNoteFieldSchema = z.object({
+  key: z.string().min(1).describe("Stable note field key such as phonetic or pronunciation."),
+  label: z.string().min(1).describe("Human-readable note field label."),
+  type: z.enum(["text", "text_to_speech"]),
+  value: z.string().min(1),
+  ttsLanguageCode: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Optional BCP-47 language code for text_to_speech fields, such as en-US."),
+});
 const reviewCardDraftSchema = z.object({
   clientCardId: z
     .string()
@@ -33,6 +44,12 @@ const reviewCardDraftSchema = z.object({
     .string()
     .optional()
     .describe("Short source note tying this card to the completed task."),
+  noteFields: z
+    .array(reviewCardDraftNoteFieldSchema)
+    .optional()
+    .describe("Optional structured note fields. Check /v1/ai-agent/tools capability first."),
+  frontLayout: z.array(z.string().min(1)).optional(),
+  backLayout: z.array(z.string().min(1)).optional(),
 });
 
 type ReviewCardDraft = z.infer<typeof reviewCardDraftSchema>;
@@ -219,6 +236,59 @@ function compactResource(record: GranoflowRecord): Record<string, unknown> {
   });
 }
 
+function draftUsesEnhancedFields(draft: ReviewCardDraft): boolean {
+  return (
+    (draft.noteFields?.length ?? 0) > 0 ||
+    (draft.frontLayout?.length ?? 0) > 0 ||
+    (draft.backLayout?.length ?? 0) > 0
+  );
+}
+
+function normalizeReviewCardDraft(draft: ReviewCardDraft): Record<string, unknown> {
+  return compactRecord({
+    client_card_id: draft.clientCardId,
+    card_type: draft.cardType,
+    front: draft.front,
+    back: draft.back,
+    source_summary: draft.sourceSummary,
+    note_fields: draft.noteFields?.map((field) =>
+      compactRecord({
+        key: field.key,
+        label: field.label,
+        type: field.type,
+        value: field.value,
+        tts_language_code: field.ttsLanguageCode,
+      }),
+    ),
+    front_layout: draft.frontLayout,
+    back_layout: draft.backLayout,
+  });
+}
+
+function supportsReviewCardDraftNoteFields(payload: unknown): boolean {
+  const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
+  const data = isObject(root) && isObject(root.data) ? root.data : root;
+  const tools = isObject(data) && Array.isArray(data.tools) ? data.tools : [];
+  return tools.some((tool) => {
+    if (!isObject(tool) || tool.toolId !== "single_task_ai" || tool.enabled !== true) {
+      return false;
+    }
+    const capabilities = isObject(tool.capabilities) ? tool.capabilities : {};
+    const reviewCards = isObject(capabilities.reviewCardDraftNoteFields)
+      ? capabilities.reviewCardDraftNoteFields
+      : {};
+    return (
+      reviewCards.enabled === true &&
+      reviewCards.capability === "review_card_draft_note_fields_v1" &&
+      Array.isArray(reviewCards.fieldTypes) &&
+      reviewCards.fieldTypes.includes("text") &&
+      reviewCards.fieldTypes.includes("text_to_speech") &&
+      reviewCards.ttsLanguageCode === true &&
+      reviewCards.layoutFields === true
+    );
+  });
+}
+
 function titleMatches(title: unknown, query: string, matchMode: "exact" | "contains"): boolean {
   if (typeof title !== "string") {
     return false;
@@ -399,15 +469,8 @@ async function finishTask(input: {
     startedAt: input.startedAt,
     endedAt: input.endedAt,
   });
-  const normalizedCardDrafts = input.reviewCardDrafts?.map((draft) =>
-    compactRecord({
-      client_card_id: draft.clientCardId,
-      card_type: draft.cardType,
-      front: draft.front,
-      back: draft.back,
-      source_summary: draft.sourceSummary,
-    }),
-  );
+  const normalizedCardDrafts = input.reviewCardDrafts?.map(normalizeReviewCardDraft);
+  const hasEnhancedCardDrafts = input.reviewCardDrafts?.some(draftUsesEnhancedFields) ?? false;
   const hasReviewImport =
     typeof input.taskReview === "string" ||
     (normalizedCardDrafts !== undefined && normalizedCardDrafts.length > 0);
@@ -431,6 +494,24 @@ async function finishTask(input: {
       },
       runtime: runtime.runtime,
     };
+  }
+  if (hasEnhancedCardDrafts) {
+    const toolsResult = await requestGranoflowApi({ path: "/v1/ai-agent/tools" });
+    if (!toolsResult.ok || !supportsReviewCardDraftNoteFields(toolsResult)) {
+      return {
+        ok: false,
+        code: "review_card_draft_note_fields_unsupported",
+        data: {
+          unsupportedFields: ["noteFields", "frontLayout", "backLayout"],
+          fallback:
+            "Regenerate reviewCardDrafts without noteFields/frontLayout/backLayout. Keep phonetic, translation, and pronunciation hints directly in front/back so the card remains useful on older Granoflow apps.",
+        },
+        error: {
+          message: "The running Granoflow app does not advertise review_card_draft_note_fields_v1.",
+        },
+        runtime: toolsResult.runtime,
+      };
+    }
   }
   const reviewImportBody = hasReviewImport
     ? {
@@ -582,7 +663,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_agent_workflow_skill",
-    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, or review cards, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Do not call it for unrelated venting or unrelated disagreement.",
+    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Do not call it for unrelated venting or unrelated disagreement.",
     {},
     async () =>
       jsonTextResult({
@@ -695,7 +776,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_ai_agent_tools",
-    "List Granoflow AI-agent tool contracts.",
+    "List Granoflow AI-agent tool contracts from the running app. Use with granoflow_agent_workflow_skill for task, review, and memory-style questions.",
     {},
     async () => apiTool({ path: "/v1/ai-agent/tools" }),
   );
@@ -706,7 +787,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_export",
-    "Export a task context for an AI agent.",
+    "Export task details, completion review, project context, and reusable lessons for evidence-based task or memory retrieval.",
     { taskId: z.string().min(1).describe("Granoflow task id.") },
     async ({ taskId }) => apiTool({ path: `/v1/ai-agent/tasks/${String(taskId)}/export` }),
   );

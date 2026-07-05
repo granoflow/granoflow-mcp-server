@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { mkdtemp, writeFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -38,19 +39,21 @@ function parseToolText(result: unknown): unknown {
 
 function collectHandlers() {
   const handlers = new Map<string, (args: Record<string, unknown>) => Promise<unknown>>();
+  const descriptions = new Map<string, string>();
 
   registerGranoflowTools({
     tool: (
       name: string,
-      _description: string,
+      description: string,
       _schema: Record<string, z.ZodTypeAny>,
       handler: (args: Record<string, unknown>) => Promise<unknown>,
     ) => {
       handlers.set(name, handler);
+      descriptions.set(name, description);
     },
   });
 
-  return handlers;
+  return { descriptions, handlers };
 }
 
 function localDateKey(date: Date): string {
@@ -124,7 +127,7 @@ describe("MCP tool registration", () => {
   });
 
   it("exposes the bundled public Granoflow workflow skill", async () => {
-    const handlers = collectHandlers();
+    const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_agent_workflow_skill")?.({});
 
@@ -136,11 +139,38 @@ describe("MCP tool registration", () => {
         skill: expect.stringContaining("User Dissatisfaction"),
       },
     });
-    expect(JSON.stringify(parseToolText(result))).toContain("wrapper skill");
+    const serialized = JSON.stringify(parseToolText(result));
+    expect(serialized).toContain("wrapper skill");
+    expect(serialized).toContain("Long-Term Work Memory");
+    expect(serialized).toContain("long-term-work-memory.md");
+    expect(serialized).toContain("decision");
+    expect(serialized).toContain("similar");
+  });
+
+  it("documents the long-term work memory reference contract", () => {
+    const reference = readFileSync(
+      "skills/granoflow-agent-workflow/references/long-term-work-memory.md",
+      "utf8",
+    );
+
+    expect(reference).toContain("Memory Intent Detection");
+    expect(reference).toContain("Retrieval Order");
+    expect(reference).toContain("Bounded Retrieval");
+    expect(reference).toContain("Evidence Rules");
+    expect(reference).toContain("Missing Memory Handling");
+    expect(reference).toContain("Privacy And Local Content");
+  });
+
+  it("nudges agents toward memory guidance through tool descriptions", () => {
+    const { descriptions } = collectHandlers();
+
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("long-term work memory");
+    expect(descriptions.get("granoflow_task_export")).toContain("reusable lessons");
+    expect(descriptions.get("granoflow_ai_agent_tools")).toContain("memory-style questions");
   });
 
   it("previews structured task creation through the Local HTTP API", async () => {
-    const handlers = collectHandlers();
+    const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_create_structured")?.({
       title: "Ship MCP v0",
@@ -165,7 +195,7 @@ describe("MCP tool registration", () => {
   });
 
   it("previews structured task reminder updates through the Local HTTP API", async () => {
-    const handlers = collectHandlers();
+    const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_update_structured")?.({
       taskId: "task-1",
@@ -186,7 +216,7 @@ describe("MCP tool registration", () => {
   });
 
   it("previews milestone creation through the Local HTTP API", async () => {
-    const handlers = collectHandlers();
+    const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_milestone_create")?.({
       projectId: "project-1",
@@ -207,7 +237,7 @@ describe("MCP tool registration", () => {
   });
 
   it("previews finishing a task as a multi-step dry-run", async () => {
-    const handlers = collectHandlers();
+    const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_finish")?.({
       taskId: "task-1",
@@ -270,7 +300,7 @@ describe("MCP tool registration", () => {
   });
 
   it("requires project and milestone ids before importing review data", async () => {
-    const handlers = collectHandlers();
+    const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_finish")?.({
       taskId: "task-1",
@@ -288,6 +318,66 @@ describe("MCP tool registration", () => {
         },
       },
     });
+  });
+
+  it("fails fast when enhanced review card fields are not advertised by the app", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              tools: [{ toolId: "single_task_ai", enabled: true }],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 500;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_finish")?.({
+      taskId: "task-1",
+      projectId: "project-1",
+      milestoneId: "milestone-1",
+      taskReview: "Durable lesson.",
+      reviewCardDrafts: [
+        {
+          clientCardId: "card-1",
+          cardType: "basic_qa",
+          front: "What is idempotent?",
+          back: "A repeated operation has the same durable effect.",
+          noteFields: [
+            {
+              key: "pronunciation",
+              label: "Pronunciation",
+              type: "text_to_speech",
+              value: "idempotent",
+              ttsLanguageCode: "en-US",
+            },
+          ],
+          frontLayout: ["front", "pronunciation"],
+          backLayout: ["back"],
+        },
+      ],
+      confirmComplete: true,
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "review_card_draft_note_fields_unsupported",
+      data: {
+        unsupportedFields: ["noteFields", "frontLayout", "backLayout"],
+      },
+    });
+    expect(requestedUrls).toEqual(["/v1/ai-agent/tools"]);
   });
 
   it("resolves task candidates without writing data", async () => {
@@ -308,7 +398,7 @@ describe("MCP tool registration", () => {
       );
     });
     process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
-    const handlers = collectHandlers();
+    const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_resolve")?.({
       query: "Ship",
@@ -352,7 +442,7 @@ describe("MCP tool registration", () => {
       response.end(JSON.stringify({ ok: false }));
     });
     process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
-    const handlers = collectHandlers();
+    const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_project_delete")?.({
       projectId: "project-1",

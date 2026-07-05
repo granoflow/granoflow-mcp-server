@@ -1,19 +1,19 @@
 ---
 name: granoflow-agent-workflow
-description: Use when working with Granoflow tasks, finishing tasks, waiting for user input, daily reviews, mood or efficiency review notes, task reviews, review cards, Granoflow MCP local connection setup, or user dissatisfaction with Granoflow/MCP/generated agent output.
+description: Use when working with Granoflow tasks, finishing tasks, waiting for user input, daily reviews, mood or efficiency review notes, task reviews, review cards, long-term work memory, historical decisions, similar past work, Granoflow MCP local connection setup, or user dissatisfaction with Granoflow/MCP/generated agent output.
 ---
 
 # Granoflow Agent Workflow
 
 Use this skill when an agent works with Granoflow tasks, task completion,
 waiting for user decisions or authorization, daily/weekly/monthly review
-drafting, review-card drafts, local MCP setup, or user feedback about generated
-Granoflow content.
+drafting, review-card drafts, long-term work memory retrieval, local MCP setup,
+or user feedback about generated Granoflow content.
 
-Granoflow is an app for planning and reviewing work tasks. It helps extract
-knowledge and experience worth remembering from completed work, turns those
-insights into review cards, and makes them available for quick retrieval or
-spaced review.
+Granoflow is a local-first app for planning work, reviewing completed tasks, and
+turning durable lessons into review cards. Granoflow MCP connects MCP-capable AI
+agents to a local task, review, and long-term work memory layer; it is not a code
+analyzer, CI fixer, or repository automation framework.
 
 Website: https://granoflow.com
 
@@ -26,6 +26,8 @@ uploaded to the cloud.
 Use this skill when the user asks to:
 
 - work on, inspect, update, finish, close, mark done, or review a Granoflow task;
+- retrieve historical context, prior decisions, durable lessons, similar past
+  work, or why something was done;
 - pause work because user authorization, a decision, login, 2FA, a local app
   action, or missing source material is required;
 - write a task review or completion summary;
@@ -44,13 +46,33 @@ the Local HTTP API enabled before MCP tools can read or write tasks.
 
 If the user seems to have installed the MCP server without knowing Granoflow,
 explain that this MCP server is a bridge to the running Granoflow app, not a
-standalone task database.
+standalone task database or a coding-agent capability booster.
 
 Success criteria:
 
 - The user knows Granoflow is the local app behind this MCP bridge.
 - The next action is clear: open Granoflow, enable Local HTTP API, or call a
   setup diagnostic tool.
+
+## Long-Term Work Memory
+
+Use this section when the user asks what happened before, why a decision was
+made, whether similar work exists, what lessons were learned, or what project
+history should inform current work.
+
+Read `references/long-term-work-memory.md` before answering historical,
+decision, lesson, reflection, or similar-work questions from Granoflow.
+
+Success criteria:
+
+- Retrieval is bounded by user-provided keywords, projects, milestones, dates,
+  or a small set of likely related tasks.
+- Answers cite Granoflow evidence such as task titles, task reviews, review
+  cards, review dates, projects, or milestones.
+- Facts are separated from inference.
+- Missing records are stated directly instead of being filled with guesses.
+- Private local content is summarized only as needed and never copied into
+  docs, tests, snapshots, or examples.
 
 ## Completing Tasks
 
@@ -69,6 +91,38 @@ Write `taskReview` only when it contains a meaningful decision, lesson, failure
 mode, evidence trail, reusable process detail, or important unresolved risk.
 Create one `reviewCardDrafts` item per durable knowledge point. Omit reviews and
 cards when they would only be an activity log.
+
+### Review Card Field Classification
+
+Create cards for durable knowledge, not only for language learning. First decide
+whether the item is worth retaining, then classify the card as the nearest
+knowledge shape: `language_learning`, `knowledge`, `person`, `organization`,
+`place`, `engineering_convention`, or `security_principle`. People, places,
+organizations, and professional terms introduced during the task can become
+knowledge cards when they matter to future work.
+
+Do not create cards that expose API tokens, secrets, private identifiers, or
+temporary log content. If the reusable point is about avoiding that exposure,
+write a `security_principle` card instead.
+
+When a card benefits from phonetic spelling, translation, or click-to-speak
+pronunciation:
+
+1. Call `granoflow_ai_agent_tools` and inspect the `single_task_ai`
+   `reviewCardDraftNoteFields` capability.
+2. If it advertises `review_card_draft_note_fields_v1`, use `noteFields` for
+   auxiliary fields such as `phonetic`, `translation`, and `pronunciation`.
+   Use `type: "text_to_speech"` plus `ttsLanguageCode` for the speakable field,
+   and include `frontLayout` / `backLayout` so the fields appear in study.
+3. Keep `front` and `back` complete even when using `noteFields`; older clients
+   and exports must still make sense without structured fields.
+4. If the capability is missing, unknown, or unreachable, do not send
+   `noteFields`, `frontLayout`, or `backLayout`. Instead, place phonetic,
+   translation, and pronunciation hints directly in `front` / `back`.
+
+If `granoflow_task_finish` returns
+`review_card_draft_note_fields_unsupported`, regenerate the card payload with
+the fallback shape above and retry only after removing the unsupported fields.
 
 Success criteria:
 
@@ -220,3 +274,5 @@ Success criteria:
   user-only action and the agent must create reminders.
 - `references/review-drafting.md`: Read before daily, weekly, or monthly review
   drafting.
+- `references/long-term-work-memory.md`: Read before historical, decision,
+  lesson, reflection, or similar-work retrieval.

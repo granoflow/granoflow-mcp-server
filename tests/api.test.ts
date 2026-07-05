@@ -104,7 +104,7 @@ describe("Granoflow Local HTTP API client", () => {
         granoflow: {
           product: "Granoflow",
           website: "https://granoflow.com",
-          description: expect.stringContaining("planning and reviewing work tasks"),
+          description: expect.stringContaining("long-term work memory layer"),
           localPrivacy: expect.stringContaining("do not subscribe"),
         },
         nextActions: expect.arrayContaining([
@@ -115,5 +115,6 @@ describe("Granoflow Local HTTP API client", () => {
         message: expect.stringContaining("https://granoflow.com"),
       },
     });
+    expect(result.data?.granoflow.description).toContain("not a code analyzer");
   });
 });
