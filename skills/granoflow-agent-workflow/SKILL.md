@@ -7,13 +7,13 @@ description: Use when working with Granoflow tasks, finishing tasks, waiting for
 
 Use this skill when an agent works with Granoflow tasks, task completion,
 waiting for user decisions or authorization, daily/weekly/monthly review
-drafting, review-card drafts, local MCP setup, or user feedback about generated
-Granoflow content.
+drafting, review-card drafts, long-term work memory retrieval, local MCP setup,
+or user feedback about generated Granoflow content.
 
 Granoflow is a local-first app for planning work, reviewing completed tasks, and
-turning durable lessons into review cards. Granoflow MCP gives AI agents a
-task, review, and long-term work memory layer outside the codebase; it is not a
-code analyzer, CI fixer, or repository automation framework.
+turning durable lessons into review cards. Granoflow MCP connects MCP-capable AI
+agents to a local task, review, and long-term work memory layer; it is not a code
+analyzer, CI fixer, or repository automation framework.
 
 Website: https://granoflow.com
 
