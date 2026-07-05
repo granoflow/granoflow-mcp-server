@@ -15,15 +15,31 @@ directories.
 
 ## Short Description
 
-Connect AI agents to Granoflow for tasks, reviews, and spaced-review memory
-cards.
+Connect MCP-capable AI agents to a local task, review, and long-term work
+memory layer in Granoflow.
 
 ## Directory Description
 
-Granoflow helps people plan and review work tasks, capture lessons from
-completed work, and turn durable insights into review cards for spaced practice.
-This MCP server lets AI agents connect to the local Granoflow app through its
-Local HTTP API.
+Granoflow helps people plan work, review completed tasks, capture lessons, and
+turn durable insights into review cards for spaced practice. This MCP server
+lets AI agents connect to the local Granoflow app through its Local HTTP API, so
+agent work can be tracked, completed, reviewed, and remembered outside chat
+history.
+
+This server is not a code analyzer, CI fixer, or repository automation system.
+It is for the workflow around agent work: tasks, completion records, reviews,
+and reusable memory cards. It is useful with MCP-capable agents and IDEs such as
+Codex, Cursor, Claude Code, OpenCode, OpenClaw, and similar clients.
+
+Example questions:
+
+- "What did we decide last time about the release plan?"
+- "Find similar completed tasks about MCP publishing."
+- "Why did we reject the CLI-wrapper approach?"
+- "Summarize my recent lessons about Flutter desktop bugs."
+
+Current memory-style lookup is evidence-bound over existing Granoflow records.
+It does not claim semantic search across all historical discussion.
 
 ## Install Command
 
@@ -54,6 +70,8 @@ npx -y @granoflow/mcp-server
 - Show daily, weekly, and monthly review context.
 - Draft review-card-worthy lessons from completed work.
 - Diagnose local app and Local HTTP API connectivity.
+- Keep coding-agent sessions connected to task state and post-task learning
+  without reading repository contents itself.
 
 ## Privacy Boundary
 

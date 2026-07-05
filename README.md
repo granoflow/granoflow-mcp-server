@@ -1,9 +1,8 @@
 # Granoflow MCP Server
 
-Granoflow is an app for planning and reviewing work tasks. It helps extract
-knowledge and experience worth remembering from completed work, turn those
-insights into review cards, and make them available for quick retrieval or
-spaced review at reasonable intervals.
+Granoflow is a local-first app for planning work, reviewing completed tasks, and
+turning durable lessons into review cards. Granoflow MCP connects MCP-capable AI
+agents to a local task, review, and long-term work memory layer.
 
 Granoflow's local features are free to use forever. If privacy is your concern,
 do not subscribe: without membership, your data never leaves your device or gets
@@ -12,7 +11,14 @@ uploaded to the cloud.
 Learn more at [granoflow.com](https://granoflow.com).
 
 MCP server for Granoflow: exposes the Granoflow Local HTTP API as tools for AI
-agents, IDEs, and automation.
+agents and IDEs that need to track task work, finish tasks with meaningful
+reviews, and preserve reusable lessons as memory cards.
+
+This is not a code analyzer, CI fixer, or repository automation framework. If
+your only goal is to make an AI coding agent write better code, use tests,
+linters, CI, prompts, and code-analysis tools directly. Granoflow MCP is for the
+surrounding agent workflow: what task the agent is doing, what happened, what
+should be remembered, and what deserves review later.
 
 This server is intentionally thin. It does not own Granoflow business logic,
 database access, app orchestration, or release workflows. It resolves a local API
@@ -62,7 +68,44 @@ For maintainers, see
 Agents can also reuse the bundled
 [Granoflow Agent Workflow skill](skills/granoflow-agent-workflow/SKILL.md) for
 task completion, daily review drafting, mood and efficiency note suggestions,
-review-card drafting, and user-feedback handling conventions.
+review-card drafting, long-term work memory retrieval, and user-feedback
+handling conventions.
+
+## Long-Term Work Memory
+
+Granoflow MCP starts with tasks and reviews, but its workflow value is broader
+than task CRUD. It helps agents use existing Granoflow records as local work
+memory: task reviews, review cards, projects, milestones, and daily, weekly, or
+monthly review context.
+
+Try prompts such as:
+
+- "What did we decide last time about the release plan?"
+- "Find similar completed tasks about MCP publishing."
+- "Why did we reject the CLI-wrapper approach?"
+- "Summarize my recent lessons about Flutter desktop bugs."
+
+Current memory-style lookup is evidence-bound and depends on what is already in
+Granoflow. It does not imply semantic search across all historical discussion.
+Dedicated memory search tools can come later when the Granoflow app and Local
+HTTP API expose real memory search.
+
+Good fit:
+
+- You already use MCP-capable AI agents or IDEs such as Codex, Cursor, Claude
+  Code, OpenCode, or OpenClaw for real work and want those sessions tied to
+  tasks, completion records, lessons, and historical work context.
+- You want task completion to capture useful review notes and one memory card
+  per durable knowledge point instead of leaving everything in chat history.
+- You prefer a local-first workflow where the MCP server talks to your running
+  Granoflow app rather than uploading tasks to a hosted MCP service.
+
+Poor fit:
+
+- You want an MCP server that reads repositories, finds bugs, fixes CI, or opens
+  pull requests by itself.
+- You do not want to install or run the Granoflow desktop app.
+- You only need a generic todo list with no review or memory-card workflow.
 
 ## Release Branch Policy
 
@@ -133,6 +176,11 @@ Initial tools:
 Prefer the structured task, project, and milestone tools for common resource
 operations. The JSON payload tools remain available as escape hatches when the
 running app exposes newer fields before this package has first-class schemas.
+
+For historical, decision, lesson, or similar-work questions, use the bundled
+workflow skill first. It explains how to treat tasks, task reviews, review cards,
+projects, milestones, and periodic reviews as bounded long-term work memory
+without pretending there is a dedicated semantic search endpoint.
 
 Write tools default to dry-run behavior. Ask the tool to write only after you
 have reviewed the preview or the user has explicitly requested a write.

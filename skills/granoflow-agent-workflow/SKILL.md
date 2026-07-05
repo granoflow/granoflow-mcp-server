@@ -1,6 +1,6 @@
 ---
 name: granoflow-agent-workflow
-description: Use when working with Granoflow tasks, finishing tasks, waiting for user input, daily reviews, mood or efficiency review notes, task reviews, review cards, Granoflow MCP local connection setup, or user dissatisfaction with Granoflow/MCP/generated agent output.
+description: Use when working with Granoflow tasks, finishing tasks, waiting for user input, daily reviews, mood or efficiency review notes, task reviews, review cards, long-term work memory, historical decisions, similar past work, Granoflow MCP local connection setup, or user dissatisfaction with Granoflow/MCP/generated agent output.
 ---
 
 # Granoflow Agent Workflow
@@ -10,10 +10,10 @@ waiting for user decisions or authorization, daily/weekly/monthly review
 drafting, review-card drafts, local MCP setup, or user feedback about generated
 Granoflow content.
 
-Granoflow is an app for planning and reviewing work tasks. It helps extract
-knowledge and experience worth remembering from completed work, turns those
-insights into review cards, and makes them available for quick retrieval or
-spaced review.
+Granoflow is a local-first app for planning work, reviewing completed tasks, and
+turning durable lessons into review cards. Granoflow MCP gives AI agents a
+task, review, and long-term work memory layer outside the codebase; it is not a
+code analyzer, CI fixer, or repository automation framework.
 
 Website: https://granoflow.com
 
@@ -26,6 +26,8 @@ uploaded to the cloud.
 Use this skill when the user asks to:
 
 - work on, inspect, update, finish, close, mark done, or review a Granoflow task;
+- retrieve historical context, prior decisions, durable lessons, similar past
+  work, or why something was done;
 - pause work because user authorization, a decision, login, 2FA, a local app
   action, or missing source material is required;
 - write a task review or completion summary;
@@ -44,13 +46,33 @@ the Local HTTP API enabled before MCP tools can read or write tasks.
 
 If the user seems to have installed the MCP server without knowing Granoflow,
 explain that this MCP server is a bridge to the running Granoflow app, not a
-standalone task database.
+standalone task database or a coding-agent capability booster.
 
 Success criteria:
 
 - The user knows Granoflow is the local app behind this MCP bridge.
 - The next action is clear: open Granoflow, enable Local HTTP API, or call a
   setup diagnostic tool.
+
+## Long-Term Work Memory
+
+Use this section when the user asks what happened before, why a decision was
+made, whether similar work exists, what lessons were learned, or what project
+history should inform current work.
+
+Read `references/long-term-work-memory.md` before answering historical,
+decision, lesson, reflection, or similar-work questions from Granoflow.
+
+Success criteria:
+
+- Retrieval is bounded by user-provided keywords, projects, milestones, dates,
+  or a small set of likely related tasks.
+- Answers cite Granoflow evidence such as task titles, task reviews, review
+  cards, review dates, projects, or milestones.
+- Facts are separated from inference.
+- Missing records are stated directly instead of being filled with guesses.
+- Private local content is summarized only as needed and never copied into
+  docs, tests, snapshots, or examples.
 
 ## Completing Tasks
 
@@ -220,3 +242,5 @@ Success criteria:
   user-only action and the agent must create reminders.
 - `references/review-drafting.md`: Read before daily, weekly, or monthly review
   drafting.
+- `references/long-term-work-memory.md`: Read before historical, decision,
+  lesson, reflection, or similar-work retrieval.

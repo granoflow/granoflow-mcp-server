@@ -1,7 +1,18 @@
 # Granoflow MCP User Install And Demo Guide
 
-This guide helps you connect Codex or Cursor to the Granoflow desktop app
-through the Granoflow Local HTTP API.
+This guide helps you connect an MCP-capable AI agent or IDE to the Granoflow
+desktop app through the Granoflow Local HTTP API. The examples below show Codex
+and Cursor because they are the verified client targets for this repository;
+other stdio MCP clients can use the same command shape.
+
+Granoflow MCP does not make an AI agent better at reading repositories, fixing
+CI, or writing code. It connects MCP-capable AI agents to a local task, review,
+and long-term work memory layer: they can see the work you planned, update task
+state, finish tasks with meaningful review notes, and draft review cards for
+lessons worth remembering.
+
+Use it when you want agent work to leave a durable trail outside chat history.
+Skip it if you only need code analysis or repository automation.
 
 ## 1. Start Granoflow
 
@@ -108,6 +119,25 @@ Expected result:
 ```
 
 The dry-run preview should not create a real task.
+
+## 7. Memory-Style Demo
+
+After the basic connection works, try asking your MCP client:
+
+```text
+Search Granoflow for past lessons about release planning.
+```
+
+Other useful prompts:
+
+- "Find similar completed tasks about MCP publishing."
+- "What historical evidence do we have about this project?"
+- "Why did we reject the CLI-wrapper approach?"
+
+The quality of this demo depends on the data already in your local Granoflow
+app. Agents can use existing tasks, task reviews, review cards, projects,
+milestones, and periodic reviews as evidence, but this phase does not provide
+semantic search across all historical discussion.
 
 ## Troubleshooting
 

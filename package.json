@@ -2,7 +2,7 @@
   "name": "@granoflow/mcp-server",
   "version": "0.1.10",
   "mcpName": "com.granoflow/mcp-server",
-  "description": "Connect AI agents to Granoflow for task management, work reviews, and spaced-review memory cards.",
+  "description": "Connect MCP-capable AI agents to Granoflow for local tasks, reviews, and work memory.",
   "license": "MIT",
   "type": "module",
   "homepage": "https://github.com/granoflow/granoflow-mcp-server#readme",

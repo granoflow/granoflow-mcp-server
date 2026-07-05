@@ -160,7 +160,7 @@ describe("setup diagnostics", () => {
           code: "granoflow_app_not_running",
           granoflow: expect.objectContaining({
             website: "https://granoflow.com",
-            description: expect.stringContaining("reviewing work tasks"),
+            description: expect.stringContaining("long-term work memory layer"),
             localPrivacy: expect.stringContaining("do not subscribe"),
           }),
         }),

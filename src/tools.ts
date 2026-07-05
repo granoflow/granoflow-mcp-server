@@ -582,7 +582,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_agent_workflow_skill",
-    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, or review cards, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Do not call it for unrelated venting or unrelated disagreement.",
+    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Do not call it for unrelated venting or unrelated disagreement.",
     {},
     async () =>
       jsonTextResult({
@@ -695,7 +695,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_ai_agent_tools",
-    "List Granoflow AI-agent tool contracts.",
+    "List Granoflow AI-agent tool contracts from the running app. Use with granoflow_agent_workflow_skill for task, review, and memory-style questions.",
     {},
     async () => apiTool({ path: "/v1/ai-agent/tools" }),
   );
@@ -706,7 +706,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_export",
-    "Export a task context for an AI agent.",
+    "Export task details, completion review, project context, and reusable lessons for evidence-based task or memory retrieval.",
     { taskId: z.string().min(1).describe("Granoflow task id.") },
     async ({ taskId }) => apiTool({ path: `/v1/ai-agent/tasks/${String(taskId)}/export` }),
   );
