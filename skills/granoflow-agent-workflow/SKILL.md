@@ -88,20 +88,36 @@ Before pausing for the user:
 
 1. Mark any already-finished task nodes complete when the running Granoflow app
    exposes a node-aware path for doing so.
-2. Add a current task node that states exactly what is missing.
-3. Set the current task reminder to 5 minutes from the local current time.
-4. Create one separate follow-up task with a reminder 10 minutes from the local
-   current time.
-5. Push or request cloud sync after the local writes when sync is available.
+2. Move safe, non-authorized work before the authorization node when it can be
+   done without external side effects, privacy exposure, account changes,
+   irreversible changes, or user-only context.
+3. Add a current task node that states the requested authorization, what action
+   is blocked, and what user response would count as approval, rejection, or a
+   changed instruction.
+4. Set the current task reminder to 5 minutes from the local current time.
+5. Create one separate follow-up task with a reminder 10 minutes from the local
+   current time. Its title and description must name the same concrete
+   authorization issue, target object, likely external effect, and node-based
+   response options.
+6. Continue the safe nodes first. Treat the task as blocked only when no safe
+   node remains before the authorization decision.
+7. Push or request cloud sync after the local writes when sync is available.
 
 Read `references/waiting-for-user-input.md` before applying this branch.
 
 Success criteria:
 
 - The blocked work is visible as the current node on the original task.
+- Safe work that does not require authorization is moved before the waiting node
+  and attempted before switching tasks.
 - The original task has a near reminder 5 minutes out.
 - A separate follow-up task provides a second reminder 10 minutes out.
-- The user can understand the missing action without reading the agent chat.
+- The follow-up task explains the actual authorization problem without relying
+  on a narrow domain-specific example.
+- The follow-up task tells the user they can approve, reject, edit the action,
+  or reschedule it, including replies such as "reschedule to tomorrow 09:00".
+- The waiting node and follow-up task tell the user to add a new task node with
+  explicit text for approval, rejection, rescheduling, or other instructions.
 - Sync is attempted only through the Granoflow Local HTTP API or documented
   Granoflow tools.
 
