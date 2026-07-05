@@ -1,6 +1,6 @@
 {
   "name": "@granoflow/mcp-server",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "mcpName": "com.granoflow/mcp-server",
   "description": "Connect AI agents to Granoflow for task management, work reviews, and spaced-review memory cards.",
   "license": "MIT",
