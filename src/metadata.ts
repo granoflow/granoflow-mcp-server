@@ -1,2 +1,2 @@
 export const SERVER_NAME = "granoflow-mcp-server";
-export const SERVER_VERSION = "0.1.10";
+export const SERVER_VERSION = "0.1.11";
