@@ -145,6 +145,7 @@ describe("MCP tool registration", () => {
     const result = await handlers.get("granoflow_task_create_structured")?.({
       title: "Ship MCP v0",
       description: "Release the package.",
+      remindAt: "2026-07-05T10:05:00.000",
       projectId: "project-1",
       milestoneId: "milestone-1",
       dryRun: true,
@@ -156,10 +157,32 @@ describe("MCP tool registration", () => {
         path: "/v1/tasks",
         body: {
           projectId: "project-1",
+          remindAt: "2026-07-05T10:05:00.000",
         },
       },
     });
     expect(JSON.stringify(parseToolText(result))).not.toContain('"tags"');
+  });
+
+  it("previews structured task reminder updates through the Local HTTP API", async () => {
+    const handlers = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_update_structured")?.({
+      taskId: "task-1",
+      remindAt: "2026-07-05T10:10:00.000",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        method: "PATCH",
+        path: "/v1/tasks/task-1",
+        body: {
+          remindAt: "2026-07-05T10:10:00.000",
+        },
+      },
+    });
   });
 
   it("previews milestone creation through the Local HTTP API", async () => {

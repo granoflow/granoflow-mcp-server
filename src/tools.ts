@@ -764,6 +764,7 @@ export function registerGranoflowTools(server: {
       title: z.string().min(1),
       description: z.string().optional(),
       dueAt: z.string().optional(),
+      remindAt: z.string().optional(),
       projectId: z.string().min(1).optional(),
       milestoneId: z.string().min(1).optional(),
       status: resourceStatusSchema,
@@ -772,7 +773,7 @@ export function registerGranoflowTools(server: {
         .default(true)
         .describe("When true, previews the request without writing."),
     },
-    async ({ title, description, dueAt, projectId, milestoneId, status, dryRun }) =>
+    async ({ title, description, dueAt, remindAt, projectId, milestoneId, status, dryRun }) =>
       apiTool({
         method: "POST",
         path: "/v1/tasks",
@@ -780,6 +781,7 @@ export function registerGranoflowTools(server: {
           title,
           description,
           dueAt,
+          remindAt,
           projectId,
           milestoneId,
           status,
@@ -816,6 +818,7 @@ export function registerGranoflowTools(server: {
       title: z.string().min(1).optional(),
       description: z.string().optional(),
       dueAt: z.string().optional(),
+      remindAt: z.string().optional(),
       projectId: z.string().min(1).optional(),
       milestoneId: z.string().min(1).optional(),
       status: resourceStatusSchema,
@@ -824,7 +827,17 @@ export function registerGranoflowTools(server: {
         .default(true)
         .describe("When true, previews the request without writing."),
     },
-    async ({ taskId, title, description, dueAt, projectId, milestoneId, status, dryRun }) =>
+    async ({
+      taskId,
+      title,
+      description,
+      dueAt,
+      remindAt,
+      projectId,
+      milestoneId,
+      status,
+      dryRun,
+    }) =>
       apiTool({
         method: "PATCH",
         path: `/v1/tasks/${String(taskId)}`,
@@ -832,6 +845,7 @@ export function registerGranoflowTools(server: {
           title,
           description,
           dueAt,
+          remindAt,
           projectId,
           milestoneId,
           status,
