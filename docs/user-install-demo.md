@@ -139,6 +139,42 @@ app. Agents can use existing tasks, task reviews, review cards, projects,
 milestones, and periodic reviews as evidence, but this phase does not provide
 semantic search across all historical discussion.
 
+## 8. Agent Completion Workflow Demo
+
+Use this demo after you have at least one real or test task in Granoflow. Ask
+your MCP client:
+
+```text
+Resolve my Granoflow task named "MCP dry-run test", then finish it with a short
+task review and one review card for the reusable lesson. Use dry-run first.
+```
+
+The agent should prefer `granoflow_task_finish`. In dry-run mode, the result
+should preview a sequence that can update task timing, complete the task, import
+the task review and review-card drafts, then read the task back.
+
+For real work, the expected agent behavior is:
+
+- infer `startedAt` and `endedAt` when the conversation provides evidence;
+- write `taskReview` only for useful decisions, lessons, failure modes, process
+  details, or unresolved risks;
+- create one `reviewCardDrafts` item per durable knowledge point;
+- skip task reviews and cards when the task only produced an activity log.
+
+When a review card benefits from pronunciation, phonetic spelling, or
+translation, ask:
+
+```text
+Create the review card with phonetic spelling and click-to-speak pronunciation
+if the running Granoflow app supports that card-field capability. Otherwise put
+the pronunciation and translation hints directly in the card front/back.
+```
+
+The agent should call `granoflow_ai_agent_tools` before sending structured
+`noteFields`. If `review_card_draft_note_fields_v1` is advertised, it can send
+`noteFields`, `frontLayout`, and `backLayout`. If not, it should fall back to
+plain `front` and `back` content and still create a useful card.
+
 ## Troubleshooting
 
 ### The health check cannot connect

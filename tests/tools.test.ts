@@ -320,6 +320,66 @@ describe("MCP tool registration", () => {
     });
   });
 
+  it("fails fast when enhanced review card fields are not advertised by the app", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              tools: [{ toolId: "single_task_ai", enabled: true }],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 500;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_finish")?.({
+      taskId: "task-1",
+      projectId: "project-1",
+      milestoneId: "milestone-1",
+      taskReview: "Durable lesson.",
+      reviewCardDrafts: [
+        {
+          clientCardId: "card-1",
+          cardType: "basic_qa",
+          front: "What is idempotent?",
+          back: "A repeated operation has the same durable effect.",
+          noteFields: [
+            {
+              key: "pronunciation",
+              label: "Pronunciation",
+              type: "text_to_speech",
+              value: "idempotent",
+              ttsLanguageCode: "en-US",
+            },
+          ],
+          frontLayout: ["front", "pronunciation"],
+          backLayout: ["back"],
+        },
+      ],
+      confirmComplete: true,
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "review_card_draft_note_fields_unsupported",
+      data: {
+        unsupportedFields: ["noteFields", "frontLayout", "backLayout"],
+      },
+    });
+    expect(requestedUrls).toEqual(["/v1/ai-agent/tools"]);
+  });
+
   it("resolves task candidates without writing data", async () => {
     const port = await startServer((request, response) => {
       response.setHeader("content-type", "application/json");

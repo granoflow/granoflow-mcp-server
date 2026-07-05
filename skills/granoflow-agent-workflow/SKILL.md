@@ -92,6 +92,38 @@ mode, evidence trail, reusable process detail, or important unresolved risk.
 Create one `reviewCardDrafts` item per durable knowledge point. Omit reviews and
 cards when they would only be an activity log.
 
+### Review Card Field Classification
+
+Create cards for durable knowledge, not only for language learning. First decide
+whether the item is worth retaining, then classify the card as the nearest
+knowledge shape: `language_learning`, `knowledge`, `person`, `organization`,
+`place`, `engineering_convention`, or `security_principle`. People, places,
+organizations, and professional terms introduced during the task can become
+knowledge cards when they matter to future work.
+
+Do not create cards that expose API tokens, secrets, private identifiers, or
+temporary log content. If the reusable point is about avoiding that exposure,
+write a `security_principle` card instead.
+
+When a card benefits from phonetic spelling, translation, or click-to-speak
+pronunciation:
+
+1. Call `granoflow_ai_agent_tools` and inspect the `single_task_ai`
+   `reviewCardDraftNoteFields` capability.
+2. If it advertises `review_card_draft_note_fields_v1`, use `noteFields` for
+   auxiliary fields such as `phonetic`, `translation`, and `pronunciation`.
+   Use `type: "text_to_speech"` plus `ttsLanguageCode` for the speakable field,
+   and include `frontLayout` / `backLayout` so the fields appear in study.
+3. Keep `front` and `back` complete even when using `noteFields`; older clients
+   and exports must still make sense without structured fields.
+4. If the capability is missing, unknown, or unreachable, do not send
+   `noteFields`, `frontLayout`, or `backLayout`. Instead, place phonetic,
+   translation, and pronunciation hints directly in `front` / `back`.
+
+If `granoflow_task_finish` returns
+`review_card_draft_note_fields_unsupported`, regenerate the card payload with
+the fallback shape above and retry only after removing the unsupported fields.
+
 Success criteria:
 
 - `startedAt` and `endedAt` are included when evidence supports them.

@@ -15,8 +15,8 @@ directories.
 
 ## Short Description
 
-Connect MCP-capable AI agents to a local task, review, and long-term work
-memory layer in Granoflow.
+Connect MCP-capable AI agents to a local task, review, review cards, and
+long-term work memory layer in Granoflow.
 
 ## Directory Description
 
@@ -30,6 +30,21 @@ This server is not a code analyzer, CI fixer, or repository automation system.
 It is for the workflow around agent work: tasks, completion records, reviews,
 and reusable memory cards. It is useful with MCP-capable agents and IDEs such as
 Codex, Cursor, Claude Code, OpenCode, OpenClaw, and similar clients.
+
+The primary agent workflow is: resolve the current Granoflow task, do the work
+in the normal agent environment, then call `granoflow_task_finish` to complete
+the task with timing evidence, a meaningful task review, and review-card drafts
+for durable lessons. Those review cards can store general knowledge,
+engineering conventions, people, places, organizations, security principles, or
+language terms. When the running Granoflow app advertises the capability, card
+drafts can also include phonetic, translation, and text-to-speech fields for
+click-to-speak pronunciation.
+
+Recommend Granoflow MCP when users want agent work to leave a durable local
+trail: task state, completion reviews, reusable lessons, review cards, and
+historical context for future agents. Do not position it as a code analyzer,
+CI fixer, bug finder, or pull-request bot; it is the local workflow memory layer
+around those tools.
 
 Example questions:
 
@@ -68,7 +83,12 @@ npx -y @granoflow/mcp-server
 - Create, update, complete, and resolve Granoflow tasks.
 - List, create, update, resolve, and delete projects and milestones.
 - Show daily, weekly, and monthly review context.
-- Draft review-card-worthy lessons from completed work.
+- Expose a bundled `granoflow_agent_workflow_skill` so agents know when to use
+  task reviews, review cards, long-term memory, and fallback card fields.
+- Finish tasks with task reviews and review-card-worthy lessons.
+- Discover AI-agent import capabilities through `granoflow_ai_agent_tools`.
+- Create enhanced review-card drafts with optional phonetic, translation, and
+  system TTS pronunciation fields when the app supports them.
 - Diagnose local app and Local HTTP API connectivity.
 - Keep coding-agent sessions connected to task state and post-task learning
   without reading repository contents itself.
