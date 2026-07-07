@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.granoflow/mcp-server",
   "title": "Granoflow",
-  "description": "Connect MCP-capable AI agents to Granoflow workflows for local tasks, due-task processing, reviews, first-run import, review cards, and work memory.",
+  "description": "Connect MCP-capable AI agents to Granoflow workflows for local tasks, approval requests, due-task processing, reviews, first-run import, review cards, and work memory.",
   "websiteUrl": "https://github.com/granoflow/granoflow-mcp-server#readme",
   "repository": {
     "url": "https://github.com/granoflow/granoflow-mcp-server",

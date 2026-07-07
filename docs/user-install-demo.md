@@ -118,7 +118,12 @@ Process today's tasks
 
 Granoflow will analyze and process the matching tasks in Granoflow.
 
-## 8. Dry-Run Write Demo
+## 8. Approval Request Workflow
+
+During a task, Granoflow can ask for your approval or missing information by
+adding a request to the task and notifying you when available.
+
+## 9. Dry-Run Write Demo
 
 Use a dry-run before any write. For example, ask the MCP client to call
 `granoflow_task_create_structured` with:
@@ -141,7 +146,7 @@ Expected result:
 
 The dry-run preview should not create a real task.
 
-## 9. Memory-Style Demo
+## 10. Memory-Style Demo
 
 After the basic connection works, try asking your MCP client:
 
@@ -160,7 +165,7 @@ app. Agents can use existing tasks, task reviews, review cards, projects,
 milestones, and periodic reviews as evidence, but this phase does not provide
 semantic search across all historical discussion.
 
-## 10. Agent Completion Workflow Demo
+## 11. Agent Completion Workflow Demo
 
 Use this demo after you have at least one real or test task in Granoflow. Ask
 your MCP client:

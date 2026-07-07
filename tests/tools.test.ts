@@ -169,6 +169,11 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("plan document");
     expect(serialized).toContain("Attach or safely link");
     expect(serialized).toContain("plain-language explanations");
+    expect(serialized).toContain("notification task");
+    expect(serialized).toContain("3 minutes");
+    expect(serialized).toContain("10 minutes");
+    expect(serialized).toContain("synced_to_server");
+    expect(serialized).toContain("unknown_remote_visibility");
     expect(serialized).toContain("decision");
     expect(serialized).toContain("similar");
   });
@@ -221,8 +226,10 @@ describe("MCP tool registration", () => {
 
     expect(publicDocs).toContain("Initialize Granoflow and import data");
     expect(publicDocs).toContain("Process today's tasks");
+    expect(publicDocs).toContain("approval or missing information");
     expect(publicDocs).not.toContain("初始化 Granoflow 并导入数据");
     expect(publicDocs).not.toContain("处理今日任务");
+    expect(publicDocs).not.toContain("需要我授权或补充信息时");
 
     const skills = [
       readFileSync("skills/granoflow-first-run-import/SKILL.md", "utf8"),
@@ -230,10 +237,14 @@ describe("MCP tool registration", () => {
         "skills/granoflow-agent-workflow/references/daily-pending-task-triage.md",
         "utf8",
       ),
+      readFileSync("skills/granoflow-agent-workflow/references/waiting-for-user-input.md", "utf8"),
     ].join("\n");
 
     expect(skills).toContain("初始化 Granoflow 并导入数据");
     expect(skills).toContain("处理今日任务");
+    expect(skills).toContain("notification task");
+    expect(skills).toContain("synced_to_server");
+    expect(skills).toContain("unknown_remote_visibility");
     expect(skills).toContain("user's language");
   });
 
@@ -243,6 +254,9 @@ describe("MCP tool registration", () => {
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("long-term work memory");
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("Process today's tasks");
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("their own language");
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain(
+      "needs approval or missing information",
+    );
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain(
       "granoflow_first_run_import_skill",
     );

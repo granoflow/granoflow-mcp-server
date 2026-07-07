@@ -98,9 +98,10 @@ High-level contract:
 7. Attach or safely link the final analysis and plan documents, then update the
    relevant task descriptions with plain-language explanations.
 8. For blockers, use the waiting-for-user-input workflow: add a current node on
-   the original task, set a 5-minute reminder, create a separate follow-up task
-   with a 10-minute reminder, tell the user to respond by adding a new explicit
-   node, and sync when available.
+   the original task, verify local readback, set a 3-minute reminder on the
+   original task, create a separate notification task with a 10-minute reminder,
+   tell the user to respond by adding a new explicit node under the original
+   task, attempt sync when available, and report sync visibility honestly.
 9. Write completion evidence back to the document and Granoflow. Finish only
    tasks that are actually done and verified.
 
@@ -117,8 +118,8 @@ Success criteria:
   linked with a recorded tool gap.
 - Task descriptions explain the result in the user's language with simple,
   non-jargony wording.
-- Blocked tasks have durable Granoflow nodes/reminders/follow-up tasks instead
-  of chat-only asks.
+- Blocked tasks have durable Granoflow nodes, reminders, and notification tasks
+  instead of chat-only asks.
 - Sync is attempted through documented Granoflow tools when available.
 
 ## Long-Term Work Memory
@@ -221,14 +222,22 @@ Before pausing for the user:
 3. Add a current task node that states the requested authorization, what action
    is blocked, and what user response would count as approval, rejection, or a
    changed instruction.
-4. Set the current task reminder to 5 minutes from the local current time.
-5. Create one separate follow-up task with a reminder 10 minutes from the local
-   current time. Its title and description must name the same concrete
-   authorization issue, target object, likely external effect, and node-based
-   response options.
-6. Continue the safe nodes first. Treat the task as blocked only when no safe
+4. Read the original task back and verify the waiting node exists before any
+   sync claim.
+5. Set the current task reminder to 3 minutes from the local current time.
+6. Create one separate notification task with a reminder 10 minutes from the
+   local current time. Its title and description must name the original task,
+   concrete authorization issue, target object, likely external effect, and
+   node-based response options.
+7. Continue the safe nodes first. Treat the task as blocked only when no safe
    node remains before the authorization decision.
-7. Push or request cloud sync after the local writes when sync is available.
+8. Push or request cloud sync after the local writes when sync is available,
+   then report `synced_to_server`, `local_only`, or
+   `unknown_remote_visibility`.
+9. After the original task completes or the blocker is resolved, recommend
+   deleting the temporary notification task. If deletion is unavailable or
+   inappropriate, complete, archive, or otherwise clean it up only after
+   verifying it is the notification task for the resolved original task.
 
 Read `references/waiting-for-user-input.md` before applying this branch.
 
@@ -237,16 +246,22 @@ Success criteria:
 - The blocked work is visible as the current node on the original task.
 - Safe work that does not require authorization is moved before the waiting node
   and attempted before switching tasks.
-- The original task has a near reminder 5 minutes out.
-- A separate follow-up task provides a second reminder 10 minutes out.
-- The follow-up task explains the actual authorization problem without relying
-  on a narrow domain-specific example.
-- The follow-up task tells the user they can approve, reject, edit the action,
-  or reschedule it, including replies such as "reschedule to tomorrow 09:00".
-- The waiting node and follow-up task tell the user to add a new task node with
-  explicit text for approval, rejection, rescheduling, or other instructions.
+- Local readback proves the waiting node exists on the original task before sync
+  is attempted.
+- The original task has a near reminder 3 minutes out.
+- A separate notification task provides a second reminder 10 minutes out.
+- The notification task explains the actual authorization problem without
+  relying on a narrow domain-specific example.
+- The notification task tells the user they can approve, reject, edit the
+  action, or reschedule it by adding a new node under the original task.
+- The waiting node and notification task tell the user to add a new task node
+  under the original task with explicit text for approval, rejection,
+  rescheduling, or other instructions.
 - Sync is attempted only through the Granoflow Local HTTP API or documented
   Granoflow tools.
+- Sync results are reported as `synced_to_server`, `local_only`, or
+  `unknown_remote_visibility`; do not claim remote delivery or phone
+  notification delivery without explicit API evidence.
 
 ## Review Drafting
 

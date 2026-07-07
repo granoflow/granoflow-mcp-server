@@ -7,6 +7,12 @@ private context the agent cannot infer.
 The waiting state should usually be local to the node that needs the user. Do
 not block the whole task while safe work remains.
 
+Public README, npm, registry, and MCP-directory copy must stay English-only.
+Localized trigger examples belong in skill/runtime documentation and tests, not
+canonical public listing copy. Runtime behavior is multilingual: write waiting
+nodes, notification tasks, reminders, confirmation prompts, and final reports in
+the user's language by default.
+
 ## Required Writes
 
 Use the Granoflow Local HTTP API or documented Granoflow tools.
@@ -19,23 +25,34 @@ Use the Granoflow Local HTTP API or documented Granoflow tools.
 3. Add a current node on the original task with a direct description of the
    requested authorization, the blocked action, and what user responses count as
    approval, rejection, or a changed instruction.
-4. Set the original task `remindAt` to local current time plus 5 minutes.
-5. Create a separate follow-up task with `remindAt` set to local current time
-   plus 10 minutes. The task must describe the real authorization problem, not
-   only say that the agent is waiting.
-6. Continue the safe nodes first. Switch to other tasks only after no safe node
+4. Read the original task back and verify the waiting node exists, belongs to
+   the intended original task, describes the intended blocker, and contains no
+   secret value. If local readback fails, stop and report
+   `waiting_node_local_write_failed`.
+5. Set the original task `remindAt` to local current time plus 3 minutes.
+6. Create a separate notification task with `remindAt` set to local current
+   time plus 10 minutes. The task must describe the real authorization problem,
+   not only say that the agent is waiting.
+7. Read back the original task reminder and notification task.
+8. Attempt cloud sync through the Local HTTP API when sync is available, then
+   classify visibility as `synced_to_server`, `local_only`, or
+   `unknown_remote_visibility`.
+9. Continue the safe nodes first. Switch to other tasks only after no safe node
    remains before the authorization decision.
-7. Attempt cloud sync through the Local HTTP API when sync is available.
 
-The follow-up task title and description should stand on their own. Include:
+The notification task title and description should stand on their own. Include:
 
 - the requested user action or decision;
+- the original task title or id;
 - the concrete target or object affected by the decision;
 - the external effect, irreversible effect, privacy effect, account effect, or
   other reason this needs user authorization;
 - the acceptable response options: approve, reject, revise the action, provide
   missing input, or reschedule;
-- that the user should respond by adding a new node with explicit text;
+- that the user should respond by adding a new node with explicit text under
+  the original task;
+- that the notification task is a temporary pointer back to the original task,
+  not the main conversation thread;
 - any safe context needed to decide, without copying secrets or tokens.
 
 Generic response examples:
@@ -47,8 +64,8 @@ Generic response examples:
 
 ## User Response Contract
 
-Tell the user to add a new node under the task or follow-up task. The node title
-must use explicit text such as:
+Tell the user to add a new node under the original task. The node title must
+use explicit text such as:
 
 - approve: `同意`, `批准`, `可以执行`, `继续`, `yes`, `approve`;
 - reject: `不同意`, `不要`, `取消`, `不执行`, `no`, `reject`;
@@ -63,11 +80,11 @@ revised action that is safe and sufficiently specific.
 
 ## Where The User Should Reply
 
-Use this response-location rule in the waiting node and follow-up task
+Use this response-location rule in the waiting node and notification task
 description:
 
-- The user should add a new node to express the decision. This makes the answer
-  visible as synced Granoflow task data.
+- The user should add a new node under the original task to express the
+  decision. This makes the answer visible as synced Granoflow task data.
 - The response node must be specific enough to act on, for example
   `Response: approve`, `Response: reject`, or
   `Response: reschedule to tomorrow 09:00`.
@@ -77,7 +94,8 @@ description:
 
 Only data written into Granoflow task fields or nodes will exist as synced
 Granoflow data. For this workflow, the durable user response should be a new
-node, not a hidden chat-only instruction.
+node under the original task, not a hidden chat-only instruction and not a reply
+stored only on the notification task.
 
 ## Tooling Notes
 
@@ -87,6 +105,23 @@ node, not a hidden chat-only instruction.
 - Use `/v1/sync/push` through `granoflow_api_request` only when a sync attempt is
   appropriate for the user's current setup.
 - Do not add execution dependencies on external Granoflow command-line wrappers.
+
+## Sync Status Contract
+
+Do not claim that the server, another device, or a phone notification received
+the waiting node unless the app or API returns explicit evidence.
+
+Report one of:
+
+- `synced_to_server`: only when the app/API explicitly returns evidence that the
+  write was pushed or remote state is current.
+- `local_only`: local write/readback succeeded, but sync is unavailable,
+  disabled, failed, or unverified.
+- `unknown_remote_visibility`: sync was attempted, but the response does not
+  prove server visibility.
+
+Never write a generic "pushed" or "notified" success report without one of these
+statuses.
 
 ## Reminder Safety
 
@@ -98,17 +133,32 @@ node, not a hidden chat-only instruction.
 - Do not claim that a phone notification was delivered unless the app or API
   returns evidence of delivery.
 
+## Notification Task Cleanup
+
+After the original task is completed or the blocker is resolved, recommend
+deleting the temporary notification task. If deletion is unavailable or
+inappropriate for the app's task-management semantics, complete, archive, or
+otherwise clean it up only after verifying that it is the notification task for
+the resolved original task.
+
 ## Checkpoints
 
 - The blocked action is understandable without reading the chat.
 - Safe nodes that do not need authorization are moved before the waiting node and
   attempted first.
-- The follow-up task names the specific authorization issue and the target
+- Local readback proves the waiting node exists on the original task before sync
+  is attempted.
+- The original task has a near reminder 3 minutes out.
+- The notification task has a second reminder 10 minutes out.
+- The notification task names the specific authorization issue and the target
   affected by it.
-- The follow-up task includes clear approve/reject/revise/reschedule options.
-- The waiting node and follow-up task explain that synced user replies are added
-  as new nodes with explicit decision text.
-- The original task and follow-up task have different reminder times.
-- The follow-up task is not marked done or hidden.
+- The notification task includes clear approve/reject/revise/reschedule options.
+- The waiting node and notification task explain that synced user replies are
+  added to the original task as new nodes with explicit decision text.
+- The original task and notification task have different reminder times.
+- The notification task is not marked done or hidden before the blocker is
+  resolved.
+- Cleanup recommends deleting the temporary notification task after the original
+  task completes or the blocker is resolved.
 - No secrets, tokens, or private credentials are copied into task titles,
   descriptions, nodes, or tool results.

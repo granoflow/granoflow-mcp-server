@@ -94,6 +94,9 @@ Process today's tasks
 
 Granoflow will analyze and process the matching tasks in Granoflow.
 
+During a task, Granoflow can ask for your approval or missing information by
+adding a request to the task and notifying you when available.
+
 More workflows will be added to this catalog as the Granoflow MCP workflow layer
 grows.
 
@@ -167,14 +170,14 @@ rules for when to write task reviews, when to create cards, how to handle
 pronunciation fields, and when to fall back to plain `front` / `back` card
 content.
 
-The bundled workflow also includes a daily unfinished-task triage mode. When the
-user asks an agent to inspect all current pending tasks, the agent should write
-an analysis document first, classify which tasks are safe for AI, blocked on
-authorization, blocked on secrets/login, user-only, obsolete, already done, or
-conflicting, then wait for confirmation before executing. Executable work should
-get a plan document and adversarial review pass. User-only blockers should be
-preserved as Granoflow task nodes, reminders, follow-up tasks, and sync attempts
-when the running app exposes the required tools.
+The bundled workflow also includes due-task processing. When the user asks an
+agent to process today's tasks, a specific date or range, or all unfinished
+tasks, the agent should write an analysis document first, classify which tasks
+AI can do, which need user input, and which the user must do, then wait for
+confirmation before executing. Executable work should get a plan document and
+adversarial review pass. User-only blockers should be preserved as Granoflow
+task nodes, reminders, notification tasks, and sync visibility reports when the
+running app exposes the required tools.
 
 ## Agent Completion Workflow
 

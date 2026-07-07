@@ -206,7 +206,7 @@ Resolved scope: <concrete date, date range, or all-task boundary>
 - Task updates:
 - Nodes:
 - Reminders:
-- Follow-up tasks:
+- Notification tasks:
 - Document attachments:
 - Plain-language task descriptions:
 - Task reviews/cards:
@@ -257,8 +257,8 @@ The confirmation request should name:
 - the phrase the user can use to proceed, localized to the user's language, such
   as `Start execution` for English or `开始执行` for Chinese;
 - any task writes the agent will make, such as node additions, reminders,
-  follow-up tasks, document attachments, task description updates, task reviews,
-  completions, or sync attempts.
+  notification tasks, document attachments, task description updates, task
+  reviews, completions, or sync attempts.
 
 If the user confirms only part of the analysis, execute only that part and keep
 the rest in the document as deferred.
@@ -448,21 +448,32 @@ Required writes:
      reschedule;
    - that the user should respond by adding a new explicit node under the
      original task.
-2. Set the original task reminder to local current time plus 5 minutes.
-3. Create a separate follow-up task with reminder at local current time plus 10
-   minutes. The follow-up task must stand alone and describe the same blocker.
-4. If the app or MCP does not expose node writes, write the same content into
+2. Read the original task back and verify that the waiting node exists before
+   making any sync or delivery claim.
+3. Set the original task reminder to local current time plus 3 minutes.
+4. Create a separate notification task with reminder at local current time plus
+   10 minutes. The notification task must stand alone, name the original task,
+   describe the same blocker, and tell the user to add a new node under the
+   original task.
+5. If the app or MCP does not expose node writes, write the same content into
    the task description or another documented field and classify the result as
    `blocked_by_tool_gap`.
-5. Attempt sync through the documented Granoflow API/tool when sync is available.
-6. Report any sync failure as local-only visibility risk. Do not claim remote
-   delivery or phone notification delivery without app/API evidence.
+6. Attempt sync through the documented Granoflow API/tool when sync is
+   available.
+7. Report sync visibility as `synced_to_server`, `local_only`, or
+   `unknown_remote_visibility`. Do not claim remote delivery or phone
+   notification delivery without app/API evidence.
+8. After the original task completes or the blocker is resolved, recommend
+   deleting the temporary notification task. If deletion is unavailable or
+   inappropriate, complete, archive, or otherwise clean it up only after
+   verifying it is the notification task for the resolved original task.
 
-Follow-up task description template:
+Notification task description template:
 
 ```text
 This task is waiting for your explicit response on the original task.
 
+Original task: <title or id>
 Blocked action: <action>
 Target: <object/account/repo/task>
 Why user input is required: <authorization/login/secret/payment/external effect>
@@ -475,6 +486,8 @@ Please add a new node under the original task with one of:
 - Response: reschedule to tomorrow 09:00
 
 The agent must not proceed with the blocked action until that node exists.
+After the original task is completed or the blocker is resolved, this temporary
+notification task should be deleted or cleaned up.
 ```
 
 ## Phase 8: Completion And Writeback
@@ -502,9 +515,9 @@ claim closure.
 
 ## Phase 9: Sync And Final Report
 
-After task, node, reminder, follow-up, review, or card writes, attempt sync when
-the running app advertises or exposes a documented sync path and the user's
-setup makes sync appropriate.
+After task, node, reminder, notification task, review, or card writes, attempt
+sync when the running app advertises or exposes a documented sync path and the
+user's setup makes sync appropriate.
 
 The final report must include:
 
@@ -513,10 +526,10 @@ The final report must include:
 - attachment or fallback-link status;
 - tasks completed;
 - tasks left pending and why;
-- blockers written as nodes/reminders/follow-up tasks;
+- blockers written as nodes/reminders/notification tasks;
 - task descriptions updated;
 - review cards created;
-- sync attempt result;
+- sync visibility result;
 - verification results;
 - skipped checks and residual risks.
 
