@@ -1,6 +1,6 @@
 {
   "name": "@granoflow/mcp-server",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "mcpName": "com.granoflow/mcp-server",
   "description": "Connect MCP-capable AI agents to Granoflow workflows for local tasks, requirement capture, approval requests, due-task processing, reviews, first-run import, review cards, and work memory.",
   "license": "MIT",

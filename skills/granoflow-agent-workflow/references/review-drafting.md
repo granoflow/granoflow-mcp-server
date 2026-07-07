@@ -10,15 +10,41 @@ content, mood or efficiency notes, task reviews, or review-card candidates.
   statements as evidence.
 - Separate recorded facts from inference. Never present inferred mood,
   efficiency, or meaning as certain truth.
+- Periodic daily, weekly, and monthly review must be user-initiated. A
+  `dailyReviewSuggestion`, `weeklyReviewSuggestion`, or
+  `monthlyReviewSuggestion` is a nudge only; do not begin analysis, drafting,
+  scoring, journaling, reporting, or writeback from a suggestion alone.
 - Require user confirmation before writing mood scores, efficiency scores, mood
-  notes, efficiency notes, daily report content, weekly/monthly content, task
-  reviews, new tasks, or review cards.
+  notes, efficiency notes, daily report content, weekly/monthly content, new
+  tasks, or review cards.
+- A factual `taskReview` may be written automatically when the agent executed
+  or directly helped complete the task and the review records what was done,
+  key decisions, blockers, verification results, evidence, unresolved risks, or
+  reusable process details. Do not use automatic task reviews for mood,
+  personality, motivation, efficiency, or other subjective interpretation.
+- Daily-review synthesis imports remain a separate confirmed writeback path:
+  updating task titles, `task_review`, daily report content, or planned tasks
+  from that flow still requires the app/user confirmation gate.
 - Do not rewrite task start time, end time, actual duration, or flow time from a
   review flow. If task time is wrong, tell the user to adjust it in Granoflow
   task details.
 - Candidate task reviews and review cards should capture durable lessons,
   decisions, repeated failure modes, unresolved risks, or reusable process
   details.
+
+## User-Initiated Review Session
+
+Examples of user initiation include:
+
+- `review today`, `write today's journal`, `summarize today`;
+- `summarize this week`, `write a weekly report`, `review this week`;
+- `review July`, `write a monthly report`, `how did this month go`;
+- localized equivalents such as `做日回顾`, `帮我写今天的日记`, `总结这周`,
+  `写周报`, `回顾 7 月`, or `这个月我做得怎么样`.
+
+During the session, keep the interaction loose. Let the user add, reject, or
+rewrite context in ordinary language. Before saving, show a draft of the fields
+that will be written, then wait for confirmation.
 
 ## Daily Reviews
 
@@ -30,11 +56,14 @@ AI may draft:
   failures, unresolved risks, or reusable process details;
 - candidate review cards for durable knowledge points;
 - suggested `moodScore` and `efficiencyScore` on the user's available scale;
+- a one-sentence summary when the running app/API exposes such a field or the
+  caller needs a compact diary headline;
 - short `moodNote` and `efficiencyNote` drafts.
 
 The user must provide or confirm:
 
 - final mood and efficiency scores;
+- the final one-sentence summary when present;
 - subjective flow time and any manually remembered interruptions;
 - whether inferred emotional tone, efficiency, task reviews, daily report
   content, and review-card drafts are accurate enough to save;
@@ -68,6 +97,10 @@ When talking with the user before saving, it is acceptable to explain the
 reasoning and propose a score from 1 to 5 when that is the active scale. Keep
 that explanation out of the saved note fields.
 
+Before writeback, show the draft mood score, efficiency score, one-sentence
+summary when present, mood note, efficiency note, and journal/report content.
+Save only after the user confirms or edits the draft.
+
 ## Weekly Reviews
 
 Weekly review is not a repetition of seven daily reviews. Its job is to step
@@ -96,11 +129,13 @@ The user must confirm:
 Rules:
 
 - Do not summarize each day one by one unless the user asks for a timeline.
-- Prefer patterns, tradeoffs, and next-week decisions over exhaustive task
-  listings.
+- Prefer patterns, rhythm, repeated blockers, tradeoffs, and next-week decisions
+  over exhaustive task listings.
 - Keep weekly value notes natural and short enough to be useful in the weekly
   review UI.
 - Save weekly `content` or value entries only after user confirmation.
+- Before writeback, show the weekly content draft, value score/note drafts, and
+  candidate next-week adjustments.
 
 ## Monthly Reviews
 
@@ -132,6 +167,8 @@ Rules:
 - Monthly REST and CLI writes may update only `content`.
 - Do not turn the month into four weekly summaries unless the user asks for that
   structure.
-- Prefer direction, tradeoffs, recurring costs, important progress, and
-  next-month choices over exhaustive task listings.
+- Prefer direction, tradeoffs, investment structure, recurring costs, important
+  progress, and next-month choices over exhaustive task listings.
 - Save monthly `content` only after user confirmation.
+- Before writeback, show the monthly content draft, theme/interpretation, and
+  continue/reduce/pause/protect suggestions.

@@ -36,8 +36,9 @@ Use this skill when the user asks to:
   user-only, then plan and run the work the agent can safely complete;
 - retrieve historical context, prior decisions, durable lessons, similar past
   work, or why something was done;
-- maintain project or milestone descriptions as current work-memory context, or
-  archive milestone context as a final snapshot;
+- maintain project or milestone descriptions as current work-memory context,
+  maintain project context YAML attachments, or archive milestone context as a
+  final snapshot;
 - pause work because user authorization, a decision, login, 2FA, a local app
   action, or missing source material is required;
 - write a task review or completion summary;
@@ -196,23 +197,34 @@ Success criteria:
 ## Project And Milestone Context Stewardship
 
 Use this section when project or milestone descriptions should become the
-current context map for future agents.
+current context map for future agents, or when project-level context YAML
+attachments should be created, read, reconciled, or safely updated.
+
+Read `references/project-context-attachments.md` before applying this branch.
 
 High-level contract:
 
 1. Read `granoflow_ai_agent_tools` and prefer context-steward tools when the
    running app and MCP server expose them.
-2. Use `granoflow_context_steward_status` to inspect current project,
+2. Prefer `granoflow_project_context_attachments_v1` when advertised. Ensure
+   `project_snapshot.yaml` and `project_rules.yaml` exist, read only bounded
+   sections by default, check freshness before use, and treat stale YAML as a
+   historical hint rather than complete fact.
+3. Use `granoflow_context_steward_status` to inspect current project,
    active milestone, archived milestone, and policy state.
-3. Use `granoflow_project_context_update` for project descriptions. Keep them
+4. Use `granoflow_project_context_update` for project descriptions. Keep them
    focused on current state, scope, decisions, risks, key docs/APIs, active
    milestones, last verification, and next expected work.
-4. Use `granoflow_milestone_context_update` only for active milestones. Archived
+5. Use `granoflow_milestone_context_update` only for active milestones. Archived
    milestone descriptions are final snapshots for ordinary MCP workflow.
-5. Use `granoflow_milestone_context_archive` to preview archive closure before
+6. Use `granoflow_milestone_context_archive` to preview archive closure before
    any write. The preview must include both final milestone state and parent
    project description update.
-6. If MCP is unavailable, do not block unrelated user work. Report that context
+7. If YAML content conflicts with project facts, project descriptions, long-term
+   rules, or public wording, return a proposal/conflict report instead of
+   silently overwriting the rules or wording. Low-risk factual snapshot deltas
+   may be reconciled automatically.
+8. If MCP is unavailable, do not block unrelated user work. Report that context
    upkeep was skipped or blocked.
 
 Success criteria:
@@ -222,8 +234,12 @@ Success criteria:
 - Archived milestone descriptions are not modified through ordinary MCP
   workflow.
 - Archive closure always considers the parent project description update.
+- Canonical project context attachments are fresh, stale, partial, or blocked
+  explicitly; stale YAML is never treated as complete fact.
+- Rules, wording, positioning, and decision conflicts are proposed for user
+  confirmation instead of silently overwritten.
 - Secrets, tokens, OTPs, private auth URLs, and raw local private content are
-  never written into descriptions.
+  never written into descriptions or YAML attachments.
 
 ## Completing Tasks
 
@@ -238,10 +254,29 @@ Before writing completion data:
 3. Decide whether there is anything genuinely worth reviewing.
 4. Decide whether any durable knowledge points should become review cards.
 
-Write `taskReview` only when it contains a meaningful decision, lesson, failure
-mode, evidence trail, reusable process detail, or important unresolved risk.
-Create one `reviewCardDrafts` item per durable knowledge point. Omit reviews and
-cards when they would only be an activity log.
+For tasks the agent has executed or directly helped complete, a factual
+`taskReview` may be written automatically when it contains a meaningful
+decision, lesson, failure mode, evidence trail, reusable process detail,
+verification result, blocker, or important unresolved risk. Keep this automatic
+review factual: what was done, key decisions, blockers, verification, and what
+would help next time. Do not write inferred mood, personality, motivation,
+efficiency, or other subjective judgments into automatic task reviews.
+
+Create one `reviewCardDrafts` item per durable knowledge point, but show the
+card content and shape before creating review cards unless a more specific
+confirmed workflow already authorizes card creation. Omit reviews and cards when
+they would only be an activity log.
+
+Automatic task completion review does not change the daily-review synthesis
+confirmation gate. Daily review AI imports that update task titles,
+`task_review`, daily report content, or planned tasks still require the
+app/user confirmation path defined by the review-journal workflow.
+
+After writing meaningful task review content, maintain current project context
+when project context tools are available: low-risk factual deltas may update
+`project_snapshot.yaml`, while `project_rules.yaml`, public wording, or
+positioning conflicts must produce a proposal or conflict report instead of a
+silent overwrite.
 
 Read `references/review-card-authoring.md` before creating review cards from a
 task. It defines card-worthiness, experience cards, language-learning cards,
@@ -373,10 +408,24 @@ Use this section when the user asks to review today, summarize today, write a
 daily/weekly/monthly review, assess mood or efficiency, or turn completed work
 into review cards.
 
-Treat review drafting as assisted reflection. Use recorded Granoflow evidence,
-separate facts from inference, and require user confirmation before writing
-subjective scores, notes, review content, task reviews, new tasks, or review
-cards.
+Treat review drafting as assisted reflection. Periodic daily, weekly, and
+monthly review must be user-initiated; a suggestion or nudge is not permission
+to start the review. Use recorded Granoflow evidence, separate facts from
+inference, and require user confirmation before writing subjective scores,
+notes, daily/weekly/monthly review content, new tasks, or review cards.
+
+Accept localized natural-language triggers in the user's language. Examples
+include `review today`, `write today's journal`, `summarize this week`,
+`write a weekly report`, `review July`, `做日回顾`, `帮我写今天的日记`,
+`总结这周`, `写周报`, `回顾 7 月`, and `这个月我做得怎么样`.
+
+Keep the interaction loose: talk with the user naturally, let them add, reject,
+or rewrite context, then show a draft of the final fields before saving. For
+daily reviews this includes mood score, efficiency score, one-sentence summary,
+and journal/report content when available. For weekly reviews, prefer patterns,
+rhythm, repeated blockers, tradeoffs, and next-week adjustments over a seven-day
+task list. For monthly reviews, prefer direction, tradeoffs, investment
+structure, and next-month choices over four weekly summaries.
 
 Read `references/review-drafting.md` before drafting daily, weekly, or monthly
 review content.
@@ -404,12 +453,18 @@ When this suggestion appears, mention it briefly after completing the user's
 current request. Do not interrupt the requested work, and do not repeat the
 suggestion if it is absent.
 
+The nudge is only a nudge. It must not trigger analysis, drafting, scoring,
+journal/report writing, or any review writeback until the user actively asks to
+start that daily, weekly, or monthly review.
+
 Success criteria:
 
 - The user receives at most one daily-review nudge per local day.
 - The nudge is presented only after the current request is handled.
 - Weekly and monthly nudges appear only on their eligible days and only when the
   checked review is empty.
+- No periodic review starts from a suggestion alone; wait for explicit user
+  initiation.
 
 ## User Dissatisfaction
 
@@ -477,3 +532,5 @@ Success criteria:
   drafting.
 - `references/long-term-work-memory.md`: Read before historical, decision,
   lesson, reflection, or similar-work retrieval.
+- `references/project-context-attachments.md`: Read before project context YAML
+  attachment creation, bounded reading, reconcile, or update.

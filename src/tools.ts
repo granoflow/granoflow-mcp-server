@@ -36,6 +36,9 @@ const memoryBatchItemSchema = z.object({
   completedAt: z.string().min(1).optional(),
   reviewCardCandidates: z.array(z.record(z.string(), z.unknown())).optional(),
 });
+const projectContextAttachmentSchema = z
+  .enum(["snapshot", "rules", "project_snapshot.yaml", "project_rules.yaml"])
+  .default("snapshot");
 const contextPackScopeSchema = z.enum(["task", "project", "repo"]);
 const contextPackSourceSchema = z.object({
   taskId: z.string().min(1).optional(),
@@ -422,6 +425,32 @@ function supportsContextSteward(payload: unknown): boolean {
   });
 }
 
+function supportsProjectContextAttachments(payload: unknown): boolean {
+  const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
+  const data = isObject(root) && isObject(root.data) ? root.data : root;
+  const tools = isObject(data) && Array.isArray(data.tools) ? data.tools : [];
+  return tools.some((tool) => {
+    if (
+      !isObject(tool) ||
+      tool.toolId !== "granoflow_project_context_attachments_v1" ||
+      tool.enabled !== true
+    ) {
+      return false;
+    }
+    const capabilities = isObject(tool.capabilities) ? tool.capabilities : {};
+    const consistency = isObject(capabilities.consistencySafety)
+      ? capabilities.consistencySafety
+      : {};
+    return (
+      capabilities.freshnessCheck === true &&
+      capabilities.incrementalReconcile === true &&
+      capabilities.fullReadRequiresExplicitIntent === true &&
+      consistency.rulesAndWordingConflicts === "proposal_required" &&
+      consistency.secretOrPrivacyRisk === "fail_closed"
+    );
+  });
+}
+
 async function requestPreviewWithMeta(options: ApiRequestOptions, meta: Record<string, unknown>) {
   const preview = await requestGranoflowApi({ ...options, dryRun: true });
   const data = isObject(preview.data) ? preview.data : {};
@@ -471,6 +500,29 @@ async function memoryBatchPreviewApiTool(options: ApiRequestOptions) {
       },
       error: {
         message: "The running Granoflow app does not advertise memory_batch_preview_v1.",
+      },
+      runtime: toolsResult.runtime,
+    });
+  }
+  return apiTool(options);
+}
+
+async function projectContextAttachmentApiTool(options: ApiRequestOptions) {
+  if (options.dryRun) {
+    return apiTool(options);
+  }
+  const toolsResult = await requestGranoflowApi({ path: "/v1/ai-agent/tools" });
+  if (!toolsResult.ok || !supportsProjectContextAttachments(toolsResult)) {
+    return jsonTextResult({
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        requiredCapability: "granoflow_project_context_attachments_v1",
+        endpoint: options.path,
+      },
+      error: {
+        message:
+          "The running Granoflow app does not advertise granoflow_project_context_attachments_v1.",
       },
       runtime: toolsResult.runtime,
     });
@@ -1328,6 +1380,114 @@ export function registerGranoflowTools(server: {
           projectId: typeof projectId === "string" ? projectId : undefined,
         }),
       ),
+  );
+
+  registerTool(
+    "granoflow_project_context_attachments_ensure",
+    "Ensure Granoflow canonical project context YAML attachments exist: project_snapshot.yaml and project_rules.yaml. Defaults to dry-run.",
+    {
+      projectId: z.string().min(1).describe("Granoflow project id."),
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews missing attachments without writing."),
+    },
+    async ({ projectId, dryRun }) =>
+      projectContextAttachmentApiTool({
+        method: "POST",
+        path: "/v1/ai-agent/project-context-attachments/ensure",
+        body: compactRecord({
+          projectId,
+          dryRun: dryRun !== false,
+        }),
+        dryRun: false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_project_context_attachment_read",
+    "Read a bounded section of project_snapshot.yaml or project_rules.yaml. Defaults to header, summary, and the smallest matching section; full read requires explicit intent.",
+    {
+      projectId: z.string().min(1).describe("Granoflow project id."),
+      attachment: projectContextAttachmentSchema,
+      section: z.string().min(1).optional(),
+      query: z.string().min(1).optional(),
+      intent: z
+        .enum(["normal", "full_audit", "export", "migration", "rewrite", "full_read"])
+        .default("normal"),
+      allowFullRead: z.boolean().default(false),
+      dryRun: z
+        .boolean()
+        .default(false)
+        .describe("When true, previews the HTTP request without calling the app."),
+    },
+    async ({ projectId, attachment, section, query, intent, allowFullRead, dryRun }) =>
+      projectContextAttachmentApiTool({
+        method: "POST",
+        path: "/v1/ai-agent/project-context-attachments/read",
+        body: compactRecord({
+          projectId,
+          attachment,
+          section,
+          query,
+          intent: intent === "normal" ? undefined : intent,
+          allowFullRead: allowFullRead === true,
+        }),
+        dryRun: dryRun === true,
+      }),
+  );
+
+  registerTool(
+    "granoflow_project_context_attachment_reconcile",
+    "Check or reconcile project context YAML freshness. Low-risk factual snapshot deltas can reconcile; rules and wording conflicts return a proposal.",
+    {
+      projectId: z.string().min(1).describe("Granoflow project id."),
+      attachment: projectContextAttachmentSchema,
+      dryRun: z.boolean().default(true).describe("When true, previews reconcile without writing."),
+    },
+    async ({ projectId, attachment, dryRun }) =>
+      projectContextAttachmentApiTool({
+        method: "POST",
+        path: "/v1/ai-agent/project-context-attachments/reconcile",
+        body: compactRecord({
+          projectId,
+          attachment,
+          dryRun: dryRun !== false,
+        }),
+        dryRun: false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_project_context_attachment_write",
+    "Write a project context YAML attachment through app-owned safety gates. project_rules.yaml requires confirmation; secret/privacy risks fail closed.",
+    {
+      projectId: z.string().min(1).describe("Granoflow project id."),
+      attachment: projectContextAttachmentSchema,
+      section: z.string().min(1).optional(),
+      content: z.string().min(1),
+      confirmed: z
+        .boolean()
+        .default(false)
+        .describe("Required for project_rules.yaml rule, wording, or decision-note changes."),
+      dryRun: z
+        .boolean()
+        .default(false)
+        .describe("When true, previews the HTTP request without calling the app."),
+    },
+    async ({ projectId, attachment, section, content, confirmed, dryRun }) =>
+      projectContextAttachmentApiTool({
+        method: "POST",
+        path: "/v1/ai-agent/project-context-attachments/write",
+        body: compactRecord({
+          projectId,
+          attachment,
+          section,
+          content,
+          confirmed: confirmed === true,
+        }),
+        dryRun: dryRun === true,
+      }),
   );
 
   registerTool(

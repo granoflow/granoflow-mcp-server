@@ -32,6 +32,14 @@ It is for the workflow around agent work: tasks, completion records, reviews,
 and reusable memory cards. It is useful with MCP-capable agents and IDEs such as
 Codex, Cursor, Claude Code, OpenCode, OpenClaw, and similar clients.
 
+Granoflow MCP can support any agent-assisted work, and it is especially useful
+for software projects. For people who are not programmers or have not used AI
+coding agents before, it makes AI work less of a black box: users can read,
+understand, and learn from the experience AI leaves behind, while future agents
+can search those records tomorrow, next month, or next year instead of starting
+with a fresh plan every time and fragmenting the project into disconnected
+attempts.
+
 The primary agent workflow is: resolve the current Granoflow task, do the work
 in the normal agent environment, then call `granoflow_task_finish` to complete
 the task with timing evidence, a meaningful task review, and review-card drafts
@@ -191,37 +199,37 @@ submitted or published until the relevant platform confirms the update.
 ### GitHub / npm / Official MCP Registry
 
 ```text
-Granoflow connects MCP-capable AI agents to local workflows for tasks, approval requests, reviews, review cards, first-run import, due-task processing, requirement capture, task analysis, and long-term work memory. After installing, ask your agent "Initialize Granoflow and import data" to import data from Cursor, Codex, Hermes, or other agents into Granoflow, "Process today's tasks" to analyze and process matching Granoflow tasks, "Create a task from this requirement" to capture a discussed requirement as a Granoflow task, or "Analyze the first task" to plan and move a selected task forward after confirmation.
+Granoflow connects MCP-capable AI agents to local workflows for tasks, approval requests, reviews, review cards, first-run import, due-task processing, requirement capture, task analysis, and long-term work memory. It supports many agent-assisted work scenarios and is especially useful for software projects: users can inspect and learn from AI's recorded experience, while future agents can search that experience tomorrow, next month, or next year instead of inventing a fresh plan every session and fragmenting the project into disconnected attempts. After installing, ask your agent "Initialize Granoflow and import data" to import data from Cursor, Codex, Hermes, or other agents into Granoflow, "Process today's tasks" to analyze and process matching Granoflow tasks, "Create a task from this requirement" to capture a discussed requirement as a Granoflow task, or "Analyze the first task" to plan and move a selected task forward after confirmation.
 ```
 
 ### Glama
 
 ```text
-Granoflow MCP connects AI agents to a local-first workflow layer for tasks, task analysis, requirement capture, approval requests, due-task processing, reviews, durable lesson cards, long-term work memory, and first-run import from Cursor, Codex, Hermes, or other agents.
+Granoflow MCP connects AI agents to a local-first workflow layer for tasks, task analysis, requirement capture, approval requests, due-task processing, reviews, durable lesson cards, long-term work memory, and first-run import from Cursor, Codex, Hermes, or other agents. Especially useful for software projects: AI experience becomes readable, learnable, and searchable by future agents.
 ```
 
 ### mcp.so
 
 ```text
-Granoflow helps MCP-capable agents keep work outside chat history: task state, task analysis, requirement capture, approval requests, due-task processing, completion reviews, durable review cards, first-run data import, and local work-memory context.
+Granoflow helps MCP-capable agents keep work outside chat history: task state, task analysis, requirement capture, approval requests, due-task processing, completion reviews, durable review cards, first-run data import, and local work-memory context. For AI coding agents, it turns one-off chat output into experience future agents can reuse.
 ```
 
 ### mcpservers.org
 
 ```text
-Local-first productivity MCP server for Granoflow. It helps agents manage task workflows, task analysis, requirement capture, approval requests, due-task processing, reviews, review cards, first-run import, and long-term work memory.
+Local-first productivity MCP server for Granoflow. It helps agents manage task workflows, task analysis, requirement capture, approval requests, due-task processing, reviews, review cards, first-run import, and long-term work memory. Especially useful for software projects where future agents should continue from past experience, not start over and fragment the project.
 ```
 
 ### Awesome MCP Servers
 
 ```text
-- [Granoflow](https://github.com/granoflow/granoflow-mcp-server) - Local-first task, task analysis, requirement capture, approval request, due-task processing, review, first-run import, review-card, and work-memory workflows for MCP-capable agents.
+- [Granoflow](https://github.com/granoflow/granoflow-mcp-server) - Local-first task, task analysis, requirement capture, approval request, due-task processing, review, first-run import, review-card, and work-memory workflows for MCP-capable agents; especially useful for software projects where future agents should continue from past experience instead of fragmenting the project.
 ```
 
 ### Smithery / MCPB
 
 ```text
-Connect AI agents to Granoflow for local task workflows, task analysis, requirement capture, approval requests, due-task processing, first-run data import, reviews, review cards, and work-memory context.
+Connect AI agents to Granoflow for local task workflows, task analysis, requirement capture, approval requests, due-task processing, first-run data import, reviews, review cards, and work-memory context. AI experience becomes readable, learnable, and reusable by future agents.
 ```
 
 ## Directory Publication Status

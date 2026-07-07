@@ -120,6 +120,10 @@ describe("MCP tool registration", () => {
         "granoflow_context_pack",
         "granoflow_memory_batch_preview",
         "granoflow_context_steward_status",
+        "granoflow_project_context_attachments_ensure",
+        "granoflow_project_context_attachment_read",
+        "granoflow_project_context_attachment_reconcile",
+        "granoflow_project_context_attachment_write",
         "granoflow_project_context_update",
         "granoflow_milestone_context_update",
         "granoflow_milestone_context_archive",
@@ -185,6 +189,9 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("unknown_remote_visibility");
     expect(serialized).toContain("decision");
     expect(serialized).toContain("similar");
+    expect(serialized).toContain("project-context-attachments.md");
+    expect(serialized).toContain("project_snapshot.yaml");
+    expect(serialized).toContain("project_rules.yaml");
   });
 
   it("exposes the bundled first-run import workflow skill", async () => {
@@ -226,6 +233,20 @@ describe("MCP tool registration", () => {
     expect(reference).toContain("Privacy And Local Content");
   });
 
+  it("documents the project context attachment safety contract", () => {
+    const reference = readFileSync(
+      "skills/granoflow-agent-workflow/references/project-context-attachments.md",
+      "utf8",
+    );
+
+    expect(reference).toContain("project_snapshot.yaml");
+    expect(reference).toContain("project_rules.yaml");
+    expect(reference).toContain("smallest matching section");
+    expect(reference).toContain("proposal or conflict report");
+    expect(reference).toContain("fail closed");
+    expect(reference).toContain("project_context_attachments_unchanged");
+  });
+
   it("documents the discussed requirement task capture contract", () => {
     const reference = readFileSync(
       "skills/granoflow-agent-workflow/references/discussed-requirement-task-capture.md",
@@ -260,6 +281,25 @@ describe("MCP tool registration", () => {
     expect(reference).toContain("Execute only after user confirmation");
   });
 
+  it("documents the internal review drafting boundary", () => {
+    const skill = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
+    const reference = readFileSync(
+      "skills/granoflow-agent-workflow/references/review-drafting.md",
+      "utf8",
+    );
+    const combined = `${skill}\n${reference}`;
+
+    expect(combined).toContain("factual `taskReview` may be written automatically");
+    expect(combined).toContain("suggestion or nudge is not permission");
+    expect(combined).toContain("No periodic review starts from a suggestion alone");
+    expect(combined).toContain("show a draft of the fields");
+    expect(combined).toContain("Daily-review synthesis imports remain");
+    expect(combined).toContain("Automatic task completion review does not change");
+    expect(combined).toContain("Do not write inferred mood");
+    expect(combined).toContain("review July");
+    expect(combined).toContain("写周报");
+  });
+
   it("keeps public workflow catalog copy English-only while skills support localized triggers", () => {
     const publicDocs = [
       readFileSync("README.md", "utf8"),
@@ -274,6 +314,15 @@ describe("MCP tool registration", () => {
     expect(publicDocs).toContain("project, milestone, or inbox");
     expect(publicDocs).toContain("Analyze the first task");
     expect(publicDocs).toContain("move it forward after your confirmation");
+    expect(publicDocs).toContain("any agent-assisted work");
+    expect(publicDocs).toContain("especially useful for software projects");
+    expect(publicDocs).toContain("work is no longer a black box");
+    expect(publicDocs).toContain("tomorrow, next month, or next year");
+    expect(publicDocs).toContain("instead of inventing a fresh plan every time");
+    expect(publicDocs).toContain("fragmenting the project");
+    expect(publicDocs).not.toContain("write today's journal");
+    expect(publicDocs).not.toContain("write a weekly report");
+    expect(publicDocs).not.toContain("write a monthly report");
     expect(publicDocs).not.toContain("初始化 Granoflow 并导入数据");
     expect(publicDocs).not.toContain("处理今日任务");
     expect(publicDocs).not.toContain("需要我授权或补充信息时");
@@ -1007,6 +1056,126 @@ describe("MCP tool registration", () => {
           target: { projectId: "project-1" },
           items: [{ title: "Add batch memory preview" }],
           dryRun: true,
+        },
+      },
+    ]);
+  });
+
+  it("requires project context attachment capability before reading YAML", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: { tools: [{ toolId: "granoflow_context_pack_v1", enabled: true }] },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 500;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_project_context_attachment_read")?.({
+      projectId: "project-1",
+      attachment: "snapshot",
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        requiredCapability: "granoflow_project_context_attachments_v1",
+        endpoint: "/v1/ai-agent/project-context-attachments/read",
+      },
+    });
+    expect(requestedUrls).toEqual(["/v1/ai-agent/tools"]);
+  });
+
+  it("forwards project context attachment read after capability confirmation", async () => {
+    const requested: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        requested.push({ method: request.method, url: request.url });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              tools: [
+                {
+                  toolId: "granoflow_project_context_attachments_v1",
+                  enabled: true,
+                  capabilities: {
+                    fullReadRequiresExplicitIntent: true,
+                    freshnessCheck: true,
+                    incrementalReconcile: true,
+                    consistencySafety: {
+                      rulesAndWordingConflicts: "proposal_required",
+                      secretOrPrivacyRisk: "fail_closed",
+                    },
+                  },
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      if (request.url === "/v1/ai-agent/project-context-attachments/read") {
+        requested.push({
+          method: request.method,
+          url: request.url,
+          body: await readJsonBody(request),
+        });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              status: "fresh",
+              contentReturned: false,
+              matchedSections: ["summary"],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_project_context_attachment_read")?.({
+      projectId: "project-1",
+      attachment: "rules",
+      query: "copy",
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      data: {
+        data: {
+          status: "fresh",
+          contentReturned: false,
+        },
+      },
+    });
+    expect(requested).toEqual([
+      { method: "GET", url: "/v1/ai-agent/tools" },
+      {
+        method: "POST",
+        url: "/v1/ai-agent/project-context-attachments/read",
+        body: {
+          projectId: "project-1",
+          attachment: "rules",
+          query: "copy",
+          allowFullRead: false,
         },
       },
     ]);
