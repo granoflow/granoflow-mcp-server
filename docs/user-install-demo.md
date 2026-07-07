@@ -97,7 +97,18 @@ Expected result:
 - version returns Granoflow app version metadata
 - task list returns your current Granoflow tasks
 
-## 6. Dry-Run Write Demo
+## 6. First-Run Import Workflow
+
+After the basic connection works, ask your agent:
+
+```text
+初始化 Granoflow 并导入数据
+```
+
+Granoflow will help import data from Cursor, Codex, Hermes, or other agents into
+Granoflow.
+
+## 7. Dry-Run Write Demo
 
 Use a dry-run before any write. For example, ask the MCP client to call
 `granoflow_task_create_structured` with:
@@ -120,7 +131,7 @@ Expected result:
 
 The dry-run preview should not create a real task.
 
-## 7. Memory-Style Demo
+## 8. Memory-Style Demo
 
 After the basic connection works, try asking your MCP client:
 
@@ -139,7 +150,7 @@ app. Agents can use existing tasks, task reviews, review cards, projects,
 milestones, and periodic reviews as evidence, but this phase does not provide
 semantic search across all historical discussion.
 
-## 8. Agent Completion Workflow Demo
+## 9. Agent Completion Workflow Demo
 
 Use this demo after you have at least one real or test task in Granoflow. Ask
 your MCP client:

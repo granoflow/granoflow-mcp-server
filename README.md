@@ -71,6 +71,24 @@ task completion, daily review drafting, mood and efficiency note suggestions,
 review-card drafting, long-term work memory retrieval, and user-feedback
 handling conventions.
 
+Agents can use the bundled
+[Granoflow First-Run Import skill](skills/granoflow-first-run-import/SKILL.md)
+for onboarding imports from Cursor, Codex, Hermes, or other agents.
+
+## Workflow Examples
+
+After installing Granoflow MCP, ask your agent:
+
+```text
+初始化 Granoflow 并导入数据
+```
+
+Granoflow will help import data from Cursor, Codex, Hermes, or other agents into
+Granoflow.
+
+More workflows will be added to this catalog as the Granoflow MCP workflow layer
+grows.
+
 ## Long-Term Work Memory
 
 Granoflow MCP starts with tasks and reviews, but its workflow value is broader
@@ -89,6 +107,11 @@ Current memory-style lookup is evidence-bound and depends on what is already in
 Granoflow. It does not imply semantic search across all historical discussion.
 Dedicated memory search tools can come later when the Granoflow app and Local
 HTTP API expose real memory search.
+
+Project and milestone descriptions can also act as a living context map for
+agents. Keep project descriptions current with the global state, keep active
+milestone descriptions current with the current phase, and treat archived
+milestone descriptions as final snapshots for ordinary MCP workflows.
 
 Good fit:
 
@@ -136,6 +159,15 @@ rules for when to write task reviews, when to create cards, how to handle
 pronunciation fields, and when to fall back to plain `front` / `back` card
 content.
 
+The bundled workflow also includes a daily unfinished-task triage mode. When the
+user asks an agent to inspect all current pending tasks, the agent should write
+an analysis document first, classify which tasks are safe for AI, blocked on
+authorization, blocked on secrets/login, user-only, obsolete, already done, or
+conflicting, then wait for confirmation before executing. Executable work should
+get a plan document and adversarial review pass. User-only blockers should be
+preserved as Granoflow task nodes, reminders, follow-up tasks, and sync attempts
+when the running app exposes the required tools.
+
 ## Agent Completion Workflow
 
 Granoflow MCP is designed to be part of an agent's end-of-task routine. When an
@@ -164,14 +196,10 @@ language term, person, organization, place, engineering convention, security
 principle, or general knowledge. Professional terms introduced by the agent can
 become cards when they matter to future work.
 
-When a card needs pronunciation, phonetic spelling, or translation, the agent
-should first call `granoflow_ai_agent_tools`. If the running Granoflow app
-advertises `review_card_draft_note_fields_v1`, `reviewCardDrafts` may include
-structured `noteFields` plus `frontLayout` and `backLayout`. `text_to_speech`
-fields may include `ttsLanguageCode`, so the app can use system TTS with the
-right language. If the capability is absent, unknown, or unreachable, agents
-should omit those structured fields and place the phonetic, translation, and
-pronunciation hints directly in `front` and `back`.
+The bundled workflow skill contains the detailed authoring rules for compact
+note-like cards, experience cards, language-learning cards, source preservation,
+internal self-review, image-assisted cards, pronunciation fields, and fallback
+behavior when enhanced note fields are not advertised by the running app.
 
 Minimal enhanced card example:
 
@@ -236,6 +264,8 @@ npm run release:preflight
 Initial tools:
 
 - `granoflow_setup_status`
+- `granoflow_agent_workflow_skill`
+- `granoflow_first_run_import_skill`
 - `granoflow_setup_detect_local_api`
 - `granoflow_setup_write_config`
 - `granoflow_setup_open_config`
@@ -244,10 +274,18 @@ Initial tools:
 - `granoflow_version`
 - `granoflow_capabilities`
 - `granoflow_ai_agent_tools`
+- `granoflow_context_pack`
+- `granoflow_context_steward_status`
+- `granoflow_project_context_update`
+- `granoflow_milestone_context_update`
+- `granoflow_milestone_context_archive`
+- `granoflow_task_completion_record`
+- `granoflow_review_card_record`
 - `granoflow_task_list`
 - `granoflow_task_export`
 - `granoflow_task_validate`
 - `granoflow_task_import`
+- `granoflow_task_history_mutate`
 - `granoflow_task_create`
 - `granoflow_task_create_structured`
 - `granoflow_task_update`
@@ -273,9 +311,19 @@ operations. The JSON payload tools remain available as escape hatches when the
 running app exposes newer fields before this package has first-class schemas.
 
 For historical, decision, lesson, or similar-work questions, use the bundled
-workflow skill first. It explains how to treat tasks, task reviews, review cards,
-projects, milestones, and periodic reviews as bounded long-term work memory
-without pretending there is a dedicated semantic search endpoint.
+workflow skill first. When the running app advertises `context_pack_v1`, prefer
+`granoflow_context_pack` for bounded work-memory retrieval. If that capability
+is unavailable, fall back to task list/export and review tools as described by
+the workflow skill.
+
+For project-level or milestone-level context upkeep, prefer the focused context
+stewardship tools over generic resource updates.
+`granoflow_project_context_update` updates only the project description,
+`granoflow_milestone_context_update` updates only active milestone descriptions
+and fails closed for archived milestones, and
+`granoflow_milestone_context_archive` previews the archive closure: final
+milestone state plus parent project description update. Real archive writes fail
+closed until the running app exposes a safe app-owned milestone archive API.
 
 Write tools default to dry-run behavior. Ask the tool to write only after you
 have reviewed the preview or the user has explicitly requested a write.

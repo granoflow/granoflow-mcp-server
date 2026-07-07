@@ -4,10 +4,11 @@ Read this reference before answering questions about historical decisions,
 lessons, reflections, similar past work, or why something was done.
 
 Granoflow MCP connects MCP-capable AI agents to a local task, review, and
-long-term work memory layer. In the current MCP server, memory-style retrieval
-uses existing Granoflow tasks, task reviews, review cards, projects, milestones,
-and periodic reviews. It is bounded, evidence-based retrieval, not semantic
-search across all historical discussion.
+long-term work memory layer. When the running app advertises `context_pack_v1`,
+memory-style retrieval should start with `granoflow_context_pack`. When that
+capability is unavailable, fall back to existing Granoflow tasks, task reviews,
+review cards, projects, milestones, and periodic reviews. This is bounded,
+evidence-based retrieval, not semantic search across all historical discussion.
 
 ## Memory Intent Detection
 
@@ -36,18 +37,42 @@ past work.
 
 Prefer existing Granoflow evidence in this order:
 
-1. Use `granoflow_task_list` to identify likely relevant tasks. Narrow by the
+1. Call `granoflow_ai_agent_tools` and check for `context_pack_v1`.
+2. If available, use `granoflow_context_pack` with the narrowest known scope,
+   repo, task id, project id, and query. Treat returned tasks, reviews, cards,
+   project descriptions, milestone descriptions, `matchSignals`,
+   `emptyReasons`, and `unavailableReasons` as evidence, not as agent
+   recommendations.
+3. If context packs are unavailable, use `granoflow_task_list` to identify
+   likely relevant tasks. Narrow by the
    user's keyword, project, milestone, status, date clue, or named artifact when
    available.
-2. Use `granoflow_task_export` for a small set of likely relevant tasks.
-3. Inspect exported `taskReview`, review-card drafts, project context,
+4. Use `granoflow_task_export` for a small set of likely relevant tasks.
+5. Inspect exported `taskReview`, review-card drafts, project context,
    milestone context, completion timing, and task description.
-4. Use `granoflow_review_day_show` when the user provides a date or when task
+6. Use `granoflow_review_day_show` when the user provides a date or when task
    dates clearly point to a daily review worth checking.
-5. Use project and milestone list/resolve tools when the question is scoped to a
+7. Use project and milestone list/resolve tools when the question is scoped to a
    project, milestone, roadmap, or release.
-6. Ask the user for a narrower keyword, date range, project, or candidate task
+8. Ask the user for a narrower keyword, date range, project, or candidate task
    when the available result set is too broad.
+
+## Project And Milestone Descriptions
+
+Treat project and active milestone descriptions as living context when they are
+present in context packs or resource results.
+
+- Project descriptions summarize the current global map for a project.
+- Active milestone descriptions summarize the current phase.
+- Archived milestone descriptions are final snapshots for ordinary MCP
+  workflow; do not update them through generic MCP milestone-description tools.
+- When closing or archiving a milestone, preview the archive context closure:
+  final milestone state plus the parent project description update.
+
+If the current work changes project state, API/tool contracts, release status,
+documentation truth, blockers, or next expected work, update the relevant
+project or active milestone description during closeout when MCP tools are
+available. If MCP is unavailable, report that context upkeep was skipped.
 
 ## Bounded Retrieval
 
@@ -59,8 +84,8 @@ When the task list is large or ambiguous:
 - prefer a small set of likely related tasks over broad local data sweeps;
 - stop and report uncertainty when existing tools cannot support the requested
   historical lookup;
-- explain that dedicated memory search requires app/API support and is not
-  available in this phase.
+- explain whether context packs are unavailable, empty, or too broad for the
+  current request.
 
 ## Decision And Lesson Extraction
 

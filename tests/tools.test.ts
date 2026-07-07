@@ -32,6 +32,15 @@ async function startServer(
   return address.port;
 }
 
+async function readJsonBody(request: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of request) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  const text = Buffer.concat(chunks).toString("utf8");
+  return text.trim() ? JSON.parse(text) : null;
+}
+
 function parseToolText(result: unknown): unknown {
   const content = (result as { content: Array<{ text: string }> }).content;
   return JSON.parse(content[0].text);
@@ -102,11 +111,20 @@ describe("MCP tool registration", () => {
       expect.arrayContaining([
         "granoflow_setup_status",
         "granoflow_agent_workflow_skill",
+        "granoflow_first_run_import_skill",
         "granoflow_setup_detect_local_api",
         "granoflow_setup_write_config",
         "granoflow_setup_open_config",
         "granoflow_setup_open_app",
         "granoflow_version",
+        "granoflow_context_pack",
+        "granoflow_memory_batch_preview",
+        "granoflow_context_steward_status",
+        "granoflow_project_context_update",
+        "granoflow_milestone_context_update",
+        "granoflow_milestone_context_archive",
+        "granoflow_task_completion_record",
+        "granoflow_review_card_record",
         "granoflow_task_create_structured",
         "granoflow_task_update",
         "granoflow_task_update_structured",
@@ -147,6 +165,29 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("similar");
   });
 
+  it("exposes the bundled first-run import workflow skill", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_first_run_import_skill")?.({});
+    const parsed = parseToolText(result);
+
+    expect(parsed).toMatchObject({
+      ok: true,
+      code: "ok",
+      data: {
+        path: "skills/granoflow-first-run-import/SKILL.md",
+        skill: expect.stringContaining("初始化 Granoflow 并导入数据"),
+      },
+    });
+    const serialized = JSON.stringify(parsed);
+    expect(serialized).toContain("Cursor");
+    expect(serialized).toContain("Codex");
+    expect(serialized).toContain("Hermes");
+    expect(serialized).toContain("Import Preview");
+    expect(serialized).toContain("bounded batches");
+    expect(serialized).toContain("hidden chat histories");
+  });
+
   it("documents the long-term work memory reference contract", () => {
     const reference = readFileSync(
       "skills/granoflow-agent-workflow/references/long-term-work-memory.md",
@@ -165,6 +206,14 @@ describe("MCP tool registration", () => {
     const { descriptions } = collectHandlers();
 
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("long-term work memory");
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain(
+      "granoflow_first_run_import_skill",
+    );
+    expect(descriptions.get("granoflow_first_run_import_skill")).toContain(
+      "初始化 Granoflow 并导入数据",
+    );
+    expect(descriptions.get("granoflow_first_run_import_skill")).toContain("Cursor");
+    expect(descriptions.get("granoflow_first_run_import_skill")).toContain("monthly milestones");
     expect(descriptions.get("granoflow_task_export")).toContain("reusable lessons");
     expect(descriptions.get("granoflow_ai_agent_tools")).toContain("memory-style questions");
   });
@@ -378,6 +427,859 @@ describe("MCP tool registration", () => {
       },
     });
     expect(requestedUrls).toEqual(["/v1/ai-agent/tools"]);
+  });
+
+  it("previews historical task mutations through the dedicated AI-agent API", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_history_mutate")?.({
+      source: { kind: "test", summary: "Backfill historical task." },
+      mutations: [
+        {
+          clientMutationId: "mutation-1",
+          op: "create",
+          fields: {
+            title: "Historical import",
+            createdAt: "2026-07-01T09:00:00.000",
+            startedAt: "2026-06-30T10:00:00.000",
+          },
+          reason: "Import existing work history.",
+        },
+      ],
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        method: "POST",
+        path: "/v1/ai-agent/tasks/historical-mutations",
+        body: {
+          dryRun: true,
+          source: { kind: "test", summary: "Backfill historical task." },
+          mutations: [
+            expect.objectContaining({
+              clientMutationId: "mutation-1",
+              op: "create",
+              fields: expect.objectContaining({
+                createdAt: "2026-07-01T09:00:00.000",
+                startedAt: "2026-06-30T10:00:00.000",
+              }),
+            }),
+          ],
+        },
+      },
+    });
+  });
+
+  it("previews context-pack requests through the dedicated AI-agent API", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_context_pack")?.({
+      scope: "repo",
+      repo: "granoflow/mcp-server",
+      query: "Fix flaky CI",
+      limit: 8,
+      client: "codex",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        method: "POST",
+        path: "/v1/ai-agent/context-pack",
+        body: {
+          scope: "repo",
+          repo: "granoflow/mcp-server",
+          query: "Fix flaky CI",
+          limit: 8,
+          client: "codex",
+        },
+      },
+    });
+  });
+
+  it("previews memory batch preview requests through the dedicated AI-agent API", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_memory_batch_preview")?.({
+      source: { client: "codex", threadId: "thread-1" },
+      target: { projectId: "project-1", milestoneId: "milestone-1" },
+      items: [
+        {
+          clientItemId: "item-1",
+          kind: "task_completion",
+          title: "Add batch memory preview",
+          summary: "Preview before writing.",
+          completedAt: "2026-07-07T10:00:00.000Z",
+        },
+      ],
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        method: "POST",
+        path: "/v1/ai-agent/memory-batches/preview",
+        body: {
+          source: { client: "codex", threadId: "thread-1" },
+          target: { projectId: "project-1", milestoneId: "milestone-1" },
+          dryRun: true,
+          items: [
+            expect.objectContaining({
+              clientItemId: "item-1",
+              title: "Add batch memory preview",
+            }),
+          ],
+        },
+      },
+    });
+  });
+
+  it("previews project context description updates without extra fields", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_project_context_update")?.({
+      projectId: "project-1",
+      description: "Current state: Granoflow MCP context steward is active.",
+      evidenceSummary: "Implemented context steward plan.",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        method: "PATCH",
+        path: "/v1/projects/project-1",
+        body: {
+          description: "Current state: Granoflow MCP context steward is active.",
+        },
+        contextSteward: {
+          target: "project",
+          evidenceSummary: "Implemented context steward plan.",
+          descriptionPolicy: "living_context",
+        },
+      },
+    });
+  });
+
+  it("previews active milestone context updates after resolving milestone state", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/milestones") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              items: [
+                {
+                  id: "milestone-1",
+                  title: "Context steward",
+                  status: "doing",
+                  projectId: "project-1",
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_milestone_context_update")?.({
+      milestoneId: "milestone-1",
+      projectId: "project-1",
+      description: "Current phase: implementing context steward.",
+      evidenceSummary: "Milestone remains active.",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        method: "PATCH",
+        path: "/v1/milestones/milestone-1",
+        body: {
+          projectId: "project-1",
+          description: "Current phase: implementing context steward.",
+        },
+        contextSteward: {
+          target: "active_milestone",
+          descriptionPolicy: "living_context",
+        },
+      },
+    });
+    expect(requestedUrls).toEqual(["/v1/milestones"]);
+  });
+
+  it("blocks ordinary MCP milestone description updates when milestone is archived", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/milestones") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              items: [
+                {
+                  id: "milestone-1",
+                  title: "Archived milestone",
+                  status: "archived",
+                  projectId: "project-1",
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 500;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const focused = await handlers.get("granoflow_milestone_context_update")?.({
+      milestoneId: "milestone-1",
+      description: "Should not be written.",
+      evidenceSummary: "Attempted update.",
+      dryRun: false,
+    });
+    const generic = await handlers.get("granoflow_milestone_update")?.({
+      milestoneId: "milestone-1",
+      description: "Should not be written.",
+      dryRun: false,
+    });
+
+    expect(parseToolText(focused)).toMatchObject({
+      ok: false,
+      code: "archived_milestone_context_locked_for_mcp",
+    });
+    expect(parseToolText(generic)).toMatchObject({
+      ok: false,
+      code: "archived_milestone_context_locked_for_mcp",
+    });
+  });
+
+  it("previews milestone archive context closure with parent project update", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/milestones") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              items: [
+                {
+                  id: "milestone-1",
+                  title: "Context steward",
+                  status: "doing",
+                  projectId: "project-1",
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_milestone_context_archive")?.({
+      milestoneId: "milestone-1",
+      projectId: "project-1",
+      closure: {
+        finalOutcome: "Context steward shipped.",
+        verification: "Tests passed.",
+        followUpMovedTo: "Next active milestone.",
+        projectDescription: "Current state: context steward shipped.",
+      },
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      code: "dry_run",
+      data: {
+        previewMode: "context_archive_closure",
+        writesPerformed: false,
+        steps: [
+          expect.objectContaining({
+            step: "finalize_milestone_context",
+            path: "/v1/milestones/milestone-1/archive",
+            appOwnedArchiveApiAvailable: false,
+          }),
+          expect.objectContaining({
+            step: "update_parent_project_context",
+            path: "/v1/projects/project-1",
+            body: {
+              description: "Current state: context steward shipped.",
+            },
+          }),
+        ],
+      },
+    });
+  });
+
+  it("fails closed for real milestone archive context closure until app archive API exists", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/milestones") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              items: [
+                {
+                  id: "milestone-1",
+                  title: "Context steward",
+                  status: "doing",
+                  projectId: "project-1",
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 500;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_milestone_context_archive")?.({
+      milestoneId: "milestone-1",
+      projectId: "project-1",
+      closure: {
+        finalOutcome: "Context steward shipped.",
+        verification: "Tests passed.",
+        followUpMovedTo: "Next active milestone.",
+        projectDescription: "Current state: context steward shipped.",
+      },
+      dryRun: false,
+      confirmArchive: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "milestone_archive_api_unavailable",
+      data: {
+        requiredCapability: "app_owned_milestone_archive_api",
+        writesPerformed: false,
+      },
+    });
+  });
+
+  it("requires memory_batch_preview_v1 before calling memory batch preview", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: { tools: [{ toolId: "granoflow_context_pack_v1", enabled: true }] },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 500;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_memory_batch_preview")?.({
+      items: [{ title: "Add batch memory preview" }],
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        requiredCapability: "memory_batch_preview_v1",
+        endpoint: "/v1/ai-agent/memory-batches/preview",
+      },
+    });
+    expect(requestedUrls).toEqual(["/v1/ai-agent/tools"]);
+  });
+
+  it("forwards memory batch preview after capability confirmation", async () => {
+    const requested: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        requested.push({ method: request.method, url: request.url });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              tools: [
+                {
+                  toolId: "granoflow_memory_batch_preview_v1",
+                  enabled: true,
+                  capabilities: {
+                    memoryBatchPreview: {
+                      capability: "memory_batch_preview_v1",
+                      maxItems: 20,
+                      writesPerformed: false,
+                    },
+                  },
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      if (request.url === "/v1/ai-agent/memory-batches/preview") {
+        requested.push({
+          method: request.method,
+          url: request.url,
+          body: await readJsonBody(request),
+        });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: { previewMode: "server_side", writesPerformed: false, items: [] },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_memory_batch_preview")?.({
+      target: { projectId: "project-1" },
+      items: [{ title: "Add batch memory preview" }],
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      data: {
+        data: {
+          previewMode: "server_side",
+          writesPerformed: false,
+        },
+      },
+    });
+    expect(requested).toEqual([
+      { method: "GET", url: "/v1/ai-agent/tools" },
+      {
+        method: "POST",
+        url: "/v1/ai-agent/memory-batches/preview",
+        body: {
+          target: { projectId: "project-1" },
+          items: [{ title: "Add batch memory preview" }],
+          dryRun: true,
+        },
+      },
+    ]);
+  });
+
+  it("requires context_pack_v1 before calling context-pack endpoints", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: { tools: [{ toolId: "single_task_ai", enabled: true }] },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 500;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_context_pack")?.({
+      scope: "repo",
+      repo: "granoflow/mcp-server",
+      query: "Fix flaky CI",
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        requiredCapability: "context_pack_v1",
+        endpoint: "/v1/ai-agent/context-pack",
+      },
+    });
+    expect(requestedUrls).toEqual(["/v1/ai-agent/tools"]);
+  });
+
+  it("forwards context-pack requests after capability confirmation", async () => {
+    const requested: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        requested.push({ method: request.method, url: request.url });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              tools: [
+                {
+                  toolId: "granoflow_context_pack_v1",
+                  enabled: true,
+                  capabilities: {
+                    contextPack: {
+                      capability: "context_pack_v1",
+                      matchSignals: true,
+                      recommendations: false,
+                      embeddingScores: false,
+                    },
+                  },
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      if (request.url === "/v1/ai-agent/context-pack") {
+        requested.push({
+          method: request.method,
+          url: request.url,
+          body: await readJsonBody(request),
+        });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            code: "ok",
+            data: { model: "granoflow_task_review_card_context_v1", tasks: [] },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_context_pack")?.({
+      scope: "repo",
+      repo: "granoflow/mcp-server",
+      query: "Fix flaky CI",
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      data: {
+        model: "granoflow_task_review_card_context_v1",
+        tasks: [],
+      },
+    });
+    expect(requested).toEqual([
+      { method: "GET", url: "/v1/ai-agent/tools" },
+      {
+        method: "POST",
+        url: "/v1/ai-agent/context-pack",
+        body: {
+          scope: "repo",
+          repo: "granoflow/mcp-server",
+          query: "Fix flaky CI",
+          limit: 12,
+          client: "mcp",
+        },
+      },
+    ]);
+  });
+
+  it("previews controlled work-memory write endpoints without writing", async () => {
+    const { handlers } = collectHandlers();
+
+    const taskResult = await handlers.get("granoflow_task_completion_record")?.({
+      repo: "granoflow/mcp-server",
+      title: "Fix flaky CI",
+      summary: "Fixed cache race.",
+      outcome: "success",
+      decisions: ["Use isolated cache."],
+      dryRun: true,
+    });
+    const cardResult = await handlers.get("granoflow_review_card_record")?.({
+      title: "CI cache race",
+      problem: "Shared cache caused flaky CI.",
+      solution: "Use isolated cache.",
+      tags: ["ci"],
+      dryRun: true,
+    });
+
+    expect(parseToolText(taskResult)).toMatchObject({
+      code: "dry_run",
+      data: { path: "/v1/ai-agent/task-completions" },
+    });
+    expect(parseToolText(cardResult)).toMatchObject({
+      code: "dry_run",
+      data: { path: "/v1/ai-agent/review-cards" },
+    });
+  });
+
+  it("forwards controlled work-memory write endpoints after capability confirmation", async () => {
+    const requested: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        requested.push({ method: request.method, url: request.url });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              tools: [
+                {
+                  toolId: "granoflow_context_pack_v1",
+                  enabled: true,
+                  capabilities: {
+                    contextPack: {
+                      capability: "context_pack_v1",
+                      matchSignals: true,
+                      recommendations: false,
+                      embeddingScores: false,
+                    },
+                    controlledWrites: {
+                      taskCompletion: true,
+                      reviewCard: "controlled_import_or_fail_closed",
+                    },
+                  },
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      if (
+        request.url === "/v1/ai-agent/task-completions" ||
+        request.url === "/v1/ai-agent/review-cards"
+      ) {
+        requested.push({
+          method: request.method,
+          url: request.url,
+          body: await readJsonBody(request),
+        });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: { status: "forwarded" },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    await handlers.get("granoflow_task_completion_record")?.({
+      repo: "granoflow/mcp-server",
+      title: "Fix flaky CI",
+      summary: "Fixed cache race.",
+      outcome: "success",
+      decisions: ["Use isolated cache."],
+      source: { taskId: "task-1", threadId: "thread-1" },
+      dryRun: false,
+    });
+    await handlers.get("granoflow_review_card_record")?.({
+      title: "CI cache race",
+      problem: "Shared cache caused flaky CI.",
+      solution: "Use isolated cache.",
+      tags: ["ci"],
+      source: { taskId: "task-1" },
+      dryRun: false,
+    });
+
+    expect(requested).toEqual([
+      { method: "GET", url: "/v1/ai-agent/tools" },
+      {
+        method: "POST",
+        url: "/v1/ai-agent/task-completions",
+        body: {
+          repo: "granoflow/mcp-server",
+          title: "Fix flaky CI",
+          summary: "Fixed cache race.",
+          decisions: ["Use isolated cache."],
+          outcome: "success",
+          client: "mcp",
+          source: { taskId: "task-1", threadId: "thread-1" },
+        },
+      },
+      { method: "GET", url: "/v1/ai-agent/tools" },
+      {
+        method: "POST",
+        url: "/v1/ai-agent/review-cards",
+        body: {
+          title: "CI cache race",
+          problem: "Shared cache caused flaky CI.",
+          solution: "Use isolated cache.",
+          tags: ["ci"],
+          client: "mcp",
+          source: { taskId: "task-1" },
+        },
+      },
+    ]);
+  });
+
+  it("requires the historical task mutation capability before writing", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              tools: [{ toolId: "granoflow_task_history_mutate", enabled: true }],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 500;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_history_mutate")?.({
+      mutations: [
+        {
+          clientMutationId: "mutation-1",
+          op: "softDelete",
+          taskId: "task-1",
+          reason: "Remove duplicate historical import.",
+        },
+      ],
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        requiredCapability: "historical_task_mutations_v1",
+        endpoint: "/v1/ai-agent/tasks/historical-mutations",
+      },
+    });
+    expect(requestedUrls).toEqual(["/v1/ai-agent/tools"]);
+  });
+
+  it("writes historical task mutations only after capability confirmation", async () => {
+    const requested: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        requested.push({ method: request.method, url: request.url });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              tools: [
+                {
+                  toolId: "granoflow_task_history_mutate",
+                  enabled: true,
+                  capabilities: {
+                    historicalTaskMutations: {
+                      enabled: true,
+                      capability: "historical_task_mutations_v1",
+                      preservesHistoricalTimes: true,
+                    },
+                  },
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      if (request.url === "/v1/ai-agent/tasks/historical-mutations") {
+        requested.push({
+          method: request.method,
+          url: request.url,
+          body: await readJsonBody(request),
+        });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            code: "historical_task_mutations_applied",
+            data: { results: [{ clientMutationId: "mutation-1", ok: true }] },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_history_mutate")?.({
+      source: { kind: "test" },
+      mutations: [
+        {
+          clientMutationId: "mutation-1",
+          op: "update",
+          taskId: "task-1",
+          fields: { startedAt: "2026-06-30T10:00:00.000" },
+          reason: "Restore true start time.",
+        },
+      ],
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      code: "historical_task_mutations_applied",
+      data: { results: [{ clientMutationId: "mutation-1", ok: true }] },
+    });
+    expect(requested).toEqual([
+      { method: "GET", url: "/v1/ai-agent/tools" },
+      {
+        method: "POST",
+        url: "/v1/ai-agent/tasks/historical-mutations",
+        body: {
+          dryRun: false,
+          source: { kind: "test" },
+          mutations: [
+            {
+              clientMutationId: "mutation-1",
+              op: "update",
+              taskId: "task-1",
+              fields: { startedAt: "2026-06-30T10:00:00.000" },
+              reason: "Restore true start time.",
+            },
+          ],
+        },
+      },
+    ]);
   });
 
   it("resolves task candidates without writing data", async () => {

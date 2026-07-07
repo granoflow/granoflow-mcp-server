@@ -19,6 +19,41 @@ import {
 const jsonInputSchema = z
   .record(z.string(), z.unknown())
   .describe("JSON object sent to the Granoflow Local HTTP API.");
+const historicalTaskMutationSchema = z.object({
+  clientMutationId: z.string().min(1),
+  op: z.enum(["create", "update", "softDelete"]),
+  taskId: z.string().min(1).optional(),
+  fields: z.record(z.string(), z.unknown()).optional(),
+  reason: z.string().min(1).optional(),
+});
+const memoryBatchItemSchema = z.object({
+  clientItemId: z.string().min(1).optional(),
+  kind: z
+    .enum(["task_completion", "task_review", "review_card_candidate"])
+    .default("task_completion"),
+  title: z.string().min(1),
+  summary: z.string().min(1).optional(),
+  completedAt: z.string().min(1).optional(),
+  reviewCardCandidates: z.array(z.record(z.string(), z.unknown())).optional(),
+});
+const contextPackScopeSchema = z.enum(["task", "project", "repo"]);
+const contextPackSourceSchema = z.object({
+  taskId: z.string().min(1).optional(),
+  threadId: z.string().min(1).optional(),
+  commit: z.string().min(1).optional(),
+});
+const contextStewardEvidenceSchema = z
+  .string()
+  .min(1)
+  .describe("Short evidence summary for why this context description changed.");
+const milestoneArchiveClosureSchema = z.object({
+  finalOutcome: z.string().min(1),
+  verification: z.string().min(1),
+  followUpMovedTo: z.string().min(1),
+  milestoneDescription: z.string().min(1).optional(),
+  completionSummary: z.string().min(1).optional(),
+  projectDescription: z.string().min(1),
+});
 const resourceStatusSchema = z.string().min(1).optional();
 const resolveMatchModeSchema = z.enum(["exact", "contains"]).default("exact");
 const reviewCardDraftNoteFieldSchema = z.object({
@@ -69,6 +104,10 @@ const AGENT_WORKFLOW_SKILL_URL = new URL(
   "../skills/granoflow-agent-workflow/SKILL.md",
   import.meta.url,
 );
+const FIRST_RUN_IMPORT_SKILL_URL = new URL(
+  "../skills/granoflow-first-run-import/SKILL.md",
+  import.meta.url,
+);
 
 function compactRecord(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
@@ -86,6 +125,10 @@ function jsonTextResult(value: unknown) {
 
 function readAgentWorkflowSkill(): string {
   return readFileSync(AGENT_WORKFLOW_SKILL_URL, "utf8");
+}
+
+function readFirstRunImportSkill(): string {
+  return readFileSync(FIRST_RUN_IMPORT_SKILL_URL, "utf8");
 }
 
 function periodicReviewHasLog(value: unknown): boolean {
@@ -287,6 +330,419 @@ function supportsReviewCardDraftNoteFields(payload: unknown): boolean {
       reviewCards.layoutFields === true
     );
   });
+}
+
+function supportsHistoricalTaskMutations(payload: unknown): boolean {
+  const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
+  const data = isObject(root) && isObject(root.data) ? root.data : root;
+  const tools = isObject(data) && Array.isArray(data.tools) ? data.tools : [];
+  return tools.some((tool) => {
+    if (
+      !isObject(tool) ||
+      tool.toolId !== "granoflow_task_history_mutate" ||
+      tool.enabled !== true
+    ) {
+      return false;
+    }
+    const capabilities = isObject(tool.capabilities) ? tool.capabilities : {};
+    const mutations = isObject(capabilities.historicalTaskMutations)
+      ? capabilities.historicalTaskMutations
+      : {};
+    return (
+      mutations.enabled === true &&
+      mutations.capability === "historical_task_mutations_v1" &&
+      mutations.preservesHistoricalTimes === true
+    );
+  });
+}
+
+function supportsContextPack(payload: unknown): boolean {
+  const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
+  const data = isObject(root) && isObject(root.data) ? root.data : root;
+  const tools = isObject(data) && Array.isArray(data.tools) ? data.tools : [];
+  return tools.some((tool) => {
+    if (!isObject(tool) || tool.toolId !== "granoflow_context_pack_v1" || tool.enabled !== true) {
+      return false;
+    }
+    const capabilities = isObject(tool.capabilities) ? tool.capabilities : {};
+    const contextPack = isObject(capabilities.contextPack) ? capabilities.contextPack : {};
+    return (
+      contextPack.capability === "context_pack_v1" &&
+      contextPack.matchSignals === true &&
+      contextPack.recommendations === false &&
+      contextPack.embeddingScores === false
+    );
+  });
+}
+
+function supportsMemoryBatchPreview(payload: unknown): boolean {
+  const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
+  const data = isObject(root) && isObject(root.data) ? root.data : root;
+  const tools = isObject(data) && Array.isArray(data.tools) ? data.tools : [];
+  return tools.some((tool) => {
+    if (
+      !isObject(tool) ||
+      tool.toolId !== "granoflow_memory_batch_preview_v1" ||
+      tool.enabled !== true
+    ) {
+      return false;
+    }
+    const capabilities = isObject(tool.capabilities) ? tool.capabilities : {};
+    const preview = isObject(capabilities.memoryBatchPreview)
+      ? capabilities.memoryBatchPreview
+      : {};
+    return (
+      preview.capability === "memory_batch_preview_v1" &&
+      preview.writesPerformed === false &&
+      typeof preview.maxItems === "number" &&
+      preview.maxItems >= 1
+    );
+  });
+}
+
+function supportsContextSteward(payload: unknown): boolean {
+  const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
+  const data = isObject(root) && isObject(root.data) ? root.data : root;
+  const tools = isObject(data) && Array.isArray(data.tools) ? data.tools : [];
+  return tools.some((tool) => {
+    if (
+      !isObject(tool) ||
+      tool.toolId !== "granoflow_context_steward_v1" ||
+      tool.enabled !== true
+    ) {
+      return false;
+    }
+    const capabilities = isObject(tool.capabilities) ? tool.capabilities : {};
+    return (
+      capabilities.projectDescriptionLivingContext === true &&
+      capabilities.activeMilestoneDescriptionLivingContext === true &&
+      capabilities.archivedMilestoneOrdinaryUpdates === false &&
+      capabilities.archiveFinalSummaryRequired === true
+    );
+  });
+}
+
+async function requestPreviewWithMeta(options: ApiRequestOptions, meta: Record<string, unknown>) {
+  const preview = await requestGranoflowApi({ ...options, dryRun: true });
+  const data = isObject(preview.data) ? preview.data : {};
+  return {
+    ...preview,
+    data: {
+      ...data,
+      ...meta,
+    },
+  };
+}
+
+async function contextPackApiTool(options: ApiRequestOptions) {
+  if (options.dryRun) {
+    return apiTool(options);
+  }
+  const toolsResult = await requestGranoflowApi({ path: "/v1/ai-agent/tools" });
+  if (!toolsResult.ok || !supportsContextPack(toolsResult)) {
+    return jsonTextResult({
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        requiredCapability: "context_pack_v1",
+        endpoint: options.path,
+      },
+      error: {
+        message: "The running Granoflow app does not advertise context_pack_v1.",
+      },
+      runtime: toolsResult.runtime,
+    });
+  }
+  return apiTool(options);
+}
+
+async function memoryBatchPreviewApiTool(options: ApiRequestOptions) {
+  if (options.dryRun) {
+    return apiTool(options);
+  }
+  const toolsResult = await requestGranoflowApi({ path: "/v1/ai-agent/tools" });
+  if (!toolsResult.ok || !supportsMemoryBatchPreview(toolsResult)) {
+    return jsonTextResult({
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        requiredCapability: "memory_batch_preview_v1",
+        endpoint: options.path,
+      },
+      error: {
+        message: "The running Granoflow app does not advertise memory_batch_preview_v1.",
+      },
+      runtime: toolsResult.runtime,
+    });
+  }
+  return apiTool(options);
+}
+
+async function mutateTaskHistory(input: {
+  dryRun?: boolean;
+  source?: Record<string, unknown>;
+  mutations?: z.infer<typeof historicalTaskMutationSchema>[];
+}) {
+  const body = {
+    dryRun: input.dryRun !== false,
+    source: input.source ?? { kind: "mcp_tool" },
+    mutations: input.mutations ?? [],
+  };
+  if (body.dryRun) {
+    return requestGranoflowApi({
+      method: "POST",
+      path: "/v1/ai-agent/tasks/historical-mutations",
+      body,
+      dryRun: true,
+    });
+  }
+  const toolsResult = await requestGranoflowApi({ path: "/v1/ai-agent/tools" });
+  if (!toolsResult.ok || !supportsHistoricalTaskMutations(toolsResult)) {
+    return {
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        requiredCapability: "historical_task_mutations_v1",
+        endpoint: "/v1/ai-agent/tasks/historical-mutations",
+      },
+      error: {
+        message: "The running Granoflow app does not advertise historical_task_mutations_v1.",
+      },
+      runtime: toolsResult.runtime,
+    };
+  }
+  return requestGranoflowApi({
+    method: "POST",
+    path: "/v1/ai-agent/tasks/historical-mutations",
+    body,
+  });
+}
+
+async function resolveResourceById(kind: ResourceKind, id: string) {
+  const result = await requestGranoflowApi({ path: listPathFor(kind) });
+  if (!result.ok) {
+    return { result, resource: null };
+  }
+  return {
+    result,
+    resource: extractItems(result).find((item) => item.id === id) ?? null,
+  };
+}
+
+function isArchivedResource(resource: GranoflowRecord): boolean {
+  return resource.status === "archived";
+}
+
+async function contextStewardStatus(input: { projectId?: string }) {
+  const toolsResult = await requestGranoflowApi({ path: "/v1/ai-agent/tools" });
+  const projectsResult = await requestGranoflowApi({ path: "/v1/projects" });
+  const milestonesResult = await requestGranoflowApi({ path: "/v1/milestones" });
+  const projects = projectsResult.ok ? extractItems(projectsResult) : [];
+  const milestones = milestonesResult.ok
+    ? extractItems(milestonesResult).filter(
+        (milestone) => !input.projectId || milestone.projectId === input.projectId,
+      )
+    : [];
+  return {
+    ok: toolsResult.ok && projectsResult.ok && milestonesResult.ok,
+    code: toolsResult.ok && projectsResult.ok && milestonesResult.ok ? "ok" : "partial",
+    data: {
+      contextStewardAdvertised: toolsResult.ok && supportsContextSteward(toolsResult),
+      archivedMilestoneOrdinaryUpdates: false,
+      projectId: input.projectId,
+      projects: projects
+        .filter((project) => !input.projectId || project.id === input.projectId)
+        .map(compactResource),
+      activeMilestones: milestones
+        .filter((milestone) => !isArchivedResource(milestone))
+        .map(compactResource),
+      archivedMilestones: milestones.filter(isArchivedResource).map(compactResource),
+      policy: {
+        projectDescription: "living_context",
+        activeMilestoneDescription: "living_context",
+        archivedMilestoneDescription: "final_snapshot_for_ordinary_mcp_workflow",
+      },
+    },
+    runtime: toolsResult.runtime,
+  };
+}
+
+async function projectContextUpdate(input: {
+  projectId: string;
+  description: string;
+  evidenceSummary: string;
+  dryRun?: boolean;
+}) {
+  const body = { description: input.description };
+  const options = {
+    method: "PATCH" as const,
+    path: `/v1/projects/${input.projectId}`,
+    body,
+  };
+  if (input.dryRun !== false) {
+    return requestPreviewWithMeta(options, {
+      contextSteward: {
+        target: "project",
+        evidenceSummary: input.evidenceSummary,
+        descriptionPolicy: "living_context",
+      },
+    });
+  }
+  return requestGranoflowApi(options);
+}
+
+async function milestoneContextUpdate(input: {
+  milestoneId: string;
+  projectId?: string;
+  description: string;
+  evidenceSummary: string;
+  dryRun?: boolean;
+}) {
+  const { result, resource } = await resolveResourceById("milestone", input.milestoneId);
+  if (!result.ok) {
+    return result;
+  }
+  if (!resource) {
+    return {
+      ok: false,
+      code: "milestone_not_found",
+      error: { message: "Granoflow milestone was not found." },
+      runtime: result.runtime,
+    };
+  }
+  if (isArchivedResource(resource)) {
+    return {
+      ok: false,
+      code: "archived_milestone_context_locked_for_mcp",
+      data: {
+        milestone: compactResource(resource),
+        policy: "archived_milestone_description_is_final_snapshot",
+      },
+      error: {
+        message: "Archived milestone descriptions are final snapshots for ordinary MCP workflows.",
+      },
+      runtime: result.runtime,
+    };
+  }
+
+  const body = compactRecord({
+    projectId: input.projectId,
+    description: input.description,
+  });
+  const options = {
+    method: "PATCH" as const,
+    path: `/v1/milestones/${input.milestoneId}`,
+    body,
+  };
+  if (input.dryRun !== false) {
+    return requestPreviewWithMeta(options, {
+      contextSteward: {
+        target: "active_milestone",
+        evidenceSummary: input.evidenceSummary,
+        descriptionPolicy: "living_context",
+        currentMilestone: compactResource(resource),
+      },
+    });
+  }
+  return requestGranoflowApi(options);
+}
+
+async function milestoneContextArchive(input: {
+  milestoneId: string;
+  projectId: string;
+  closure: z.infer<typeof milestoneArchiveClosureSchema>;
+  dryRun?: boolean;
+  confirmArchive?: boolean;
+}) {
+  const { result, resource } = await resolveResourceById("milestone", input.milestoneId);
+  if (!result.ok) {
+    return result;
+  }
+  if (!resource) {
+    return {
+      ok: false,
+      code: "milestone_not_found",
+      error: { message: "Granoflow milestone was not found." },
+      runtime: result.runtime,
+    };
+  }
+  if (isArchivedResource(resource)) {
+    return {
+      ok: false,
+      code: "archived_milestone_context_locked_for_mcp",
+      data: {
+        milestone: compactResource(resource),
+        policy: "archived_milestone_description_is_final_snapshot",
+      },
+      error: {
+        message: "Archived milestone descriptions are final snapshots for ordinary MCP workflows.",
+      },
+      runtime: result.runtime,
+    };
+  }
+
+  const completionSummary = input.closure.completionSummary ?? input.closure.finalOutcome;
+  const milestoneDescription =
+    input.closure.milestoneDescription ??
+    [
+      `Final outcome: ${input.closure.finalOutcome}`,
+      `Verification: ${input.closure.verification}`,
+      `Follow-up moved to: ${input.closure.followUpMovedTo}`,
+    ].join("\n");
+  const steps = [
+    {
+      step: "finalize_milestone_context",
+      method: "POST",
+      path: `/v1/milestones/${input.milestoneId}/archive`,
+      body: {
+        completionSummary,
+        description: milestoneDescription,
+      },
+      appOwnedArchiveApiAvailable: false,
+    },
+    {
+      step: "update_parent_project_context",
+      method: "PATCH",
+      path: `/v1/projects/${input.projectId}`,
+      body: {
+        description: input.closure.projectDescription,
+      },
+    },
+  ];
+
+  if (input.dryRun !== false) {
+    return {
+      ok: true,
+      code: "dry_run",
+      data: {
+        previewMode: "context_archive_closure",
+        milestone: compactResource(resource),
+        steps,
+        writesPerformed: false,
+        nextActions: [
+          "Review the final milestone state and parent project description update together.",
+          "Do not update an archived milestone through ordinary MCP workflow after archive.",
+        ],
+      },
+      runtime: result.runtime,
+    };
+  }
+
+  return {
+    ok: false,
+    code: "milestone_archive_api_unavailable",
+    data: {
+      steps,
+      requiredCapability: "app_owned_milestone_archive_api",
+      confirmArchive: input.confirmArchive === true,
+      writesPerformed: false,
+    },
+    error: {
+      message:
+        "The current Local HTTP API does not expose a safe app-owned milestone archive endpoint for MCP forwarding.",
+    },
+    runtime: result.runtime,
+  };
 }
 
 function titleMatches(title: unknown, query: string, matchMode: "exact" | "contains"): boolean {
@@ -663,7 +1119,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_agent_workflow_skill",
-    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Do not call it for unrelated venting or unrelated disagreement.",
+    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Use granoflow_first_run_import_skill for first-run import from Cursor, Codex, Hermes, or other agents. Do not call it for unrelated venting or unrelated disagreement.",
     {},
     async () =>
       jsonTextResult({
@@ -672,6 +1128,21 @@ export function registerGranoflowTools(server: {
         data: {
           path: "skills/granoflow-agent-workflow/SKILL.md",
           skill: readAgentWorkflowSkill(),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_first_run_import_skill",
+    "Read the bundled Granoflow First-Run Import skill. Call this when a user says '初始化 Granoflow 并导入数据' or asks to import data from Cursor, Codex, Hermes, or another agent into Granoflow. The workflow previews authorized source records as projects, monthly milestones, tasks, review-card candidates, and context backfills before writing.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-first-run-import/SKILL.md",
+          skill: readFirstRunImportSkill(),
         },
       }),
   );
@@ -781,6 +1252,226 @@ export function registerGranoflowTools(server: {
     async () => apiTool({ path: "/v1/ai-agent/tools" }),
   );
 
+  registerTool(
+    "granoflow_context_pack",
+    "Read a structured Granoflow work-memory context pack for the current agent task. Returns typed facts and match signals, not planning hints or recommendations.",
+    {
+      scope: contextPackScopeSchema.default("repo"),
+      repo: z.string().min(1).optional(),
+      taskId: z.string().min(1).optional(),
+      projectId: z.string().min(1).optional(),
+      query: z.string().min(1).optional(),
+      limit: z.number().int().min(1).max(25).default(12),
+      client: z.string().min(1).default("mcp"),
+      dryRun: z
+        .boolean()
+        .default(false)
+        .describe("When true, previews the request without calling the app."),
+    },
+    async ({ scope, repo, taskId, projectId, query, limit, client, dryRun }) =>
+      contextPackApiTool({
+        method: "POST",
+        path: "/v1/ai-agent/context-pack",
+        body: compactRecord({
+          scope,
+          repo,
+          taskId,
+          projectId,
+          query,
+          limit: limit ?? 12,
+          client: client ?? "mcp",
+        }),
+        dryRun: dryRun === true,
+      }),
+  );
+
+  registerTool(
+    "granoflow_memory_batch_preview",
+    "Ask the running Granoflow app to preview an AI-agent memory batch before any write. Granoflow owns project/milestone matching and duplicate signals; this MCP tool only forwards after capability checks.",
+    {
+      source: z.record(z.string(), z.unknown()).optional(),
+      target: z
+        .object({
+          projectId: z.string().min(1).optional(),
+          milestoneId: z.string().min(1).optional(),
+        })
+        .optional(),
+      items: z.array(memoryBatchItemSchema).min(1).max(20),
+      dryRun: z
+        .boolean()
+        .default(false)
+        .describe("When true, previews the HTTP request without calling the app."),
+    },
+    async ({ source, target, items, dryRun }) =>
+      memoryBatchPreviewApiTool({
+        method: "POST",
+        path: "/v1/ai-agent/memory-batches/preview",
+        body: compactRecord({
+          source: isObject(source) ? source : undefined,
+          target: isObject(target) ? target : undefined,
+          items,
+          dryRun: true,
+        }),
+        dryRun: dryRun === true,
+      }),
+  );
+
+  registerTool(
+    "granoflow_context_steward_status",
+    "Read Granoflow project and milestone context-steward state, including active milestones and the archived-milestone final-snapshot policy.",
+    {
+      projectId: z.string().min(1).optional(),
+    },
+    async ({ projectId }) =>
+      jsonTextResult(
+        await contextStewardStatus({
+          projectId: typeof projectId === "string" ? projectId : undefined,
+        }),
+      ),
+  );
+
+  registerTool(
+    "granoflow_project_context_update",
+    "Update only a Granoflow project description as living context. Defaults to dry-run and requires an evidence summary.",
+    {
+      projectId: z.string().min(1).describe("Granoflow project id."),
+      description: z.string().min(1),
+      evidenceSummary: contextStewardEvidenceSchema,
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ projectId, description, evidenceSummary, dryRun }) =>
+      jsonTextResult(
+        await projectContextUpdate({
+          projectId: String(projectId),
+          description: String(description),
+          evidenceSummary: String(evidenceSummary),
+          dryRun: dryRun !== false,
+        }),
+      ),
+  );
+
+  registerTool(
+    "granoflow_milestone_context_update",
+    "Update only an active Granoflow milestone description as living context. Fails closed for archived milestones and defaults to dry-run.",
+    {
+      milestoneId: z.string().min(1).describe("Granoflow milestone id."),
+      projectId: z.string().min(1).optional(),
+      description: z.string().min(1),
+      evidenceSummary: contextStewardEvidenceSchema,
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ milestoneId, projectId, description, evidenceSummary, dryRun }) =>
+      jsonTextResult(
+        await milestoneContextUpdate({
+          milestoneId: String(milestoneId),
+          projectId: typeof projectId === "string" ? projectId : undefined,
+          description: String(description),
+          evidenceSummary: String(evidenceSummary),
+          dryRun: dryRun !== false,
+        }),
+      ),
+  );
+
+  registerTool(
+    "granoflow_milestone_context_archive",
+    "Preview a milestone archive context closure: final milestone state plus parent project description update. Real writes fail closed until the app exposes a safe archive API.",
+    {
+      milestoneId: z.string().min(1).describe("Granoflow milestone id."),
+      projectId: z.string().min(1).describe("Parent Granoflow project id."),
+      closure: milestoneArchiveClosureSchema,
+      confirmArchive: z
+        .boolean()
+        .default(false)
+        .describe("Reserved for future safe archive writes; dry-run remains the normal mode."),
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the closure without writing."),
+    },
+    async ({ milestoneId, projectId, closure, confirmArchive, dryRun }) =>
+      jsonTextResult(
+        await milestoneContextArchive({
+          milestoneId: String(milestoneId),
+          projectId: String(projectId),
+          closure: closure as z.infer<typeof milestoneArchiveClosureSchema>,
+          confirmArchive: confirmArchive === true,
+          dryRun: dryRun !== false,
+        }),
+      ),
+  );
+
+  registerTool(
+    "granoflow_task_completion_record",
+    "Record an engineering task completion through Granoflow's controlled work-memory API and existing task write/complete paths.",
+    {
+      repo: z.string().min(1).optional(),
+      title: z.string().min(1),
+      summary: z.string().min(1),
+      decisions: z.array(z.string().min(1)).optional(),
+      outcome: z.enum(["success", "failed"]),
+      tags: z.array(z.string().min(1)).optional(),
+      client: z.string().min(1).default("mcp"),
+      source: contextPackSourceSchema.optional(),
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ repo, title, summary, decisions, outcome, tags, client, source, dryRun }) =>
+      contextPackApiTool({
+        method: "POST",
+        path: "/v1/ai-agent/task-completions",
+        body: compactRecord({
+          repo,
+          title,
+          summary,
+          decisions,
+          outcome,
+          tags,
+          client: client ?? "mcp",
+          source,
+        }),
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_review_card_record",
+    "Record a reusable review-card lesson through Granoflow's controlled work-memory API. The app may fail closed until controlled review-card import/create paths are available.",
+    {
+      title: z.string().min(1),
+      problem: z.string().min(1),
+      solution: z.string().min(1),
+      tags: z.array(z.string().min(1)).optional(),
+      client: z.string().min(1).default("mcp"),
+      source: contextPackSourceSchema.optional(),
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ title, problem, solution, tags, client, source, dryRun }) =>
+      contextPackApiTool({
+        method: "POST",
+        path: "/v1/ai-agent/review-cards",
+        body: compactRecord({
+          title,
+          problem,
+          solution,
+          tags,
+          client: client ?? "mcp",
+          source,
+        }),
+        dryRun: dryRun !== false,
+      }),
+  );
+
   registerTool("granoflow_task_list", "List tasks from Granoflow.", {}, async () =>
     apiTool({ path: "/v1/tasks" }),
   );
@@ -817,6 +1508,34 @@ export function registerGranoflowTools(server: {
         body: input,
         dryRun: dryRun !== false,
       }),
+  );
+
+  registerTool(
+    "granoflow_task_history_mutate",
+    "Create, update, or soft-delete historical Granoflow task facts through the dedicated AI-agent API. Use dryRun first; when dryRun=false, the running app must advertise historical_task_mutations_v1.",
+    {
+      source: z
+        .record(z.string(), z.unknown())
+        .optional()
+        .describe("Source metadata such as {kind, threadId, summary, startedAt, endedAt}."),
+      mutations: z.array(historicalTaskMutationSchema).max(20),
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe(
+          "When true, previews without writing. Set false only with explicit user approval.",
+        ),
+    },
+    async ({ source, mutations, dryRun }) =>
+      jsonTextResult(
+        await mutateTaskHistory({
+          source: isObject(source) ? source : undefined,
+          mutations: Array.isArray(mutations)
+            ? (mutations as z.infer<typeof historicalTaskMutationSchema>[])
+            : undefined,
+          dryRun: dryRun !== false,
+        }),
+      ),
   );
 
   registerTool(
@@ -1228,7 +1947,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_milestone_update",
-    "Update a Granoflow milestone with common structured fields. Defaults to dry-run.",
+    "Update a Granoflow milestone with common structured fields. Defaults to dry-run. Use granoflow_milestone_context_update for description upkeep; description updates fail closed for archived milestones.",
     {
       milestoneId: z.string().min(1).describe("Granoflow milestone id."),
       projectId: z.string().min(1).optional(),
@@ -1241,19 +1960,30 @@ export function registerGranoflowTools(server: {
         .default(true)
         .describe("When true, previews the request without writing."),
     },
-    async ({ milestoneId, projectId, title, description, dueAt, status, dryRun }) =>
-      apiTool({
+    async ({ milestoneId, projectId, title, description, dueAt, status, dryRun }) => {
+      if (typeof description === "string") {
+        return jsonTextResult(
+          await milestoneContextUpdate({
+            milestoneId: String(milestoneId),
+            projectId: typeof projectId === "string" ? projectId : undefined,
+            description,
+            evidenceSummary: "Generic milestone update requested a description change.",
+            dryRun: dryRun !== false,
+          }),
+        );
+      }
+      return apiTool({
         method: "PATCH",
         path: `/v1/milestones/${String(milestoneId)}`,
         body: compactRecord({
           projectId,
           title,
-          description,
           dueAt,
           status,
         }),
         dryRun: dryRun !== false,
-      }),
+      });
+    },
   );
 
   registerTool(

@@ -26,8 +26,13 @@ uploaded to the cloud.
 Use this skill when the user asks to:
 
 - work on, inspect, update, finish, close, mark done, or review a Granoflow task;
+- triage all current unfinished Granoflow tasks, decide which are actionable,
+  blocked, obsolete, already done, conflicting, or user-only, then plan and run
+  the work the agent can safely complete;
 - retrieve historical context, prior decisions, durable lessons, similar past
   work, or why something was done;
+- maintain project or milestone descriptions as current work-memory context, or
+  archive milestone context as a final snapshot;
 - pause work because user authorization, a decision, login, 2FA, a local app
   action, or missing source material is required;
 - write a task review or completion summary;
@@ -54,6 +59,45 @@ Success criteria:
 - The next action is clear: open Granoflow, enable Local HTTP API, or call a
   setup diagnostic tool.
 
+## Daily Pending Task Triage And Execution
+
+Use this section when the user asks the agent to inspect all current unfinished
+tasks, clarify what they really require, identify authorization or information
+blockers, write analysis/planning documents, adversarially review the plan, execute safe work,
+and leave user-only decisions as Granoflow task nodes and reminders.
+
+Read `references/daily-pending-task-triage.md` before applying this branch.
+
+High-level contract:
+
+1. List current unfinished tasks from the running Granoflow app and verify that
+   the app/API instance matches the user-visible surface when visibility
+   matters.
+2. Write an analysis document before execution. Classify every pending task as
+   safe for AI, needs user authorization, needs a secret or login, needs more
+   information, user-only, likely already done, not worth doing, or conflicting
+   with current requirements.
+3. Show the analysis and require user confirmation before moving into execution
+   unless the user's instruction explicitly pre-authorizes that exact step.
+4. For executable work, write a plan document, run an adversarial review pass,
+   revise the plan, then execute only the safe portion.
+5. For blockers, use the waiting-for-user-input workflow: add a current node on
+   the original task, set a 5-minute reminder, create a separate follow-up task
+   with a 10-minute reminder, tell the user to respond by adding a new explicit
+   node, and sync when available.
+6. Write completion evidence back to the document and Granoflow. Finish only
+   tasks that are actually done and verified.
+
+Success criteria:
+
+- Every unfinished task appears exactly once in the analysis ledger.
+- Authorization, login, secret, payment, destructive, external-account,
+  missing-information, and user-only blockers are visible before execution.
+- The execution plan has passed adversarial review and been revised before safe work starts.
+- Blocked tasks have durable Granoflow nodes/reminders/follow-up tasks instead
+  of chat-only asks.
+- Sync is attempted through documented Granoflow tools when available.
+
 ## Long-Term Work Memory
 
 Use this section when the user asks what happened before, why a decision was
@@ -74,6 +118,38 @@ Success criteria:
 - Private local content is summarized only as needed and never copied into
   docs, tests, snapshots, or examples.
 
+## Project And Milestone Context Stewardship
+
+Use this section when project or milestone descriptions should become the
+current context map for future agents.
+
+High-level contract:
+
+1. Read `granoflow_ai_agent_tools` and prefer context-steward tools when the
+   running app and MCP server expose them.
+2. Use `granoflow_context_steward_status` to inspect current project,
+   active milestone, archived milestone, and policy state.
+3. Use `granoflow_project_context_update` for project descriptions. Keep them
+   focused on current state, scope, decisions, risks, key docs/APIs, active
+   milestones, last verification, and next expected work.
+4. Use `granoflow_milestone_context_update` only for active milestones. Archived
+   milestone descriptions are final snapshots for ordinary MCP workflow.
+5. Use `granoflow_milestone_context_archive` to preview archive closure before
+   any write. The preview must include both final milestone state and parent
+   project description update.
+6. If MCP is unavailable, do not block unrelated user work. Report that context
+   upkeep was skipped or blocked.
+
+Success criteria:
+
+- Project descriptions remain the current global map.
+- Active milestone descriptions remain the current phase map.
+- Archived milestone descriptions are not modified through ordinary MCP
+  workflow.
+- Archive closure always considers the parent project description update.
+- Secrets, tokens, OTPs, private auth URLs, and raw local private content are
+  never written into descriptions.
+
 ## Completing Tasks
 
 When the user asks to complete, finish, close, mark done, wrap up, or otherwise
@@ -92,43 +168,17 @@ mode, evidence trail, reusable process detail, or important unresolved risk.
 Create one `reviewCardDrafts` item per durable knowledge point. Omit reviews and
 cards when they would only be an activity log.
 
-### Review Card Field Classification
-
-Create cards for durable knowledge, not only for language learning. First decide
-whether the item is worth retaining, then classify the card as the nearest
-knowledge shape: `language_learning`, `knowledge`, `person`, `organization`,
-`place`, `engineering_convention`, or `security_principle`. People, places,
-organizations, and professional terms introduced during the task can become
-knowledge cards when they matter to future work.
-
-Do not create cards that expose API tokens, secrets, private identifiers, or
-temporary log content. If the reusable point is about avoiding that exposure,
-write a `security_principle` card instead.
-
-When a card benefits from phonetic spelling, translation, or click-to-speak
-pronunciation:
-
-1. Call `granoflow_ai_agent_tools` and inspect the `single_task_ai`
-   `reviewCardDraftNoteFields` capability.
-2. If it advertises `review_card_draft_note_fields_v1`, use `noteFields` for
-   auxiliary fields such as `phonetic`, `translation`, and `pronunciation`.
-   Use `type: "text_to_speech"` plus `ttsLanguageCode` for the speakable field,
-   and include `frontLayout` / `backLayout` so the fields appear in study.
-3. Keep `front` and `back` complete even when using `noteFields`; older clients
-   and exports must still make sense without structured fields.
-4. If the capability is missing, unknown, or unreachable, do not send
-   `noteFields`, `frontLayout`, or `backLayout`. Instead, place phonetic,
-   translation, and pronunciation hints directly in `front` / `back`.
-
-If `granoflow_task_finish` returns
-`review_card_draft_note_fields_unsupported`, regenerate the card payload with
-the fallback shape above and retry only after removing the unsupported fields.
+Read `references/review-card-authoring.md` before creating review cards from a
+task. It defines card-worthiness, experience cards, language-learning cards,
+source preservation, self-review, note fields, and fallback behavior.
 
 Success criteria:
 
 - `startedAt` and `endedAt` are included when evidence supports them.
 - Empty activity logs are not written as task reviews.
 - Each review card contains exactly one durable knowledge point.
+- Review cards preserve source context when available and omit secrets,
+  credentials, private identifiers, and temporary log content.
 - Completion is verified by reading back task state when possible.
 
 ## Waiting For User Input
@@ -272,6 +322,11 @@ Success criteria:
 
 - `references/waiting-for-user-input.md`: Read when work is blocked on a
   user-only action and the agent must create reminders.
+- `references/daily-pending-task-triage.md`: Read when the user asks to review
+  all unfinished tasks, classify blockers, write analysis/plans, adversarially review the plan,
+  execute safe tasks, and preserve user-only decisions as task nodes.
+- `references/review-card-authoring.md`: Read before creating review-card
+  drafts from completed task work.
 - `references/review-drafting.md`: Read before daily, weekly, or monthly review
   drafting.
 - `references/long-term-work-memory.md`: Read before historical, decision,
