@@ -8,8 +8,20 @@ description: Use when a user asks to initialize Granoflow and import data from C
 Use this skill when the user asks:
 
 ```text
+Initialize Granoflow and import data
+```
+
+Also accept equivalent requests in the user's language, including:
+
+```text
 初始化 Granoflow 并导入数据
 ```
+
+Public README and directory-listing copy should use the English prompt. Runtime
+behavior is multilingual: parse equivalent user commands in the user's language,
+and continue prompts, confirmations, preview summaries, blockers, task
+descriptions, and final reports in the user's language by default unless the
+user asks otherwise.
 
 This workflow helps import data from Cursor, Codex, Hermes, or other agents into
 Granoflow. It is an onboarding orchestration skill: it previews source records as

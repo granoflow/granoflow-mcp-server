@@ -80,11 +80,19 @@ for onboarding imports from Cursor, Codex, Hermes, or other agents.
 After installing Granoflow MCP, ask your agent:
 
 ```text
-初始化 Granoflow 并导入数据
+Initialize Granoflow and import data
 ```
 
 Granoflow will help import data from Cursor, Codex, Hermes, or other agents into
 Granoflow.
+
+Then ask:
+
+```text
+Process today's tasks
+```
+
+Granoflow will analyze and process the matching tasks in Granoflow.
 
 More workflows will be added to this catalog as the Granoflow MCP workflow layer
 grows.

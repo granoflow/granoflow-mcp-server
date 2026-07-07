@@ -1,4 +1,4 @@
 agent:
   name: granoflow-first-run-import
   short_description: "Initialize Granoflow by importing data from Cursor, Codex, Hermes, or other agents"
-  default_prompt: "Use the Granoflow First-Run Import skill when the user asks to initialize Granoflow and import data, including the prompt '初始化 Granoflow 并导入数据'. Build a preview first, then import only confirmed projects, monthly milestones, tasks, review-card candidates, and context backfills through Granoflow MCP tools."
+  default_prompt: "Use the Granoflow First-Run Import skill when the user asks to initialize Granoflow and import data, including localized equivalents in the user's language. Public catalog copy should use 'Initialize Granoflow and import data'. Build a preview first, then import only confirmed projects, monthly milestones, tasks, review-card candidates, and context backfills through Granoflow MCP tools."

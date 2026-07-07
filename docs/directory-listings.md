@@ -53,7 +53,7 @@ around those tools.
 After installing Granoflow MCP, ask your agent:
 
 ```text
-初始化 Granoflow 并导入数据
+Initialize Granoflow and import data
 ```
 
 Granoflow helps import data from Cursor, Codex, Hermes, or other agents into
@@ -62,7 +62,23 @@ Granoflow.
 Directory summary:
 
 ```text
-First-run import: after installing Granoflow MCP, ask your agent "初始化 Granoflow 并导入数据". Granoflow helps import data from Cursor, Codex, Hermes, or other agents into Granoflow.
+First-run import: after installing Granoflow MCP, ask your agent "Initialize Granoflow and import data". Granoflow helps import data from Cursor, Codex, Hermes, or other agents into Granoflow.
+```
+
+### Process Due Tasks
+
+After installing Granoflow MCP, ask your agent:
+
+```text
+Process today's tasks
+```
+
+Granoflow will analyze and process the matching tasks in Granoflow.
+
+Directory summary:
+
+```text
+Due-task workflow: after installing Granoflow MCP, ask your agent "Process today's tasks". Granoflow will analyze and process the matching tasks in Granoflow.
 ```
 
 Example questions:
@@ -128,37 +144,37 @@ submitted or published until the relevant platform confirms the update.
 ### GitHub / npm / Official MCP Registry
 
 ```text
-Granoflow connects MCP-capable AI agents to local workflows for tasks, reviews, review cards, first-run import, and long-term work memory. After installing, ask your agent "初始化 Granoflow 并导入数据" to import data from Cursor, Codex, Hermes, or other agents into Granoflow.
+Granoflow connects MCP-capable AI agents to local workflows for tasks, reviews, review cards, first-run import, due-task processing, and long-term work memory. After installing, ask your agent "Initialize Granoflow and import data" to import data from Cursor, Codex, Hermes, or other agents into Granoflow, or "Process today's tasks" to analyze and process matching Granoflow tasks.
 ```
 
 ### Glama
 
 ```text
-Granoflow MCP connects AI agents to a local-first workflow layer for tasks, reviews, durable lesson cards, long-term work memory, and first-run import from Cursor, Codex, Hermes, or other agents.
+Granoflow MCP connects AI agents to a local-first workflow layer for tasks, due-task processing, reviews, durable lesson cards, long-term work memory, and first-run import from Cursor, Codex, Hermes, or other agents.
 ```
 
 ### mcp.so
 
 ```text
-Granoflow helps MCP-capable agents keep work outside chat history: task state, completion reviews, durable review cards, first-run data import, and local work-memory context.
+Granoflow helps MCP-capable agents keep work outside chat history: task state, due-task processing, completion reviews, durable review cards, first-run data import, and local work-memory context.
 ```
 
 ### mcpservers.org
 
 ```text
-Local-first productivity MCP server for Granoflow. It helps agents manage task workflows, reviews, review cards, first-run import, and long-term work memory.
+Local-first productivity MCP server for Granoflow. It helps agents manage task workflows, due-task processing, reviews, review cards, first-run import, and long-term work memory.
 ```
 
 ### Awesome MCP Servers
 
 ```text
-- [Granoflow](https://github.com/granoflow/granoflow-mcp-server) - Local-first task, review, first-run import, review-card, and work-memory workflows for MCP-capable agents.
+- [Granoflow](https://github.com/granoflow/granoflow-mcp-server) - Local-first task, due-task processing, review, first-run import, review-card, and work-memory workflows for MCP-capable agents.
 ```
 
 ### Smithery / MCPB
 
 ```text
-Connect AI agents to Granoflow for local task workflows, first-run data import, reviews, review cards, and work-memory context.
+Connect AI agents to Granoflow for local task workflows, due-task processing, first-run data import, reviews, review cards, and work-memory context.
 ```
 
 ## Directory Publication Status

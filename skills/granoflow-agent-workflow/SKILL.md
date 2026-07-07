@@ -26,9 +26,10 @@ uploaded to the cloud.
 Use this skill when the user asks to:
 
 - work on, inspect, update, finish, close, mark done, or review a Granoflow task;
-- triage all current unfinished Granoflow tasks, decide which are actionable,
-  blocked, obsolete, already done, conflicting, or user-only, then plan and run
-  the work the agent can safely complete;
+- process today's tasks, tasks for another user-specified date or range, more
+  tasks, all unfinished Granoflow tasks, or the older pending-task triage flow;
+  decide which are actionable, blocked, obsolete, already done, conflicting, or
+  user-only, then plan and run the work the agent can safely complete;
 - retrieve historical context, prior decisions, durable lessons, similar past
   work, or why something was done;
 - maintain project or milestone descriptions as current work-memory context, or
@@ -59,41 +60,63 @@ Success criteria:
 - The next action is clear: open Granoflow, enable Local HTTP API, or call a
   setup diagnostic tool.
 
-## Daily Pending Task Triage And Execution
+## Due Task Processing And Execution
 
-Use this section when the user asks the agent to inspect all current unfinished
-tasks, clarify what they really require, identify authorization or information
-blockers, write analysis/planning documents, adversarially review the plan, execute safe work,
-and leave user-only decisions as Granoflow task nodes and reminders.
+Use this section when the user asks the agent to `Process today's tasks`, to
+process tasks for another date or range, to process more tasks, to process all
+unfinished tasks, or to inspect current pending tasks. The workflow clarifies
+what the scoped tasks really require, identifies authorization or information
+blockers, writes and grills analysis/planning documents, executes confirmed safe
+work, and leaves user-only decisions as Granoflow task nodes and reminders.
+
+Public README and directory-listing copy should use English-only prompt text,
+such as `Process today's tasks`. At runtime, accept equivalent commands in the
+user's language and continue prompts, confirmations, task descriptions, and
+final reports in that language by default. For example, `处理今日任务` is a
+localized trigger accepted inside the skill, not public README or directory
+copy.
 
 Read `references/daily-pending-task-triage.md` before applying this branch.
 
 High-level contract:
 
-1. List current unfinished tasks from the running Granoflow app and verify that
-   the app/API instance matches the user-visible surface when visibility
-   matters.
-2. Write an analysis document before execution. Classify every pending task as
-   safe for AI, needs user authorization, needs a secret or login, needs more
-   information, user-only, likely already done, not worth doing, or conflicting
-   with current requirements.
-3. Show the analysis and require user confirmation before moving into execution
-   unless the user's instruction explicitly pre-authorizes that exact step.
-4. For executable work, write a plan document, run an adversarial review pass,
-   revise the plan, then execute only the safe portion.
-5. For blockers, use the waiting-for-user-input workflow: add a current node on
+1. Resolve the requested task scope from the running Granoflow app. Default
+   `Process today's tasks` to unfinished tasks due today; also support explicit
+   dates, ranges, overdue tasks, more-task scopes, and all-task scopes.
+2. Verify that the app/API instance matches the user-visible surface when
+   visibility matters.
+3. Write an analysis document before execution. Classify every scoped task as
+   AI can do now, needs user authorization or input, or user must do, with
+   secondary flags for secrets, logins, files, account actions, stale work,
+   conflicts, and tool gaps.
+4. Grill and revise the analysis before showing it as final.
+5. Show the analysis and require user confirmation before moving into
+   execution unless the user's instruction explicitly pre-authorizes that exact
+   step.
+6. For executable work, write a plan document, run a grill/adversarial review
+   pass, revise the plan, then execute only the confirmed safe portion.
+7. Attach or safely link the final analysis and plan documents, then update the
+   relevant task descriptions with plain-language explanations.
+8. For blockers, use the waiting-for-user-input workflow: add a current node on
    the original task, set a 5-minute reminder, create a separate follow-up task
    with a 10-minute reminder, tell the user to respond by adding a new explicit
    node, and sync when available.
-6. Write completion evidence back to the document and Granoflow. Finish only
+9. Write completion evidence back to the document and Granoflow. Finish only
    tasks that are actually done and verified.
 
 Success criteria:
 
-- Every unfinished task appears exactly once in the analysis ledger.
+- Every scoped task appears exactly once in the analysis ledger.
+- The default scope is unfinished tasks due today, while explicit dates, ranges,
+  more-task scopes, and all-task scopes are honored when the user asks.
 - Authorization, login, secret, payment, destructive, external-account,
   missing-information, and user-only blockers are visible before execution.
-- The execution plan has passed adversarial review and been revised before safe work starts.
+- Analysis and execution plan documents have passed grill review and been
+  revised before safe work starts.
+- Final analysis and plan documents are attached when supported, or honestly
+  linked with a recorded tool gap.
+- Task descriptions explain the result in the user's language with simple,
+  non-jargony wording.
 - Blocked tasks have durable Granoflow nodes/reminders/follow-up tasks instead
   of chat-only asks.
 - Sync is attempted through documented Granoflow tools when available.

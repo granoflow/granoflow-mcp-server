@@ -1119,7 +1119,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_agent_workflow_skill",
-    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Use granoflow_first_run_import_skill for first-run import from Cursor, Codex, Hermes, or other agents. Do not call it for unrelated venting or unrelated disagreement.",
+    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, says 'Process today's tasks', asks in their own language to process tasks for a date/range/all-task scope, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Use granoflow_first_run_import_skill for first-run import from Cursor, Codex, Hermes, or other agents. Do not call it for unrelated venting or unrelated disagreement.",
     {},
     async () =>
       jsonTextResult({
@@ -1134,7 +1134,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_first_run_import_skill",
-    "Read the bundled Granoflow First-Run Import skill. Call this when a user says '初始化 Granoflow 并导入数据' or asks to import data from Cursor, Codex, Hermes, or another agent into Granoflow. The workflow previews authorized source records as projects, monthly milestones, tasks, review-card candidates, and context backfills before writing.",
+    "Read the bundled Granoflow First-Run Import skill. Call this when a user says 'Initialize Granoflow and import data' or asks in their own language to import data from Cursor, Codex, Hermes, or another agent into Granoflow. The workflow previews authorized source records as projects, monthly milestones, tasks, review-card candidates, and context backfills before writing.",
     {},
     async () =>
       jsonTextResult({

@@ -161,6 +161,14 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("wrapper skill");
     expect(serialized).toContain("Long-Term Work Memory");
     expect(serialized).toContain("long-term-work-memory.md");
+    expect(serialized).toContain("Process today's tasks");
+    expect(serialized).toContain("处理今日任务");
+    expect(serialized).toContain("user's language");
+    expect(serialized).toContain("analysis document");
+    expect(serialized).toContain("grill");
+    expect(serialized).toContain("plan document");
+    expect(serialized).toContain("Attach or safely link");
+    expect(serialized).toContain("plain-language explanations");
     expect(serialized).toContain("decision");
     expect(serialized).toContain("similar");
   });
@@ -176,10 +184,12 @@ describe("MCP tool registration", () => {
       code: "ok",
       data: {
         path: "skills/granoflow-first-run-import/SKILL.md",
-        skill: expect.stringContaining("初始化 Granoflow 并导入数据"),
+        skill: expect.stringContaining("Initialize Granoflow and import data"),
       },
     });
     const serialized = JSON.stringify(parsed);
+    expect(serialized).toContain("初始化 Granoflow 并导入数据");
+    expect(serialized).toContain("multilingual");
     expect(serialized).toContain("Cursor");
     expect(serialized).toContain("Codex");
     expect(serialized).toContain("Hermes");
@@ -202,16 +212,44 @@ describe("MCP tool registration", () => {
     expect(reference).toContain("Privacy And Local Content");
   });
 
+  it("keeps public workflow catalog copy English-only while skills support localized triggers", () => {
+    const publicDocs = [
+      readFileSync("README.md", "utf8"),
+      readFileSync("docs/user-install-demo.md", "utf8"),
+      readFileSync("docs/directory-listings.md", "utf8"),
+    ].join("\n");
+
+    expect(publicDocs).toContain("Initialize Granoflow and import data");
+    expect(publicDocs).toContain("Process today's tasks");
+    expect(publicDocs).not.toContain("初始化 Granoflow 并导入数据");
+    expect(publicDocs).not.toContain("处理今日任务");
+
+    const skills = [
+      readFileSync("skills/granoflow-first-run-import/SKILL.md", "utf8"),
+      readFileSync(
+        "skills/granoflow-agent-workflow/references/daily-pending-task-triage.md",
+        "utf8",
+      ),
+    ].join("\n");
+
+    expect(skills).toContain("初始化 Granoflow 并导入数据");
+    expect(skills).toContain("处理今日任务");
+    expect(skills).toContain("user's language");
+  });
+
   it("nudges agents toward memory guidance through tool descriptions", () => {
     const { descriptions } = collectHandlers();
 
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("long-term work memory");
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("Process today's tasks");
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("their own language");
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain(
       "granoflow_first_run_import_skill",
     );
     expect(descriptions.get("granoflow_first_run_import_skill")).toContain(
-      "初始化 Granoflow 并导入数据",
+      "Initialize Granoflow and import data",
     );
+    expect(descriptions.get("granoflow_first_run_import_skill")).toContain("their own language");
     expect(descriptions.get("granoflow_first_run_import_skill")).toContain("Cursor");
     expect(descriptions.get("granoflow_first_run_import_skill")).toContain("monthly milestones");
     expect(descriptions.get("granoflow_task_export")).toContain("reusable lessons");

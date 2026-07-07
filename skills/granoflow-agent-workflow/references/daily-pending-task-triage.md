@@ -1,9 +1,12 @@
-# Daily Pending Task Triage And Execution
+# Due Task Processing And Execution
 
-Read this reference when the user asks the agent to inspect all current
-unfinished Granoflow tasks, decide what they really require, write an analysis
-document, plan and adversarially review the executable work, complete what the agent can safely
-complete, and leave user-only decisions as durable Granoflow task data.
+Read this reference when the user asks the agent to process today's Granoflow
+tasks, tasks for a specific day or range, more unfinished tasks, all unfinished
+tasks, or the older daily pending-task triage workflow. The workflow resolves
+the task scope from Granoflow app data, writes and grills an analysis document,
+asks for user confirmation, writes and grills an execution plan, completes what
+the agent can safely complete, and leaves user-only decisions as durable
+Granoflow task data.
 
 This is an agent workflow. The MCP server remains a thin Local HTTP API bridge:
 use MCP tools and documented Granoflow API paths for reads, writes, reminders,
@@ -14,16 +17,33 @@ SQLite directly, run app builds, or create a hidden task database.
 
 Use this workflow for requests such as:
 
+- "Process today's tasks";
+- "process tomorrow's tasks";
+- "process tasks for 2026-07-10";
+- "process overdue tasks";
+- "process all tasks";
 - "check all unfinished gf tasks";
 - "analyze pending Granoflow tasks and tell me what needs authorization";
 - "write an analysis document for current tasks, then plan and execute";
 - "daily task triage";
 - "find tasks that need me, keys, login, or external action";
 - "do what AI can do and leave the rest as nodes/reminders";
+- `处理今日任务`;
 - equivalent instructions in another language.
 
 Do not use this workflow for a single obvious task unless the user asks for a
 full pending-task sweep.
+
+Public README, npm, registry, and MCP-directory copy must stay English-only.
+Localized trigger examples belong in skill/runtime documentation and tests, not
+canonical public listing copy.
+
+Runtime behavior is multilingual. Parse equivalent commands in the user's
+language, resolve dates and task scope in that language, and write prompts,
+blockers, confirmation requests, task descriptions, analysis summaries, plans,
+and final reports in the user's language by default unless the user asks
+otherwise. Preserve official product names, API names, command names,
+environment variable names, and file paths in their original spelling.
 
 ## Phase 0: Connect And Scope
 
@@ -34,23 +54,43 @@ full pending-task sweep.
 3. If the user is comparing against the visible UI, verify that the task set,
    app version, API base URL, or other observable facts match the user-visible
    app before writing.
-4. Include only unfinished tasks by default. If the API returns multiple
-   unfinished-like states, include `pending` and active in-progress states, and
-   exclude done, archived, trashed, and deleted tasks unless the user says
-   otherwise.
-5. Record the task ids, titles, status, project, milestone, due/reminder times,
-   and description availability in the analysis document.
+4. Resolve the requested task scope before analysis:
+   - For "Process today's tasks", include unfinished tasks whose due date is
+     today in the user's local timezone.
+   - If the user names a specific day, such as "process tomorrow's tasks",
+     "process tasks for 2026-07-10", or "process last Friday's tasks", use that
+     concrete day.
+   - If the user names a range, such as this week, next week, this month,
+     overdue tasks, or tasks before a date, use that range.
+   - If the user asks to complete more tasks, broaden conservatively from today
+     to overdue plus near-term unfinished tasks, and show the chosen boundary
+     before execution.
+   - If the user asks to process all tasks, include all unfinished Granoflow
+     tasks unless they explicitly include completed or archived records too.
+5. Include active in-progress states when they match the resolved scope. Exclude
+   done, archived, trashed, deleted, and undated tasks from date-based scopes
+   unless the user explicitly includes them.
+6. If a natural-language date is ambiguous, state the resolved concrete date or
+   date range before analysis. Ask only when ambiguity changes which tasks would
+   be touched.
+7. Record the requested scope, resolved concrete dates, task ids, titles,
+   status, project, milestone, due/reminder times, and description availability
+   in the analysis document.
 
 If the API is unreachable, stop and explain that Granoflow must be open with the
-Local HTTP API enabled. Do not invent task data from memory.
+Local HTTP API enabled. If the API cannot expose due dates or cannot support the
+requested scope, stop and report the tool gap instead of guessing from titles or
+chat history. Do not invent task data from memory.
 
 ## Document Names
 
 Use simple, portable file names that do not depend on a private numbering
 system:
 
-- Analysis documents: `analysis-YYYY-MM-DD-<short-topic>.md`
-- Plan documents: `plan-YYYY-MM-DD-<short-topic>.md`
+- Analysis documents: `analysis-YYYY-MM-DD-due-tasks.md` or
+  `analysis-YYYY-MM-DD-<short-topic>.md`
+- Plan documents: `plan-YYYY-MM-DD-due-tasks.md` or
+  `plan-YYYY-MM-DD-<short-topic>.md`
 
 When a project has a documented temporary-docs directory, write there. Otherwise
 use a clearly local working directory such as `docs-temp/`, `.local-ai/`, or an
@@ -65,31 +105,45 @@ analysis path that is clearly not a public product document.
 
 Use these classifications:
 
-- `ai_safe_now`: the agent can do it with current permissions and local
-  evidence.
-- `needs_user_authorization`: external effect, publish, delete, payment,
-  account, sending, irreversible change, or user approval is required.
-- `needs_secret_or_login`: token, OTP, recovery code, login, private account, or
+- `ai_can_do_now`: the agent can complete it with current permissions, local
+  evidence, and no external side effect requiring approval.
+- `needs_user_authorization_or_input`: the agent can probably complete it after
+  the user approves, logs in, provides a required file, supplies missing
+  information, or makes an account/payment/publish/delete/send decision.
+- `user_must_do`: the user must personally act, decide, pay, sign in, handle a
+  private account surface, or make a subjective judgment the agent cannot safely
+  make.
+
+Secondary flags may be added when useful:
+
+- `needs_secret_or_key`: token, OTP, recovery code, login, private account, or
   browser/session state is required.
-- `needs_more_information`: the task goal is under-specified and local evidence
-  cannot resolve it.
-- `user_only`: the user must personally do the action, decide the subjective
-  preference, provide legal/payment/account context, or operate an external
-  surface the agent cannot safely control.
+- `needs_login_or_2fa`: login or second-factor action is required.
+- `needs_missing_file`: a required local or private file is missing.
+- `needs_external_account_action`: external account state blocks safe execution.
 - `likely_done_verify_only`: evidence suggests the work is already done; the
   agent should verify and close only if readback supports it.
-- `not_worth_doing`: cost, risk, stale goal, or conflict outweighs value.
+- `stale_or_not_worth_doing`: cost, risk, stale goal, or conflict outweighs
+  value.
 - `conflicts_with_current_requirement`: the task points at an older direction
   that appears to contradict current requirements.
 - `blocked_by_tool_gap`: Granoflow/MCP lacks a needed node, reminder, sync, or
   API surface; record the tool gap instead of faking completion.
 
+The analysis must explicitly list every approval point and every needed key,
+login, OTP, file, account action, or missing fact by name, never by secret
+value. For example, write `OPENAI_API_KEY needed in local environment`, not the
+key itself. If a secret is needed, tell the user to provide it through an
+appropriate local secure channel or existing app/account flow, not paste it into
+public docs, task descriptions, test snapshots, or chat transcripts.
+
 Recommended ledger columns:
 
 ```text
-Task | Project/Milestone | What it really asks | Classification |
-Worth doing? | Existing evidence | Conflict? | User/auth needed |
-Recommended next action | AI can do now? | Verification
+Task | Project/Milestone | Due evidence | What it really asks |
+Primary bucket | Secondary flags | Worth doing? | Existing evidence |
+Conflict? | User/auth/input needed | Recommended next action |
+AI can do now? | Verification
 ```
 
 Use this template:
@@ -100,25 +154,39 @@ Use this template:
 Date: <YYYY-MM-DD>
 Source: <Granoflow API base URL or tool>
 Snapshot time: <local time>
-Scope: <which projects/milestones/tasks are included>
+Requested scope: <user wording>
+Resolved scope: <concrete date, date range, or all-task boundary>
 
 ## Summary
 
-- Total unfinished tasks: <count>
-- Safe for AI now: <count>
-- Needs user authorization: <count>
-- Needs secret/login: <count>
-- Needs more information: <count>
-- User-only: <count>
+- Total scoped unfinished tasks: <count>
+- AI can do now: <count>
+- Needs user authorization or input: <count>
+- User must do: <count>
 - Likely done / verify only: <count>
-- Not worth doing or stale: <count>
+- Stale or not worth doing: <count>
 - Conflicting with current requirements: <count>
 - Blocked by tool gap: <count>
 
+## Included Tasks
+
+| Task | Due evidence | Why included |
+| ---- | ------------ | ------------ |
+
+## Excluded Tasks
+
+| Task | Reason |
+| ---- | ------ |
+
 ## Task Ledger
 
-| Task | Project/Milestone | What it really asks | Classification | Worth doing? | Existing evidence | Conflict? | User/auth needed | Recommended next action | AI can do now? | Verification |
-| ---- | ----------------- | ------------------- | -------------- | ------------ | ----------------- | --------- | ---------------- | ----------------------- | -------------- | ------------ |
+| Task | Project/Milestone | Due evidence | What it really asks | Primary bucket | Secondary flags | Worth doing? | Existing evidence | Conflict? | User/auth/input needed | Recommended next action | AI can do now? | Verification |
+| ---- | ----------------- | ------------ | ------------------- | -------------- | --------------- | ------------ | ----------------- | --------- | ---------------------- | ----------------------- | -------------- | ------------ |
+
+## Authorization And Input Checklist
+
+| Task | Approval, key, login, file, account action, or missing fact | Value requested? | Safe way to provide | Blocks execution? |
+| ---- | ----------------------------------------------------------- | ---------------- | ------------------- | ----------------- |
 
 ## Blocking Questions
 
@@ -127,10 +195,11 @@ Scope: <which projects/milestones/tasks are included>
 
 ## Execution Batches
 
-1. Safe now:
+1. AI can do now:
 2. Verify-only:
-3. Needs user response:
-4. Deferred / not worth doing:
+3. Needs user authorization or input:
+4. User must do:
+5. Deferred / stale / not worth doing:
 
 ## Proposed Writes
 
@@ -138,6 +207,8 @@ Scope: <which projects/milestones/tasks are included>
 - Nodes:
 - Reminders:
 - Follow-up tasks:
+- Document attachments:
+- Plain-language task descriptions:
 - Task reviews/cards:
 - Sync:
 
@@ -146,7 +217,30 @@ Scope: <which projects/milestones/tasks are included>
 - <risk or assumption>
 ```
 
-## Phase 2: Confirmation Gate
+Use the user's language by default. Preserve official product names, API names,
+environment variable names, command names, and file paths in their original
+spelling.
+
+## Phase 2: Analysis Grill And Revision
+
+Before showing the analysis as final, run a grill pass and revise the analysis.
+
+The grill pass must ask at least these questions:
+
+- Did the workflow resolve the user's requested task scope correctly?
+- If the user did not request another scope, did it stay limited to tasks due
+  today?
+- Did any task get labeled `ai_can_do_now` while hiding publish, send, payment,
+  deletion, account, login, key, or irreversible effects?
+- Are all requested keys or secrets named without exposing values?
+- Is any `user_must_do` task being disguised as an agent task?
+- Is any likely-done or stale task worth verifying instead of executing?
+- Would a non-technical user understand what is being asked from them?
+
+Every non-`keep` grill result must be applied back to the analysis document
+before the workflow proceeds.
+
+## Phase 3: Confirmation Gate
 
 Show the analysis summary and ask for confirmation before executing, unless the
 user's latest instruction explicitly pre-authorizes the same action after seeing
@@ -155,15 +249,21 @@ the analysis. Internal confidence is not user confirmation.
 The confirmation request should name:
 
 - tasks the agent proposes to execute now;
-- tasks that need user authorization, secrets, login, or missing info;
+- tasks that need user authorization, secrets, login, files, account actions, or
+  missing info;
+- tasks the user should do personally;
 - tasks proposed as verify-only, obsolete, not worth doing, or conflicting;
+- exact approvals and missing inputs requested;
+- the phrase the user can use to proceed, localized to the user's language, such
+  as `Start execution` for English or `开始执行` for Chinese;
 - any task writes the agent will make, such as node additions, reminders,
-  follow-up tasks, task reviews, completions, or sync attempts.
+  follow-up tasks, document attachments, task description updates, task reviews,
+  completions, or sync attempts.
 
 If the user confirms only part of the analysis, execute only that part and keep
 the rest in the document as deferred.
 
-## Phase 3: Plan, Review, And Revise
+## Phase 4: Plan, Grill, And Revise
 
 For tasks classified as executable, write a plan document before changing code,
 docs, public copy, release settings, or other durable artifacts. Use the
@@ -179,6 +279,7 @@ The plan must include:
 - verification commands or user-visible checks;
 - rollback or stop conditions;
 - how completion will be written back to Granoflow.
+- how the final analysis and plan documents will be attached or linked.
 
 Use this template:
 
@@ -236,6 +337,8 @@ Confirmed by user: <yes/no and confirmation text>
 
 ## Completion Writeback
 
+- Document attachments or safe links:
+- Plain-language task description updates:
 - Task review:
 - Review cards:
 - Tasks to mark done:
@@ -258,13 +361,61 @@ The adversarial review must attack:
 - whether the planned evidence proves the user-visible result;
 - whether the task belongs in Granoflow app, MCP server, docs/manual, marketing,
   release, or user-only action;
+- whether every execution step traces back to the confirmed analysis;
+- whether the plan secretly adds scope the user did not approve;
 - what breaks if sync, Local HTTP API, review-card writing, node writing, or
   reminders are unavailable.
 
 Revise the plan after the adversarial review. Do not execute a plan that still
 has blocking questions.
 
-## Phase 4: Execute Safe Work
+Every non-`keep` grill result must be applied back to the plan document. If the
+grill finds a blocker, execution stops and the blocker is written back to the
+task.
+
+## Phase 5: Attach Documents And Write Plain-Language Descriptions
+
+After both documents are finalized, attach the final analysis and plan
+documents to the relevant Granoflow task or tasks when the running app and MCP
+tools expose a documented attachment surface.
+
+If first-class attachment support is unavailable, write stable local paths or
+safe document links into the task description and record
+`blocked_by_tool_gap: attachment_api_unavailable` in the analysis or final
+report. Do not silently pretend that attachment happened.
+
+Update relevant task descriptions with a simple explanation based on the final
+analysis and plan.
+
+Plain-language description rules:
+
+- explain the task like a normal person would explain a household errand or
+  office handoff;
+- use short sentences;
+- use examples or analogies when they reduce confusion;
+- avoid invented agent/process jargon;
+- avoid unexplained internal labels such as `ai_can_do_now`, `context pack`,
+  `tool gap`, or `writeback` in user-facing prose;
+- when a professional term is unavoidable, write the English term first and, if
+  the user's language is not English, add the common local translation in
+  parentheses;
+- never include secret values, OTPs, private auth URLs, or raw sensitive account
+  data.
+
+For example, in Chinese:
+
+```text
+今天这件事像整理办公桌：我会先把能自己处理的文件放好，把需要你签字或提供钥匙的文件单独放一摞，把必须你本人处理的文件留下来。你确认后，我只处理你同意的部分，并把检查结果写回这里。
+```
+
+For an English-speaking user:
+
+```text
+This step needs an OAuth token. Do not paste the token into the task; configure
+it in the safe local place first, then I can continue.
+```
+
+## Phase 6: Execute Safe Work
 
 Execute only work classified as safe and confirmed. Keep diffs small and local
 to the task. Follow the owning project's rules, tests, and release gates.
@@ -280,7 +431,7 @@ During execution:
 - when a task becomes blocked, switch to the waiting workflow below instead of
   leaving a chat-only question.
 
-## Phase 5: Blocking User Input
+## Phase 7: Blocking User Input
 
 When a task needs user authorization, login, OTP, secret material, external
 account action, missing files, private context, or an explicit decision, use the
@@ -326,7 +477,7 @@ Please add a new node under the original task with one of:
 The agent must not proceed with the blocked action until that node exists.
 ```
 
-## Phase 6: Completion And Writeback
+## Phase 8: Completion And Writeback
 
 For completed tasks, prefer `granoflow_task_finish` when available. Write a
 meaningful task review only when the task produced decisions, evidence, durable
@@ -340,6 +491,8 @@ Task completion writeback should include:
 - changed files or external surfaces when relevant;
 - skipped checks and why;
 - residual risk;
+- attachment or fallback-link status for final analysis and plan documents;
+- plain-language task description updates;
 - cards created or deliberately omitted;
 - links or paths to analysis and plan documents when safe.
 
@@ -347,7 +500,7 @@ After completion, read back the task list or exported task and verify completed
 tasks are really done. If verification fails, report the mismatch and do not
 claim closure.
 
-## Phase 7: Sync And Final Report
+## Phase 9: Sync And Final Report
 
 After task, node, reminder, follow-up, review, or card writes, attempt sync when
 the running app advertises or exposes a documented sync path and the user's
@@ -357,9 +510,11 @@ The final report must include:
 
 - analysis document path;
 - plan document path when one was created;
+- attachment or fallback-link status;
 - tasks completed;
 - tasks left pending and why;
 - blockers written as nodes/reminders/follow-up tasks;
+- task descriptions updated;
 - review cards created;
 - sync attempt result;
 - verification results;
