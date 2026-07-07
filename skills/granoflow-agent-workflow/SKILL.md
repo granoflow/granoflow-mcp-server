@@ -26,6 +26,8 @@ uploaded to the cloud.
 Use this skill when the user asks to:
 
 - work on, inspect, update, finish, close, mark done, or review a Granoflow task;
+- analyze, start, execute, or move forward one selected Granoflow task, such as
+  `Analyze the first task`;
 - create a task from the requirement currently being discussed, such as
   `Create a task from this requirement`;
 - process today's tasks, tasks for another user-specified date or range, more
@@ -312,6 +314,59 @@ Success criteria:
   `unknown_remote_visibility`; do not claim remote delivery or phone
   notification delivery without explicit API evidence.
 
+## Task Analysis And Execution
+
+Use this section when the user asks the agent to `Analyze the first task`,
+`Start the first task`, name a task, describe a task, or otherwise asks to
+analyze, execute, or move forward one selected Granoflow task.
+
+This is a single-task workflow. For date scopes, today's tasks, overdue tasks,
+more tasks, or all unfinished tasks, use the due-task workflow instead.
+
+Public README and directory-listing copy should use English-only prompt text,
+such as `Analyze the first task`. At runtime, accept equivalent commands in the
+user's language and continue explanations, plan summaries, confirmation
+prompts, node plans, and final reports in that language by default. For example,
+`请分析第一个任务`, `执行第一个任务`, and `处理排在最前面的任务` are localized
+triggers accepted inside the skill, not public README or directory copy.
+
+Read `references/task-analysis-execution.md` before applying this branch.
+
+High-level contract:
+
+1. Resolve the intended task before analysis. If `first task` cannot be proven
+   from the running app/API order, ask the user to choose.
+2. Read task details plus project and milestone descriptions when ids are
+   present. Separate task facts, project/milestone context, and AI inference.
+3. Classify the task as AI-completable, AI-completable after user input,
+   user-only, or not enough information.
+4. For simple AI-completable tasks, write a concise plan, grill it, revise it,
+   explain it plainly, discuss, then execute only after confirmation.
+5. For complex AI-completable tasks, retrieve Granoflow-backed cards first and
+   related tasks only when needed. Successful experience may guide the plan;
+   failure-only history must be explained and should include abandon, defer,
+   split, or redefine options.
+6. For tasks the user must complete, write a confirmed user-action node plan
+   back to the original task and leave the task open.
+7. If authorization, login, secrets, files, private context, or user decisions
+   are missing, use the waiting-for-user-input workflow before blocked work.
+8. After any node or fallback-field writeback, read the task back before
+   claiming the write succeeded.
+
+Success criteria:
+
+- The selected task is resolved or the user is asked to disambiguate.
+- Project and milestone descriptions are used as context when available, with
+  explicit gap codes when unavailable or orphaned.
+- Plans pass grill review before confirmation.
+- User-facing explanations use plain language, examples, or analogies when
+  helpful.
+- No execution or writeback happens before explicit confirmation.
+- Retrieval uses app-owned Granoflow context/memory surfaces, not MCP-side
+  embedding or database access.
+- Non-AI-completable tasks get confirmed user-action nodes or a documented
+  fallback field, verified by readback.
+
 ## Review Drafting
 
 Use this section when the user asks to review today, summarize today, write a
@@ -414,6 +469,8 @@ Success criteria:
 - `references/daily-pending-task-triage.md`: Read when the user asks to review
   all unfinished tasks, classify blockers, write analysis/plans, adversarially review the plan,
   execute safe tasks, and preserve user-only decisions as task nodes.
+- `references/task-analysis-execution.md`: Read when the user asks to analyze,
+  start, execute, or move forward one selected Granoflow task.
 - `references/review-card-authoring.md`: Read before creating review-card
   drafts from completed task work.
 - `references/review-drafting.md`: Read before daily, weekly, or monthly review

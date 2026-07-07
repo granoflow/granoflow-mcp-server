@@ -163,6 +163,10 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("long-term-work-memory.md");
     expect(serialized).toContain("Process today's tasks");
     expect(serialized).toContain("处理今日任务");
+    expect(serialized).toContain("Analyze the first task");
+    expect(serialized).toContain("请分析第一个任务");
+    expect(serialized).toContain("task-analysis-execution.md");
+    expect(serialized).toContain("single-task workflow");
     expect(serialized).toContain("Create a task from this requirement");
     expect(serialized).toContain("把我们讨论的需求建一个任务");
     expect(serialized).toContain("discussed-requirement-task-capture.md");
@@ -238,6 +242,24 @@ describe("MCP tool registration", () => {
     expect(reference).toContain("Do not create review cards");
   });
 
+  it("documents the task analysis and execution workflow contract", () => {
+    const reference = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-analysis-execution.md",
+      "utf8",
+    );
+
+    expect(reference).toContain("Analyze the first task");
+    expect(reference).toContain("请分析第一个任务");
+    expect(reference).toContain("first active task");
+    expect(reference).toContain("project_context_orphaned");
+    expect(reference).toContain("not_enough_information");
+    expect(reference).toContain("waiting-for-user-input.md");
+    expect(reference).toContain("card_context_unavailable");
+    expect(reference).toContain("task_node_api_unavailable");
+    expect(reference).toContain("Read the original task back");
+    expect(reference).toContain("Execute only after user confirmation");
+  });
+
   it("keeps public workflow catalog copy English-only while skills support localized triggers", () => {
     const publicDocs = [
       readFileSync("README.md", "utf8"),
@@ -250,10 +272,13 @@ describe("MCP tool registration", () => {
     expect(publicDocs).toContain("approval or missing information");
     expect(publicDocs).toContain("Create a task from this requirement");
     expect(publicDocs).toContain("project, milestone, or inbox");
+    expect(publicDocs).toContain("Analyze the first task");
+    expect(publicDocs).toContain("move it forward after your confirmation");
     expect(publicDocs).not.toContain("初始化 Granoflow 并导入数据");
     expect(publicDocs).not.toContain("处理今日任务");
     expect(publicDocs).not.toContain("需要我授权或补充信息时");
     expect(publicDocs).not.toContain("把我们讨论的需求建一个任务");
+    expect(publicDocs).not.toContain("请分析第一个任务");
 
     const skills = [
       readFileSync("skills/granoflow-first-run-import/SKILL.md", "utf8"),
@@ -266,13 +291,16 @@ describe("MCP tool registration", () => {
         "skills/granoflow-agent-workflow/references/discussed-requirement-task-capture.md",
         "utf8",
       ),
+      readFileSync("skills/granoflow-agent-workflow/references/task-analysis-execution.md", "utf8"),
     ].join("\n");
 
     expect(skills).toContain("初始化 Granoflow 并导入数据");
     expect(skills).toContain("处理今日任务");
     expect(skills).toContain("把我们讨论的需求建一个任务");
+    expect(skills).toContain("请分析第一个任务");
     expect(skills).toContain("strong match");
     expect(skills).toContain("omitting `projectId` and `milestoneId`");
+    expect(skills).toContain("project_context_orphaned");
     expect(skills).toContain("notification task");
     expect(skills).toContain("synced_to_server");
     expect(skills).toContain("unknown_remote_visibility");
@@ -286,6 +314,8 @@ describe("MCP tool registration", () => {
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain(
       "Create a task from this requirement",
     );
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("Analyze the first task");
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("one selected task");
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("discussed requirement");
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("Process today's tasks");
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("their own language");

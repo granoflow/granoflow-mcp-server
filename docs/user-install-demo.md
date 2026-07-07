@@ -134,7 +134,18 @@ Create a task from this requirement
 Granoflow will capture the requirement as a task and place it in the right
 project, milestone, or inbox.
 
-## 10. Dry-Run Write Demo
+## 10. Task Analysis Workflow
+
+Ask your agent:
+
+```text
+Analyze the first task
+```
+
+Granoflow will help the agent understand the selected task, plan the next steps,
+and move it forward after your confirmation.
+
+## 11. Dry-Run Write Demo
 
 Use a dry-run before any write. For example, ask the MCP client to call
 `granoflow_task_create_structured` with:
@@ -157,7 +168,7 @@ Expected result:
 
 The dry-run preview should not create a real task.
 
-## 11. Memory-Style Demo
+## 12. Memory-Style Demo
 
 After the basic connection works, try asking your MCP client:
 
@@ -176,7 +187,7 @@ app. Agents can use existing tasks, task reviews, review cards, projects,
 milestones, and periodic reviews as evidence, but this phase does not provide
 semantic search across all historical discussion.
 
-## 12. Agent Completion Workflow Demo
+## 13. Agent Completion Workflow Demo
 
 Use this demo after you have at least one real or test task in Granoflow. Ask
 your MCP client:

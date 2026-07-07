@@ -106,6 +106,15 @@ Create a task from this requirement
 Granoflow will capture the requirement as a task and place it in the right
 project, milestone, or inbox.
 
+Ask your agent:
+
+```text
+Analyze the first task
+```
+
+Granoflow will help the agent understand the selected task, plan the next steps,
+and move it forward after your confirmation.
+
 More workflows will be added to this catalog as the Granoflow MCP workflow layer
 grows.
 
@@ -194,6 +203,14 @@ agent should place it directly into a clearly matching project and active
 milestone, or into inbox/default placement for temporary work. If a requirement
 is worth preserving but has no clear home, the agent should suggest a
 project/milestone structure and ask before assigning or creating that structure.
+
+The bundled workflow also includes single-task analysis and execution. When the
+user asks an agent to analyze or start a selected Granoflow task, the agent
+should resolve the task, read task/project/milestone context, plan the next
+steps, explain the plan in plain language, and continue only after user
+confirmation. Complex tasks may use Granoflow-backed historical cards and
+related tasks as evidence; the MCP server should not compute embeddings or
+invent past experience.
 
 ## Agent Completion Workflow
 
