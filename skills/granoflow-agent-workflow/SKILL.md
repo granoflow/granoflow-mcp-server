@@ -26,6 +26,8 @@ uploaded to the cloud.
 Use this skill when the user asks to:
 
 - work on, inspect, update, finish, close, mark done, or review a Granoflow task;
+- create a task from the requirement currently being discussed, such as
+  `Create a task from this requirement`;
 - process today's tasks, tasks for another user-specified date or range, more
   tasks, all unfinished Granoflow tasks, or the older pending-task triage flow;
   decide which are actionable, blocked, obsolete, already done, conflicting, or
@@ -59,6 +61,53 @@ Success criteria:
 - The user knows Granoflow is the local app behind this MCP bridge.
 - The next action is clear: open Granoflow, enable Local HTTP API, or call a
   setup diagnostic tool.
+
+## Discussed Requirement Task Capture
+
+Use this section when the user asks the agent to `Create a task from this
+requirement`, `Create a task from what we discussed`, or an equivalent command
+in the user's language. This workflow captures a lower-priority requirement as a
+Granoflow task. It is not a plan-writing, attachment, execution, or card-creation
+workflow.
+
+Public README and directory-listing copy should use English-only prompt text,
+such as `Create a task from this requirement`. At runtime, accept equivalent
+commands in the user's language and write task descriptions, confirmations, and
+final reports in that language by default. For example,
+`把我们讨论的需求建一个任务` is a localized trigger accepted inside the skill,
+not public README or directory copy.
+
+Read `references/discussed-requirement-task-capture.md` before applying this
+branch.
+
+High-level contract:
+
+1. Identify the discussed requirement from the active conversation and explicit
+   references.
+2. Inspect existing projects and active milestones.
+3. If an existing project and active milestone are a strong match, create the
+   task directly. The user's explicit task-creation request is confirmation for
+   that task write.
+4. If no clear project or milestone fits, decide whether the task is temporary
+   or worth preserving.
+5. Create temporary tasks in inbox/default placement without inventing structure.
+   When no explicit inbox field exists, omit `projectId` and `milestoneId`.
+6. For worth-preserving tasks with no clear home, suggest the project/milestone
+   structure and wait for user confirmation before assigning or creating it.
+7. Keep the description compact but useful enough to reopen later.
+8. Read the task back. If supported fields such as `description`, `projectId`,
+   or `milestoneId` were dropped by create, patch them and read back again.
+
+Success criteria:
+
+- No plan document or attachment is required for this workflow.
+- Strong placement uses only existing active milestones, never archived, done,
+  trashed, deleted, stale, or merely thematic milestones.
+- Task creation alone does not execute the task, create cards, create
+  project/milestone structure, or authorize secrets, publishing, deletion,
+  payment, sending, account changes, or subjective decisions.
+- The final report states the task id or visible reference and whether it was
+  placed in a project, milestone, or inbox/default location.
 
 ## Due Task Processing And Execution
 
@@ -360,6 +409,8 @@ Success criteria:
 
 - `references/waiting-for-user-input.md`: Read when work is blocked on a
   user-only action and the agent must create reminders.
+- `references/discussed-requirement-task-capture.md`: Read when the user asks to
+  create a task from the requirement currently being discussed.
 - `references/daily-pending-task-triage.md`: Read when the user asks to review
   all unfinished tasks, classify blockers, write analysis/plans, adversarially review the plan,
   execute safe tasks, and preserve user-only decisions as task nodes.

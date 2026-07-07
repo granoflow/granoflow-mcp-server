@@ -97,6 +97,15 @@ Granoflow will analyze and process the matching tasks in Granoflow.
 During a task, Granoflow can ask for your approval or missing information by
 adding a request to the task and notifying you when available.
 
+Ask your agent:
+
+```text
+Create a task from this requirement
+```
+
+Granoflow will capture the requirement as a task and place it in the right
+project, milestone, or inbox.
+
 More workflows will be added to this catalog as the Granoflow MCP workflow layer
 grows.
 
@@ -178,6 +187,13 @@ confirmation before executing. Executable work should get a plan document and
 adversarial review pass. User-only blockers should be preserved as Granoflow
 task nodes, reminders, notification tasks, and sync visibility reports when the
 running app exposes the required tools.
+
+The bundled workflow also includes lightweight requirement capture. When the
+user asks an agent to create a task from the requirement being discussed, the
+agent should place it directly into a clearly matching project and active
+milestone, or into inbox/default placement for temporary work. If a requirement
+is worth preserving but has no clear home, the agent should suggest a
+project/milestone structure and ask before assigning or creating that structure.
 
 ## Agent Completion Workflow
 

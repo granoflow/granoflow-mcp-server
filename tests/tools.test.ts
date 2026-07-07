@@ -163,6 +163,11 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("long-term-work-memory.md");
     expect(serialized).toContain("Process today's tasks");
     expect(serialized).toContain("处理今日任务");
+    expect(serialized).toContain("Create a task from this requirement");
+    expect(serialized).toContain("把我们讨论的需求建一个任务");
+    expect(serialized).toContain("discussed-requirement-task-capture.md");
+    expect(serialized).toContain("explicit task-creation request is confirmation");
+    expect(serialized).toContain("omit `projectId` and `milestoneId`");
     expect(serialized).toContain("user's language");
     expect(serialized).toContain("analysis document");
     expect(serialized).toContain("grill");
@@ -217,6 +222,22 @@ describe("MCP tool registration", () => {
     expect(reference).toContain("Privacy And Local Content");
   });
 
+  it("documents the discussed requirement task capture contract", () => {
+    const reference = readFileSync(
+      "skills/granoflow-agent-workflow/references/discussed-requirement-task-capture.md",
+      "utf8",
+    );
+
+    expect(reference).toContain("Create a task from this requirement");
+    expect(reference).toContain("把我们讨论的需求建一个任务");
+    expect(reference).toContain("quick capture");
+    expect(reference).toContain("active milestone");
+    expect(reference).toContain("omitting `projectId` and `milestoneId`");
+    expect(reference).toContain("explicit task-creation request is confirmation");
+    expect(reference).toContain("patch the missing field");
+    expect(reference).toContain("Do not create review cards");
+  });
+
   it("keeps public workflow catalog copy English-only while skills support localized triggers", () => {
     const publicDocs = [
       readFileSync("README.md", "utf8"),
@@ -227,9 +248,12 @@ describe("MCP tool registration", () => {
     expect(publicDocs).toContain("Initialize Granoflow and import data");
     expect(publicDocs).toContain("Process today's tasks");
     expect(publicDocs).toContain("approval or missing information");
+    expect(publicDocs).toContain("Create a task from this requirement");
+    expect(publicDocs).toContain("project, milestone, or inbox");
     expect(publicDocs).not.toContain("初始化 Granoflow 并导入数据");
     expect(publicDocs).not.toContain("处理今日任务");
     expect(publicDocs).not.toContain("需要我授权或补充信息时");
+    expect(publicDocs).not.toContain("把我们讨论的需求建一个任务");
 
     const skills = [
       readFileSync("skills/granoflow-first-run-import/SKILL.md", "utf8"),
@@ -238,10 +262,17 @@ describe("MCP tool registration", () => {
         "utf8",
       ),
       readFileSync("skills/granoflow-agent-workflow/references/waiting-for-user-input.md", "utf8"),
+      readFileSync(
+        "skills/granoflow-agent-workflow/references/discussed-requirement-task-capture.md",
+        "utf8",
+      ),
     ].join("\n");
 
     expect(skills).toContain("初始化 Granoflow 并导入数据");
     expect(skills).toContain("处理今日任务");
+    expect(skills).toContain("把我们讨论的需求建一个任务");
+    expect(skills).toContain("strong match");
+    expect(skills).toContain("omitting `projectId` and `milestoneId`");
     expect(skills).toContain("notification task");
     expect(skills).toContain("synced_to_server");
     expect(skills).toContain("unknown_remote_visibility");
@@ -252,6 +283,10 @@ describe("MCP tool registration", () => {
     const { descriptions } = collectHandlers();
 
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("long-term work memory");
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain(
+      "Create a task from this requirement",
+    );
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("discussed requirement");
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("Process today's tasks");
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain("their own language");
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain(

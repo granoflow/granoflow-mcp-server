@@ -1,4 +1,4 @@
 interface:
   display_name: "Granoflow Agent Workflow"
-  short_description: "Guide Granoflow task triage, completion, reviews, memory, cards, and feedback"
-  default_prompt: "Use the bundled Granoflow Agent Workflow skill when triaging unfinished Granoflow tasks, finishing tasks, writing task reviews, retrieving historical decisions or similar past work, drafting review cards, diagnosing local MCP setup, or handling user dissatisfaction with Granoflow/MCP/generated output."
+  short_description: "Guide Granoflow task capture, triage, completion, reviews, memory, cards, and feedback"
+  default_prompt: "Use the bundled Granoflow Agent Workflow skill when creating a task from a discussed requirement, triaging unfinished Granoflow tasks, finishing tasks, writing task reviews, retrieving historical decisions or similar past work, drafting review cards, diagnosing local MCP setup, or handling user dissatisfaction with Granoflow/MCP/generated output."
