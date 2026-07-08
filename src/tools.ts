@@ -7,7 +7,15 @@ import {
   type MonthlyReviewSuggestion,
   type WeeklyReviewSuggestion,
 } from "./config.js";
-import { requestGranoflowApi, type ApiRequestOptions } from "./api.js";
+import { requestGranoflowApi, type ApiRequestOptions, type ApiResult } from "./api.js";
+import {
+  applyCompletionSourceToBody,
+  completionSourceTagSlug,
+  ensureSourceTags,
+  mergeTagSlugs,
+  readSourceTagCatalog,
+  type CompletionSource,
+} from "./source-tags.js";
 import {
   detectLocalApi,
   getSetupStatus,
@@ -19,6 +27,12 @@ import {
 const jsonInputSchema = z
   .record(z.string(), z.unknown())
   .describe("JSON object sent to the Granoflow Local HTTP API.");
+const completionSourceSchema = z
+  .enum(["ai", "human", "unknown"])
+  .optional()
+  .describe(
+    "When ai or human, attach the matching AI/人工 source tag after ensuring it exists. Omit or unknown means no source tag.",
+  );
 const historicalTaskMutationSchema = z.object({
   clientMutationId: z.string().min(1),
   op: z.enum(["create", "update", "softDelete"]),
@@ -111,6 +125,10 @@ const FIRST_RUN_IMPORT_SKILL_URL = new URL(
   "../skills/granoflow-first-run-import/SKILL.md",
   import.meta.url,
 );
+const REVIEW_CARD_DRAFT_SKILL_URL = new URL(
+  "../skills/granoflow-review-card-draft/SKILL.md",
+  import.meta.url,
+);
 
 function compactRecord(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
@@ -132,6 +150,10 @@ function readAgentWorkflowSkill(): string {
 
 function readFirstRunImportSkill(): string {
   return readFileSync(FIRST_RUN_IMPORT_SKILL_URL, "utf8");
+}
+
+function readReviewCardDraftSkill(): string {
+  return readFileSync(REVIEW_CARD_DRAFT_SKILL_URL, "utf8");
 }
 
 function periodicReviewHasLog(value: unknown): boolean {
@@ -265,6 +287,177 @@ function extractItems(value: unknown): GranoflowRecord[] {
     return data.items.filter(isObject);
   }
   return [];
+}
+
+type TagFilterNotice = {
+  acceptedTags: string[];
+  skippedTags: Array<{ slug: string; reason: "unknown_tag" }>;
+  catalogUnavailable?: boolean;
+};
+
+function normalizeRequestedTags(tags: unknown): string[] {
+  if (!Array.isArray(tags)) {
+    return [];
+  }
+  return tags
+    .map((tag) => (typeof tag === "string" ? tag.trim() : String(tag).trim()))
+    .filter(Boolean);
+}
+
+async function fetchKnownTagSlugs(): Promise<{ slugs: Set<string>; catalogUnavailable: boolean }> {
+  const result = await requestGranoflowApi({ method: "GET", path: "/v1/tags" });
+  if (!result.ok) {
+    return { slugs: new Set(), catalogUnavailable: true };
+  }
+  const slugs = new Set<string>();
+  for (const item of extractItems(result.data)) {
+    if (typeof item.slug === "string" && item.slug.trim()) {
+      slugs.add(item.slug.trim());
+    }
+  }
+  return { slugs, catalogUnavailable: false };
+}
+
+async function filterTagsForTaskWrite(tags: unknown): Promise<{
+  tags?: string[];
+  tagFilter: TagFilterNotice;
+}> {
+  const requested = normalizeRequestedTags(tags);
+  if (requested.length === 0) {
+    return {
+      tags: undefined,
+      tagFilter: { acceptedTags: [], skippedTags: [] },
+    };
+  }
+  const { slugs, catalogUnavailable } = await fetchKnownTagSlugs();
+  if (catalogUnavailable) {
+    return {
+      tags: undefined,
+      tagFilter: {
+        acceptedTags: [],
+        skippedTags: requested.map((slug) => ({ slug, reason: "unknown_tag" })),
+        catalogUnavailable: true,
+      },
+    };
+  }
+  const acceptedTags: string[] = [];
+  const skippedTags: Array<{ slug: string; reason: "unknown_tag" }> = [];
+  for (const slug of requested) {
+    if (slugs.has(slug)) {
+      acceptedTags.push(slug);
+    } else {
+      skippedTags.push({ slug, reason: "unknown_tag" });
+    }
+  }
+  return {
+    tags: acceptedTags.length > 0 ? acceptedTags : undefined,
+    tagFilter: { acceptedTags, skippedTags },
+  };
+}
+
+function withTagFilterMetadata(result: ApiResult, tagFilter: TagFilterNotice): ApiResult {
+  if (
+    tagFilter.skippedTags.length === 0 &&
+    !tagFilter.catalogUnavailable &&
+    tagFilter.acceptedTags.length === 0
+  ) {
+    return result;
+  }
+  const data: Record<string, unknown> = isObject(result.data)
+    ? { ...result.data }
+    : { value: result.data };
+  data.tagFilter = tagFilter;
+  return { ...result, data };
+}
+
+async function applyTaskBodyTagFilter(body: Record<string, unknown>): Promise<{
+  body: Record<string, unknown>;
+  tagFilter?: TagFilterNotice;
+}> {
+  if (!("tags" in body)) {
+    return { body };
+  }
+  const { tags, tagFilter } = await filterTagsForTaskWrite(body.tags);
+  const nextBody = { ...body };
+  if (tags !== undefined) {
+    nextBody.tags = tags;
+  } else {
+    delete nextBody.tags;
+  }
+  const hasTagFilter =
+    tagFilter.skippedTags.length > 0 ||
+    tagFilter.catalogUnavailable === true ||
+    tagFilter.acceptedTags.length > 0;
+  return hasTagFilter ? { body: nextBody, tagFilter } : { body: nextBody };
+}
+
+async function apiToolForTaskWrite(
+  options: ApiRequestOptions,
+  body: Record<string, unknown>,
+  completionSource?: CompletionSource,
+) {
+  const withSource = await applyCompletionSourceToBody(body, completionSource);
+  const { body: filteredBody, tagFilter } = await applyTaskBodyTagFilter(withSource);
+  const result = await requestGranoflowApi({ ...options, body: filteredBody });
+  return jsonTextResult(tagFilter ? withTagFilterMetadata(result, tagFilter) : result);
+}
+
+function parseCompletionSource(value: unknown): CompletionSource | undefined {
+  if (value === "ai" || value === "human" || value === "unknown") {
+    return value;
+  }
+  return undefined;
+}
+
+function extractTaskEntity(value: unknown): GranoflowRecord | null {
+  if (!isObject(value)) {
+    return null;
+  }
+  const data = value.data;
+  if (isObject(data) && isObject(data.entity)) {
+    return data.entity;
+  }
+  if (isObject(data) && isObject(data.data) && isObject(data.data.entity)) {
+    return data.data.entity;
+  }
+  return null;
+}
+
+async function patchTaskCompletionSourceTag(
+  taskId: string,
+  completionSource: CompletionSource = "ai",
+): Promise<ApiResult | null> {
+  if (completionSource === "unknown") {
+    return null;
+  }
+  const ensured = await ensureSourceTags();
+  const catalog = readSourceTagCatalog(ensured);
+  if (!catalog) {
+    return ensured;
+  }
+  const slug = completionSourceTagSlug(completionSource, catalog);
+  if (!slug) {
+    return null;
+  }
+  const readResult = await requestGranoflowApi({ path: `/v1/tasks/${taskId}` });
+  if (!readResult.ok) {
+    return readResult;
+  }
+  const entity = extractTaskEntity(readResult.data);
+  const currentTags = entity?.tags;
+  const merged = mergeTagSlugs(currentTags, [slug]);
+  const unchanged =
+    Array.isArray(currentTags) &&
+    currentTags.length === merged.length &&
+    merged.every((tag) => currentTags.includes(tag));
+  if (unchanged) {
+    return null;
+  }
+  return requestGranoflowApi({
+    method: "PATCH",
+    path: `/v1/tasks/${taskId}`,
+    body: { tags: merged },
+  });
 }
 
 function compactResource(record: GranoflowRecord): Record<string, unknown> {
@@ -970,9 +1163,11 @@ async function finishTask(input: {
   taskReview?: string;
   reviewCardDrafts?: ReviewCardDraft[];
   endedAt?: string;
+  completionSource?: CompletionSource;
   confirmComplete?: boolean;
   dryRun?: boolean;
 }) {
+  const completionSource = input.completionSource ?? "ai";
   const updateBody = compactRecord({
     startedAt: input.startedAt,
     endedAt: input.endedAt,
@@ -1047,6 +1242,15 @@ async function finishTask(input: {
     ...(Object.keys(updateBody).length > 0
       ? [{ method: "PATCH", path: `/v1/tasks/${input.taskId}`, body: updateBody }]
       : []),
+    ...(completionSource === "unknown"
+      ? []
+      : [
+          {
+            method: "PATCH",
+            path: `/v1/tasks/${input.taskId}`,
+            body: { tags: `attach ${completionSource} source tag when missing` },
+          },
+        ]),
     {
       method: "POST",
       path: `/v1/tasks/${input.taskId}/complete`,
@@ -1110,6 +1314,14 @@ async function finishTask(input: {
     if (!updateResult.ok) {
       return updateResult;
     }
+  }
+
+  const sourceTagPatch = await patchTaskCompletionSourceTag(input.taskId, completionSource);
+  if (sourceTagPatch && !sourceTagPatch.ok) {
+    return sourceTagPatch;
+  }
+  if (sourceTagPatch) {
+    applied.push({ step: "attach_source_tag", result: sourceTagPatch });
   }
 
   const completeResult = await requestGranoflowApi({
@@ -1195,6 +1407,21 @@ export function registerGranoflowTools(server: {
         data: {
           path: "skills/granoflow-first-run-import/SKILL.md",
           skill: readFirstRunImportSkill(),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_review_card_draft_skill",
+    "Read the bundled Granoflow review card draft skill. Call this when creating review cards, word cards, multiple-choice cards, or image-assisted cards so the agent fetches the app schema, previews cards, and writes only after user confirmation.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-review-card-draft/SKILL.md",
+          skill: readReviewCardDraftSkill(),
         },
       }),
   );
@@ -1302,6 +1529,13 @@ export function registerGranoflowTools(server: {
     "List Granoflow AI-agent tool contracts from the running app. Use with granoflow_agent_workflow_skill for task, review, and memory-style questions.",
     {},
     async () => apiTool({ path: "/v1/ai-agent/tools" }),
+  );
+
+  registerTool(
+    "granoflow_review_card_draft_schema",
+    "Fetch the Granoflow review card draft template and field schema from the running app. Call before creating reviewCardDrafts so card types, note fields, layouts, and fallbacks match app import rules.",
+    {},
+    async () => apiTool({ path: "/v1/ai-agent/review-card-drafts/schema" }),
   );
 
   registerTool(
@@ -1632,8 +1866,87 @@ export function registerGranoflowTools(server: {
       }),
   );
 
-  registerTool("granoflow_task_list", "List tasks from Granoflow.", {}, async () =>
-    apiTool({ path: "/v1/tasks" }),
+  registerTool(
+    "granoflow_tag_list",
+    "List tags from the Granoflow local catalog.",
+    {
+      kind: z
+        .string()
+        .optional()
+        .describe("Optional tag kind filter forwarded to the Local HTTP API."),
+    },
+    async ({ kind }) => {
+      const path =
+        typeof kind === "string" && kind.trim()
+          ? `/v1/tags?kind=${encodeURIComponent(kind.trim())}`
+          : "/v1/tags";
+      return apiTool({ path });
+    },
+  );
+
+  registerTool(
+    "granoflow_tag_create",
+    "Create a custom Granoflow tag. Defaults to dry-run.",
+    {
+      label: z.string().min(1),
+      slug: z.string().min(1).optional(),
+      iconKey: z.string().optional(),
+      dryRun: z
+        .boolean()
+        .default(true)
+        .describe("When true, previews the request without writing."),
+    },
+    async ({ label, slug, iconKey, dryRun }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/tags",
+        body: compactRecord({ label, slug, iconKey }),
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_source_tags_ensure",
+    "Ensure the AI and 人工 completion source tags exist in Granoflow. Idempotent: reuses existing tags matched by slug or label.",
+    {
+      dryRun: z
+        .boolean()
+        .default(false)
+        .describe("When true, only inspects the current catalog without creating missing tags."),
+    },
+    async ({ dryRun }) => {
+      if (dryRun !== false) {
+        const listResult = await requestGranoflowApi({ method: "GET", path: "/v1/tags" });
+        return jsonTextResult({
+          ...listResult,
+          code: "dry_run",
+          data: {
+            previewMode: "catalog_inspection_only",
+            tags: extractItems(listResult.data),
+            expected: {
+              ai: { label: "AI", slug: "custom_ai" },
+              human: { label: "人工", slug: "custom_u4eba5de5" },
+            },
+          },
+        });
+      }
+      return jsonTextResult(await ensureSourceTags());
+    },
+  );
+
+  registerTool(
+    "granoflow_task_list",
+    "List tasks from Granoflow. Optionally filter by tag slug.",
+    {
+      tag: z.string().min(1).optional().describe("Return only tasks containing this tag slug."),
+    },
+    async ({ tag }) =>
+      apiTool({
+        path:
+          typeof tag === "string" && tag.trim()
+            ? `/v1/tasks?tag=${encodeURIComponent(tag.trim())}`
+            : "/v1/tasks",
+      }),
   );
 
   registerTool(
@@ -1700,7 +2013,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_create",
-    "Create a Granoflow task from a JSON payload.",
+    "Create a Granoflow task from a JSON payload. Tags not in the local catalog are skipped automatically. Optional completionSource attaches AI/人工 source tags for completed-work capture.",
     {
       input: jsonInputSchema,
       dryRun: z
@@ -1708,18 +2021,25 @@ export function registerGranoflowTools(server: {
         .default(true)
         .describe("When true, previews the request without writing."),
     },
-    async ({ input, dryRun }) =>
-      apiTool({
-        method: "POST",
-        path: "/v1/tasks",
-        body: input,
-        dryRun: dryRun !== false,
-      }),
+    async ({ input, dryRun }) => {
+      const record = isObject(input) ? { ...input } : {};
+      const completionSource = parseCompletionSource(record.completionSource);
+      delete record.completionSource;
+      return apiToolForTaskWrite(
+        {
+          method: "POST",
+          path: "/v1/tasks",
+          dryRun: dryRun !== false,
+        },
+        record,
+        completionSource,
+      );
+    },
   );
 
   registerTool(
     "granoflow_task_create_structured",
-    "Create a Granoflow task with common structured fields. Defaults to dry-run.",
+    "Create a Granoflow task with common structured fields. Tags not in the local catalog are skipped automatically. Defaults to dry-run.",
     {
       title: z.string().min(1),
       description: z.string().optional(),
@@ -1728,16 +2048,32 @@ export function registerGranoflowTools(server: {
       projectId: z.string().min(1).optional(),
       milestoneId: z.string().min(1).optional(),
       status: resourceStatusSchema,
+      tags: z.array(z.string().min(1)).optional(),
+      completionSource: completionSourceSchema,
       dryRun: z
         .boolean()
         .default(true)
         .describe("When true, previews the request without writing."),
     },
-    async ({ title, description, dueAt, remindAt, projectId, milestoneId, status, dryRun }) =>
-      apiTool({
-        method: "POST",
-        path: "/v1/tasks",
-        body: compactRecord({
+    async ({
+      title,
+      description,
+      dueAt,
+      remindAt,
+      projectId,
+      milestoneId,
+      status,
+      tags,
+      completionSource,
+      dryRun,
+    }) =>
+      apiToolForTaskWrite(
+        {
+          method: "POST",
+          path: "/v1/tasks",
+          dryRun: dryRun !== false,
+        },
+        compactRecord({
           title,
           description,
           dueAt,
@@ -1745,14 +2081,15 @@ export function registerGranoflowTools(server: {
           projectId,
           milestoneId,
           status,
+          tags,
         }),
-        dryRun: dryRun !== false,
-      }),
+        parseCompletionSource(completionSource),
+      ),
   );
 
   registerTool(
     "granoflow_task_update",
-    "Update a Granoflow task through the Local HTTP API.",
+    "Update a Granoflow task through the Local HTTP API. Tags not in the local catalog are skipped automatically.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       input: jsonInputSchema,
@@ -1762,12 +2099,14 @@ export function registerGranoflowTools(server: {
         .describe("When true, previews the request without writing."),
     },
     async ({ taskId, input, dryRun }) =>
-      apiTool({
-        method: "PATCH",
-        path: `/v1/tasks/${String(taskId)}`,
-        body: input,
-        dryRun: dryRun !== false,
-      }),
+      apiToolForTaskWrite(
+        {
+          method: "PATCH",
+          path: `/v1/tasks/${String(taskId)}`,
+          dryRun: dryRun !== false,
+        },
+        input as Record<string, unknown>,
+      ),
   );
 
   registerTool(
@@ -1877,6 +2216,9 @@ export function registerGranoflowTools(server: {
         .describe(
           "Task end time inferred from the current agent conversation, preferably ISO-like.",
         ),
+      completionSource: completionSourceSchema.describe(
+        "Defaults to ai when an agent finishes the task. Use human for clearly human-completed work, or unknown to skip source tags.",
+      ),
       confirmComplete: z.boolean().default(false).describe("Must be true when dryRun=false."),
       dryRun: z
         .boolean()
@@ -1892,6 +2234,7 @@ export function registerGranoflowTools(server: {
       taskReview,
       reviewCardDrafts,
       endedAt,
+      completionSource,
       confirmComplete,
       dryRun,
     }) =>
@@ -1907,6 +2250,7 @@ export function registerGranoflowTools(server: {
             ? (reviewCardDrafts as ReviewCardDraft[])
             : undefined,
           endedAt: typeof endedAt === "string" ? endedAt : undefined,
+          completionSource: parseCompletionSource(completionSource),
           confirmComplete: confirmComplete === true,
           dryRun: dryRun !== false,
         }),

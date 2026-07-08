@@ -114,6 +114,11 @@ fields:
 - `milestoneId` when placement is strong or confirmed
 - `dueAt` or `remindAt` only when stated or strongly implied
 - `status` when supported
+- `tags` only when they already exist in the Granoflow tag catalog; do not invent tag slugs
+
+When attaching tags, prefer existing catalog slugs only. The MCP create/update tools
+filter unknown tags automatically and report skipped slugs in `tagFilter`. Do not
+treat skipped tags as task-create failure when the task itself was written.
 
 After creating, read back and verify:
 
@@ -123,6 +128,7 @@ After creating, read back and verify:
 - status;
 - due/reminder values if written;
 - project and milestone placement if written;
+- tag placement if written, and whether any requested tags were skipped;
 - no secret value was persisted.
 
 If `description`, `projectId`, `milestoneId`, or another supported field was

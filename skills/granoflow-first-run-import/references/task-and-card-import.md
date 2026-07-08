@@ -40,11 +40,31 @@ Each candidate should include:
 - source locator when available;
 - started or ended evidence when available;
 - task review candidate when the source has durable review value;
-- dedupe key.
+- dedupe key;
+- completion source: `ai`, `human`, or `unknown`.
 
 Completed work should become completed tasks only when the source clearly
 records an outcome. Otherwise keep it as pending, blocked, or
 needs-confirmation.
+
+## Completion Source Tags
+
+Before importing completed tasks, call `granoflow_source_tags_ensure`.
+
+When writing imported or newly created completed tasks:
+
+- AI clearly completed the work -> attach the `AI` source tag (`custom_ai`).
+- A human clearly completed the work -> attach the `人工` source tag
+  (`custom_u4eba5de5`).
+- Source is uncertain -> do not attach either source tag.
+
+Use `completionSource` on `granoflow_task_create` /
+`granoflow_task_create_structured` for direct task writes. After review-card or
+single-task import writes, PATCH the task tags when the import payload cannot
+carry tags directly.
+
+Do not invent alternate AI/人工 tag slugs. Do not attach source tags to pending
+capture-only tasks unless the source clearly records completed human work.
 
 ## Task Review Gate
 

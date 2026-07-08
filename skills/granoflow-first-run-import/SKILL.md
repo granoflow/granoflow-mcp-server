@@ -71,7 +71,10 @@ Before source analysis:
 2. Check that the Granoflow Local HTTP API is reachable.
 3. Call `granoflow_ai_agent_tools` and inspect available project, milestone,
    task, review-card, context-pack, memory-batch, and context-steward tools.
-4. If Granoflow is unreachable, stop and tell the user to open Granoflow and
+4. Call `granoflow_source_tags_ensure` so the `AI` and `人工` completion source
+   tags exist before any import write. Reuse existing tags; do not create
+   near-duplicate labels.
+5. If Granoflow is unreachable, stop and tell the user to open Granoflow and
    enable the Local HTTP API. Do not create a fake preview from chat memory.
 
 Fail closed when there is no safe task or project write surface.

@@ -409,6 +409,168 @@ describe("MCP tool registration", () => {
     expect(JSON.stringify(parseToolText(result))).not.toContain('"tags"');
   });
 
+  it("filters unknown tags before structured task creation", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer(async (request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/tags") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              items: [{ id: "tag-1", slug: "known-tag" }],
+            },
+          }),
+        );
+        return;
+      }
+      if (request.method === "POST" && request.url === "/v1/tasks") {
+        const body = await readJsonBody(request);
+        response.end(
+          JSON.stringify({
+            ok: true,
+            code: "ok",
+            data: { entity: body },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_create_structured")?.({
+      title: "Tagged task",
+      tags: ["known-tag", "unknown-tag"],
+      dryRun: false,
+    });
+
+    expect(requestedUrls).toEqual(["/v1/tags", "/v1/tasks"]);
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      data: {
+        entity: {
+          title: "Tagged task",
+          tags: ["known-tag"],
+        },
+        tagFilter: {
+          acceptedTags: ["known-tag"],
+          skippedTags: [{ slug: "unknown-tag", reason: "unknown_tag" }],
+        },
+      },
+    });
+  });
+
+  it("omits tags when the tag catalog is unavailable", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/tags") {
+        response.statusCode = 503;
+        response.end(JSON.stringify({ ok: false, code: "unavailable" }));
+        return;
+      }
+      if (request.method === "POST" && request.url === "/v1/tasks") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            code: "ok",
+            data: { entity: { title: "No tags" } },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_create")?.({
+      input: {
+        title: "No tags",
+        tags: ["maybe-tag"],
+      },
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      data: {
+        entity: {
+          title: "No tags",
+        },
+        tagFilter: {
+          acceptedTags: [],
+          skippedTags: [{ slug: "maybe-tag", reason: "unknown_tag" }],
+          catalogUnavailable: true,
+        },
+      },
+    });
+    expect(JSON.stringify(parseToolText(result))).not.toContain('"tags"');
+  });
+
+  it("lists tasks filtered by tag query param", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/tasks?tag=custom_ai") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              items: [{ id: "task-ai", title: "AI work", tags: ["custom_ai"] }],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_list")?.({ tag: "custom_ai" });
+    const parsed = parseToolText(result) as { ok: boolean; data: { data?: { items?: unknown[] } } };
+    expect(parsed.ok).toBe(true);
+    const items = parsed.data.data?.items ?? parsed.data.items;
+    expect(items).toEqual([expect.objectContaining({ id: "task-ai" })]);
+  });
+
+  it("fetches review card draft schema from the Local HTTP API", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/review-card-drafts/schema") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              capability: "review_card_draft_schema_v1",
+              cardTypes: [{ cardType: "basic_qa" }],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_review_card_draft_schema")?.({});
+    const parsed = parseToolText(result) as {
+      ok: boolean;
+      data: { data?: { capability?: string } };
+    };
+    expect(parsed.ok).toBe(true);
+    expect(
+      parsed.data.data?.capability ?? (parsed.data as { capability?: string }).capability,
+    ).toBe("review_card_draft_schema_v1");
+  });
+
   it("previews structured task reminder updates through the Local HTTP API", async () => {
     const { handlers } = collectHandlers();
 

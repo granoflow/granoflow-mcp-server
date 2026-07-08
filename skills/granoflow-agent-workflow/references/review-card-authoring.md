@@ -4,6 +4,10 @@ Read this reference before creating `reviewCardDrafts` while finishing a
 Granoflow task, writing review content, or turning durable lessons into study
 cards.
 
+Before drafting cards, call `granoflow_review_card_draft_schema` and inspect
+`single_task_ai` capabilities from `granoflow_ai_agent_tools`. Use the app-owned
+schema for card types, note fields, layouts, and unsupported-pattern fallbacks.
+
 Review cards are for future action, not for logging that something happened.
 When a point is useful but not worth spaced practice, keep it in `taskReview`
 instead.
