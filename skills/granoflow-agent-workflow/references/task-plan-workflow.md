@@ -1,6 +1,6 @@
 # Task Plan Workflow
 
-Use this owner workflow after `analysis_status=finalized`, `decision=proceed`, and `planning_readiness=yes`. Read [task-plan-template.md](task-plan-template.md) and the matching learning or software-development profile.
+Use this owner workflow after `analysis_status=finalized`, `decision=proceed`, and `planning_readiness=yes`. Read [task-plan-template.md](task-plan-template.md), then append zero or more profiles in the fixed order learning, software development.
 
 ## Lifecycle
 
@@ -10,13 +10,14 @@ Do not execute before explicit Plan confirmation. Plan confirmation authorizes o
 
 ## Author And Confirm
 
-1. Re-read the latest Granoflow task, nodes, description, attachments, project/milestone context, and active analysis final.
+1. Re-read the latest Granoflow task, nodes, description, attachments, project/milestone context, active analysis final, and its Card Checkpoint.
 2. Inherit Outcome, Evidence, Boundaries, Risks, and user decisions without silently changing them.
 3. Write 3–7 major nodes. Each node needs a concrete deliverable, a testable delivery standard, Evidence, and a handoff proving downstream startup readiness.
 4. Mark manual acceptance as an independent `user_manual` node titled `验收：<object>` with `non_blocking_acceptance` dependencies.
-5. Grill dependencies, authorization, false-success paths, rollback, manual acceptance, cross-device changes, and task completion.
-6. Obtain explicit confirmation.
-7. Save an immutable `task-plan-vNN.md`, upload it with `granoflow_task_attachment_add_markdown`, list attachments to verify it, and point the description summary to the single active version. A material amendment creates the next version and records `supersedes`; progress alone does not rewrite the attachment.
+5. Load the sole card authoring owner, run the Plan Card Checkpoint, and record the Knowledge And Card Plan. Plan confirmation does not approve future Execution card operations.
+6. Grill dependencies, authorization, false-success paths, rollback, manual acceptance, cross-device changes, and task completion.
+7. Obtain explicit confirmation.
+8. Save an immutable `task-plan-vNN.md`, upload it with `granoflow_task_attachment_add_markdown` using an idempotency key, task revision, and expected local hash, then read the attachment content/hash back. A filename-only list or HTTP success is insufficient. Point the description summary to the single active version. A material amendment creates the next version and records `supersedes`; progress alone does not rewrite the attachment.
 
 ## Granoflow Nodes
 
@@ -33,19 +34,22 @@ Before every node start or mutation, after any wait, and before task completion:
 After executing a node:
 
 1. verify its delivery standard and Evidence;
-2. verify downstream execution startup requirements;
-3. call `granoflow_task_node_update` with the latest revision and `status=finished`;
-4. list nodes and confirm the persisted status;
-5. update only the controlled description summary;
-6. continue to the next safe execution node.
+2. when its Knowledge/Card Delta Trigger fired, run the Execution Card Checkpoint; otherwise record that no node-level checkpoint was triggered;
+3. verify downstream execution startup requirements;
+4. call `granoflow_task_node_update` with the latest revision and `status=finished`;
+5. list nodes and confirm the persisted status;
+6. update only the controlled description summary;
+7. continue to the next safe execution node.
 
-User manual acceptance remains pending and does not block later safe nodes. When AI work is exhausted, write the factual review-so-far and use `awaiting_manual_acceptance`. The user may finish acceptance on any synced device.
+User manual acceptance remains pending and does not block later safe nodes. The user may finish acceptance on any synced device. Before every write, use Granoflow's latest state rather than an Agent cache.
 
 ## Task Completion
 
-NodeService is the only completion path. Write the factual task review before finishing the last AI node. When every active required node becomes `finished`, Granoflow's existing node-progress service completes the parent task. Do not call a second task-completion endpoint. Re-read the task and require the persisted completed state.
+For a node-backed task, create and verify the versioned Task Delivery, including its Card Checkpoint, before finishing the final required execution node. NodeService is the only completion path: when every active required node becomes `finished`, Granoflow completes the parent task. Do not call a second completion endpoint. Re-read the task and require the persisted completed state.
 
-If the user finishes the last manual node later, normal Granoflow sync and parent-task propagation complete the task without a resident Agent. A later Agent may append a review amendment, but review polish never blocks completion.
+For a genuinely node-less compatibility task, `granoflow_task_finish` may complete the task after its applicable Delivery gate. Completion reads and summarizes the Delivery Card Checkpoint; it does not create a new checkpoint, Task Review, or card-write batch. A Delivery checkpoint may be explicitly deferred without blocking completion. Legacy inline review parameters are used only when the user explicitly requested and approved inline review.
+
+If the user finishes the last manual node later, normal Granoflow sync and parent-task propagation complete the task without a resident Agent. Deferred Task Review is a separate later workflow and never blocks completion.
 
 ## Description Summary
 

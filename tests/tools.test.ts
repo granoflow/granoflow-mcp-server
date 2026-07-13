@@ -405,8 +405,11 @@ describe("MCP tool registration", () => {
     expect(workflow).toContain("task_state_conflict");
     expect(workflow).toContain("NodeService is the only completion path");
     expect(workflow).toContain("awaiting_manual_acceptance");
-    expect(template).toContain("Delivery standard");
-    expect(template).toContain("Downstream startup requirements");
+    expect(workflow).toContain("Task Delivery");
+    expect(template).toContain("Delivery Standard");
+    expect(template).toContain("Downstream Startup Requirements");
+    expect(template).not.toContain("project_73");
+    expect(template).not.toContain("project_76");
     expect(learning).toContain("independent mastery gate");
     expect(software).toContain("file and method responsibility/size budgets");
   });
@@ -419,13 +422,13 @@ describe("MCP tool registration", () => {
     );
     const combined = `${skill}\n${reference}`;
 
-    expect(combined).toContain("factual `taskReview` may be written automatically");
+    expect(combined).toContain("Task Review is user-initiated and deferred by default");
     expect(combined).toContain("suggestion or nudge is not permission");
     expect(combined).toContain("No periodic review starts from a suggestion alone");
     expect(combined).toContain("show a draft of the fields");
     expect(combined).toContain("Daily-review synthesis imports remain");
-    expect(combined).toContain("Automatic task completion review does not change");
-    expect(combined).toContain("Do not write inferred mood");
+    expect(combined).toContain("does not automatically write taskReview or Review Cards");
+    expect(combined).toContain("Never present inferred mood");
     expect(combined).toContain("review July");
     expect(combined).toContain("写周报");
   });
@@ -513,6 +516,10 @@ describe("MCP tool registration", () => {
     expect(descriptions.get("granoflow_first_run_import_skill")).toContain("monthly milestones");
     expect(descriptions.get("granoflow_task_export")).toContain("reusable lessons");
     expect(descriptions.get("granoflow_ai_agent_tools")).toContain("memory-style questions");
+    expect(descriptions.get("granoflow_review_card_draft_skill")).toContain(
+      "lifecycle Card Checkpoint",
+    );
+    expect(descriptions.get("granoflow_review_card_authoring_preview")).toContain("inbox task");
   });
 
   it("previews structured task creation through the Local HTTP API", async () => {
@@ -799,9 +806,9 @@ describe("MCP tool registration", () => {
           expect.objectContaining({ method: "GET", path: "/v1/tasks" }),
         ]),
         finishGuidance: expect.arrayContaining([
-          expect.stringContaining("startedAt and endedAt"),
-          expect.stringContaining("Only pass taskReview"),
-          expect.stringContaining("one reviewCardDraft"),
+          expect.stringContaining("no Plan nodes"),
+          expect.stringContaining("Task Delivery"),
+          expect.stringContaining("Do not generate Task Review"),
         ]),
       },
     });
@@ -826,6 +833,67 @@ describe("MCP tool registration", () => {
         },
       },
     });
+  });
+
+  it("fails closed on malformed Task Review and Completion Summary markers", async () => {
+    const { handlers } = collectHandlers();
+
+    const review = await handlers.get("granoflow_task_review_update")?.({
+      taskId: "task-1",
+      taskReview: "review_revision: 1\nNo managed markers",
+      expectedUpdatedAt: "2026-07-13T10:00:00.000Z",
+      dryRun: false,
+    });
+    const summary = await handlers.get("granoflow_task_completion_summary_update")?.({
+      taskId: "task-1",
+      description: "<!-- granoflow-task-completion-summary:v1:start -->\nOne-sided summary",
+      expectedUpdatedAt: "2026-07-13T10:00:00.000Z",
+      dryRun: false,
+    });
+
+    expect(parseToolText(review)).toMatchObject({
+      ok: false,
+      code: "task_review_markers_invalid",
+      data: { reason: "missing_marker" },
+    });
+    expect(parseToolText(summary)).toMatchObject({
+      ok: false,
+      code: "task_completion_summary_markers_invalid",
+      data: { reason: "missing_marker" },
+    });
+  });
+
+  it("refuses a second completion path for a node-backed task", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/tasks/task-1/nodes") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: { items: [{ id: "node-1", status: "pending" }] },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 500;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_complete")?.({
+      taskId: "task-1",
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "node_managed_completion_required",
+      data: { completionOwner: "task_node_service", nodeCount: 1 },
+    });
+    expect(requestedUrls).toEqual(["/v1/tasks/task-1/nodes"]);
   });
 
   it("fails fast when enhanced review card fields are not advertised by the app", async () => {
@@ -1949,6 +2017,8 @@ describe("task plan attachments and nodes", () => {
     const result = await handlers.get("granoflow_task_attachment_add_markdown")?.({
       taskId: "task-1",
       filePath: "/etc/hosts",
+      idempotencyKey: "plan-v01",
+      expectedTaskUpdatedAt: "2026-07-13T10:00:00.000Z",
       dryRun: false,
     });
 
@@ -1958,15 +2028,43 @@ describe("task plan attachments and nodes", () => {
     });
   });
 
-  it("forwards a generated Markdown attachment path", async () => {
+  it("forwards and verifies a generated Markdown attachment", async () => {
     const dir = await mkdtemp(join(tmpdir(), "granoflow-plan-"));
     const filePath = join(dir, "task-plan-v01.md");
     await writeFile(filePath, "# Plan\n", "utf8");
     const requests: Array<{ url?: string; body: unknown }> = [];
     const port = await startServer(async (request, response) => {
-      requests.push({ url: request.url, body: await readJsonBody(request) });
+      requests.push({
+        url: request.url,
+        body: request.method === "GET" ? null : await readJsonBody(request),
+      });
       response.setHeader("content-type", "application/json");
-      response.end(JSON.stringify({ ok: true, data: { attachmentId: "attachment-1" } }));
+      if (request.url === "/v1/capabilities") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              resources: {
+                task: ["attachment.conditional-add", "attachment.read-content-hash"],
+              },
+            },
+          }),
+        );
+        return;
+      }
+      if (request.method === "POST") {
+        response.end(JSON.stringify({ ok: true, data: { entity: { id: "attachment-1" } } }));
+        return;
+      }
+      response.end(
+        JSON.stringify({
+          ok: true,
+          data: {
+            content: "# Plan\n",
+            contentSha256: "c3964bb3b70a957ec9b233c7dd3653f6ba17701ab00facf88ae1393dc6155577",
+          },
+        }),
+      );
     });
     process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
 
@@ -1974,14 +2072,23 @@ describe("task plan attachments and nodes", () => {
     await handlers.get("granoflow_task_attachment_add_markdown")?.({
       taskId: "task-1",
       filePath,
+      idempotencyKey: "task-plan-v01",
+      expectedTaskUpdatedAt: "2026-07-13T10:00:00.000Z",
       dryRun: false,
     });
 
     expect(requests).toEqual([
+      { url: "/v1/capabilities", body: null },
       {
         url: "/v1/tasks/task-1/attachments",
-        body: { file: realpathSync(filePath) },
+        body: {
+          file: realpathSync(filePath),
+          idempotencyKey: "task-plan-v01",
+          expectedTaskUpdatedAt: "2026-07-13T10:00:00.000Z",
+          expectedContentSha256: "c3964bb3b70a957ec9b233c7dd3653f6ba17701ab00facf88ae1393dc6155577",
+        },
       },
+      { url: "/v1/tasks/task-1/attachments/attachment-1", body: null },
     ]);
   });
 

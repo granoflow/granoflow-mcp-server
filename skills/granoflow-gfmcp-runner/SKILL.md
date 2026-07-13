@@ -16,7 +16,9 @@ Use this skill when installing, operating, or diagnosing the optional GFMCP auto
 - Safe local inspection and reversible workspace edits may proceed. Publishing, payment, login, external messages, destructive changes, secrets, or broadened scope require explicit user authorization.
 - Missing necessary information must be written into the task as a concise waiting/blocker note. Do not invent credentials or business choices.
 - A task is complete only after Granoflow API readback reports `status=done`. An agent process exit code is not completion evidence.
-- Record only review-card candidates or wait-state nodes. Delegate every card search, draft, preview, confirmation, and write to `granoflow-review-card-draft`; never create hidden card drafts or cards.
+- A task with Plan nodes must write and content/hash-readback Task Delivery before the final required node, then complete only through NodeService. A node-less compatibility task may use one finish call after its applicable Delivery gate.
+- Ordinary completion does not create deep Task Review or a new Card Checkpoint. It consumes the Delivery checkpoint already recorded by the task workflow.
+- An unattended worker may read linked cards and record phase candidates, but it cannot infer approval for card writes. Delegate every card search, draft, preview, confirmation, and write to `granoflow-review-card-draft`; record unapproved operations as deferred and never create hidden card drafts or cards.
 
 ## Run
 

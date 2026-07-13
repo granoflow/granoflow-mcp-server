@@ -1,17 +1,19 @@
 # Task Plan Template
 
-Use this base template after a confirmed analysis final. A project 73/76 may be the Plan SSOT when it contains the same contract.
+Use this base template after a confirmed analysis final. Local planning-document numbers are repository governance only and never become public task types.
 
 ```markdown
 # Task Plan: <title>
 
 task_id: <id>
 plan_version: <positive integer>
-plan_kind: general | learning | software_development | project_73 | project_76
+profiles: [] | [learning] | [software_development] | [learning, software_development]
 plan_status: draft
 source_analysis: <active analysis final>
 supersedes: null | <prior plan attachment>
 execution_readiness: <state>
+
+> Scope notice: This is the pre-execution plan, not a completion record. Task Delivery governs what was actually delivered.
 
 ## Analysis Inheritance
 
@@ -23,6 +25,10 @@ execution_readiness: <state>
 
 ## Recommended Approach
 
+## Knowledge And Card Plan
+
+Use the canonical Card Checkpoint from `../../granoflow-review-card-draft/references/lifecycle-card-checkpoints.md`. Record knowledge inherited from Analysis, expected changes, and the evidence or event that would trigger reconciliation.
+
 ## Execution Nodes
 
 ### Node N: <action + result>
@@ -31,14 +37,15 @@ execution_readiness: <state>
 - Preconditions:
 - Action:
 - Deliverable:
-- Delivery standard:
-- Completion condition:
+- Delivery Standard:
+- Completion Condition:
 - Verification Evidence:
 - Acceptance: automated | ai_review | user_manual
 - Manual acceptance instructions: none | <entry, steps, pass criteria>
-- Downstream startup requirements:
-- Handoff decision:
-- Block and stop conditions:
+- Downstream Startup Requirements:
+- Handoff Decision:
+- Stop Conditions:
+- Knowledge/Card Delta Trigger: none | <material knowledge, correction, rule, or reusable-experience trigger>
 
 ## Dependencies And Handoffs
 
@@ -57,7 +64,12 @@ Types: `execution_required` or `non_blocking_acceptance`.
 
 ## Granoflow Writeback
 
+- Delivery gate before final required node:
+- Completion owner: NodeService | node-less compatibility
+
 ## Plan Grill
+
+## Card Checkpoint
 
 ## Confirmation And Execution Readiness
 ```

@@ -7,9 +7,9 @@ other stdio MCP clients can use the same command shape.
 
 Granoflow MCP does not make an AI agent better at reading repositories, fixing
 CI, or writing code. It connects MCP-capable AI agents to a local task, review,
-and long-term work memory layer: they can see the work you planned, update task
-state, finish tasks with meaningful review notes, and draft review cards for
-lessons worth remembering.
+and long-term work memory layer: they can see planned work, update task state,
+record verified Task Delivery, finish through one completion owner, and later
+review lessons worth remembering.
 
 Use it when you want agent work to leave a durable trail outside chat history.
 Skip it if you only need code analysis or repository automation.
@@ -193,27 +193,29 @@ app. Agents can use existing tasks, task reviews, review cards, projects,
 milestones, and periodic reviews as evidence, but this phase does not provide
 semantic search across all historical discussion.
 
-## 13. Agent Completion Workflow Demo
+## 13. Agent Delivery And Deferred Review Demo
 
 Use this demo after you have at least one real or test task in Granoflow. Ask
 your MCP client:
 
 ```text
-Resolve my Granoflow task named "MCP dry-run test", then finish it with a short
-task review and one review card for the reusable lesson. Use dry-run first.
+Resolve my Granoflow task named "MCP dry-run test", write and verify its Task
+Delivery, then complete it through the correct single completion owner. Use
+dry-run first.
 ```
 
-The agent should prefer `granoflow_task_finish`. In dry-run mode, the result
-should preview a sequence that can update task timing, complete the task, import
-the task review and review-card drafts, then read the task back.
+The agent should inspect nodes first. Node-backed tasks finish through
+NodeService; only node-less compatibility tasks use `granoflow_task_finish`.
+The Task Delivery attachment must pass content or App-owned hash readback.
 
 For real work, the expected agent behavior is:
 
-- infer `startedAt` and `endedAt` when the conversation provides evidence;
-- write `taskReview` only for useful decisions, lessons, failure modes, process
-  details, or unresolved risks;
-- create one `reviewCardDrafts` item per durable knowledge point;
-- skip task reviews and cards when the task only produced an activity log.
+- record actual deliverables, verification, Analysis/Plan differences,
+  residuals, acceptance state, and handoff in Task Delivery;
+- use exactly one completion owner and read back `status=done`;
+- leave Review pending by default;
+- when the user separately requests Review, confirm the review body and any
+  card operations before writing them.
 
 When a review card benefits from pronunciation, phonetic spelling, or
 translation, ask:

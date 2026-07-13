@@ -178,7 +178,7 @@ npx -y @granoflow/mcp-server
   task reviews, review cards, long-term memory, and fallback card fields.
 - Expose a bundled `granoflow_first_run_import_skill` for initializing
   Granoflow and importing data from Cursor, Codex, Hermes, or other agents.
-- Finish tasks with task reviews and review-card-worthy lessons.
+- Record verified Task Delivery, complete through one owner, and review tasks later without blocking completion.
 - Discover AI-agent import capabilities through `granoflow_ai_agent_tools`.
 - Create enhanced review-card drafts with optional phonetic, translation, and
   system TTS pronunciation fields when the app supports them.

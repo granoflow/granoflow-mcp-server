@@ -11,7 +11,7 @@ delegate here instead of restating card rules. The public MCP tool name remains
 
 ## Required Flow
 
-1. Confirm the target task exists and belongs to a project. Every card must be linked to such a task.
+1. Confirm the target task exists and is not deleted. Project and inbox tasks are both eligible when the running App advertises inbox authoring; every operation remains linked to a task.
 2. Summarize the proposed card set's core knowledge in one short paragraph.
 3. Call `granoflow_review_card_similar` with that summary. Supply up to 12 discriminating keywords so the App can fall back when vector search is disabled, unavailable, or produces no useful candidates.
 4. Classify raw matches as `same_knowledge`, `related`, `conflicting`, or irrelevant. Show only the AI-filtered useful candidates to the user. Search results never authorize a write.
@@ -31,6 +31,10 @@ Do not infer confirmation from search, classification, prior general interest, o
 - `create_note_cards`: create one complete note and one or more front/back cards that share it.
 
 Use the running App's schema and advertised capabilities. Do not implement card business logic in MCP or bypass the Local HTTP API.
+
+## Lifecycle Card Checkpoints
+
+Read [Task Lifecycle Card Checkpoints](references/lifecycle-card-checkpoints.md) whenever card knowledge is read or changed during Task Analysis, Plan, Execution, Delivery, or Deferred Review. That reference owns the checkpoint record, phase responsibilities, inbox capability fallback, and cross-phase provenance. Completion only verifies the Delivery checkpoint and never starts a new card-write pass.
 
 ## Knowledge And Source Fidelity
 

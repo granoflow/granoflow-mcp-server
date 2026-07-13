@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { extname, isAbsolute, relative, resolve } from "node:path";
@@ -73,6 +74,10 @@ const milestoneArchiveClosureSchema = z.object({
   completionSummary: z.string().min(1).optional(),
   projectDescription: z.string().min(1),
 });
+const TASK_REVIEW_START = "<!-- granoflow-task-review:v1:start -->";
+const TASK_REVIEW_END = "<!-- granoflow-task-review:v1:end -->";
+const TASK_COMPLETION_SUMMARY_START = "<!-- granoflow-task-completion-summary:v1:start -->";
+const TASK_COMPLETION_SUMMARY_END = "<!-- granoflow-task-completion-summary:v1:end -->";
 const resourceStatusSchema = z.string().min(1).optional();
 const taskNodeStatusSchema = z.enum(["pending", "finished"]);
 const taskNodeCreateSchema = z.object({
@@ -145,6 +150,24 @@ function compactRecord(record: Record<string, unknown>): Record<string, unknown>
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
 }
 
+function validateManagedBlock(
+  value: string,
+  startMarker: string,
+  endMarker: string,
+): { ok: true } | { ok: false; reason: string } {
+  const start = value.indexOf(startMarker);
+  const end = value.indexOf(endMarker);
+  if (start < 0 || end < 0) return { ok: false, reason: "missing_marker" };
+  if (start > end) return { ok: false, reason: "reversed_markers" };
+  if (value.indexOf(startMarker, start + startMarker.length) >= 0) {
+    return { ok: false, reason: "duplicate_start_marker" };
+  }
+  if (value.indexOf(endMarker, end + endMarker.length) >= 0) {
+    return { ok: false, reason: "duplicate_end_marker" };
+  }
+  return { ok: true };
+}
+
 function textResult(text: string) {
   return {
     content: [{ type: "text" as const, text }],
@@ -207,6 +230,98 @@ function supportsTaskNodeWorkflow(payload: unknown): boolean {
   ].every((action) => task.includes(action));
 }
 
+function supportsTaskWorkflowAttachmentReadback(payload: unknown): boolean {
+  const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
+  const data = isObject(root) && isObject(root.data) ? root.data : root;
+  const resources = isObject(data) && isObject(data.resources) ? data.resources : {};
+  const task = Array.isArray(resources.task) ? resources.task : [];
+  return ["attachment.conditional-add", "attachment.read-content-hash"].every((action) =>
+    task.includes(action),
+  );
+}
+
+function extractEntity(value: unknown): Record<string, unknown> | null {
+  if (!isObject(value)) return null;
+  if (isObject(value.entity)) return value.entity;
+  if (isObject(value.data)) return extractEntity(value.data);
+  return null;
+}
+
+async function addTaskWorkflowAttachment(input: {
+  taskId: string;
+  filePath: string;
+  idempotencyKey: string;
+  expectedTaskUpdatedAt: string;
+  dryRun: boolean;
+}) {
+  const file = validatedWorkflowMarkdownPath(input.filePath);
+  const contentSha256 = createHash("sha256").update(readFileSync(file)).digest("hex");
+  const body = {
+    file,
+    idempotencyKey: input.idempotencyKey,
+    expectedTaskUpdatedAt: input.expectedTaskUpdatedAt,
+    expectedContentSha256: contentSha256,
+  };
+  if (input.dryRun) {
+    return requestGranoflowApi({
+      method: "POST",
+      path: `/v1/tasks/${input.taskId}/attachments`,
+      body,
+      dryRun: true,
+    });
+  }
+  const capabilities = await requestGranoflowApi({ path: "/v1/capabilities" });
+  if (!capabilities.ok || !supportsTaskWorkflowAttachmentReadback(capabilities)) {
+    return {
+      ok: false,
+      code: "unsupported_capability",
+      data: { requiredCapability: "task_workflow_attachment_readback_v1" },
+      error: {
+        message:
+          "The running Granoflow app does not advertise conditional task attachment write and content/hash readback.",
+      },
+      runtime: capabilities.runtime,
+    };
+  }
+  const write = await requestGranoflowApi({
+    method: "POST",
+    path: `/v1/tasks/${input.taskId}/attachments`,
+    body,
+  });
+  if (!write.ok) return write;
+  const entity = extractEntity(write);
+  const attachmentId = typeof entity?.id === "string" ? entity.id : undefined;
+  if (!attachmentId) {
+    return {
+      ok: false,
+      code: "attachment_readback_unavailable",
+      data: { write },
+      error: { message: "The app did not return the created task attachment id." },
+      runtime: write.runtime,
+    };
+  }
+  const readback = await requestGranoflowApi({
+    path: `/v1/tasks/${input.taskId}/attachments/${attachmentId}`,
+  });
+  const readbackData = isObject(readback.data) ? readback.data : {};
+  const storedHash =
+    typeof readbackData.contentSha256 === "string"
+      ? readbackData.contentSha256
+      : isObject(readbackData.data) && typeof readbackData.data.contentSha256 === "string"
+        ? readbackData.data.contentSha256
+        : undefined;
+  const verified = readback.ok && storedHash === contentSha256;
+  return {
+    ok: verified,
+    code: verified ? "task_attachment_written" : "attachment_readback_mismatch",
+    data: { attachment: entity, contentSha256, verified, write, readback },
+    error: verified
+      ? undefined
+      : { message: "Task attachment content/hash readback did not match the local Markdown." },
+    runtime: readback.runtime ?? write.runtime,
+  };
+}
+
 async function taskNodeApiTool(options: ApiRequestOptions) {
   if (options.method === "GET" || options.dryRun) return apiTool(options);
   const capabilities = await requestGranoflowApi({ path: "/v1/capabilities" });
@@ -222,6 +337,43 @@ async function taskNodeApiTool(options: ApiRequestOptions) {
     });
   }
   return apiTool(options);
+}
+
+async function completeNodeLessTask(input: {
+  taskId: string;
+  body?: Record<string, unknown>;
+  dryRun: boolean;
+}) {
+  if (input.dryRun) {
+    return requestGranoflowApi({
+      method: "POST",
+      path: `/v1/tasks/${input.taskId}/complete`,
+      body: input.body,
+      dryRun: true,
+    });
+  }
+  const nodes = await requestGranoflowApi({ path: `/v1/tasks/${input.taskId}/nodes` });
+  if (nodes.ok && extractItems(nodes).length > 0) {
+    return {
+      ok: false,
+      code: "node_managed_completion_required",
+      data: {
+        taskId: input.taskId,
+        nodeCount: extractItems(nodes).length,
+        completionOwner: "task_node_service",
+      },
+      error: {
+        message:
+          "This task has Plan nodes. Write and verify Task Delivery, then finish the final required node.",
+      },
+      runtime: nodes.runtime,
+    };
+  }
+  return requestGranoflowApi({
+    method: "POST",
+    path: `/v1/tasks/${input.taskId}/complete`,
+    body: input.body,
+  });
 }
 
 function periodicReviewHasLog(value: unknown): boolean {
@@ -1349,9 +1501,10 @@ async function finishTask(input: {
         steps,
         previewMode: "local_request_sequence_only",
         finishGuidance: [
-          "Before writing, infer startedAt and endedAt from the current agent conversation when evidence is available.",
-          "Only pass taskReview when there is durable learning or a meaningful decision; omit it for a plain activity log.",
-          "Create one reviewCardDraft per long-lived knowledge point worth remembering.",
+          "Use this compatibility path only when the latest task has no Plan nodes.",
+          "Before completion, verify the required Task Delivery attachment and Completion Summary when this workflow entered Plan or Execution.",
+          "Do not generate Task Review or Review Cards by default; schedule Deferred Task Review separately.",
+          "Only pass legacy taskReview/reviewCardDrafts when the user explicitly requested inline review and approved that payload.",
         ],
       },
     };
@@ -1368,6 +1521,26 @@ async function finishTask(input: {
       },
       error: { message: "Set confirmComplete=true to finish a Granoflow task." },
       runtime: runtime.runtime,
+    };
+  }
+
+  const nodesResult = await requestGranoflowApi({
+    path: `/v1/tasks/${input.taskId}/nodes`,
+  });
+  if (nodesResult.ok && extractItems(nodesResult).length > 0) {
+    return {
+      ok: false,
+      code: "node_managed_completion_required",
+      data: {
+        taskId: input.taskId,
+        nodeCount: extractItems(nodesResult).length,
+        completionOwner: "task_node_service",
+      },
+      error: {
+        message:
+          "This task has Plan nodes. Write and verify Task Delivery, then finish the final required node; do not call a second completion endpoint.",
+      },
+      runtime: nodesResult.runtime,
     };
   }
 
@@ -1481,7 +1654,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_review_card_draft_skill",
-    "Read the bundled core Granoflow review-card authoring skill. Call it for every card search, link, create, or modification so similarity fallback, AI filtering, note quality, preview, approval, controlled writes, and readback use one workflow.",
+    "Read the bundled core Granoflow review-card authoring skill. Call it for every lifecycle Card Checkpoint and every card search, link, create, or modification so similarity fallback, AI filtering, note quality, preview, approval, controlled writes, and readback use one workflow.",
     {},
     async () =>
       jsonTextResult({
@@ -1672,7 +1845,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_review_card_authoring_preview",
-    "Preview controlled review-card creation, existing-card linking, or field-level updates. This endpoint performs no writes and returns a confirmation token plus shared-note impact.",
+    "Preview controlled review-card creation, existing-card linking, or field-level updates for an existing project or inbox task. This endpoint performs no writes and returns a confirmation token plus shared-note impact.",
     {
       taskId: z.string().min(1),
       operations: z.array(z.record(z.string(), z.unknown())).min(1),
@@ -2285,6 +2458,7 @@ export function registerGranoflowTools(server: {
       taskId: z.string().min(1).describe("Granoflow task id."),
       title: z.string().min(1).optional(),
       description: z.string().optional(),
+      taskReview: z.string().optional(),
       dueAt: z.string().optional(),
       remindAt: z.string().optional(),
       projectId: z.string().min(1).optional(),
@@ -2300,6 +2474,7 @@ export function registerGranoflowTools(server: {
       taskId,
       title,
       description,
+      taskReview,
       dueAt,
       remindAt,
       projectId,
@@ -2314,6 +2489,7 @@ export function registerGranoflowTools(server: {
         body: compactRecord({
           title,
           description,
+          taskReview,
           dueAt,
           remindAt,
           projectId,
@@ -2326,8 +2502,81 @@ export function registerGranoflowTools(server: {
   );
 
   registerTool(
+    "granoflow_task_review_update",
+    "Safely write a confirmed structured Task Review to any task, including completed inbox tasks, using the latest task revision. Review cards and context promotion remain separate controlled steps.",
+    {
+      taskId: z.string().min(1),
+      taskReview: z.string().min(1),
+      expectedUpdatedAt: z.string().datetime(),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ taskId, taskReview, expectedUpdatedAt, dryRun }) => {
+      const review = String(taskReview);
+      const markers = validateManagedBlock(review, TASK_REVIEW_START, TASK_REVIEW_END);
+      const revisionPresent = /\breview_revision:\s*[1-9]\d*\b/.test(review);
+      const operationPresent = /\breview_operation_id:\s*\S+/.test(review);
+      if (!markers.ok || !revisionPresent || !operationPresent) {
+        return jsonTextResult({
+          ok: false,
+          code: "task_review_markers_invalid",
+          data: {
+            reason: !markers.ok
+              ? markers.reason
+              : !revisionPresent
+                ? "review_revision_missing"
+                : "review_operation_id_missing",
+          },
+          error: {
+            message:
+              "Structured Task Review requires one valid marker pair, a positive review_revision, and review_operation_id.",
+          },
+        });
+      }
+      return apiTool({
+        method: "PATCH",
+        path: `/v1/tasks/${String(taskId)}`,
+        body: { taskReview: review, expectedUpdatedAt },
+        dryRun: dryRun !== false,
+      });
+    },
+  );
+
+  registerTool(
+    "granoflow_task_completion_summary_update",
+    "Safely update a task description that already preserves all user text and contains exactly one Task Completion Summary managed block.",
+    {
+      taskId: z.string().min(1),
+      description: z.string().min(1),
+      expectedUpdatedAt: z.string().datetime(),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ taskId, description, expectedUpdatedAt, dryRun }) => {
+      const nextDescription = String(description);
+      const markers = validateManagedBlock(
+        nextDescription,
+        TASK_COMPLETION_SUMMARY_START,
+        TASK_COMPLETION_SUMMARY_END,
+      );
+      if (!markers.ok) {
+        return jsonTextResult({
+          ok: false,
+          code: "task_completion_summary_markers_invalid",
+          data: { reason: markers.reason },
+          error: { message: "Task Completion Summary markers are not safe to update." },
+        });
+      }
+      return apiTool({
+        method: "PATCH",
+        path: `/v1/tasks/${String(taskId)}`,
+        body: { description: nextDescription, expectedUpdatedAt },
+        dryRun: dryRun !== false,
+      });
+    },
+  );
+
+  registerTool(
     "granoflow_task_complete",
-    "Low-level compatibility endpoint to complete a Granoflow task. Prefer granoflow_task_finish for any user-facing completion request so startedAt, endedAt, review, and review cards can be captured.",
+    "Low-level node-less compatibility endpoint. Never call it for a task with Plan nodes; NodeService owns completion for node-backed tasks.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       input: jsonInputSchema.optional(),
@@ -2337,12 +2586,13 @@ export function registerGranoflowTools(server: {
         .describe("When true, previews the request without writing."),
     },
     async ({ taskId, input, dryRun }) =>
-      apiTool({
-        method: "POST",
-        path: `/v1/tasks/${String(taskId)}/complete`,
-        body: input,
-        dryRun: dryRun !== false,
-      }),
+      jsonTextResult(
+        await completeNodeLessTask({
+          taskId: String(taskId),
+          body: isObject(input) ? input : undefined,
+          dryRun: dryRun !== false,
+        }),
+      ),
   );
 
   registerTool(
@@ -2354,13 +2604,15 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_attachment_add_markdown",
-    "Attach a generated task Analysis or Plan Markdown file. The file must be under the current workspace or system temp directory.",
+    "Conditionally attach a versioned Task Analysis, Task Plan, or Task Delivery Markdown file and verify App-owned content/hash readback.",
     {
       taskId: z.string().min(1),
       filePath: z.string().min(1),
+      idempotencyKey: z.string().min(1),
+      expectedTaskUpdatedAt: z.string().datetime(),
       dryRun: z.boolean().default(true),
     },
-    async ({ taskId, filePath, dryRun }) => {
+    async ({ taskId, filePath, idempotencyKey, expectedTaskUpdatedAt, dryRun }) => {
       let file: string;
       try {
         file = validatedWorkflowMarkdownPath(String(filePath));
@@ -2371,13 +2623,29 @@ export function registerGranoflowTools(server: {
           error: { message: error instanceof Error ? error.message : String(error) },
         });
       }
-      return apiTool({
-        method: "POST",
-        path: `/v1/tasks/${String(taskId)}/attachments`,
-        body: { file },
-        dryRun: dryRun !== false,
-      });
+      return jsonTextResult(
+        await addTaskWorkflowAttachment({
+          taskId: String(taskId),
+          filePath: file,
+          idempotencyKey: String(idempotencyKey),
+          expectedTaskUpdatedAt: String(expectedTaskUpdatedAt),
+          dryRun: dryRun !== false,
+        }),
+      );
     },
+  );
+
+  registerTool(
+    "granoflow_task_attachment_read_markdown",
+    "Read a bounded Task Analysis, Task Plan, or Task Delivery Markdown attachment with its App-owned SHA-256 for verification.",
+    {
+      taskId: z.string().min(1),
+      attachmentId: z.string().min(1),
+    },
+    async ({ taskId, attachmentId }) =>
+      apiTool({
+        path: `/v1/tasks/${String(taskId)}/attachments/${String(attachmentId)}`,
+      }),
   );
 
   registerTool(
@@ -2465,7 +2733,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_finish",
-    "Finish a Granoflow task from the current agent conversation: infer startedAt and endedAt, write only meaningful review content, create one review card per durable knowledge point, complete the task, and verify status=done.",
+    "Finish a node-less compatibility task after its required Delivery gate and verify status=done. Do not use for node-backed tasks. taskReview/reviewCardDrafts remain legacy explicit-inline compatibility only; deferred Review is the default.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       projectId: z

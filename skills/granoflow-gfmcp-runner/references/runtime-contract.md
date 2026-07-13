@@ -14,5 +14,5 @@ The executor prompt requires the agent to:
 2. Analyze the selected task before execution.
 3. Request authorization for external, destructive, privileged, secret-bearing, or scope-expanding actions.
 4. Record necessary questions and real blockers in Granoflow.
-5. Keep card output as candidates or wait-state data and delegate authoring to `granoflow-review-card-draft`.
+5. Read cards when useful, keep unapproved card output as phase candidates or deferred checkpoint data, and delegate authoring to `granoflow-review-card-draft`.
 6. Treat API readback as the completion authority.

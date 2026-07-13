@@ -8,12 +8,13 @@ only section 8 content; they do not duplicate this template.
 
 analysis_status: <status>
 task_id: <task id>
-task_type: general | learning | software_development
-purpose: general | learning
+profiles: [] | [learning] | [software_development] | [learning, software_development]
 created_at: <local timestamp>
 updated_at: <local timestamp>
 decision: proceed | needs_input | user_action | split | redefine | defer | abandon | completion_audit
 planning_readiness: yes | no
+
+> Scope notice: This is pre-task analysis, not the project's current state. If later evidence conflicts, use the evidence-backed later record and preserve the difference.
 
 ## 1. Trigger：触发与问题
 
@@ -70,6 +71,10 @@ planning_readiness: yes | no
 ### Unresolved questions
 
 ## 10. Planning Readiness
+
+## 11. Card Checkpoint
+
+Use the canonical `card_checkpoint` record from `../../granoflow-review-card-draft/references/lifecycle-card-checkpoints.md`. Record cards actually used as analysis inputs, approved operations, candidates, readback, and cross-phase provenance; never persist a preview token.
 ```
 
 Keep every base section. Simple tasks may use one or two sentences per section.

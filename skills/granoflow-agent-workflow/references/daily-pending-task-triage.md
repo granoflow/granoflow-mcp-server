@@ -498,10 +498,11 @@ notification task should be deleted or cleaned up.
 
 ## Phase 8: Completion And Writeback
 
-For completed tasks, prefer `granoflow_task_finish` when available. Write a
-meaningful task review only when the task produced decisions, evidence, durable
-lessons, unresolved risk, or reusable process detail. Create review cards only
-for durable points that change future action.
+For work that entered Plan/Execution, write and content/hash-readback the
+versioned Task Delivery before completion. Node-backed tasks complete only via
+NodeService; node-less compatibility tasks may use `granoflow_task_finish` once.
+Default completion leaves deep Task Review and Review Cards for a separately
+initiated Deferred Task Review.
 
 Task completion writeback should include:
 
@@ -512,7 +513,7 @@ Task completion writeback should include:
 - residual risk;
 - attachment or fallback-link status for final analysis and plan documents;
 - plain-language task description updates;
-- cards created or deliberately omitted;
+- Review status pending or explicitly completed;
 - links or paths to analysis and plan documents when safe.
 
 After completion, read back the task list or exported task and verify completed

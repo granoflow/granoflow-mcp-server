@@ -19,9 +19,11 @@ Ask for explicit user authorization before publishing, payment, login, external 
 destructive changes, secret access, or scope expansion.
 If necessary information is missing or execution is truly blocked, write a concise
 waiting/blocker note back to this Granoflow task.
-Use the existing completion and review-card workflow; review cards require user confirmation.
-Do not treat process exit as completion. Finish only through Granoflow and require API
-readback to verify status=done.
+Before completion, write and content/hash-readback Task Delivery when the task entered
+Plan or execution. Tasks with Plan nodes complete only through NodeService; node-less
+compatibility tasks may use one finish call. Record the Delivery Card Checkpoint, but do
+not infer approval for card writes or start Deferred Task Review. Do not treat process
+exit as completion; require Granoflow API readback to verify status=done.
 """
 
 

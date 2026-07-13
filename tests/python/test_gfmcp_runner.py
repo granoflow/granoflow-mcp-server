@@ -128,8 +128,12 @@ class GfmcpRunnerTest(unittest.TestCase):
     def test_executor_prompt_preserves_authorization_boundary(self) -> None:
         prompt = build_prompt("task-1")
         self.assertIn("explicit user authorization", prompt)
-        self.assertIn("API\nreadback", prompt)
-        self.assertIn("review cards require user confirmation", prompt)
+        self.assertIn("Granoflow API readback", prompt)
+        self.assertIn("content/hash-readback Task Delivery", prompt)
+        self.assertIn("Plan nodes complete only through NodeService", prompt)
+        self.assertIn("Deferred Task Review", prompt)
+        self.assertIn("Delivery Card Checkpoint", prompt)
+        self.assertIn("not infer approval", prompt)
 
 
 if __name__ == "__main__":

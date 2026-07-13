@@ -157,8 +157,10 @@ High-level contract:
    original task, create a separate notification task with a 10-minute reminder,
    tell the user to respond by adding a new explicit node under the original
    task, attempt sync when available, and report sync visibility honestly.
-9. Write completion evidence back to the document and Granoflow. Finish only
-   tasks that are actually done and verified.
+9. Run phase Card Checkpoints through the sole bundled card owner; Completion
+   only verifies the Delivery checkpoint and does not start a new card pass.
+10. Write completion evidence back to the document and Granoflow. Finish only
+    tasks that are actually done and verified.
 
 Success criteria:
 
@@ -250,48 +252,38 @@ Success criteria:
 
 ## Completing Tasks
 
-When the user asks to complete, finish, close, mark done, wrap up, or otherwise
-end a task, prefer `granoflow_task_finish` over `granoflow_task_complete`.
+Use the lifecycle `Task Analysis -> Task Plan -> Execution -> Task Delivery ->
+Completion -> Deferred Task Review`. Quick Capture remains outside this document
+chain. Read `references/task-delivery-workflow.md` and the templates/profiles it
+routes before completing work that entered Plan or Execution.
 
-Before writing completion data:
+- Node-backed task: write and content/hash-readback Task Delivery before the
+  final required node; finish that node and let NodeService complete the task.
+  Never call a second completion endpoint.
+- Node-less compatibility task: use `granoflow_task_finish` once after the
+  applicable Delivery gate and read back `status=done`.
+- Default completion does not create a deep Task Review or a new card
+  checkpoint. It reads the Delivery Card Checkpoint summary; explicitly
+  deferred card work does not block task completion.
+- Legacy `taskReview` and `reviewCardDrafts` parameters remain available only
+  for an explicitly requested and approved inline-review compatibility call.
+- If the task is already done, stop duplicate completion work.
 
-1. Infer `startedAt` from the current agent conversation when there is evidence.
-2. Infer `endedAt` from the current agent conversation or current completion
-   moment.
-3. Decide whether there is anything genuinely worth reviewing.
-4. Decide whether any durable knowledge points should become review cards.
-
-For tasks the agent has executed or directly helped complete, a factual
-`taskReview` may be written automatically when it contains a meaningful
-decision, lesson, failure mode, evidence trail, reusable process detail,
-verification result, blocker, or important unresolved risk. Keep this automatic
-review factual: what was done, key decisions, blockers, verification, and what
-would help next time. Do not write inferred mood, personality, motivation,
-efficiency, or other subjective judgments into automatic task reviews.
-
-Delegate every review-card search, draft, link, update, preview, confirmation, and write to the bundled `granoflow-review-card-draft` skill. Omit cards when they would only be an activity log.
-
-Automatic task completion review does not change the daily-review synthesis
-confirmation gate. Daily review AI imports that update task titles,
-`task_review`, daily report content, or planned tasks still require the
-app/user confirmation path defined by the review-journal workflow.
-
-After writing meaningful task review content, maintain current project context
-when project context tools are available: low-risk factual deltas may update
-`project_snapshot.yaml`, while `project_rules.yaml`, public wording, or
-positioning conflicts must produce a proposal or conflict report instead of a
-silent overwrite.
-
-Load `granoflow-review-card-draft` before any card operation. The local review-card reference is a delegation pointer and legacy background only.
+When the user later asks to review the task, read
+`references/task-review-workflow.md`. A completed inbox task remains reviewable;
+missing project or milestone context only makes promotion `not_applicable`.
+Every card operation is delegated to the bundled
+`granoflow-review-card-draft` owner with preview and approval.
 
 Success criteria:
 
-- `startedAt` and `endedAt` are included when evidence supports them.
-- Empty activity logs are not written as task reviews.
-- Each review card contains exactly one durable knowledge point.
-- Review cards preserve source context when available and omit secrets,
-  credentials, private identifiers, and temporary log content.
-- Completion is verified by reading back task state when possible.
+- Task Delivery records actual output, evidence, Analysis/Plan deltas, residuals,
+  handoff, and acceptance state.
+- App-owned content or trusted hash readback proves the attachment.
+- Exactly one completion owner runs.
+- Completion and deferred Review are independently readable and resumable.
+- Secrets, raw transcripts, full tool logs, and unrelated personal data are not
+  persisted.
 
 ## Waiting For User Input
 
@@ -380,7 +372,7 @@ High-level contract:
    recommendation.
 4. Write nothing until the user authorizes the analysis draft. The authorization
    may start Grill but never authorizes planning or execution.
-5. Write the base analysis plus a thin general, learning, or software profile;
+5. Write the base analysis plus zero or more composable learning/software profiles;
    preserve the original description and use capability-aware attachment
    fallback.
 6. Grill the draft with the bundled protocol or optional installed enhancement.
@@ -544,6 +536,24 @@ Success criteria:
   learning tasks.
 - `references/task-analysis-profile-software-development.md`: Thin section-8
   profile for software-development tasks.
+- `references/task-plan-template.md` and `references/task-plan-workflow.md`:
+  Immutable pre-execution Plan contract and node handoffs.
+- `references/task-delivery-template.md` and
+  `references/task-delivery-workflow.md`: Versioned actual-delivery record,
+  content/hash readback, and unique completion ownership.
+- `references/task-delivery-profile-learning.md` and
+  `references/task-delivery-profile-software-development.md`: Composable
+  Delivery evidence extensions.
+- `references/task-review-template.md` and
+  `references/task-review-workflow.md`: Deferred, marker-safe, resumable Task
+  Review contract.
+- `references/task-review-profile-learning.md` and
+  `references/task-review-profile-software-development.md`: Composable Review
+  extensions.
+- `references/task-completion-summary-template.md`: Managed task-description
+  closure block.
+- `references/context-promotion-entry.md`: Durable Project/Milestone promotion
+  shape, deduplication, and freshness rules.
 - `references/review-card-authoring.md`: Read before creating review-card
   drafts from completed task work.
 - `references/review-drafting.md`: Read before daily, weekly, or monthly review

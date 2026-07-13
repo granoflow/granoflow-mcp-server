@@ -57,19 +57,29 @@ planning.
 
 ## Phase 1: Prefill The Seven-Dimension Analysis
 
-Read [task-analysis-template.md](task-analysis-template.md). Use one base
-template plus the matching thin profile:
+Read [task-analysis-template.md](task-analysis-template.md). Always use the
+complete base template, then append zero or more thin profiles in this order:
 
 - [task-analysis-profile-learning.md](task-analysis-profile-learning.md)
 - [task-analysis-profile-software-development.md](task-analysis-profile-software-development.md)
 
-Classify the task as `general`, `learning`, or `software_development`. A software
-task whose purpose is learning may use:
+Profiles are composable:
 
 ```yaml
-task_type: software_development
-purpose: learning
+profiles: [] | [learning] | [software_development] | [learning, software_development]
 ```
+
+For legacy reads only, map `task_type=learning` to `[learning]`,
+`task_type=software_development` to `[software_development]`, and legacy
+software work with `purpose=learning` to both profiles. New attachments write
+only `profiles`. Profiles add requirements and never weaken the base contract.
+
+Before drafting recommendations, read the task's linked cards and search for
+relevant similar cards. Load `granoflow-review-card-draft` and its canonical
+`lifecycle-card-checkpoints.md` reference. Existing cards may inform the
+analysis; any link, update, or create proposal remains a separately approved
+card operation. If capabilities are unavailable, record
+`card_context_unavailable` without inventing card state.
 
 Prefill from task facts, files, user messages, project context, and verified
 evidence. Separate:
@@ -128,6 +138,10 @@ That reply authorizes only:
 - updating the controlled analysis-summary block;
 - starting the Grill conversation.
 
+It authorizes card operations only when the same reply also explicitly accepts
+identified operation IDs. Normalize draft and card approvals separately; do
+not infer one from the other.
+
 It does not authorize planning, nodes, execution, completion, publishing,
 messages, payment, login, deletion, or automatically accepting new Grill
 recommendations. If the user supplies information without authorizing the draft,
@@ -144,8 +158,9 @@ planning_readiness: no
 ```
 
 The draft must contain all seven base sections, the matching profile section,
-facts versus inference, evidence strength, current decision, Grill review, and
-planning readiness. Simple tasks may be short but may not omit the dimensions.
+facts versus inference, evidence strength, current decision, Grill review,
+planning readiness, and the Analysis Card Checkpoint. Simple tasks may be short
+but may not omit the dimensions.
 
 ### Description summary
 
@@ -153,8 +168,7 @@ Preserve the original task description. Manage at most one block:
 
 ```text
 <!-- granoflow-analysis-summary:start -->
-- 类型: <type>
-- 目的: <purpose>
+- Profiles: <none | learning | software_development | both>
 - 状态: <analysis_status>
 - 结论: <decision>
 - 核心判断: <1-3 sentences>
@@ -227,6 +241,9 @@ Rules:
   require user confirmation.
 - Every accepted finding updates the main analysis sections, not only the Grill
   appendix.
+- When Grill changes a knowledge assumption, re-run the Analysis Card
+  Checkpoint. New or changed card writes require a fresh preview and explicit
+  operation approval.
 
 ### Grill budget
 

@@ -260,22 +260,21 @@ node lets Granoflow's existing NodeService complete the parent task.
 Third-party grill skills may enhance this flow when already installed, but the
 bundled workflow remains complete without them.
 
-## Agent Completion Workflow
+## Agent Delivery And Completion Workflow
 
-Granoflow MCP is designed to be part of an agent's end-of-task routine. When an
-agent finishes meaningful work, it should not only mark the task done. It should
-also leave behind the durable context that future agents can reuse:
+Granoflow MCP separates actual delivery from later reflection:
 
 1. Read or resolve the current Granoflow task.
 2. Perform the work in the normal coding, writing, research, or operations
    environment.
-3. Call `granoflow_task_finish` instead of the lower-level
-   `granoflow_task_complete`.
-4. Include `startedAt` and `endedAt` when the conversation provides evidence.
-5. Write `taskReview` only when the task produced a decision, lesson, failure
-   mode, reusable process detail, or unresolved risk.
-6. Create one `reviewCardDrafts` item for each durable knowledge point worth
-   remembering.
+3. Write an immutable, versioned Task Delivery and verify its content or
+   App-owned SHA-256 readback.
+4. For a task with Plan nodes, finish the final required node and let
+   NodeService complete the parent. For a node-less compatibility task, call
+   `granoflow_task_finish` once.
+5. Read back `status=done`; never call a second completion path.
+6. Leave deep Task Review and Review Cards for a separately initiated Deferred
+   Task Review, unless the user explicitly requested inline review.
 
 This makes Granoflow useful to Codex, Cursor, Claude Code, OpenCode, OpenClaw,
 and other MCP-capable agents as a local workflow memory layer: task state is
@@ -433,14 +432,13 @@ have reviewed the preview or the user has explicitly requested a write.
 Delete tools also require the current resource title before writing, and refuse
 linked tasks unless the caller explicitly accepts that impact.
 
-When a user asks to complete, finish, close, mark done, wrap up, or otherwise
-end a task, prefer `granoflow_task_finish` over the low-level
-`granoflow_task_complete` endpoint. Before writing, infer `startedAt` and
-`endedAt` from the current agent conversation when evidence is available. Write
-`taskReview` only when there is a meaningful decision, lesson, failure mode, or
-reusable process detail; leave it empty when it would only say what happened.
-Create one `reviewCardDrafts` item per durable knowledge point worth long-term
-memory, and omit cards when there is nothing worth remembering.
+When a user asks to complete a task, first inspect the latest nodes and
+attachments. Node-backed work uses Task Delivery followed by NodeService only;
+`granoflow_task_finish` is a node-less compatibility entry. Ordinary completion
+does not automatically create `taskReview` or `reviewCardDrafts`. When the user
+later asks to review the task, Granoflow writes a revisioned paired-marker
+review, then separately previews and confirms any cards or durable context
+promotion. Completed inbox tasks are reviewable without project or milestone.
 
 After 16:30 local time, tool results may include a `dailyReviewSuggestion`. It is
 stored in the non-secret MCP config and appears at most once per local day. When

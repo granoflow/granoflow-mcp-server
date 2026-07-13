@@ -17,11 +17,10 @@ content, mood or efficiency notes, task reviews, or review-card candidates.
 - Require user confirmation before writing mood scores, efficiency scores, mood
   notes, efficiency notes, daily report content, weekly/monthly content, new
   tasks, or review cards.
-- A factual `taskReview` may be written automatically when the agent executed
-  or directly helped complete the task and the review records what was done,
-  key decisions, blockers, verification results, evidence, unresolved risks, or
-  reusable process details. Do not use automatic task reviews for mood,
-  personality, motivation, efficiency, or other subjective interpretation.
+- Task Review is user-initiated and deferred by default. Ordinary completion
+  writes verified Task Delivery and a Completion Summary with review pending;
+  it does not automatically write taskReview or Review Cards. Legacy inline
+  Review is allowed only when explicitly requested and approved.
 - Daily-review synthesis imports remain a separate confirmed writeback path:
   updating task titles, `task_review`, daily report content, or planned tasks
   from that flow still requires the app/user confirmation gate.
