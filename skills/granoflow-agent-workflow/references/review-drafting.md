@@ -99,26 +99,59 @@ Rules:
 
 ## Monthly Reviews
 
-Monthly review is about direction and tradeoffs. It should help the user see
-what they repeatedly gave time, attention, emotion, and patience to during the
-month.
+Monthly review is an interactive recall session about direction and tradeoffs,
+not an automatic monthly report or four weekly summaries.
 
-AI may draft monthly `content` from:
+Resolve the target month before reading or drafting: use a user-specified month;
+interpret `this month` in the caller's local time zone and `last month` as the
+previous complete calendar month; ask the user to choose for another ambiguous
+request. Then display target month dates and the caller's local time zone.
 
-- monthly aggregates returned by Granoflow, including task count, invested time,
-  real focus time, average daily minutes, and most active date;
-- daily and weekly review content;
-- completed tasks, task reviews, project and milestone progress;
-- mood and efficiency patterns visible across daily reviews;
-- review cards and durable lessons created during the month;
-- user statements about what mattered, what changed, and what should continue.
+Follow this order after the user initiates the session:
 
-The user must confirm:
+1. Show a bounded coverage ledger for available daily/weekly reviews,
+   task/task-review and delivery records, project or milestone changes, monthly
+   time/focus aggregates, and existing monthly content. Show sources, ranges,
+   and only the minimum necessary facts for the current cue; mark evidence as
+   available, missing, or unavailable. Missing or unavailable evidence does not
+   mean no progress.
+2. Select 3–5 high-information recall cues rather than dumping the month's
+   tasks. Prefer a direction change, consequential decision or delivery,
+   investment structure or cost, recurring friction/rework, unrecorded but
+   important work, or project/milestone movement.
+3. Discuss one cue at a time with an open prompt. The user may skip any prompt,
+   reject its premise, or give a free-form account that replaces the framework.
+   Do not seek sensitive, relationship, or emotional details unless the user
+   introduces them. With empty or unavailable coverage, begin with the user's
+   free-form account instead of inferring inactivity.
+4. Draft monthly `content`, month-level direction, investment/cost, repeated
+   patterns, and candidate next-month experiments from the evidence plus the
+   user's additions. Label each material claim as a recorded fact, a
+   user-confirmed interpretation, a tentative inference, or unknown. Never turn
+   inference into fact or diagnose motivation, efficiency, mood, or mental state.
 
-- the final monthly `content`;
-- the month theme or interpretation;
-- what to continue, reduce, pause, or protect next month;
-- which higher-level lessons deserve review cards.
+When the user has not supplied a structure, offer these skippable discussion
+entries, not a required form:
+
+- monthly main thread: what did this month really center on?
+- key changes: which decision, turn, or delivery changed direction?
+- investment and cost: where did time and attention go, and was it worth it?
+- repeated patterns: which friction, rework, or environmental condition recurred?
+- unrecorded but important: what mattered but never entered the task system?
+- next-month experiments: what should continue, reduce, pause, or be protected?
+
+Let the user reorder, omit, or replace these entries. A candidate next-month
+experiment should name its trigger, action, owner, expected benefit, and
+verification method, but it is not execution authorization.
+
+The user may use partial confirmation: confirm, edit, reorder, delete, or defer
+monthly content, each pattern/interpretation, and each next-month experiment
+independently. Only confirmed monthly `content` may be written.
+
+Recognition of a reusable lesson does not create a review card. Tasks, reminders,
+review cards, Task Reviews, and project/milestone changes each require their own
+preview/confirmation/write/readback flow; monthly review does not automatically
+create tasks, reminders, cards, Task Reviews, or project/milestone changes.
 
 Rules:
 
@@ -129,6 +162,7 @@ Rules:
   structure.
 - Prefer direction, tradeoffs, investment structure, recurring costs, important
   progress, and next-month choices over exhaustive task listings.
-- Save monthly `content` only after user confirmation.
-- Before writeback, show the monthly content draft, theme/interpretation, and
-  continue/reduce/pause/protect suggestions.
+- Before writeback, show approved monthly content, approved patterns and
+  interpretations, and approved next-month experiments separately from deferred
+  or rejected items.
+- Save only confirmed monthly `content`, then read it back.

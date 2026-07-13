@@ -477,8 +477,9 @@ remains separate from a completed Task Review. For weekly reviews, the Agent
 Workflow skill uses a small, evidence-bounded set of recall cues to discuss
 patterns across the week, then writes only user-confirmed content and value
 scores/notes; any follow-up work remains a separate confirmed flow. For monthly
-reviews, it may draft and write confirmed `content`, while monthly aggregate
-metrics remain read-only.
+reviews, it uses a small set of evidence-bounded recall cues and an open-ended
+monthly-note frame, then writes only confirmed `content`; monthly aggregate
+metrics remain read-only and any follow-up work stays separate.
 
 ## Setup Diagnostics
 

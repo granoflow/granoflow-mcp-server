@@ -434,8 +434,14 @@ reviews, prefer patterns, rhythm, repeated blockers, tradeoffs, and candidate
 next-week experiments over a seven-day task list; partial confirmation is valid,
 and follow-up tasks, reminders, cards, Task Reviews, or project/milestone changes
 remain separate preview/confirmation/write/readback flows. For monthly reviews,
-prefer direction, tradeoffs, investment structure, and next-month choices over
-four weekly summaries.
+first resolve and display the target month in the caller's local time zone, then
+show a bounded coverage ledger and 3–5 recall cues. Offer a skippable monthly
+main-thread, key-changes, investment-and-cost, repeated-patterns,
+unrecorded-but-important, and next-month-experiments frame; a free-form account
+may replace it. Keep evidence minimal, distinguish recorded fact,
+user-confirmed interpretation, tentative inference, and unknown, and write only
+confirmed monthly `content`. Monthly aggregates remain read-only, and all
+follow-up work remains a separate preview/confirmation/write/readback flow.
 
 Read `references/review-drafting.md` before drafting weekly or monthly review
 content.
@@ -451,6 +457,8 @@ Success criteria:
   than exhaustive task listings.
 - Weekly recall cues are evidence-bounded, skippable, and never become automatic
   follow-up writes.
+- Monthly review stays open-ended when evidence is empty or unavailable, and its
+  default discussion frame never becomes a required form or automatic follow-up.
 
 ## Daily Review Nudge
 

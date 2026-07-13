@@ -474,6 +474,30 @@ describe("MCP tool registration", () => {
     expect(combined).toMatch(/does not automatically\s+create tasks, reminders, cards/);
   });
 
+  it("defines monthly review as an interactive, open-ended recall session", () => {
+    const skill = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
+    const reference = readFileSync(
+      "skills/granoflow-agent-workflow/references/review-drafting.md",
+      "utf8",
+    );
+    const combined = `${skill}\n${reference}`;
+
+    expect(combined).toContain("target month dates and the caller's local time zone");
+    expect(combined).toContain("3–5 high-information recall cues");
+    expect(combined).toContain("monthly main thread");
+    expect(combined).toContain("unrecorded but important");
+    expect(combined).toContain("may skip any prompt");
+    expect(combined).toContain("free-form account");
+    expect(combined).toMatch(/unavailable evidence does not\s+mean no progress/);
+    expect(combined).toContain("minimum necessary facts");
+    expect(combined).toContain("recorded fact");
+    expect(combined).toContain("user-confirmed interpretation");
+    expect(combined).toContain("tentative inference");
+    expect(combined).toContain("unknown");
+    expect(combined).toContain("monthly `content`");
+    expect(combined).toMatch(/does not automatically\s+create tasks, reminders, cards/);
+  });
+
   it("keeps daily review defaults flexible under one owner", () => {
     const dailySkill = readFileSync("skills/granoflow-daily-review/SKILL.md", "utf8");
     const dailyContract = readFileSync(
