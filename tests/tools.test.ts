@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { mkdtemp, writeFile } from "node:fs/promises";
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -112,6 +112,10 @@ describe("MCP tool registration", () => {
         "granoflow_setup_status",
         "granoflow_agent_workflow_skill",
         "granoflow_first_run_import_skill",
+        "granoflow_gfmcp_runner_skill",
+        "granoflow_gfmcp_prepare",
+        "granoflow_gfmcp_safe_sync",
+        "granoflow_gfmcp_candidates",
         "granoflow_setup_detect_local_api",
         "granoflow_setup_write_config",
         "granoflow_setup_open_config",
@@ -129,9 +133,19 @@ describe("MCP tool registration", () => {
         "granoflow_milestone_context_archive",
         "granoflow_task_completion_record",
         "granoflow_review_card_record",
+        "granoflow_review_card_similar",
+        "granoflow_review_card_authoring_preview",
+        "granoflow_review_card_authoring_apply",
         "granoflow_task_create_structured",
         "granoflow_task_update",
         "granoflow_task_update_structured",
+        "granoflow_task_attachment_list",
+        "granoflow_task_attachment_add_markdown",
+        "granoflow_task_attachment_delete",
+        "granoflow_task_node_list",
+        "granoflow_task_node_batch_create",
+        "granoflow_task_node_update",
+        "granoflow_task_node_delete",
         "granoflow_task_finish",
         "granoflow_task_resolve",
         "granoflow_project_resolve",
@@ -170,12 +184,17 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("Analyze the first task");
     expect(serialized).toContain("请分析第一个任务");
     expect(serialized).toContain("task-analysis-execution.md");
+    expect(serialized).toContain("task-analysis-template.md");
+    expect(serialized).toContain("task-analysis-profile-learning.md");
+    expect(serialized).toContain("task-analysis-profile-software-development.md");
     expect(serialized).toContain("single-task workflow");
     expect(serialized).toContain("Create a task from this requirement");
     expect(serialized).toContain("把我们讨论的需求建一个任务");
     expect(serialized).toContain("discussed-requirement-task-capture.md");
-    expect(serialized).toContain("explicit task-creation request is confirmation");
-    expect(serialized).toContain("omit `projectId` and `milestoneId`");
+    expect(serialized).toContain("explicit task-creation request confirms this write");
+    expect(serialized).toContain("omit both `projectId`");
+    expect(serialized).toContain("`milestoneId`");
+    expect(serialized).toContain("exactly one placement sentence");
     expect(serialized).toContain("user's language");
     expect(serialized).toContain("analysis document");
     expect(serialized).toContain("grill");
@@ -219,6 +238,34 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("hidden chat histories");
   });
 
+  it("exposes the bundled GFMCP runner skill and safe dry-run tools", async () => {
+    const { handlers } = collectHandlers();
+
+    const skill = parseToolText(await handlers.get("granoflow_gfmcp_runner_skill")?.({}));
+    expect(skill).toMatchObject({
+      ok: true,
+      data: {
+        path: "skills/granoflow-gfmcp-runner/SKILL.md",
+        skill: expect.stringContaining("five-minute interval"),
+      },
+    });
+
+    const prepare = parseToolText(
+      await handlers.get("granoflow_gfmcp_prepare")?.({ dryRun: true }),
+    );
+    expect(prepare).toMatchObject({
+      ok: true,
+      code: "dry_run",
+      data: { method: "POST", path: "/v1/ai-agent/gfmcp/prepare" },
+    });
+    const sync = parseToolText(await handlers.get("granoflow_gfmcp_safe_sync")?.({ dryRun: true }));
+    expect(sync).toMatchObject({
+      ok: true,
+      code: "dry_run",
+      data: { method: "POST", path: "/v1/sync/gfmcp-safe-run" },
+    });
+  });
+
   it("documents the long-term work memory reference contract", () => {
     const reference = readFileSync(
       "skills/granoflow-agent-workflow/references/long-term-work-memory.md",
@@ -255,12 +302,20 @@ describe("MCP tool registration", () => {
 
     expect(reference).toContain("Create a task from this requirement");
     expect(reference).toContain("把我们讨论的需求建一个任务");
-    expect(reference).toContain("quick capture");
+    expect(reference).toContain("quick-capture workflow");
     expect(reference).toContain("active milestone");
-    expect(reference).toContain("omitting `projectId` and `milestoneId`");
-    expect(reference).toContain("explicit task-creation request is confirmation");
-    expect(reference).toContain("patch the missing field");
-    expect(reference).toContain("Do not create review cards");
+    expect(reference).toContain("omitting both `projectId` and `milestoneId`");
+    expect(reference).toContain("`granoflow_task_create_structured` with `dryRun=false`");
+    expect(reference).toContain("task id returned by creation");
+    expect(reference).toMatch(/Do not resolve the\s+newly created task by title/);
+    expect(reference).toContain("Only the project is clear");
+    expect(reference).toContain("learning task");
+    expect(reference).toContain("software-development task");
+    expect(reference).toContain("general task");
+    expect(reference).toContain("No analysis or plan document");
+    expect(reference).toContain("No historical retrieval or default duplicate search");
+    expect(reference).toContain("任务已经放入「<项目名>」项目「<里程碑名>」里程碑。");
+    expect(reference).toContain("任务已收录到收集箱。");
   });
 
   it("documents the task analysis and execution workflow contract", () => {
@@ -279,6 +334,81 @@ describe("MCP tool registration", () => {
     expect(reference).toContain("task_node_api_unavailable");
     expect(reference).toContain("Read the original task back");
     expect(reference).toContain("Execute only after user confirmation");
+    expect(reference).toContain("analysis_status");
+    expect(reference).toContain("planning_readiness");
+    expect(reference).toContain("全部按推荐，写入初稿并开始 Grill Me");
+    expect(reference).toContain("AI 推荐");
+    expect(reference).toContain("确认分析终稿");
+    expect(reference).toContain("最多两轮");
+    expect(reference).toContain("analysis_summary_markers_invalid");
+    expect(reference).toContain("attachment_api_unavailable");
+    expect(reference).toContain("duplicate, missing, reversed, or nested markers");
+    expect(reference).toContain("does not authorize planning");
+    expect(reference).toContain("does not accept future directional recommendations");
+    expect(reference).toContain("Every non-`proceed` decision has `planning_readiness=no`");
+  });
+
+  it("keeps one task-analysis base template with thin learning and software profiles", () => {
+    const base = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-analysis-template.md",
+      "utf8",
+    );
+    const learning = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-analysis-profile-learning.md",
+      "utf8",
+    );
+    const software = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-analysis-profile-software-development.md",
+      "utf8",
+    );
+
+    for (const dimension of [
+      "Trigger",
+      "Outcome",
+      "Evidence",
+      "Context",
+      "Boundaries",
+      "Risks",
+      "Decision",
+    ]) {
+      expect(base).toContain(dimension);
+    }
+    expect(base).toContain("Planning Readiness");
+    expect(learning).toContain("independent mastery");
+    expect(learning).not.toContain("## 1. Trigger");
+    expect(software).toContain("database table/schema judgment");
+    expect(software).toContain("real user-visible surface");
+    expect(software).not.toContain("## 1. Trigger");
+  });
+
+  it("documents the confirmed Plan, node handoff, and completion workflow", () => {
+    const workflow = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-plan-workflow.md",
+      "utf8",
+    );
+    const template = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-plan-template.md",
+      "utf8",
+    );
+    const learning = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-plan-profile-learning.md",
+      "utf8",
+    );
+    const software = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-plan-profile-software-development.md",
+      "utf8",
+    );
+
+    expect(workflow).toContain("task-plan-vNN.md");
+    expect(workflow).toContain("granoflow_task_attachment_add_markdown");
+    expect(workflow).toContain("granoflow_task_node_batch_create");
+    expect(workflow).toContain("task_state_conflict");
+    expect(workflow).toContain("NodeService is the only completion path");
+    expect(workflow).toContain("awaiting_manual_acceptance");
+    expect(template).toContain("Delivery standard");
+    expect(template).toContain("Downstream startup requirements");
+    expect(learning).toContain("independent mastery gate");
+    expect(software).toContain("file and method responsibility/size budgets");
   });
 
   it("documents the internal review drafting boundary", () => {
@@ -313,7 +443,8 @@ describe("MCP tool registration", () => {
     expect(publicDocs).toContain("Create a task from this requirement");
     expect(publicDocs).toContain("project, milestone, or inbox");
     expect(publicDocs).toContain("Analyze the first task");
-    expect(publicDocs).toContain("move it forward after your confirmation");
+    expect(publicDocs).toContain("AI recommendations");
+    expect(publicDocs).toContain("before planning");
     expect(publicDocs).toContain("any agent-assisted work");
     expect(publicDocs).toContain("especially useful for software projects");
     expect(publicDocs).toContain("work is no longer a black box");
@@ -348,7 +479,7 @@ describe("MCP tool registration", () => {
     expect(skills).toContain("把我们讨论的需求建一个任务");
     expect(skills).toContain("请分析第一个任务");
     expect(skills).toContain("strong match");
-    expect(skills).toContain("omitting `projectId` and `milestoneId`");
+    expect(skills).toContain("omitting both `projectId` and `milestoneId`");
     expect(skills).toContain("project_context_orphaned");
     expect(skills).toContain("notification task");
     expect(skills).toContain("synced_to_server");
@@ -1809,5 +1940,99 @@ describe("MCP tool registration", () => {
         },
       },
     });
+  });
+});
+
+describe("task plan attachments and nodes", () => {
+  it("rejects non-Markdown task workflow attachments", async () => {
+    const { handlers } = collectHandlers();
+    const result = await handlers.get("granoflow_task_attachment_add_markdown")?.({
+      taskId: "task-1",
+      filePath: "/etc/hosts",
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "unsafe_attachment_path",
+    });
+  });
+
+  it("forwards a generated Markdown attachment path", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "granoflow-plan-"));
+    const filePath = join(dir, "task-plan-v01.md");
+    await writeFile(filePath, "# Plan\n", "utf8");
+    const requests: Array<{ url?: string; body: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      requests.push({ url: request.url, body: await readJsonBody(request) });
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify({ ok: true, data: { attachmentId: "attachment-1" } }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+
+    const { handlers } = collectHandlers();
+    await handlers.get("granoflow_task_attachment_add_markdown")?.({
+      taskId: "task-1",
+      filePath,
+      dryRun: false,
+    });
+
+    expect(requests).toEqual([
+      {
+        url: "/v1/tasks/task-1/attachments",
+        body: { file: realpathSync(filePath) },
+      },
+    ]);
+  });
+
+  it("checks task node capability before forwarding a write", async () => {
+    const requests: Array<{ url?: string; body: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      const body = request.method === "GET" ? null : await readJsonBody(request);
+      requests.push({ url: request.url, body });
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/capabilities") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              resources: {
+                task: [
+                  "node.list",
+                  "node.batch-create",
+                  "node.update-title",
+                  "node.apply-status",
+                  "node.delete",
+                ],
+              },
+            },
+          }),
+        );
+        return;
+      }
+      response.end(JSON.stringify({ ok: true, data: { nodes: [] } }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+
+    const { handlers } = collectHandlers();
+    await handlers.get("granoflow_task_node_batch_create")?.({
+      taskId: "task-1",
+      idempotencyKey: "plan-v01",
+      expectedTaskUpdatedAt: "2026-07-13T09:00:00.000Z",
+      nodes: [{ title: "Prepare API" }],
+      dryRun: false,
+    });
+
+    expect(requests).toEqual([
+      { url: "/v1/capabilities", body: null },
+      {
+        url: "/v1/tasks/task-1/nodes",
+        body: {
+          idempotencyKey: "plan-v01",
+          expectedTaskUpdatedAt: "2026-07-13T09:00:00.000Z",
+          nodes: [{ title: "Prepare API" }],
+        },
+      },
+    ]);
   });
 });

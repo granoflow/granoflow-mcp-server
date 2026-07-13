@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { extname, isAbsolute, relative, resolve } from "node:path";
 
 import { z } from "zod";
 
@@ -72,6 +74,11 @@ const milestoneArchiveClosureSchema = z.object({
   projectDescription: z.string().min(1),
 });
 const resourceStatusSchema = z.string().min(1).optional();
+const taskNodeStatusSchema = z.enum(["pending", "finished"]);
+const taskNodeCreateSchema = z.object({
+  title: z.string().min(1),
+  parentId: z.string().min(1).optional(),
+});
 const resolveMatchModeSchema = z.enum(["exact", "contains"]).default("exact");
 const reviewCardDraftNoteFieldSchema = z.object({
   key: z.string().min(1).describe("Stable note field key such as phonetic or pronunciation."),
@@ -129,6 +136,10 @@ const REVIEW_CARD_DRAFT_SKILL_URL = new URL(
   "../skills/granoflow-review-card-draft/SKILL.md",
   import.meta.url,
 );
+const GFMCP_RUNNER_SKILL_URL = new URL(
+  "../skills/granoflow-gfmcp-runner/SKILL.md",
+  import.meta.url,
+);
 
 function compactRecord(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
@@ -154,6 +165,63 @@ function readFirstRunImportSkill(): string {
 
 function readReviewCardDraftSkill(): string {
   return readFileSync(REVIEW_CARD_DRAFT_SKILL_URL, "utf8");
+}
+
+function readGfmcpRunnerSkill(): string {
+  return readFileSync(GFMCP_RUNNER_SKILL_URL, "utf8");
+}
+
+function isWithin(root: string, target: string): boolean {
+  const path = relative(root, target);
+  return path === "" || (!path.startsWith("..") && !isAbsolute(path));
+}
+
+function validatedWorkflowMarkdownPath(filePath: string): string {
+  const absolute = realpathSync(resolve(filePath));
+  const roots = [realpathSync(process.cwd()), realpathSync(tmpdir())];
+  if (
+    extname(absolute).toLowerCase() !== ".md" ||
+    !roots.some((root) => isWithin(root, absolute))
+  ) {
+    throw new Error(
+      "Task workflow attachments must be Markdown files under the current workspace or system temp directory.",
+    );
+  }
+  if (!statSync(absolute).isFile()) {
+    throw new Error("Task workflow attachment path must reference a regular file.");
+  }
+  return absolute;
+}
+
+function supportsTaskNodeWorkflow(payload: unknown): boolean {
+  const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
+  const data = isObject(root) && isObject(root.data) ? root.data : root;
+  const resources = isObject(data) && isObject(data.resources) ? data.resources : {};
+  const task = Array.isArray(resources.task) ? resources.task : [];
+  return [
+    "node.list",
+    "node.batch-create",
+    "node.update-title",
+    "node.apply-status",
+    "node.delete",
+  ].every((action) => task.includes(action));
+}
+
+async function taskNodeApiTool(options: ApiRequestOptions) {
+  if (options.method === "GET" || options.dryRun) return apiTool(options);
+  const capabilities = await requestGranoflowApi({ path: "/v1/capabilities" });
+  if (!capabilities.ok || !supportsTaskNodeWorkflow(capabilities)) {
+    return jsonTextResult({
+      ok: false,
+      code: "unsupported_capability",
+      data: { requiredCapability: "task_node_workflow_v1", endpoint: options.path },
+      error: {
+        message: "The running Granoflow app does not advertise task node workflow support.",
+      },
+      runtime: capabilities.runtime,
+    });
+  }
+  return apiTool(options);
 }
 
 function periodicReviewHasLog(value: unknown): boolean {
@@ -1413,7 +1481,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_review_card_draft_skill",
-    "Read the bundled Granoflow review card draft skill. Call this when creating review cards, word cards, multiple-choice cards, or image-assisted cards so the agent fetches the app schema, previews cards, and writes only after user confirmation.",
+    "Read the bundled core Granoflow review-card authoring skill. Call it for every card search, link, create, or modification so similarity fallback, AI filtering, note quality, preview, approval, controlled writes, and readback use one workflow.",
     {},
     async () =>
       jsonTextResult({
@@ -1424,6 +1492,54 @@ export function registerGranoflowTools(server: {
           skill: readReviewCardDraftSkill(),
         },
       }),
+  );
+
+  registerTool(
+    "granoflow_gfmcp_runner_skill",
+    "Read the bundled GFMCP automatic task runner skill. Use it to install, operate, or diagnose the optional five-minute Python worker for pending tasks tagged GFMCP.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-gfmcp-runner/SKILL.md",
+          skill: readGfmcpRunnerSkill(),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_gfmcp_prepare",
+    "Create or repair the GFMCP custom tag and its app-localized task description template. Granoflow owns localization and idempotency.",
+    { dryRun: z.boolean().default(true) },
+    async ({ dryRun }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/ai-agent/gfmcp/prepare",
+        body: {},
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_gfmcp_safe_sync",
+    "Ask the Granoflow app to perform a safe pre-poll sync only when current authorization permits it. Defaults to dry-run and never guesses membership or key state.",
+    { dryRun: z.boolean().default(true) },
+    async ({ dryRun }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/sync/gfmcp-safe-run",
+        body: {},
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_gfmcp_candidates",
+    "List pending Granoflow tasks tagged GFMCP. The tag marks eligibility but does not grant authorization for privileged or external actions.",
+    {},
+    async () => apiTool({ path: "/v1/tasks?tag=custom_gfmcp" }),
   );
 
   registerTool(
@@ -1536,6 +1652,59 @@ export function registerGranoflowTools(server: {
     "Fetch the Granoflow review card draft template and field schema from the running app. Call before creating reviewCardDrafts so card types, note fields, layouts, and fallbacks match app import rules.",
     {},
     async () => apiTool({ path: "/v1/ai-agent/review-card-drafts/schema" }),
+  );
+
+  registerTool(
+    "granoflow_review_card_similar",
+    "Find potentially similar Granoflow review cards. The app prefers vector search and falls back to agent-supplied keywords; the agent must prefilter results before showing them to the user.",
+    {
+      summary: z.string().min(1).max(500),
+      keywords: z.array(z.string().min(1)).max(12).optional(),
+      limit: z.number().int().min(1).max(20).default(8),
+    },
+    async ({ summary, keywords, limit }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/ai-agent/review-cards/similar",
+        body: compactRecord({ summary, keywords, limit: limit ?? 8 }),
+      }),
+  );
+
+  registerTool(
+    "granoflow_review_card_authoring_preview",
+    "Preview controlled review-card creation, existing-card linking, or field-level updates. This endpoint performs no writes and returns a confirmation token plus shared-note impact.",
+    {
+      taskId: z.string().min(1),
+      operations: z.array(z.record(z.string(), z.unknown())).min(1),
+    },
+    async ({ taskId, operations }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/ai-agent/review-cards/authoring/preview",
+        body: { taskId, operations },
+      }),
+  );
+
+  registerTool(
+    "granoflow_review_card_authoring_apply",
+    "Apply only user-approved operations from a current review-card authoring preview. Returns app-owned readback; never call without explicit approval of the previewed operations.",
+    {
+      previewToken: z.string().min(1),
+      previewHash: z.string().min(1),
+      approvedOperationIds: z.array(z.string().min(1)).min(1),
+      approvedFieldsByOperation: z.record(z.string(), z.array(z.string().min(1)).min(1)).optional(),
+    },
+    async ({ previewToken, previewHash, approvedOperationIds, approvedFieldsByOperation }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/ai-agent/review-cards/authoring/apply",
+        body: compactRecord({
+          previewToken,
+          previewHash,
+          approvedOperationIds,
+          approvedFieldsByOperation,
+        }),
+      }),
   );
 
   registerTool(
@@ -2121,6 +2290,7 @@ export function registerGranoflowTools(server: {
       projectId: z.string().min(1).optional(),
       milestoneId: z.string().min(1).optional(),
       status: resourceStatusSchema,
+      expectedUpdatedAt: z.string().datetime().optional(),
       dryRun: z
         .boolean()
         .default(true)
@@ -2135,6 +2305,7 @@ export function registerGranoflowTools(server: {
       projectId,
       milestoneId,
       status,
+      expectedUpdatedAt,
       dryRun,
     }) =>
       apiTool({
@@ -2148,6 +2319,7 @@ export function registerGranoflowTools(server: {
           projectId,
           milestoneId,
           status,
+          expectedUpdatedAt,
         }),
         dryRun: dryRun !== false,
       }),
@@ -2169,6 +2341,124 @@ export function registerGranoflowTools(server: {
         method: "POST",
         path: `/v1/tasks/${String(taskId)}/complete`,
         body: input,
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_task_attachment_list",
+    "List attachments for a Granoflow task.",
+    { taskId: z.string().min(1) },
+    async ({ taskId }) => apiTool({ path: `/v1/tasks/${String(taskId)}/attachments` }),
+  );
+
+  registerTool(
+    "granoflow_task_attachment_add_markdown",
+    "Attach a generated task Analysis or Plan Markdown file. The file must be under the current workspace or system temp directory.",
+    {
+      taskId: z.string().min(1),
+      filePath: z.string().min(1),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ taskId, filePath, dryRun }) => {
+      let file: string;
+      try {
+        file = validatedWorkflowMarkdownPath(String(filePath));
+      } catch (error) {
+        return jsonTextResult({
+          ok: false,
+          code: "unsafe_attachment_path",
+          error: { message: error instanceof Error ? error.message : String(error) },
+        });
+      }
+      return apiTool({
+        method: "POST",
+        path: `/v1/tasks/${String(taskId)}/attachments`,
+        body: { file },
+        dryRun: dryRun !== false,
+      });
+    },
+  );
+
+  registerTool(
+    "granoflow_task_attachment_delete",
+    "Delete a task attachment after explicit confirmation.",
+    {
+      taskId: z.string().min(1),
+      attachmentId: z.string().min(1),
+      confirmed: z.literal(true),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ taskId, attachmentId, dryRun }) =>
+      apiTool({
+        method: "DELETE",
+        path: `/v1/tasks/${String(taskId)}/attachments/${String(attachmentId)}`,
+        body: { confirmed: true },
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_task_node_list",
+    "Read the latest Granoflow task nodes before planning, executing, or reconciling cross-device changes.",
+    { taskId: z.string().min(1) },
+    async ({ taskId }) => taskNodeApiTool({ path: `/v1/tasks/${String(taskId)}/nodes` }),
+  );
+
+  registerTool(
+    "granoflow_task_node_batch_create",
+    "Atomically create an ordered, idempotent task node batch through the Granoflow NodeService.",
+    {
+      taskId: z.string().min(1),
+      idempotencyKey: z.string().min(1),
+      expectedTaskUpdatedAt: z.string().datetime(),
+      nodes: z.array(taskNodeCreateSchema).min(1).max(50),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ taskId, idempotencyKey, expectedTaskUpdatedAt, nodes, dryRun }) =>
+      taskNodeApiTool({
+        method: "POST",
+        path: `/v1/tasks/${String(taskId)}/nodes`,
+        body: { idempotencyKey, expectedTaskUpdatedAt, nodes },
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_task_node_update",
+    "Update a task node title or apply pending/finished status with optimistic concurrency.",
+    {
+      taskId: z.string().min(1),
+      nodeId: z.string().min(1),
+      expectedUpdatedAt: z.string().datetime(),
+      title: z.string().min(1).optional(),
+      status: taskNodeStatusSchema.optional(),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ taskId, nodeId, expectedUpdatedAt, title, status, dryRun }) =>
+      taskNodeApiTool({
+        method: "PATCH",
+        path: `/v1/tasks/${String(taskId)}/nodes/${String(nodeId)}`,
+        body: compactRecord({ expectedUpdatedAt, title, status }),
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_task_node_delete",
+    "Soft-delete a task node tree after a confirmed Plan amendment and explicit confirmation.",
+    {
+      taskId: z.string().min(1),
+      nodeId: z.string().min(1),
+      expectedUpdatedAt: z.string().datetime(),
+      confirmed: z.literal(true),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ taskId, nodeId, expectedUpdatedAt, dryRun }) =>
+      taskNodeApiTool({
+        method: "DELETE",
+        path: `/v1/tasks/${String(taskId)}/nodes/${String(nodeId)}`,
+        body: { expectedUpdatedAt, confirmed: true },
         dryRun: dryRun !== false,
       }),
   );

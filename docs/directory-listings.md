@@ -126,13 +126,14 @@ Ask your agent:
 Analyze the first task
 ```
 
-Granoflow will help the agent understand the selected task, plan the next steps,
-and move it forward after your confirmation.
+Granoflow will prefill the selected task analysis, show unresolved decisions
+with AI recommendations, and write a grilled analysis only after your
+confirmation. Planning remains a separate confirmed step.
 
 Directory summary:
 
 ```text
-Task-analysis workflow: ask your agent "Analyze the first task". Granoflow will help the agent understand the selected task, plan the next steps, and move it forward after your confirmation.
+Task-analysis workflow: ask your agent "Analyze the first task". Granoflow will prefill the analysis, show unresolved decisions with AI recommendations, and create a grilled final analysis before any separate planning step. A confirmed planning-ready analysis can then produce a versioned Plan attachment and deliverable task nodes; manual acceptance can happen later on any synced Granoflow device without blocking other safe execution.
 ```
 
 Example questions:
@@ -199,7 +200,7 @@ submitted or published until the relevant platform confirms the update.
 ### GitHub / npm / Official MCP Registry
 
 ```text
-Granoflow connects MCP-capable AI agents to local workflows for tasks, approval requests, reviews, review cards, first-run import, due-task processing, requirement capture, task analysis, and long-term work memory. It supports many agent-assisted work scenarios and is especially useful for software projects: users can inspect and learn from AI's recorded experience, while future agents can search that experience tomorrow, next month, or next year instead of inventing a fresh plan every session and fragmenting the project into disconnected attempts. After installing, ask your agent "Initialize Granoflow and import data" to import data from Cursor, Codex, Hermes, or other agents into Granoflow, "Process today's tasks" to analyze and process matching Granoflow tasks, "Create a task from this requirement" to capture a discussed requirement as a Granoflow task, or "Analyze the first task" to plan and move a selected task forward after confirmation.
+Granoflow connects MCP-capable AI agents to local workflows for tasks, approval requests, reviews, review cards, first-run import, due-task processing, requirement capture, task analysis, and long-term work memory. It supports many agent-assisted work scenarios and is especially useful for software projects: users can inspect and learn from AI's recorded experience, while future agents can search that experience tomorrow, next month, or next year instead of inventing a fresh plan every session and fragmenting the project into disconnected attempts. After installing, ask your agent "Initialize Granoflow and import data" to import data from Cursor, Codex, Hermes, or other agents into Granoflow, "Process today's tasks" to analyze and process matching Granoflow tasks, "Create a task from this requirement" to capture a discussed requirement as a Granoflow task, or "Analyze the first task" to confirm and grill a task analysis before planning.
 ```
 
 ### Glama

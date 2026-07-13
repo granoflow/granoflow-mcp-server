@@ -69,9 +69,9 @@ Success criteria:
 
 Use this section when the user asks the agent to `Create a task from this
 requirement`, `Create a task from what we discussed`, or an equivalent command
-in the user's language. This workflow captures a lower-priority requirement as a
-Granoflow task. It is not a plan-writing, attachment, execution, or card-creation
-workflow.
+in the user's language. This workflow quickly captures a requirement as a
+Granoflow task without interrupting the user's current work. It is not a
+plan-writing, attachment, execution, or card-creation workflow.
 
 Public README and directory-listing copy should use English-only prompt text,
 such as `Create a task from this requirement`. At runtime, accept equivalent
@@ -87,30 +87,31 @@ High-level contract:
 
 1. Identify the discussed requirement from the active conversation and explicit
    references.
-2. Inspect existing projects and active milestones.
-3. If an existing project and active milestone are a strong match, create the
-   task directly. The user's explicit task-creation request is confirmation for
-   that task write.
-4. If no clear project or milestone fits, decide whether the task is temporary
-   or worth preserving.
-5. Create temporary tasks in inbox/default placement without inventing structure.
-   When no explicit inbox field exists, omit `projectId` and `milestoneId`.
-6. For worth-preserving tasks with no clear home, suggest the project/milestone
-   structure and wait for user confirmation before assigning or creating it.
-7. Keep the description compact but useful enough to reopen later.
-8. Read the task back. If supported fields such as `description`, `projectId`,
-   or `milestoneId` were dropped by create, patch them and read back again.
+2. Use already-known placement or at most one bounded project/milestone resolve.
+3. Bind only when one existing project and one active milestone under that
+   project are an unambiguous strong match.
+4. Otherwise create the task in inbox/default placement without asking about
+   structure. When no explicit inbox field exists, omit both `projectId` and
+   `milestoneId`.
+5. Keep the description compact: preserve the trigger, desired outcome, and
+   user-provided clues needed for later analysis without writing the analysis.
+6. The user's explicit task-creation request confirms this write. Skip dry-run,
+   planning, nodes, cards, history retrieval, and duplicate search by default.
+7. Read back by the task id returned from creation. Patch dropped supported
+   fields once, then read back again.
+8. On success, reply with exactly one placement sentence defined by the focused
+   reference. Do not append the title, id, description, suggestions, or next step.
 
 Success criteria:
 
 - No plan document or attachment is required for this workflow.
-- Strong placement uses only existing active milestones, never archived, done,
-  trashed, deleted, stale, or merely thematic milestones.
+- Strong placement requires both an existing project and one active milestone
+  under it; every other default placement goes directly to inbox.
 - Task creation alone does not execute the task, create cards, create
   project/milestone structure, or authorize secrets, publishing, deletion,
   payment, sending, account changes, or subjective decisions.
-- The final report states the task id or visible reference and whether it was
-  placed in a project, milestone, or inbox/default location.
+- The default success report is exactly one sentence stating the matched project
+  and milestone or that the task was captured in inbox.
 
 ## Due Task Processing And Execution
 
@@ -145,8 +146,10 @@ High-level contract:
 5. Show the analysis and require user confirmation before moving into
    execution unless the user's instruction explicitly pre-authorizes that exact
    step.
-6. For executable work, write a plan document, run a grill/adversarial review
-   pass, revise the plan, then execute only the confirmed safe portion.
+6. For executable work, read `references/task-plan-workflow.md`, write and
+   grill the Plan, then execute only after confirmation. That owner reference
+   defines immutable Plan attachments, deliverable nodes, handoffs,
+   cross-device reconciliation, manual acceptance, and node-driven completion.
 7. Attach or safely link the final analysis and plan documents, then update the
    relevant task descriptions with plain-language explanations.
 8. For blockers, use the waiting-for-user-input workflow: add a current node on
@@ -166,8 +169,12 @@ Success criteria:
   missing-information, and user-only blockers are visible before execution.
 - Analysis and execution plan documents have passed grill review and been
   revised before safe work starts.
-- Final analysis and plan documents are attached when supported, or honestly
-  linked with a recorded tool gap.
+- Final analysis and immutable versioned Plan documents are attached and read
+  back when supported, or honestly linked with a recorded upload failure.
+- Every Plan node has a deliverable standard and downstream startup contract;
+  manual acceptance never blocks later safe execution.
+- Granoflow's latest task/node state wins over Agent caches, and NodeService is
+  the only parent-task completion path.
 - Task descriptions explain the result in the user's language with simple,
   non-jargony wording.
 - Blocked tasks have durable Granoflow nodes, reminders, and notification tasks
@@ -262,10 +269,7 @@ review factual: what was done, key decisions, blockers, verification, and what
 would help next time. Do not write inferred mood, personality, motivation,
 efficiency, or other subjective judgments into automatic task reviews.
 
-Create one `reviewCardDrafts` item per durable knowledge point, but show the
-card content and shape before creating review cards unless a more specific
-confirmed workflow already authorizes card creation. Omit reviews and cards when
-they would only be an activity log.
+Delegate every review-card search, draft, link, update, preview, confirmation, and write to the bundled `granoflow-review-card-draft` skill. Omit cards when they would only be an activity log.
 
 Automatic task completion review does not change the daily-review synthesis
 confirmation gate. Daily review AI imports that update task titles,
@@ -278,9 +282,7 @@ when project context tools are available: low-risk factual deltas may update
 positioning conflicts must produce a proposal or conflict report instead of a
 silent overwrite.
 
-Read `references/review-card-authoring.md` before creating review cards from a
-task. It defines card-worthiness, experience cards, language-learning cards,
-source preservation, self-review, note fields, and fallback behavior.
+Load `granoflow-review-card-draft` before any card operation. The local review-card reference is a delegation pointer and legacy background only.
 
 Success criteria:
 
@@ -373,27 +375,35 @@ High-level contract:
    from the running app/API order, ask the user to choose.
 2. Read task details plus project and milestone descriptions when ids are
    present. Separate task facts, project/milestone context, and AI inference.
-3. Classify the task as AI-completable, AI-completable after user input,
-   user-only, or not enough information.
-4. For simple AI-completable tasks, write a concise plan, grill it, revise it,
-   explain it plainly, discuss, then execute only after confirmation.
-5. For complex AI-completable tasks, retrieve Granoflow-backed cards first and
-   related tasks only when needed. Successful experience may guide the plan;
-   failure-only history must be explained and should include abandon, defer,
-   split, or redefine options.
-6. For tasks the user must complete, write a confirmed user-action node plan
-   back to the original task and leave the task open.
-7. If authorization, login, secrets, files, private context, or user decisions
-   are missing, use the waiting-for-user-input workflow before blocked work.
-8. After any node or fallback-field writeback, read the task back before
-   claiming the write succeeded.
+3. Prefill Trigger, Outcome, Evidence, Context, Boundaries, Risks, and Decision,
+   then present every unresolved directional question once with an AI
+   recommendation.
+4. Write nothing until the user authorizes the analysis draft. The authorization
+   may start Grill but never authorizes planning or execution.
+5. Write the base analysis plus a thin general, learning, or software profile;
+   preserve the original description and use capability-aware attachment
+   fallback.
+6. Grill the draft with the bundled protocol or optional installed enhancement.
+   Apply accepted findings to the main analysis and stop ordinary Grill after at
+   most two rounds.
+7. Show the proposed final decision and readiness, then require
+   `确认分析终稿` before setting the analysis final.
+8. Ask whether to plan only when the confirmed analysis has
+   `decision=proceed` and `planning_readiness=yes`.
+9. Planning and execution consume the analysis final and retain existing user
+   authorization, waiting, node, evidence, and readback boundaries.
 
 Success criteria:
 
 - The selected task is resolved or the user is asked to disambiguate.
 - Project and milestone descriptions are used as context when available, with
   explicit gap codes when unavailable or orphaned.
-- Plans pass grill review before confirmation.
+- Analysis separates lifecycle status, decision, and planning readiness.
+- The user sees one recommendation-backed decision batch before any draft write.
+- A bundled Grill works without third-party skills, and accepted findings revise
+  the analysis body.
+- Plans consume a user-confirmed analysis final and still pass plan Grill before
+  execution confirmation.
 - User-facing explanations use plain language, examples, or analogies when
   helpful.
 - No execution or writeback happens before explicit confirmation.
@@ -509,7 +519,9 @@ Success criteria:
 - Use Granoflow Local HTTP API tools and documented Granoflow tools for writes,
   sync, and readback.
 - Do not print secrets, credentials, API tokens, or hidden task data.
-- Keep preview and confirmation gates explicit before meaningful writes.
+- Keep preview and confirmation gates explicit before meaningful writes. An
+  explicit quick task-capture request is the narrow exception defined by
+  `references/discussed-requirement-task-capture.md`.
 - Do not mark a task complete until write results are verified by reading back
   the task state when possible.
 - Do not treat dissatisfaction as permission to publish, commit, delete, reset,
@@ -526,6 +538,12 @@ Success criteria:
   execute safe tasks, and preserve user-only decisions as task nodes.
 - `references/task-analysis-execution.md`: Read when the user asks to analyze,
   start, execute, or move forward one selected Granoflow task.
+- `references/task-analysis-template.md`: Single base template for all task
+  analyses.
+- `references/task-analysis-profile-learning.md`: Thin section-8 profile for
+  learning tasks.
+- `references/task-analysis-profile-software-development.md`: Thin section-8
+  profile for software-development tasks.
 - `references/review-card-authoring.md`: Read before creating review-card
   drafts from completed task work.
 - `references/review-drafting.md`: Read before daily, weekly, or monthly review

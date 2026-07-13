@@ -1,0 +1,6 @@
+{
+  "include": ["skills/granoflow-gfmcp-runner/scripts", "tests/python"],
+  "extraPaths": ["skills/granoflow-gfmcp-runner/scripts"],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic"
+}

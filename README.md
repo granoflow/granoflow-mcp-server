@@ -122,8 +122,8 @@ Ask your agent:
 Analyze the first task
 ```
 
-Granoflow will help the agent understand the selected task, plan the next steps,
-and move it forward after your confirmation.
+Granoflow will prefill the selected task analysis, show unresolved decisions
+with AI recommendations, and create a grilled final analysis before planning.
 
 More workflows will be added to this catalog as the Granoflow MCP workflow layer
 grows.
@@ -200,6 +200,36 @@ rules for when to write task reviews, when to create cards, how to handle
 pronunciation fields, and when to fall back to plain `front` / `back` card
 content.
 
+Every card operation then delegates to `granoflow_review_card_draft_skill`, the
+single review-card authoring owner. It uses
+`granoflow_review_card_similar` (vector first, keyword fallback), filters raw
+matches before showing them, and routes linking, creation, and modification
+through `granoflow_review_card_authoring_preview` followed by explicitly
+approved `granoflow_review_card_authoring_apply`. New card sets keep a complete
+explanatory note while one or more concise front/back cards share that note.
+Personal exam, language, splitting, answer-length, or card-type policies should
+wrap the bundled skill instead of replacing it.
+
+For unattended local queues, the package also ships an optional GFMCP runner.
+It polls every five minutes, selects only pending tasks tagged `GFMCP`, asks the
+app to perform sync only when current authorization permits it, and delegates at
+most one eligible task to a local agent. Preview it first:
+
+```bash
+granoflow-gfmcp-runner --dry-run --once
+```
+
+Run continuously with an explicit workspace:
+
+```bash
+granoflow-gfmcp-runner --workspace /absolute/project/path
+```
+
+The tag is not blanket authorization. Publishing, payment, login, external
+messages, destructive changes, secrets, and scope expansion still require user
+approval. Completion is accepted only after Local HTTP API readback reports the
+task as done.
+
 The bundled workflow also includes due-task processing. When the user asks an
 agent to process today's tasks, a specific date or range, or all unfinished
 tasks, the agent should write an analysis document first, classify which tasks
@@ -211,18 +241,24 @@ running app exposes the required tools.
 
 The bundled workflow also includes lightweight requirement capture. When the
 user asks an agent to create a task from the requirement being discussed, the
-agent should place it directly into a clearly matching project and active
-milestone, or into inbox/default placement for temporary work. If a requirement
-is worth preserving but has no clear home, the agent should suggest a
-project/milestone structure and ask before assigning or creating that structure.
+agent should place it directly into one clearly matching existing project and
+active milestone. Every other default placement goes straight to inbox without
+interrupting the user to propose or create project structure. The task keeps
+enough context for later analysis, then returns only a one-sentence placement
+confirmation.
 
-The bundled workflow also includes single-task analysis and execution. When the
-user asks an agent to analyze or start a selected Granoflow task, the agent
-should resolve the task, read task/project/milestone context, plan the next
-steps, explain the plan in plain language, and continue only after user
-confirmation. Complex tasks may use Granoflow-backed historical cards and
-related tasks as evidence; the MCP server should not compute embeddings or
-invent past experience.
+The bundled workflow also includes interactive single-task analysis. The agent
+prefills task evidence, shows all unresolved directional questions once with AI
+recommendations, writes an analysis draft only after approval, grills and
+revises that draft, and requires final-analysis confirmation before planning.
+Plans and execution can proceed only from a confirmed, planning-ready analysis.
+Confirmed Plans are immutable versioned task attachments. Their nodes have
+deliverable and downstream-start standards, reconcile against the latest
+Granoflow state before writes, and leave manual acceptance available on any
+synced device without blocking later safe AI work. Completing the last active
+node lets Granoflow's existing NodeService complete the parent task.
+Third-party grill skills may enhance this flow when already installed, but the
+bundled workflow remains complete without them.
 
 ## Agent Completion Workflow
 
@@ -322,6 +358,10 @@ Initial tools:
 - `granoflow_setup_status`
 - `granoflow_agent_workflow_skill`
 - `granoflow_first_run_import_skill`
+- `granoflow_gfmcp_runner_skill`
+- `granoflow_gfmcp_prepare`
+- `granoflow_gfmcp_safe_sync`
+- `granoflow_gfmcp_candidates`
 - `granoflow_setup_detect_local_api`
 - `granoflow_setup_write_config`
 - `granoflow_setup_open_config`
@@ -346,6 +386,13 @@ Initial tools:
 - `granoflow_task_create_structured`
 - `granoflow_task_update`
 - `granoflow_task_update_structured`
+- `granoflow_task_attachment_list`
+- `granoflow_task_attachment_add_markdown`
+- `granoflow_task_attachment_delete`
+- `granoflow_task_node_list`
+- `granoflow_task_node_batch_create`
+- `granoflow_task_node_update`
+- `granoflow_task_node_delete`
 - `granoflow_task_complete`
 - `granoflow_task_finish`
 - `granoflow_task_resolve`

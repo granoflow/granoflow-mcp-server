@@ -142,8 +142,14 @@ Ask your agent:
 Analyze the first task
 ```
 
-Granoflow will help the agent understand the selected task, plan the next steps,
-and move it forward after your confirmation.
+After the analysis is confirmed and planning-ready, the agent creates a grilled,
+versioned Plan attachment and concrete task nodes. Each node has a deliverable
+standard; manual acceptance can be completed later from any synced Granoflow
+device without blocking the agent's remaining safe work.
+
+Granoflow will prefill the selected task analysis, show unresolved decisions
+with AI recommendations, and write a grilled analysis only after your
+confirmation. Planning remains a separate confirmed step.
 
 ## 11. Dry-Run Write Demo
 

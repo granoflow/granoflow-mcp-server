@@ -265,6 +265,12 @@ the rest in the document as deferred.
 
 ## Phase 4: Plan, Grill, And Revise
 
+Use [task-plan-workflow.md](task-plan-workflow.md) as the Plan owner for every
+executable task. The batch outline below may organize the ledger, but it must
+not replace the owner workflow's immutable Plan attachment, deliverable node,
+handoff, manual-acceptance, current-state reconciliation, or NodeService
+completion contracts.
+
 For tasks classified as executable, write a plan document before changing code,
 docs, public copy, release settings, or other durable artifacts. Use the
 project's own planning rules when the task belongs to a repo with stricter

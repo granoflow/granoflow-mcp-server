@@ -1,0 +1,4 @@
+interface:
+  display_name: "Granoflow GFMCP Runner"
+  short_description: "Poll and safely execute tagged Granoflow tasks"
+  default_prompt: "Use the GFMCP runner contract to operate or diagnose automatic Granoflow task execution safely."

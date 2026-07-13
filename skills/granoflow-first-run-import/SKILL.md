@@ -124,6 +124,8 @@ them safely.
 
 Read `references/task-and-card-import.md`.
 
+Delegate all card candidates to `granoflow-review-card-draft`; do not copy or replace its authoring rules.
+
 Create task candidates only for clear work units, outcomes, blockers, or next
 actions. Create card candidates only for durable decisions, failure modes,
 project rules, engineering conventions, security principles, useful preferences,

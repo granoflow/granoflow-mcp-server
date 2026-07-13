@@ -1,58 +1,67 @@
 ---
 name: granoflow-review-card-draft
-description: Use when an AI agent needs to create Granoflow review cards with the correct fields, card types, note fields, layouts, and fallbacks. Fetch the app-owned schema first, preview cards for the user, then write through granoflow_task_finish or single_task_ai import after confirmation.
+description: Use when an agent searches, links, creates, or modifies Granoflow review cards. Owns similarity lookup, AI filtering, universal front/back and note defaults, preview, confirmation, controlled writes, and readback.
 ---
 
-# Granoflow Review Card Draft
+# Granoflow Review Card Authoring
 
-Use this skill when the user asks to create review cards, word cards, multiple-choice cards,
-image-assisted cards, or study cards from a task, book, conversation, or lesson.
+This is the single owner for Granoflow card behavior. Other bundled skills must
+delegate here instead of restating card rules. The public MCP tool name remains
+`granoflow_review_card_draft_skill` for compatibility.
 
-Public prompt:
+## Required Flow
 
-```text
-Create review cards from this material
-```
+1. Confirm the target task exists and belongs to a project. Every card must be linked to such a task.
+2. Summarize the proposed card set's core knowledge in one short paragraph.
+3. Call `granoflow_review_card_similar` with that summary. Supply up to 12 discriminating keywords so the App can fall back when vector search is disabled, unavailable, or produces no useful candidates.
+4. Classify raw matches as `same_knowledge`, `related`, `conflicting`, or irrelevant. Show only the AI-filtered useful candidates to the user. Search results never authorize a write.
+5. Recommend linking an existing card, updating and linking it, creating a new note/card set, or doing nothing. A related card does not automatically block a new card.
+6. Draft cards using `references/card-quality-defaults.md`. One explanatory note may produce several concise front/back cards. If the knowledge contains a professional term, the note must pass the reference's mandatory definition–analogy–example gate before preview.
+7. Show a table containing operation, front, back, note summary, source, and reason. For updates, show field-level before/after values, reason/evidence, and all cards/tasks affected by a shared note.
+8. Call `granoflow_review_card_authoring_preview`. It must report `writesPerformed: false`.
+9. Obtain explicit approval for specific operation IDs and, when the user accepts only part of an update, pass the approved field names in `approvedFieldsByOperation`. Modification of an old card or shared note requires the same preview and approval as creation.
+10. Call `granoflow_review_card_authoring_apply` with the unchanged preview token/hash and only approved operation IDs. Require `practiceReady: true` for every returned card, then report the App-owned readback. API `front/back` text alone is not proof that a card can be studied.
 
-Also accept equivalent requests in the user's language.
+Do not infer confirmation from search, classification, prior general interest, or task completion. If the user explicitly authorizes a defined batch maintenance operation in advance, that authorization may cover its previewed operations, but the agent must still use App preview before apply.
 
-## Required First Steps
+## Supported Actions
 
-1. Call `granoflow_review_card_draft_schema` (or `GET /v1/ai-agent/review-card-drafts/schema`).
-2. Call `granoflow_ai_agent_tools` and inspect `single_task_ai.capabilities`.
-3. Read the bundled `granoflow-agent-workflow` reference
-   `references/review-card-authoring.md` for worthiness and safety rules.
+- `link_existing`: associate an unchanged existing card with the target task.
+- `update_existing_and_link`: apply approved card/note field changes, then link.
+- `create_note_cards`: create one complete note and one or more front/back cards that share it.
 
-Do not guess card fields from memory when the running app exposes a schema.
+Use the running App's schema and advertised capabilities. Do not implement card business logic in MCP or bypass the Local HTTP API.
 
-## Workflow
+## Knowledge And Source Fidelity
 
-1. Decide whether each candidate point deserves a card or should stay in `taskReview`.
-2. Pick the nearest supported `cardType` or documented `patternId` from the schema.
-3. Build a preview for the user: title, card shape, front/back, note fields, layout, fallback notes.
-4. Wait for explicit user confirmation before writing.
-5. Write through:
-   - `granoflow_task_finish` with `reviewCardDrafts` when finishing a task, or
-   - `granoflow_task_import` / validated `single_task_ai` JSON when importing task results.
-6. Use `dryRun=true` first when the tool supports it.
+First decide whether the material is durable knowledge worth active recall. Do not card plain activity logs, temporary status, secrets, weak speculation, or facts with no plausible future retrieval trigger.
 
-## Schema Rules
+For established knowledge already present in a supplied book, specification, paper, official documentation, or project truth source, keep front/back wording faithful to that source—especially for examination use. Put analogy, examples, counterexamples, intuitive explanation, and helpful extension in the note's `content`, not as an oversized answer.
 
-- Only use import-supported `cardType` values from the schema (`basic_qa`, `reverse_qa`, `keyword_cloze`).
-- For `language_word`, follow the schema example: translation on front, target word on back,
-  optional `note_fields` for pronunciation.
-- For `multiple_choice`, `image_assisted`, and `image_multiple_choice`, use the schema fallback
-  strategy. Do not invent unsupported structured fields.
-- Keep `front` and `back` complete even when `note_fields` and layouts are present.
-- Preserve source context in `sourceSummary`; never store secret values in cards.
+Treat skill names, open-source libraries, APIs, functions, methods, commands, protocols, schemas, tools, framework concepts, and domain-specific vocabulary as professional terms. Their note `content` must include a plain-language definition, an analogy, and a concrete usage example. This is a universal default, not an optional wrapper preference.
 
-## Confirmation
+If no authoritative source is available, distinguish general knowledge from project-specific experience and label uncertainty rather than manufacturing a canonical answer.
 
-Do not write cards silently. Show the preview first unless the user already explicitly asked to
-import the exact preview you just showed.
+## User Extensions
 
-## Non-Goals
+The official skill supplies universal defaults. When a user wants a different exam, source hierarchy, splitting policy, answer length, note style, language, card type, filtering rule, preview columns, or quality review, recommend a user wrapper skill around this skill. Never recommend replacing or editing the official skill, because replacement prevents safe upgrades.
 
-- Do not implement card business logic in MCP.
-- Do not attach image binaries through import JSON when the schema says fallback only.
-- Do not create cards for plain activity logs or secret-bearing content.
+Suggest the smallest relevant wrapper change, for example:
+
+- Add an exam profile that pins the textbook edition and accepted terminology.
+- Add a split policy that creates definition, distinction, cause, and use cards.
+- Add a short-answer limit while preserving full explanation in note content.
+- Add source and terminology verification before authoring preview.
+- Add a custom card renderer while delegating search, confirmation, and writes here.
+
+Read `references/wrapper-extension-contract.md` before advising customization.
+
+## Safety
+
+- Never include tokens, OTPs, recovery codes, auth URLs, or temporary logs.
+- Do not reproduce long copyrighted passages; summarize and retain citations.
+- Never apply a stale or changed preview; preview again.
+- Never hide shared-note impact during modification.
+- Never show unfiltered raw search results to the user.
+- Never delete or hide a note field while any card front/back layout references it. First preview and apply replacement layouts for every affected card, verify `practiceReady`, and only then delete the field. If the App reports affected card IDs, show them with this ordering recommendation.
+- After creating or rewriting a batch, verify the real structured practice projection. For user-visible acceptance, open Card Practice and capture at least one front and answer screenshot; do not substitute a card-list/API screenshot.

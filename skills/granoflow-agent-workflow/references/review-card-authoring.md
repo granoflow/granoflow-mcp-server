@@ -1,4 +1,6 @@
-# Review Card Authoring
+# Review Card Authoring Delegation
+
+The bundled `granoflow-review-card-draft` skill is the sole owner of review-card search, quality defaults, preview, confirmation, writes, and readback. Load and follow it before any card operation. The remainder of this legacy reference is background only; if it conflicts with the core card skill, the core skill wins.
 
 Read this reference before creating `reviewCardDrafts` while finishing a
 Granoflow task, writing review content, or turning durable lessons into study

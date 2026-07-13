@@ -2,162 +2,149 @@
 
 Read this reference when the user asks the agent to create a Granoflow task from
 the requirement currently being discussed. Public README and directory-listing
-copy should use English prompt text such as `Create a task from this
-requirement`. At runtime, accept equivalent commands in the user's language. For
-example, `把我们讨论的需求建一个任务` is a localized trigger accepted inside
-the skill, not public README or directory copy.
-
-Public prompt:
+copy should use English prompt text such as:
 
 ```text
 Create a task from this requirement
 ```
 
-This workflow is for quick capture. Do not write a plan document, attach a plan,
-create review cards, or start executing the task.
+At runtime, accept equivalent commands in the user's language, including
+`把我们讨论的需求建一个任务`, `插入任务`, and `加入任务`.
 
-## Contract
+## Purpose
 
-1. Identify the requirement from the active conversation and any explicitly
-   referenced task, file, screenshot, issue, or document.
-2. Inspect existing projects and active milestones before writing.
-3. If an existing project and active milestone are a strong match, create the
-   task directly. The user's explicit task-creation request is confirmation for
-   that task write.
-4. If the project is clear but the milestone is weak or absent, use project-only
-   or default placement when supported. Ask before assigning to a weak milestone
-   or creating a new milestone.
-5. If no project or milestone clearly fits, classify the task as temporary or
-   worth preserving.
-6. Create temporary tasks in inbox/default placement without inventing project
-   structure.
-7. For worth-preserving tasks with no clear home, suggest a project/milestone
-   structure and wait for user confirmation before assigning or creating that
-   structure.
-8. Read the created task back. If supported fields were dropped by create, patch
-   the missing fields and read back again.
+This is a quick-capture workflow. Preserve enough context for later analysis
+without interrupting the user's current work. Do not write an analysis or plan
+document, attach files, split nodes, search history, check duplicates, create
+cards, or start executing the task unless the user explicitly asks for that
+additional work.
 
-## Placement Strength
+## Default Flow
 
-Use `strong` only when the requirement clearly belongs to an existing project and
-an active milestone under that project.
+1. Identify the requirement from the active conversation and explicitly
+   referenced files, screenshots, issues, pages, or documents.
+2. Use placement already known from the current page or conversation, or run at
+   most one bounded project/milestone resolve.
+3. Bind the task only when exactly one existing project and exactly one active
+   milestone under that project are an unambiguous strong match.
+4. For every other default placement state, create the task in inbox/default
+   placement by omitting both `projectId` and `milestoneId`.
+5. Treat the user's explicit task-creation request as confirmation. Call
+   `granoflow_task_create_structured` with `dryRun=false`.
+6. Use the task id returned by creation to read the task back. Do not resolve the
+   newly created task by title. If a supported field was dropped, patch it once
+   and read back by id again.
+7. Return exactly one success sentence from [Success Reply](#success-reply).
 
-Do not treat a milestone as strong when it is done, archived, trashed, deleted,
-stale, or only thematically similar.
+Do not ask the user to choose a project or milestone in the default quick path.
+Do not create, restore, reopen, or rename project structure during capture.
 
-Use `medium` when the project is clear but the milestone is weak or absent. If
-the app/API has no project-only placement, ask before using a weak milestone.
+## Placement Matrix
 
-Use `weak` when no project or milestone clearly owns the task.
+| State                                                                              | Default placement                      |
+| ---------------------------------------------------------------------------------- | -------------------------------------- |
+| One existing project plus one active milestone under it are a strong match         | Bind both ids                          |
+| Only the project is clear                                                          | Inbox/default                          |
+| Only a milestone is clear, or its project cannot be proven                         | Inbox/default                          |
+| Multiple projects or milestones may match                                          | Inbox/default                          |
+| Candidate milestone is done, archived, trashed, deleted, stale, or merely thematic | Inbox/default                          |
+| Placement requires new, restored, or reopened structure                            | Inbox/default; do not mutate structure |
 
-## Inbox Or Default Placement
+If the user explicitly names a project or milestone that is missing or
+ambiguous, leave the quick path and report the placement problem briefly. That
+explicit placement request is not permission to invent structure.
 
-When the app/API has no explicit inbox field, create an inbox/default task by
-omitting `projectId` and `milestoneId`. If the running app later advertises a
-first-class inbox/default placement field, use the app-owned field instead.
+When the running app advertises a first-class inbox field, prefer the app-owned
+field. Otherwise inbox/default means omitting both `projectId` and
+`milestoneId`.
 
-## Temporary Versus Worth Preserving
+## Minimum Description
 
-Temporary tasks include:
+The description has no mandatory long template. Preserve only the useful facts
+already available:
 
-- one-off reminders;
-- short-lived cleanup;
-- scratch notes;
-- low future value after completion;
-- no durable project, product, customer, release, research, or learning context.
+- trigger: why the task is being recorded now or what was observed;
+- outcome: what result or change is wanted;
+- clues: user-provided files, pages, materials, errors, constraints, or actors;
+- completion signal: a known observable result, or `待分析` when useful and
+  genuinely unknown.
 
-Worth-preserving tasks include requirements that affect:
+The task must remain understandable without reopening the chat, retain the
+user's important clues, and contain at least the desired outcome or problem. Do
+not invent deadlines, acceptance criteria, implementation details, placement,
+or user decisions merely to fill a template.
 
-- a product, API, schema, skill, manual, release, or user workflow;
-- future context for another agent;
-- a decision, design issue, or known capability gap;
-- an ongoing workstream whose exact project/milestone is unclear;
-- acceptance evidence that should survive beyond the chat.
+Lightly adapt what is retained without expanding the workflow:
 
-## Description Shape
+- learning task: learning goal, material, current difficulty, desired ability;
+- software-development task: current behavior, expected behavior, repository,
+  file, API, or verification clue;
+- general task: trigger, outcome, material constraint, completion signal.
 
-Write a compact task description, not a full implementation plan. For product,
-API, skill, or docs work, prefer:
+Task-profile classification remains an internal writing aid. It does not create
+a persisted field, ask the user questions, or trigger full analysis.
 
-```text
-背景:
-- ...
+## Supported Fields And Safety
 
-目标:
-- ...
+Write only supported fields:
 
-验收证据:
-- ...
+- `title`;
+- `description`;
+- both `projectId` and `milestoneId` only for strong placement;
+- `dueAt` or `remindAt` only when explicitly stated or strongly implied;
+- existing catalog tags only when the user supplied them or the surrounding
+  workflow already established them.
 
-注意:
-- ...
+Never include secret values, OTPs, recovery codes, auth URLs, passwords, tokens,
+or hidden chain-of-thought. Task capture never authorizes publishing, payment,
+login, external messages, deletion, account changes, or task execution.
 
-简单描述:
-- ...
-```
+## Readback
 
-Use fewer sections for small temporary tasks.
+After creation, read back by returned task id and verify:
 
-Do not include hidden chain-of-thought, invented deadlines, secret values, OTPs,
-recovery codes, auth URLs, private tokens, or private credentials. Secret names
-such as `OPENAI_API_KEY` may be named when they are needed, but secret values
-must not be written into tasks.
-
-## Create And Readback
-
-Use documented Granoflow MCP tools or Local HTTP API paths. Write only supported
-fields:
-
-- `title`
-- `description`
-- `projectId` when placement is strong or confirmed
-- `milestoneId` when placement is strong or confirmed
-- `dueAt` or `remindAt` only when stated or strongly implied
-- `status` when supported
-- `tags` only when they already exist in the Granoflow tag catalog; do not invent tag slugs
-
-When attaching tags, prefer existing catalog slugs only. The MCP create/update tools
-filter unknown tags automatically and report skipped slugs in `tagFilter`. Do not
-treat skipped tags as task-create failure when the task itself was written.
-
-After creating, read back and verify:
-
-- task id;
-- title;
-- description presence;
-- status;
-- due/reminder values if written;
-- project and milestone placement if written;
-- tag placement if written, and whether any requested tags were skipped;
+- the task exists;
+- title and description are present;
+- status is appropriate;
+- both placement ids match when strong placement was written;
+- due, reminder, or existing tags match when supplied;
 - no secret value was persisted.
 
-If `description`, `projectId`, `milestoneId`, or another supported field was
-dropped by create, patch the missing field and read back once more before
-reporting success.
+If creation returns no usable task id, readback fails, or a dropped supported
+field still cannot be patched, report failure. Do not use a success sentence.
 
-## Confirmation Rules
+## Success Reply
 
-No extra confirmation is needed when:
+For strong project and milestone placement, return exactly:
 
-- the user explicitly asked to create the task;
-- the requirement is clear;
-- an existing project and active milestone are a strong match; and
-- the write only records the task without executing it.
+```text
+任务已经放入「<项目名>」项目「<里程碑名>」里程碑。
+```
 
-Confirmation is required before:
+For inbox/default placement, return exactly:
 
-- creating a new project or milestone;
-- assigning a worth-preserving task to an uncertain project or milestone;
-- using a weak milestone;
-- writing data that may expose private content beyond what the user requested.
+```text
+任务已收录到收集箱。
+```
+
+Do not append a title, task id, description, explanation, suggestion, question,
+or next step unless the user explicitly requested more output.
+
+## Exit The Quick Path
+
+Use the corresponding full workflow when the user asks to:
+
+- analyze, plan, attach files, or split nodes during capture;
+- execute or complete the new task;
+- search for or merge duplicates;
+- preview a full description or receive a detailed report;
+- place the task into missing, ambiguous, or new project structure.
 
 ## Non-Goals
 
-- Do not write a plan document first.
-- Do not attach a plan document.
-- Do not create review cards.
-- Do not start task execution.
-- Do not imply background scheduling.
-- Do not create project or milestone structure without confirmation.
-- Do not approve secrets, publishing, deletion, payment, sending, account
-  changes, or subjective decisions through task creation alone.
+- No analysis or plan document.
+- No attachment or task-node creation.
+- No review card or task review.
+- No historical retrieval or default duplicate search.
+- No project, milestone, or tag creation.
+- No background scheduling or task execution.

@@ -19,7 +19,7 @@ Checks:
   - npm run check unless --skip-check is set
   - package.json and src/metadata.ts version consistency
   - npm pack --dry-run --json contents unless --skip-pack is set
-  - dist/index.js executable mode in the package
+  - dist/index.js and the optional GFMCP runner launcher are executable
   - docs included in the package
   - obsolete CLI references and likely secret patterns in release files
 `);
@@ -75,8 +75,14 @@ if (!skipPack) {
     const files = pack.files ?? [];
     const fileNames = new Set(files.map((file) => file.path));
     const binFile = files.find((file) => file.path === "dist/index.js");
+    const runnerBinFile = files.find((file) => file.path === "dist/gfmcp-runner-launcher.js");
     record(Boolean(binFile), "package contains dist/index.js");
     record(binFile?.mode === 493, "dist/index.js is executable in npm package");
+    record(Boolean(runnerBinFile), "package contains the GFMCP runner launcher");
+    record(
+      runnerBinFile?.mode === 493,
+      "dist/gfmcp-runner-launcher.js is executable in npm package",
+    );
     record(fileNames.has("docs/user-install-demo.md"), "package contains user install guide");
     record(fileNames.has("docs/release-checklist.md"), "package contains release checklist");
     record(fileNames.has("docs/directory-listings.md"), "package contains directory listing copy");
@@ -87,6 +93,14 @@ if (!skipPack) {
     record(
       fileNames.has("skills/granoflow-agent-workflow/agents/openai.yaml"),
       "package contains Granoflow agent workflow agents metadata",
+    );
+    record(
+      fileNames.has("skills/granoflow-gfmcp-runner/SKILL.md"),
+      "package contains the GFMCP runner skill",
+    );
+    record(
+      fileNames.has("skills/granoflow-gfmcp-runner/scripts/gfmcp_runner.py"),
+      "package contains the GFMCP Python worker",
     );
     record(!fileNames.has("dist/cli.js"), "package does not contain obsolete dist/cli.js");
   } catch (error) {

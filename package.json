@@ -17,7 +17,8 @@
     "access": "public"
   },
   "bin": {
-    "granoflow-mcp-server": "dist/index.js"
+    "granoflow-mcp-server": "dist/index.js",
+    "granoflow-gfmcp-runner": "dist/gfmcp-runner-launcher.js"
   },
   "files": [
     "dist",
@@ -28,13 +29,15 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsc -p tsconfig.json && chmod +x dist/index.js",
+    "build": "npm run clean && tsc -p tsconfig.json && chmod +x dist/index.js dist/gfmcp-runner-launcher.js",
     "dev": "tsx src/index.ts",
     "lint": "eslint .",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "test": "vitest run",
-    "check": "npm run format && npm run lint && npm run build && npm run test",
+    "test:python": "python3 -m unittest discover -s tests/python -p 'test_*.py'",
+    "check:python": "ruff check skills/granoflow-gfmcp-runner/scripts tests/python && ruff format --check skills/granoflow-gfmcp-runner/scripts tests/python && pyright skills/granoflow-gfmcp-runner/scripts tests/python && npm run test:python",
+    "check": "npm run format && npm run lint && npm run check:python && npm run build && npm run test",
     "release:preflight": "node scripts/release-preflight.mjs",
     "prepublishOnly": "npm run check"
   },
@@ -50,6 +53,7 @@
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
     "prettier": "^3.6.2",
+    "pyright": "^1.1.411",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.1",

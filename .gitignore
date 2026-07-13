@@ -7,3 +7,5 @@ docs-temp/
 npm-debug.log*
 .npm_recovery_codes.txt
 .local-ai/
+__pycache__/
+*.py[cod]

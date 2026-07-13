@@ -3,9 +3,7 @@
 Read this reference before turning retained agent records into Granoflow task
 and review-card candidates.
 
-This reference defines import boundaries. For detailed card-writing rules, read
-`../../granoflow-agent-workflow/references/review-card-authoring.md` through the
-base workflow skill.
+This reference defines import boundaries. Delegate every discovered card candidate to the bundled `granoflow-review-card-draft` skill. First-run import does not own card search, filtering, quality, confirmation, or writes.
 
 ## Task Candidate Gate
 
