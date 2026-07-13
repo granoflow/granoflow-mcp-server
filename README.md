@@ -77,9 +77,11 @@ For maintainers, see
 
 Agents can also reuse the bundled
 [Granoflow Agent Workflow skill](skills/granoflow-agent-workflow/SKILL.md) for
-task completion, daily review drafting, mood and efficiency note suggestions,
-review-card drafting, long-term work memory retrieval, and user-feedback
-handling conventions.
+task completion, weekly/monthly review drafting, review-card drafting,
+long-term work memory retrieval, and user-feedback handling conventions. For an
+explicit daily review, use the bundled
+[Granoflow Daily Review skill](skills/granoflow-daily-review/SKILL.md), which
+uses display, confirmation, and write/readback phases.
 
 Agents can use the bundled
 [Granoflow First-Run Import skill](skills/granoflow-first-run-import/SKILL.md)
@@ -194,11 +196,14 @@ lessons, review cards, and local historical context.
 
 Agents that have access to this MCP server should call
 `granoflow_agent_workflow_skill` before handling task completion, review-card
-drafting, long-term memory lookup, daily/weekly/monthly review drafting, or
-user feedback about Granoflow output. The skill gives the agent the current
-rules for when to write task reviews, when to create cards, how to handle
-pronunciation fields, and when to fall back to plain `front` / `back` card
-content.
+drafting, long-term memory lookup, weekly/monthly review drafting, or user
+feedback about Granoflow output. Call `granoflow_daily_review_skill` directly
+for an explicitly requested daily review, mood/efficiency note, or daily
+journal: it first displays evidence and a draft, obtains explicit confirmation,
+then writes and reads back only approved daily-review fields. The workflow skill
+gives the agent the current rules for when to write task reviews, when to create
+cards, how to handle pronunciation fields, and when to fall back to plain
+`front` / `back` card content.
 
 Every card operation then delegates to `granoflow_review_card_draft_skill`, the
 single review-card authoring owner. It uses
@@ -356,6 +361,7 @@ Initial tools:
 
 - `granoflow_setup_status`
 - `granoflow_agent_workflow_skill`
+- `granoflow_daily_review_skill`
 - `granoflow_first_run_import_skill`
 - `granoflow_gfmcp_runner_skill`
 - `granoflow_gfmcp_prepare`
@@ -456,15 +462,17 @@ On the last day of a month, the same suggestion may include a
 checks the previous month. If the monthly review has no visible written content
 or values yet, agents should add the monthly-review nudge too.
 
-The bundled Granoflow Agent Workflow skill also defines how agents should help
-with reviews. For daily reviews, agents may draft concise mood and efficiency
-notes from the day's tasks, timing, reviews, project context, flow time,
-interruptions, and user-confirmed signals, but save scores and notes only after
-user confirmation. Saved `moodNote` and `efficiencyNote` content should be short
-personal review notes, not scoring explanations, interaction text, or fixed
-templates. For weekly reviews, agents should focus on patterns across the week
-and user-confirmed value scores/notes. For monthly reviews, agents may draft and
-write confirmed `content`, while monthly aggregate metrics remain read-only.
+The bundled Granoflow Daily Review skill defines how agents should help with a
+daily review. When the user gives no preferred structure, it displays a concise
+summary, efficiency, mood, and free-record discussion frame; this is not a fixed
+saved template, and user-provided or free-form wording reorganizes the draft.
+Agents save only confirmed supported fields: the summary/free record becomes
+daily journal/report `content` when available, while `moodNote` and
+`efficiencyNote` stay concise personal review notes rather than scoring
+explanations or interaction text. For weekly reviews, the Agent Workflow skill
+focuses on patterns across the week and user-confirmed value scores/notes. For
+monthly reviews, it may draft and write confirmed `content`, while monthly
+aggregate metrics remain read-only.
 
 ## Setup Diagnostics
 

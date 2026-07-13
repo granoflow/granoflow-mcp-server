@@ -41,10 +41,12 @@ Before applying this workflow, read the bundled
 - review-card authoring;
 - long-term work memory;
 - waiting for user input;
-- review drafting;
+- weekly/monthly review drafting;
 - project and milestone context stewardship.
 
 Do not duplicate those detailed rules here. This skill sequences the import.
+An import is not a daily review. If the user separately asks to review a day,
+call `granoflow_daily_review_skill`; do not draft or write it during import.
 
 ## Fixed Sequence
 

@@ -19,6 +19,7 @@ Use this skill when installing, operating, or diagnosing the optional GFMCP auto
 - A task with Plan nodes must write and content/hash-readback Task Delivery before the final required node, then complete only through NodeService. A node-less compatibility task may use one finish call after its applicable Delivery gate.
 - Ordinary completion does not create deep Task Review or a new Card Checkpoint. It consumes the Delivery checkpoint already recorded by the task workflow.
 - An unattended worker may read linked cards and record phase candidates, but it cannot infer approval for card writes. Delegate every card search, draft, preview, confirmation, and write to `granoflow-review-card-draft`; record unapproved operations as deferred and never create hidden card drafts or cards.
+- An unattended worker never starts a daily review, drafts mood/efficiency notes, or writes a journal. If an interactive user separately requests one, delegate to `granoflow_daily_review_skill`.
 
 ## Run
 

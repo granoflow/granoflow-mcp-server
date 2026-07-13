@@ -111,6 +111,7 @@ describe("MCP tool registration", () => {
       expect.arrayContaining([
         "granoflow_setup_status",
         "granoflow_agent_workflow_skill",
+        "granoflow_daily_review_skill",
         "granoflow_first_run_import_skill",
         "granoflow_gfmcp_runner_skill",
         "granoflow_gfmcp_prepare",
@@ -236,6 +237,25 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("Import Preview");
     expect(serialized).toContain("bounded batches");
     expect(serialized).toContain("hidden chat histories");
+  });
+
+  it("exposes the bundled daily-review owner skill", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_daily_review_skill")?.({});
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      code: "ok",
+      data: {
+        path: "skills/granoflow-daily-review/SKILL.md",
+        skill: expect.stringContaining("Conversation and confirmation"),
+      },
+    });
+    const serialized = JSON.stringify(parseToolText(result));
+    expect(serialized).toContain("Display");
+    expect(serialized).toContain("Write and readback");
+    expect(serialized).toContain("explicitly confirmed");
   });
 
   it("exposes the bundled GFMCP runner skill and safe dry-run tools", async () => {
@@ -433,6 +453,28 @@ describe("MCP tool registration", () => {
     expect(combined).toContain("写周报");
   });
 
+  it("keeps daily review defaults flexible under one owner", () => {
+    const dailySkill = readFileSync("skills/granoflow-daily-review/SKILL.md", "utf8");
+    const dailyContract = readFileSync(
+      "skills/granoflow-daily-review/references/daily-review-contract.md",
+      "utf8",
+    );
+    const workflowReference = readFileSync(
+      "skills/granoflow-agent-workflow/references/review-drafting.md",
+      "utf8",
+    );
+    const combined = `${dailySkill}\n${dailyContract}`;
+
+    expect(combined).toContain("Default display");
+    expect(combined).toContain("not a required form");
+    expect(combined).toContain("reorganize the draft");
+    expect(combined).toContain("journal/report `content`");
+    expect(combined).toContain("not task count");
+    expect(combined).toContain("Do not diagnose");
+    expect(workflowReference).toContain("granoflow_daily_review_skill");
+    expect(workflowReference).not.toContain("## Daily Reviews");
+  });
+
   it("keeps public workflow catalog copy English-only while skills support localized triggers", () => {
     const publicDocs = [
       readFileSync("README.md", "utf8"),
@@ -508,6 +550,10 @@ describe("MCP tool registration", () => {
     expect(descriptions.get("granoflow_agent_workflow_skill")).toContain(
       "granoflow_first_run_import_skill",
     );
+    expect(descriptions.get("granoflow_agent_workflow_skill")).toContain(
+      "granoflow_daily_review_skill",
+    );
+    expect(descriptions.get("granoflow_daily_review_skill")).toContain("explicitly asks");
     expect(descriptions.get("granoflow_first_run_import_skill")).toContain(
       "Initialize Granoflow and import data",
     );

@@ -6,9 +6,10 @@ description: Use when working with Granoflow tasks, finishing tasks, waiting for
 # Granoflow Agent Workflow
 
 Use this skill when an agent works with Granoflow tasks, task completion,
-waiting for user decisions or authorization, daily/weekly/monthly review
-drafting, review-card drafts, long-term work memory retrieval, local MCP setup,
-or user feedback about generated Granoflow content.
+waiting for user decisions or authorization, weekly/monthly review drafting,
+review-card drafts, long-term work memory retrieval, local MCP setup, or user
+feedback about generated Granoflow content. Delegate an explicitly requested
+daily review to `granoflow-daily-review`.
 
 Granoflow is a local-first app for planning work, reviewing completed tasks, and
 turning durable lessons into review cards. Granoflow MCP connects MCP-capable AI
@@ -42,8 +43,9 @@ Use this skill when the user asks to:
 - pause work because user authorization, a decision, login, 2FA, a local app
   action, or missing source material is required;
 - write a task review or completion summary;
-- draft or complete Granoflow daily, weekly, or monthly review content;
-- suggest daily review mood or efficiency scores and short notes;
+- draft or complete Granoflow weekly or monthly review content;
+- route a daily review, mood score, efficiency score, or short daily note to
+  `granoflow-daily-review`;
 - create review cards from task work;
 - diagnose why Granoflow MCP cannot connect to the local app;
 - correct, reject, or complain about Granoflow-related generated tasks, reviews,
@@ -406,37 +408,37 @@ Success criteria:
 
 ## Review Drafting
 
-Use this section when the user asks to review today, summarize today, write a
-daily/weekly/monthly review, assess mood or efficiency, or turn completed work
-into review cards.
+Use this section when the user asks for a weekly/monthly review or turns
+completed work into review cards. If the user asks to review today, summarize
+today, write a journal, or assess daily mood/efficiency, call
+`granoflow_daily_review_skill` and follow that skill instead of drafting or
+writing a daily review here.
 
-Treat review drafting as assisted reflection. Periodic daily, weekly, and
-monthly review must be user-initiated; a suggestion or nudge is not permission
-to start the review. Use recorded Granoflow evidence, separate facts from
-inference, and require user confirmation before writing subjective scores,
-notes, daily/weekly/monthly review content, new tasks, or review cards.
+Treat weekly/monthly review drafting as assisted reflection. Periodic review
+must be user-initiated; a suggestion or nudge is not permission to start it.
+Use recorded Granoflow evidence, separate facts from inference, and require
+user confirmation before writing review content, new tasks, or review cards.
 
 Accept localized natural-language triggers in the user's language. Examples
-include `review today`, `write today's journal`, `summarize this week`,
-`write a weekly report`, `review July`, `做日回顾`, `帮我写今天的日记`,
-`总结这周`, `写周报`, `回顾 7 月`, and `这个月我做得怎么样`.
+include `summarize this week`, `write a weekly report`, `review July`, `总结这周`,
+`写周报`, `回顾 7 月`, and `这个月我做得怎么样`. The localized daily triggers
+`做日回顾` and `帮我写今天的日记` route to `granoflow-daily-review`.
 
 Keep the interaction loose: talk with the user naturally, let them add, reject,
 or rewrite context, then show a draft of the final fields before saving. For
-daily reviews this includes mood score, efficiency score, one-sentence summary,
-and journal/report content when available. For weekly reviews, prefer patterns,
-rhythm, repeated blockers, tradeoffs, and next-week adjustments over a seven-day
-task list. For monthly reviews, prefer direction, tradeoffs, investment
-structure, and next-month choices over four weekly summaries.
+weekly reviews, prefer patterns, rhythm, repeated blockers, tradeoffs, and
+next-week adjustments over a seven-day task list. For monthly reviews, prefer
+direction, tradeoffs, investment structure, and next-month choices over four
+weekly summaries.
 
-Read `references/review-drafting.md` before drafting daily, weekly, or monthly
-review content.
+Read `references/review-drafting.md` before drafting weekly or monthly review
+content.
 
 Success criteria:
 
 - AI drafts accelerate the review without pretending to know the user's inner
   state.
-- Scores, notes, and review content are saved only after user confirmation.
+- Review content is saved only after user confirmation.
 - Candidate reviews and review cards contain durable lessons rather than plain
   activity logs.
 - Weekly and monthly reviews describe patterns, direction, and tradeoffs rather
@@ -451,9 +453,10 @@ On Friday, Saturday, Sunday, and Monday, it may also include a
 first day of a month, it may include a `monthlyReviewSuggestion` when the
 checked monthly review has no visible written content or values.
 
-When this suggestion appears, mention it briefly after completing the user's
-current request. Do not interrupt the requested work, and do not repeat the
-suggestion if it is absent.
+When a daily suggestion appears, mention it briefly after completing the user's
+current request and route an accepted suggestion to `granoflow_daily_review_skill`.
+Do not interrupt the requested work, and do not repeat the suggestion if it is
+absent.
 
 The nudge is only a nudge. It must not trigger analysis, drafting, scoring,
 journal/report writing, or any review writeback until the user actively asks to

@@ -133,6 +133,10 @@ const AGENT_WORKFLOW_SKILL_URL = new URL(
   "../skills/granoflow-agent-workflow/SKILL.md",
   import.meta.url,
 );
+const DAILY_REVIEW_SKILL_URL = new URL(
+  "../skills/granoflow-daily-review/SKILL.md",
+  import.meta.url,
+);
 const FIRST_RUN_IMPORT_SKILL_URL = new URL(
   "../skills/granoflow-first-run-import/SKILL.md",
   import.meta.url,
@@ -180,6 +184,10 @@ function jsonTextResult(value: unknown) {
 
 function readAgentWorkflowSkill(): string {
   return readFileSync(AGENT_WORKFLOW_SKILL_URL, "utf8");
+}
+
+function readDailyReviewSkill(): string {
+  return readFileSync(DAILY_REVIEW_SKILL_URL, "utf8");
 }
 
 function readFirstRunImportSkill(): string {
@@ -1624,7 +1632,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_agent_workflow_skill",
-    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, says 'Analyze the first task', says 'Start the first task', says 'Create a task from this requirement', says 'Process today's tasks', asks in their own language to analyze/start one selected task, create a task from a discussed requirement, or process tasks for a date/range/all-task scope, needs approval or missing information recorded in a task, finishes tasks, asks for daily, weekly, or monthly reviews, mood or efficiency review notes, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Use granoflow_first_run_import_skill for first-run import from Cursor, Codex, Hermes, or other agents. Do not call it for unrelated venting or unrelated disagreement.",
+    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, says 'Analyze the first task', says 'Start the first task', says 'Create a task from this requirement', says 'Process today's tasks', asks in their own language to analyze/start one selected task, create a task from a discussed requirement, or process tasks for a date/range/all-task scope, needs approval or missing information recorded in a task, finishes tasks, asks for weekly or monthly reviews, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Use granoflow_daily_review_skill for an explicitly requested daily review or mood/efficiency note, and granoflow_first_run_import_skill for first-run import from Cursor, Codex, Hermes, or other agents. Do not call it for unrelated venting or unrelated disagreement.",
     {},
     async () =>
       jsonTextResult({
@@ -1633,6 +1641,21 @@ export function registerGranoflowTools(server: {
         data: {
           path: "skills/granoflow-agent-workflow/SKILL.md",
           skill: readAgentWorkflowSkill(),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_daily_review_skill",
+    "Read the bundled Granoflow Daily Review skill. Call this when a user explicitly asks to review, summarize, or journal one day, including mood or efficiency notes. It requires display of evidence and a draft, conversation and explicit confirmation, then write and App/API readback of only approved daily-review fields.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-daily-review/SKILL.md",
+          skill: readDailyReviewSkill(),
         },
       }),
   );

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Granoflow Daily Review"
+  short_description: "Guide a confirmed daily reflection in Granoflow"
+  default_prompt: "Use the Granoflow Daily Review skill when a user explicitly asks to review, summarize, or journal one day. Show evidence and a draft first, discuss and obtain explicit confirmation, then write and read back only approved daily-review fields."
