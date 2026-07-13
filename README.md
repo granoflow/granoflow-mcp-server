@@ -474,9 +474,11 @@ supported fields: the summary/free record becomes daily journal/report `content`
 when available, while `moodNote` and `efficiencyNote` stay concise personal
 review notes rather than scoring explanations or interaction text. Card outcome
 remains separate from a completed Task Review. For weekly reviews, the Agent
-Workflow skill focuses on patterns across the week and user-confirmed value
-scores/notes. For monthly reviews, it may draft and write confirmed `content`,
-while monthly aggregate metrics remain read-only.
+Workflow skill uses a small, evidence-bounded set of recall cues to discuss
+patterns across the week, then writes only user-confirmed content and value
+scores/notes; any follow-up work remains a separate confirmed flow. For monthly
+reviews, it may draft and write confirmed `content`, while monthly aggregate
+metrics remain read-only.
 
 ## Setup Diagnostics
 

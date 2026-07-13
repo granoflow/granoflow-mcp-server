@@ -51,27 +51,39 @@ that will be written, then wait for confirmation.
 ## Weekly Reviews
 
 Weekly review is not a repetition of seven daily reviews. Its job is to step
-back and identify what the week says as a pattern.
+back and identify what the week says as a pattern through an interactive recall
+session, not an automatic weekly report.
 
-AI may draft:
+Follow this order after the user initiates the session:
 
-- weekly `content` from completed tasks, daily reviews, task reviews, project
-  and milestone progress, time and focus aggregates, and user statements;
-- candidate weekly value `score` and `note` entries for values exposed by the
-  running Granoflow app;
-- patterns across the week, such as repeated blockers, rework, context
-  switching, protected focus, neglected directions, or unexpectedly steady
-  progress;
-- concise next-week adjustments;
-- review-card candidates for lessons that are likely to recur.
+1. Display target week dates and the caller's local time zone, then show a
+   bounded coverage ledger for available daily reviews, task/task-review and
+   delivery records, project or milestone progress, time/focus aggregates, and
+   existing weekly content. Mark evidence as available, missing, or unavailable;
+   missing records do not prove that nothing happened.
+2. Select 3–5 high-information recall cues rather than dumping every task.
+   Prefer a consequential delivery or decision, recurring friction/rework/context
+   switching, an unusual time/focus distribution, important unrecorded or
+   deferred work, and a project or milestone direction change. State the record
+   supporting each cue.
+3. Discuss one cue at a time with an open question. The user may skip any
+   question, reject its premise, or provide free-form context; reorganize the
+   draft around that context rather than forcing a questionnaire. Do not seek
+   sensitive, relationship, or emotional details unless the user introduces them.
+4. Draft weekly `content`, value `score`/`note` candidates, cross-week patterns,
+   and candidate next-week experiments from the evidence plus the user's
+   additions. Label each material claim as a recorded fact, a user-confirmed
+   interpretation, a tentative inference, or unknown. Never turn an inference
+   into a fact or diagnose mood, motivation, or mental state.
 
-The user must confirm:
+The user may use partial confirmation: confirm, edit, reorder, delete, or defer
+weekly content, each value score/note, each pattern, and each next-week
+experiment independently. Only confirmed fields may be written.
 
-- the final weekly `content`;
-- each weekly value score and note;
-- whether the inferred pattern is real rather than an artifact of missing
-  records;
-- which lessons deserve review cards.
+Next-week experiments are candidates, not execution authorization. A task,
+reminder, review card, Task Review, or project/milestone rule requires its own
+preview/confirmation/write/readback flow; weekly review does not automatically
+create tasks, reminders, cards, Task Reviews, or project/milestone changes.
 
 Rules:
 
@@ -80,9 +92,10 @@ Rules:
   over exhaustive task listings.
 - Keep weekly value notes natural and short enough to be useful in the weekly
   review UI.
-- Save weekly `content` or value entries only after user confirmation.
-- Before writeback, show the weekly content draft, value score/note drafts, and
-  candidate next-week adjustments.
+- Before writeback, show the target-week coverage, approved weekly content,
+  approved value score/note entries, approved patterns, and approved next-week
+  experiments separately from deferred or rejected items.
+- Save only the approved weekly `content` or value entries, then read them back.
 
 ## Monthly Reviews
 
