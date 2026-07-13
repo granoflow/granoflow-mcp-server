@@ -466,13 +466,17 @@ The bundled Granoflow Daily Review skill defines how agents should help with a
 daily review. When the user gives no preferred structure, it displays a concise
 summary, efficiency, mood, and free-record discussion frame; this is not a fixed
 saved template, and user-provided or free-form wording reorganizes the draft.
-Agents save only confirmed supported fields: the summary/free record becomes
-daily journal/report `content` when available, while `moodNote` and
-`efficiencyNote` stay concise personal review notes rather than scoring
-explanations or interaction text. For weekly reviews, the Agent Workflow skill
-focuses on patterns across the week and user-confirmed value scores/notes. For
-monthly reviews, it may draft and write confirmed `content`, while monthly
-aggregate metrics remain read-only.
+It first builds a daily task ledger, checks every relevant task's Task Review,
+and presents missing reviews for explicit confirmation through the existing Task
+Review owner. The diary reports review coverage and separately summarizes key
+progress, friction, changes, and rework evidence. Agents save only confirmed
+supported fields: the summary/free record becomes daily journal/report `content`
+when available, while `moodNote` and `efficiencyNote` stay concise personal
+review notes rather than scoring explanations or interaction text. Card outcome
+remains separate from a completed Task Review. For weekly reviews, the Agent
+Workflow skill focuses on patterns across the week and user-confirmed value
+scores/notes. For monthly reviews, it may draft and write confirmed `content`,
+while monthly aggregate metrics remain read-only.
 
 ## Setup Diagnostics
 

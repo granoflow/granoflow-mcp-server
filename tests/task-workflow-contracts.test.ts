@@ -119,4 +119,13 @@ describe("Task Delivery and Deferred Task Review contracts", () => {
     expect(publicText).toContain("does not automatically create");
     expect(publicText).not.toContain("factual `taskReview` may be written automatically");
   });
+
+  it("allows an explicitly requested daily review to orchestrate missing task reviews", () => {
+    const workflow = reference("task-review-workflow.md");
+
+    expect(workflow).toContain("explicitly requested daily review");
+    expect(workflow).toContain("daily task ledger");
+    expect(workflow).toContain("daily skill does not directly");
+    expect(workflow).toContain("card outcome");
+  });
 });

@@ -471,6 +471,11 @@ describe("MCP tool registration", () => {
     expect(combined).toContain("journal/report `content`");
     expect(combined).toContain("not task count");
     expect(combined).toContain("Do not diagnose");
+    expect(combined).toContain("daily task ledger");
+    expect(combined).toContain("reviewed_and_readback");
+    expect(combined).toContain("card outcome");
+    expect(combined).toContain("does not directly write `taskReview`");
+    expect(combined).toContain("rework evidence");
     expect(workflowReference).toContain("granoflow_daily_review_skill");
     expect(workflowReference).not.toContain("## Daily Reviews");
   });

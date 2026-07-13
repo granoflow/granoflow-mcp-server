@@ -1,6 +1,15 @@
 # Deferred Task Review Workflow
 
-Use this only when the user explicitly asks to review a task, including a completed inbox task. Completion does not automatically start deep Review.
+Use this when the user explicitly asks to review a task, including a completed
+inbox task, or starts an explicitly requested daily review that identifies this
+task as missing a Task Review. Completion does not automatically start deep
+Review.
+
+For a daily-review request, the daily task ledger owns task selection and the
+daily skill owns the aggregate confirmation view. This workflow still owns the
+Task Review preview, write, and readback: the daily skill does not directly
+write the taskReview. Report card outcome separately from the read-back Task
+Review body.
 
 ## Read And Preview
 

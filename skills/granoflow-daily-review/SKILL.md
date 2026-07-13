@@ -17,29 +17,38 @@ Read [Daily Review Contract](references/daily-review-contract.md) before work.
 Follow these phases in order:
 
 1. **Display**: resolve the requested local date; read only available Granoflow
-   evidence and existing daily-review values; show recorded facts, clearly marked
-   inferences, missing context, and a draft of every field that could be written.
+   evidence and existing daily-review values; build a daily task ledger before
+   the diary draft, then show recorded facts, clearly marked inferences, missing
+   context, and a draft of every field that could be written.
    Use the default display only when the user gives no format, length, or focus;
    it is not a required form.
 2. **Conversation and confirmation**: let the user add, reject, rewrite, or
-   approve individual fields in natural language. A nudge, a past preference, or
-   an inferred mood is never write authorization. When the user writes freely
-   or supplies a structure, reorganize the draft around that expression rather
-   than forcing it back into the default display.
+   approve individual task reviews and daily fields in natural language. A nudge,
+   a past preference, or an inferred mood is never write authorization. When the
+   user writes freely or supplies a structure, reorganize the draft around that
+   expression rather than forcing it back into the default display.
 3. **Write and readback**: write only explicitly confirmed fields using the
-   App-advertised Local HTTP API surface, then read back and report what actually
-   persisted. Do not treat a request success response as proof.
+   App-advertised Local HTTP API surface. Delegate each approved missing Task
+   Review to its existing owner, read it back, then write and read back the daily
+   review. Do not treat a request success response as proof.
 
 ## Ownership Boundaries
 
 - Daily review owns the day's summary, journal/report content when available,
-  mood/efficiency suggestions and notes, and their confirmed writeback.
-- It does not write `taskReview`, change task time, create or modify tasks,
-  create cards, or promote project/milestone context.
-- Candidate task reviews or durable lessons may be displayed as separate
-  follow-up recommendations. A Task Review remains user-initiated and deferred;
-  any card action delegates to `granoflow-review-card-draft` with its own
-  preview, approval, apply, and readback gates.
+  mood/efficiency suggestions and notes, their confirmed writeback, and the
+  orchestration of missing Task Reviews from the daily task ledger.
+- It does not directly write `taskReview`, change task time, create or modify
+  tasks, create cards, or promote project/milestone context. A daily review
+  delegates an approved missing Task Review to the existing Task Review owner.
+- The daily task ledger records each relevant task as `already_reviewed`,
+  `review_pending_confirmation`, `reviewed_and_readback`, `unavailable`, or
+  `deferred_by_user`, plus a separate card outcome. `reviewed_and_readback`
+  proves only the Task Review body, not that cards were created or applied.
+- Task Review remains deferred from ordinary completion. An explicitly requested
+  daily review is a valid review session, but each missing Task Review still
+  needs the Task Review preview, confirmation, write, and readback gates. Card
+  actions remain delegated to `granoflow-review-card-draft` with their own
+  approval path.
 - Weekly and monthly reviews remain with `granoflow-agent-workflow`; they may
   consume confirmed daily records as evidence but do not replace this owner.
 
