@@ -1,10 +1,10 @@
 # Task Lifecycle Card Checkpoints
 
-This is the canonical phase contract for review cards used by Granoflow task workflows. The parent `granoflow-review-card-draft` skill remains the sole owner of similarity search, classification, card quality, preview, approval, apply, and practice-ready readback. Analysis, Plan, Execution, Delivery, Completion, and Deferred Review must link here instead of copying that algorithm.
+This is the canonical phase contract for review cards used by Granoflow task workflows. The parent `granoflow-review-card-draft` skill remains the sole owner of similarity search, classification, card quality, preview, approval, apply, and practice-ready readback. Task Work, Execution, Delivery, Completion, and Deferred Review must link here instead of copying that algorithm. Historical Analysis and Plan checkpoints remain valid legacy provenance.
 
 ## Phase Model
 
-Card Checkpoints exist at `analysis | plan | execution | delivery | deferred_review`. Completion does not run a new checkpoint; it reads and summarizes the Delivery checkpoint.
+Card Checkpoints exist at `task_work | execution | delivery | deferred_review`. Completion does not run a new checkpoint; it reads and summarizes the Delivery checkpoint. Read legacy `analysis | plan` values without rewriting them.
 
 At each checkpoint:
 
@@ -15,13 +15,20 @@ At each checkpoint:
 5. Apply only approved operations and require App-owned `practiceReady: true` readback.
 6. Persist the checkpoint result in the phase document or node evidence.
 
+Before preview, validate every proposed Note: its body must contain at least
+one concrete example of the knowledge in use. If the knowledge is abstract,
+defines a boundary, contains a trade-off, or is easy to misunderstand, the Note
+must also contain a plain-language analogy, contrast, or intuitive explanation.
+This explanatory material belongs in the Note; Card fronts and backs remain
+concise recall prompts and answers.
+
 Search and read operations are safe before confirmation. Search results, a prior phase approval, task completion, or general interest never authorize a card write. Approval of an Analysis draft and approval of card `approvedOperationIds` are separate decisions, even if one natural-language reply explicitly grants both.
 
 ## Canonical Record
 
 ```yaml
 card_checkpoint:
-  phase: analysis | plan | execution | delivery | deferred_review
+  phase: task_work | execution | delivery | deferred_review
   checked_at: <timestamp>
   based_on_task_updated_at: <timestamp>
   based_on_card_updated_at_by_id: {}
@@ -58,10 +65,9 @@ For an older App that advertises `projectTaskRequired=true`, project tasks may u
 
 ## Phase Responsibilities
 
-- Analysis establishes the knowledge baseline and may formally link, update, or create source-backed cards needed by the analysis.
-- Plan reconciles decision boundaries, terminology, rules, and risks; it does not recreate unchanged Analysis knowledge.
+- Task Work establishes the knowledge baseline during Analysis and reconciles decision boundaries, terminology, rules, and risks when Planning is triggered. A later Work Document version does not recreate unchanged knowledge.
 - Execution runs a checkpoint only on a material knowledge/card delta such as a correction, verified fact, confirmed rule change, or reusable experience.
-- Delivery reconciles cards with the actual result and records accepted, overturned, or deferred Analysis/Plan assumptions.
+- Delivery reconciles cards with the actual result and records accepted, overturned, or deferred Work Document assumptions. Legacy Delivery may refer to Analysis/Plan assumptions.
 - Deferred Review performs final deduplication, quality audit, and evidence-backed experience capture; it is not the first bulk-card pass.
 
 An unattended runner may read cards and record candidates, but it cannot infer operation approval. It records proposed writes as `deferred` and continues safe work when the task contract permits.

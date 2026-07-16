@@ -101,6 +101,10 @@ describe("Granoflow Local HTTP API client", () => {
       ok: false,
       code: "network_error",
       data: {
+        connectionState: "unreachable",
+        apiBaseUrl: "http://127.0.0.1:9",
+        apiBaseUrlSource: "env",
+        configPath: expect.stringContaining("granoflow-mcp"),
         granoflow: {
           product: "Granoflow",
           website: "https://granoflow.com",
@@ -115,6 +119,29 @@ describe("Granoflow Local HTTP API client", () => {
         message: expect.stringContaining("https://granoflow.com"),
       },
     });
+    expect(JSON.stringify(result)).not.toContain("activeWorkDocumentState");
     expect(result.data?.granoflow.description).toContain("not a code analyzer");
+  });
+
+  it("classifies a reachable configured endpoint that requires authentication", async () => {
+    const port = await startServer((_request, response) => {
+      response.statusCode = 401;
+      response.end(JSON.stringify({ ok: false, code: "unauthorized" }));
+    });
+
+    const result = await requestGranoflowApi(
+      { path: "/v1/health" },
+      { GRANOFLOW_API_BASE_URL: `http://127.0.0.1:${port}` },
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "reachable_auth_required",
+      httpStatus: 401,
+      data: {
+        connectionState: "reachable_auth_required",
+        nextActions: expect.arrayContaining(["Check GRANOFLOW_API_TOKEN, then try again."]),
+      },
+    });
   });
 });

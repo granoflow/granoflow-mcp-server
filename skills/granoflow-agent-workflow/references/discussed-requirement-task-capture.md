@@ -19,22 +19,63 @@ document, attach files, split nodes, search history, check duplicates, create
 cards, or start executing the task unless the user explicitly asks for that
 additional work.
 
+## Title Standard
+
+The title is the Todo-level next action, not a miniature analysis or document
+label. Prefer this shape:
+
+> action verb + clear object or outcome + necessary qualifier
+
+Titles should be concise, specific, and understandable when shown without a
+description. Start with an action verb whenever the task represents work to be
+done. Do not make `Plan文档`、`分析任务`、`实施计划` or a filename the main title;
+describe the action instead. Put rationale, context, prerequisites, estimates,
+theory, prior experience, and detailed acceptance in the description or Task
+Work attachment.
+
+The title must also communicate the user-facing problem, consequence, or
+desired result. An internal implementation phrase or architecture term may be
+included only as a qualifier after that meaning is clear; it must not be the
+whole title. For example, prefer `修复长请求被固定上限提前截断的问题`
+over `实现分层超时与移除静态 agent 限制`. The description must then explain
+the concrete failure, the technical cause, the intended behavior change, and
+the evidence that will show the user-visible problem is resolved.
+
+The task description is the user-facing factual summary and the first source
+for the later Task Work Document. When Task Work is requested, the Agent may
+reorganize and expand confirmed description content into execution details, but
+must preserve its facts and boundaries. A title, filename, path, or “已完成”
+label alone is only a lead; it is not enough evidence to invent a failure
+scenario, implementation detail, or acceptance result.
+
+Examples:
+
+- `制定漫画任务模型并隔离项目风格偏好`
+- `评审 Task Delivery 工作流`
+- `提供 DEK 同步恢复的复现信息或测试授权`
+
 ## Default Flow
 
 1. Identify the requirement from the active conversation and explicitly
    referenced files, screenshots, issues, pages, or documents.
-2. Use placement already known from the current page or conversation, or run at
+2. Derive a concise action-oriented title using the Title Standard; keep
+   document type, filename, and detailed rationale out of the title.
+3. Use placement already known from the current page or conversation, or run at
    most one bounded project/milestone resolve.
-3. Bind the task only when exactly one existing project and exactly one active
+4. Bind the task only when exactly one existing project and exactly one active
    milestone under that project are an unambiguous strong match.
-4. For every other default placement state, create the task in inbox/default
+5. For every other default placement state, create the task in inbox/default
    placement by omitting both `projectId` and `milestoneId`.
-5. Treat the user's explicit task-creation request as confirmation. Call
+6. Treat the user's explicit task-creation request as confirmation. Call
    `granoflow_task_create_structured` with `dryRun=false`.
-6. Use the task id returned by creation to read the task back. Do not resolve the
+7. Use the task id returned by creation to read the task back. Do not resolve the
    newly created task by title. If a supported field was dropped, patch it once
    and read back by id again.
-7. Return exactly one success sentence from [Success Reply](#success-reply).
+8. Return exactly one success sentence from [Success Reply](#success-reply).
+
+Before writing the task, recover the earliest task-related user question in the
+current agent thread and write that timestamp as `startedAt`. Do not use task
+creation time when the thread provides an earlier start.
 
 Do not ask the user to choose a project or milestone in the default quick path.
 Do not create, restore, reopen, or rename project structure during capture.
@@ -58,31 +99,115 @@ When the running app advertises a first-class inbox field, prefer the app-owned
 field. Otherwise inbox/default means omitting both `projectId` and
 `milestoneId`.
 
-## Minimum Description
+## Mandatory Description Standard
 
-The description has no mandatory long template. Preserve only the useful facts
-already available:
+### Description Job: 30-Second Recall
 
-- trigger: why the task is being recorded now or what was observed;
-- outcome: what result or change is wanted;
-- clues: user-provided files, pages, materials, errors, constraints, or actors;
-- completion signal: a known observable result, or `待分析` when useful and
-  genuinely unknown.
+The description is not the execution manual. Its job is to let the user look at
+the task later and recover, within about 30 seconds:
 
-The task must remain understandable without reopening the chat, retain the
-user's important clues, and contain at least the desired outcome or problem. Do
-not invent deadlines, acceptance criteria, implementation details, placement,
-or user decisions merely to fill a template.
+- what actually happened or may happen;
+- who or what is affected;
+- what result the task seeks or achieved; and
+- what observable evidence would count as success.
+
+The later Task Work Document may repeat the minimum facts needed for a
+standalone handoff, but it must expand them into execution detail rather than
+paraphrasing this description.
+
+The problem portion must be concrete enough to stand alone. It must name at
+least one observed failure, confusing behavior, user-visible consequence, or
+plausible risk scenario that the task is meant to address. Do not substitute
+vague phrases such as “相关目标”, “已有实现”, “关联文档”, “整理流程”, or
+“缺少统一记录” unless the description immediately explains what actually
+failed, who is affected, and under what circumstances. The solution must state
+the intended behavior change, and the acceptance condition must name the
+observable evidence that distinguishes success from the original failure.
+
+Every description must include at least one concrete example of the real or
+plausible situation being addressed. The example should say what the user,
+agent, system, or other affected party encounters and why that encounter is a
+problem; for example, “用户只看到‘实现分层超时’，无法知道哪个请求会被截断，
+也无法判断修复是否生效” is useful, while “完善相关目标” is not. When the
+solution involves a meaningful choice, trade-off, or scope boundary, add one or
+more examples explaining why this approach is reasonable and why the boundary
+belongs here. These examples are part of the task's recall evidence, not
+decorative anecdotes. If no meaningful choice or boundary exists, do not invent
+a rationale paragraph.
+
+Write each distinct problem as its own natural-language paragraph with a blank
+line before the proposed solution. Do not compress several problems into one
+comma-separated sentence. When the relationships, alternatives, or failure
+paths are difficult to explain linearly, a small Markdown table, flowchart, or
+Mermaid diagram may follow the problem paragraph; it supplements the prose and
+does not replace it.
+
+Use Markdown semantics to make the prose scannable: **bold** the decisive
+problem, intended outcome, or acceptance result; use _italics_ for constraints,
+caveats, uncertainty, or conditional advice; use inline code such as
+`npm run check`, `startedAt`, API paths, field names, commands, and file paths
+for literal technical values; use fenced code blocks for multi-line commands,
+configuration, logs, or code. Use headings, lists, tables, blockquotes, and
+Mermaid diagrams when they clarify structure or evidence. Formatting must
+carry meaning and must not replace a complete natural-language explanation.
+
+Every task description must be a fluent, readable piece of task copy, not a
+questionnaire or a list of the five questions. The prose must clearly answer
+the five core dimensions: the problem, the proposed solution, prerequisites and
+current readiness, focused-work estimate with basis and uncertainty, and the
+observable acceptance condition.
+
+The five dimensions are an internal writing contract. Do not expose the question
+wording or mandatory numbered headings in the persisted description. Write
+`待分析` only where the conversation lacks enough evidence; never invent facts
+merely to make the prose sound complete. Use a time range when precision is not
+justified, distinguish focused work from elapsed calendar time, and state why
+the prerequisites are or are not ready.
+
+Cover unknown dimensions with one short, factual sentence that names the missing
+information and when it must be resolved. Do not fill them with generic prose
+about “reading related documents”, “clarifying boundaries”, or “recording
+evidence”. Quick capture remains quick: it records confirmed facts plus explicit
+unknowns and does not perform the later Analysis.
+
+When useful for decision quality, the prose may also explain why the task is
+worth doing, why the chosen approach is reasonable, its theoretical or
+evidence-based basis, and relevant prior experience. These are optional: omit
+them when they do not change understanding, execution, or acceptance.
+
+For completed historical tasks, use `历史工时未知` when no reliable focused-work
+record exists. Do not infer actual work time from calendar duration.
 
 Lightly adapt what is retained without expanding the workflow:
 
 - learning task: learning goal, material, current difficulty, desired ability;
 - software-development task: current behavior, expected behavior, repository,
   file, API, or verification clue;
-- general task: trigger, outcome, material constraint, completion signal.
+- general task: problem, proposed solution, prerequisites and readiness,
+  focused-work estimate with basis and uncertainty, acceptance condition.
 
 Task-profile classification remains an internal writing aid. It does not create
 a persisted field, ask the user questions, or trigger full analysis.
+
+## Pre-Write Recall Gate
+
+Before writing, apply the 30-second recall test using only the proposed title and
+description. Fail and revise when a reader cannot identify the concrete problem
+or event, its impact, the intended or actual result, and the acceptance signal
+without opening the thread or attachment.
+
+The following fail the gate:
+
+- a title made primarily from an architecture term, plan label, or filename;
+- a description that merely restates the title;
+- generic workflow prose that could be pasted onto another task unchanged;
+- unexplained professional terminology that hides the user-visible problem;
+- Markdown emphasis or tables that decorate an otherwise vague statement.
+
+When a professional term is necessary, explain it in plain language on first
+use. Markdown is optional and semantic: emphasize only genuinely important text.
+Do not require bold, italics, tables, diagrams, or code blocks when plain prose
+is clearer.
 
 ## Supported Fields And Safety
 
@@ -109,6 +234,7 @@ After creation, read back by returned task id and verify:
 - both placement ids match when strong placement was written;
 - due, reminder, or existing tags match when supplied;
 - no secret value was persisted.
+- the read-back title and description still pass the 30-second recall test.
 
 If creation returns no usable task id, readback fails, or a dropped supported
 field still cannot be patched, report failure. Do not use a success sentence.
@@ -142,7 +268,7 @@ Use the corresponding full workflow when the user asks to:
 
 ## Non-Goals
 
-- No analysis or plan document.
+- No Task Work Document.
 - No attachment or task-node creation.
 - No review card or task review.
 - No historical retrieval or default duplicate search.

@@ -56,9 +56,6 @@ Add this to `~/.codex/config.toml`:
 type = "stdio"
 command = "npx"
 args = ["-y", "@granoflow/mcp-server"]
-
-[mcp_servers.granoflow.env]
-GRANOFLOW_API_BASE_URL = "http://127.0.0.1:56789"
 ```
 
 Restart Codex or reload MCP servers after changing the file.
@@ -72,10 +69,7 @@ Add this to `~/.cursor/mcp.json`:
   "mcpServers": {
     "granoflow": {
       "command": "npx",
-      "args": ["-y", "@granoflow/mcp-server"],
-      "env": {
-        "GRANOFLOW_API_BASE_URL": "http://127.0.0.1:56789"
-      }
+      "args": ["-y", "@granoflow/mcp-server"]
     }
   }
 }
@@ -83,7 +77,43 @@ Add this to `~/.cursor/mcp.json`:
 
 Restart Cursor or reload MCP servers after changing the file.
 
+The MCP server uses `http://127.0.0.1:56789` by default. Do not add
+`GRANOFLOW_API_BASE_URL` merely to repeat that default: an environment value
+overrides the persistent MCP config described below.
+
+### Use A Non-Default Port Once
+
+1. Call `granoflow_setup_status`.
+2. If needed, call `granoflow_setup_detect_local_api` with a small candidate
+   list. It never scans all ports or writes config.
+3. Call `granoflow_setup_write_config` with `apiPort` and `dryRun=true`.
+4. Review the candidate evidence, config path, old/new value, `changedKeys`, and
+   environment override status together.
+5. Confirm that exact preview once and call the same tool with `dryRun=false`.
+
+The server writes `apiBaseUrl` to `~/.config/granoflow-mcp/config.json`, rereads
+it, and verifies health immediately. Later requests reuse it without asking
+again. A manually supplied remote HTTP(S) URL remains supported, but the full
+target and data boundary must be shown before confirmation.
+
+If setup returns `configuration_shadowed_by_env`, modify or remove
+`GRANOFLOW_API_BASE_URL` in the MCP client and reload that client. Rewriting the
+same JSON config cannot override an environment variable. If it returns
+`reachable_auth_required`, the address is reachable; check the token instead of
+changing the port.
+
 ## 5. First Demo
+
+After installing the MCP server, ask your agent:
+
+```text
+Initialize Granoflow
+```
+
+The agent checks the connection and offers all unavailable recommended AI
+capability collections. The Granoflow prompt shows only each collection's name
+and what it helps with. You may decline and continue using Granoflow, or later
+ask the agent to import data from Cursor, Codex, Hermes, or another source.
 
 Ask your MCP client to call:
 
@@ -237,7 +267,8 @@ plain `front` and `back` content and still create a useful card.
 
 Check that Granoflow is open and that the Local HTTP API is enabled in the app.
 If you changed the port in Granoflow, update `GRANOFLOW_API_BASE_URL` in your MCP
-client config.
+client config only when you intentionally want an environment override.
+Otherwise use the one-time `granoflow_setup_write_config` flow above.
 
 ### The MCP client does not show Granoflow tools
 

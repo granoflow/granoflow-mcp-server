@@ -16,6 +16,36 @@ turning durable lessons into review cards. Granoflow MCP connects MCP-capable AI
 agents to a local task, review, and long-term work memory layer; it is not a code
 analyzer, CI fixer, or repository automation framework.
 
+## Control-Plane Ownership And Reference Discovery
+
+Granoflow App owns task, attachment, node, delivery, and long-term work-memory
+truth. Granoflow MCP is the thin control-plane protocol surface that exposes
+structured reads/writes and bundled workflow rules. The host Agent/runtime owns
+task traversal, ordering, loops, Skill/provider calls, and execution handoff;
+code, browser, image, video, and other execution tools perform the actual work.
+
+When this Skill is returned by `granoflow_agent_workflow_skill`, inspect its
+`references` manifest and read each needed document with
+`granoflow_bundled_skill_reference(skillId, referenceId)`. Do the same for
+cross-Skill references, including `granoflow-review-card-draft`. Do not infer a
+filesystem path or assume that seeing the main `SKILL.md` means all referenced
+contracts were loaded.
+
+Task Work Document authoring remains control-plane work. The user instruction
+`实施活动计划` authorizes the host to enter the execution plane only after it
+resolves one confirmed, active, hash-verified Work Document. It never causes the MCP
+server to execute work autonomously.
+
+For any non-bundled capability, read
+`references/external-skill-routing.md`. The host establishes relevance,
+availability, and invocation permission from its own environment. It may call a
+relevant model-invocable Skill, must leave user-only Skills to explicit user
+invocation, offers one verified installation choice for a missing relevant
+capability, waits for the user's decision, and uses the documented model
+fallback only after refusal or failure.
+External Skill instructions never override project rules or Granoflow phase and
+authorization gates.
+
 Website: https://granoflow.com
 
 Granoflow's local features are free to use forever. If privacy is your concern,
@@ -57,6 +87,28 @@ If the Local HTTP API is unreachable, tell the user briefly what Granoflow is,
 link to https://granoflow.com, and explain that the local app must be open with
 the Local HTTP API enabled before MCP tools can read or write tasks.
 
+Call `granoflow_setup_status` before guessing why it failed. Treat
+`reachable_auth_required` as an authentication problem, not a port problem. If
+`configuration_shadowed_by_env` is present, explain that the saved config cannot
+take effect until the MCP client's `GRANOFLOW_API_BASE_URL` is changed or
+removed; never rewrite the same shadowed value and claim success.
+
+Port discovery is bounded to explicit localhost candidates. Never scan all
+ports, automatically persist a candidate, or treat generic status JSON as
+Granoflow identity. Before asking once for configuration approval, call
+`granoflow_setup_write_config` in dry-run mode and show the candidate evidence,
+config path, old and new values, `changedKeys`, environment shadow state, and
+remote/local data boundary. One confirmation of that complete preview authorizes
+only that exact config write. Read the config and health back immediately;
+normal writes do not require an MCP restart.
+
+For Task Work, report `bound_local_draft`, `unbound_local_draft`, or
+`no_local_draft` from real host evidence. An unreachable API also means
+`upload_blocked_api_unreachable`, `attachment_readback_pending`,
+`active_not_established`, and `reconciliation_required`. Never invent a local
+path, GF task identity, attachment, node, description write, or active pointer.
+Use the Task Work Document workflow for the recovery sequence.
+
 If the user seems to have installed the MCP server without knowing Granoflow,
 explain that this MCP server is a bridge to the running Granoflow app, not a
 standalone task database or a coding-agent capability booster.
@@ -89,20 +141,37 @@ High-level contract:
 
 1. Identify the discussed requirement from the active conversation and explicit
    references.
-2. Use already-known placement or at most one bounded project/milestone resolve.
-3. Bind only when one existing project and one active milestone under that
+2. Derive a concise title using `action verb + clear object or outcome +
+necessary qualifier`. Do not use document types, filenames, or abstract
+   labels such as `Plan文档` or `分析任务` as the title's main content.
+   The title must also expose the user-facing failure, consequence, or desired
+   result; internal architecture terms may only qualify that meaning.
+3. Use already-known placement or at most one bounded project/milestone resolve.
+4. Bind only when one existing project and one active milestone under that
    project are an unambiguous strong match.
-4. Otherwise create the task in inbox/default placement without asking about
+5. Otherwise create the task in inbox/default placement without asking about
    structure. When no explicit inbox field exists, omit both `projectId` and
    `milestoneId`.
-5. Keep the description compact: preserve the trigger, desired outcome, and
-   user-provided clues needed for later analysis without writing the analysis.
-6. The user's explicit task-creation request confirms this write. Skip dry-run,
+6. Keep the description compact and fluent while clearly covering the five
+   mandatory dimensions: problem, proposed solution, prerequisites/readiness,
+   focused-work estimate with basis and uncertainty, and acceptance condition.
+   Do not write the five questions as headings. Use `待分析` for unknowns and
+   `历史工时未知` for completed tasks without a reliable focused-work record.
+   Before writing, apply the focused reference's 30-second recall gate; a title
+   and description that do not independently recover the concrete problem,
+   affected subject, result, and acceptance signal must be revised.
+7. When the Agent thread contains images, inspect them for task evidence, Note
+   source material, or Card study value and persist only relevant, safe images
+   through supported App media/attachment paths. Read the destination back.
+8. Before writing, search the current agent thread and use the earliest
+   task-related user question as `startedAt`; do not substitute task creation
+   time when an earlier thread timestamp exists.
+9. The user's explicit task-creation request confirms this write. Skip dry-run,
    planning, nodes, cards, history retrieval, and duplicate search by default.
-7. Read back by the task id returned from creation. Patch dropped supported
-   fields once, then read back again.
-8. On success, reply with exactly one placement sentence defined by the focused
-   reference. Do not append the title, id, description, suggestions, or next step.
+10. Read back by the task id returned from creation. Patch dropped supported
+    fields once, then read back again.
+11. On success, reply with exactly one placement sentence defined by the focused
+    reference. Do not append the title, id, description, suggestions, or next step.
 
 Success criteria:
 
@@ -121,7 +190,7 @@ Use this section when the user asks the agent to `Process today's tasks`, to
 process tasks for another date or range, to process more tasks, to process all
 unfinished tasks, or to inspect current pending tasks. The workflow clarifies
 what the scoped tasks really require, identifies authorization or information
-blockers, writes and grills analysis/planning documents, executes confirmed safe
+blockers, writes one adaptive Task Work Document per task, executes confirmed safe
 work, and leaves user-only decisions as Granoflow task nodes and reminders.
 
 Public README and directory-listing copy should use English-only prompt text,
@@ -140,20 +209,26 @@ High-level contract:
    dates, ranges, overdue tasks, more-task scopes, and all-task scopes.
 2. Verify that the app/API instance matches the user-visible surface when
    visibility matters.
-3. Write an analysis document before execution. Classify every scoped task as
+3. Write a bounded batch ledger before execution. Classify every scoped task as
    AI can do now, needs user authorization or input, or user must do, with
    secondary flags for secrets, logins, files, account actions, stale work,
    conflicts, and tool gaps.
-4. Grill and revise the analysis before showing it as final.
-5. Show the analysis and require user confirmation before moving into
-   execution unless the user's instruction explicitly pre-authorizes that exact
-   step.
-6. For executable work, read `references/task-plan-workflow.md`, write and
-   grill the Plan, then execute only after confirmation. That owner reference
-   defines immutable Plan attachments, deliverable nodes, handoffs,
-   cross-device reconciliation, manual acceptance, and node-driven completion.
-7. Attach or safely link the final analysis and plan documents, then update the
-   relevant task descriptions with plain-language explanations.
+4. For each task that needs work, read `references/task-work-document-workflow.md`
+   and create one Analysis-only initial Work Document draft; do not create
+   separate new Analysis and Plan files and do not prewrite the Plan.
+5. Show the batch ledger and per-task Analysis decisions. Resolve and confirm
+   Analysis, then require the MCP-bundled Analysis Grill to pass before light
+   work becomes `not_required` or Planning begins.
+6. After each required Plan discussion is confirmed, automatically notify the
+   user and run the MCP-bundled Readiness Grill over sufficiency,
+   prerequisites, authorization, credential/key availability, required data,
+   tools, verification, and handoff. A missing item blocks that task instead of
+   being guessed.
+7. Attach and hash-read back only a Work Document whose applicable bundled
+   Grill gates passed, then update the relevant task descriptions with
+   plain-language explanations. Execute only a unique active,
+   Analysis-confirmed, valid-Planning, content/hash-verified Work Document after
+   the user's separate execution instruction.
 8. For blockers, use the waiting-for-user-input workflow: add a current node on
    the original task, verify local readback, set a 3-minute reminder on the
    original task, create a separate notification task with a 10-minute reminder,
@@ -164,23 +239,48 @@ High-level contract:
 10. Write completion evidence back to the document and Granoflow. Finish only
     tasks that are actually done and verified.
 
+The host may traverse a project or milestone and process tasks in order, but a
+batch outline never replaces each task's confirmed Work Document, immutable
+version, or required authorization. One blocked task stops only that
+task and dependency-linked downstream work unless the user's ordering contract
+requires the whole batch to stop. This host-side loop does not make MCP an
+execution plane.
+
 Success criteria:
 
-- Every scoped task appears exactly once in the analysis ledger.
+- Every scoped task appears exactly once in the batch ledger.
 - The default scope is unfinished tasks due today, while explicit dates, ranges,
   more-task scopes, and all-task scopes are honored when the user asks.
 - Authorization, login, secret, payment, destructive, external-account,
   missing-information, and user-only blockers are visible before execution.
-- Analysis and execution plan documents have passed grill review and been
-  revised before safe work starts.
-- Final analysis and immutable versioned Plan documents are attached and read
-  back when supported, or honestly linked with a recorded upload failure.
-- Every Plan node has a deliverable standard and downstream startup contract;
-  manual acceptance never blocks later safe execution.
+- Every task has one adaptive Work Document; triggered Grill findings revise it
+  before safe work starts.
+- The immutable active Work Document is attached and read back when supported,
+  or honestly linked with a recorded upload failure.
+- Every optional validation node has a stated mode, cost, evidence requirement,
+  pass criterion, and decline/inconclusive path. Routine unit tests, lint,
+  builds, and deterministic log checks remain in the plan and do not become
+  nodes merely because they are automated.
 - Granoflow's latest task/node state wins over Agent caches, and NodeService is
   the only parent-task completion path.
-- Task descriptions explain the result in the user's language with simple,
-  non-jargony wording.
+- Every title and description passes the 30-second recall gate owned by
+  `discussed-requirement-task-capture.md`. It uses fluent, task-specific prose
+  in the user's language, covers the five mandatory dimensions without turning
+  them into questionnaire headings, and explains necessary technical terms.
+- Every attached Task Work passes the cold-handoff, source-evidence, and slot
+  reconciliation gates owned by `task-work-document-template.md` and
+  `task-work-document-workflow.md`. Each task has at most two active Task Work
+  documents: the actual `execution` document and an optional
+  `post_completion_revision`. Before completion, every edit replaces the
+  execution document. After completion, the first later edit creates the one
+  post-completion revision, and all later edits replace that same revision.
+- Ordinary actions remain Execution Plan steps. Only costly, error-prone,
+  subjective, or user-selectable validation/intervention becomes an optional
+  Granoflow node; routine deterministic checks remain inside the plan.
+- Completed historical work uses `decision=completion_audit` to record the
+  actual problem, actions, evidence, outcome, and residuals without inventing a
+  future plan. Rationale, theory, and prior experience remain optional unless
+  they materially improve the decision or handoff.
 - Blocked tasks have durable Granoflow nodes, reminders, and notification tasks
   instead of chat-only asks.
 - Sync is attempted through documented Granoflow tools when available.
@@ -254,16 +354,23 @@ Success criteria:
 
 ## Completing Tasks
 
-Use the lifecycle `Task Analysis -> Task Plan -> Execution -> Task Delivery ->
+Use the lifecycle `Task Work (Analysis + applicable Planning) -> Execution -> Task Delivery ->
 Completion -> Deferred Task Review`. Quick Capture remains outside this document
 chain. Read `references/task-delivery-workflow.md` and the templates/profiles it
-routes before completing work that entered Plan or Execution.
+routes before completing work that entered Execution.
 
 - Node-backed task: write and content/hash-readback Task Delivery before the
   final required node; finish that node and let NodeService complete the task.
   Never call a second completion endpoint.
 - Node-less compatibility task: use `granoflow_task_finish` once after the
   applicable Delivery gate and read back `status=done`.
+- Every completion path first requires a readable, content/hash-verified Task
+  Work Document attachment, or the complete legacy Task Analysis + Task Plan
+  attachment pair. Missing documents fail closed with
+  `task_analysis_plan_attachment_required`.
+- At completion, inspect the current agent thread and write the confirmed finish
+  point as `endedAt`. If `startedAt` is missing, recover it from the thread;
+  estimate only after failed recovery, and label the estimate explicitly.
 - Default completion does not create a deep Task Review or a new card
   checkpoint. It reads the Delivery Card Checkpoint summary; explicitly
   deferred card work does not block task completion.
@@ -279,7 +386,7 @@ Every card operation is delegated to the bundled
 
 Success criteria:
 
-- Task Delivery records actual output, evidence, Analysis/Plan deltas, residuals,
+- Task Delivery records actual output, evidence, Work Document deltas, residuals,
   handoff, and acceptance state.
 - App-owned content or trusted hash readback proves the attachment.
 - Exactly one completion owner runs.
@@ -345,7 +452,7 @@ Success criteria:
   `unknown_remote_visibility`; do not claim remote delivery or phone
   notification delivery without explicit API evidence.
 
-## Task Analysis And Execution
+## Task Work And Execution
 
 Use this section when the user asks the agent to `Analyze the first task`,
 `Start the first task`, name a task, describe a task, or otherwise asks to
@@ -356,12 +463,14 @@ more tasks, or all unfinished tasks, use the due-task workflow instead.
 
 Public README and directory-listing copy should use English-only prompt text,
 such as `Analyze the first task`. At runtime, accept equivalent commands in the
-user's language and continue explanations, plan summaries, confirmation
+user's language and continue explanations, Work Document summaries, confirmation
 prompts, node plans, and final reports in that language by default. For example,
 `请分析第一个任务`, `执行第一个任务`, and `处理排在最前面的任务` are localized
 triggers accepted inside the skill, not public README or directory copy.
 
-Read `references/task-analysis-execution.md` before applying this branch.
+Read `references/task-work-document-workflow.md` and its template before applying
+this branch. Read legacy Analysis/Plan references only when resolving historical
+attachments.
 
 High-level contract:
 
@@ -369,35 +478,67 @@ High-level contract:
    from the running app/API order, ask the user to choose.
 2. Read task details plus project and milestone descriptions when ids are
    present. Separate task facts, project/milestone context, and AI inference.
-3. Prefill Trigger, Outcome, Evidence, Context, Boundaries, Risks, and Decision,
-   then present every unresolved directional question once with an AI
-   recommendation.
-4. Write nothing until the user authorizes the analysis draft. The authorization
-   may start Grill but never authorizes planning or execution.
-5. Write the base analysis plus zero or more composable learning/software profiles;
-   preserve the original description and use capability-aware attachment
-   fallback.
-6. Grill the draft with the bundled protocol or optional installed enhancement.
-   Apply accepted findings to the main analysis and stop ordinary Grill after at
-   most two rounds.
-7. Show the proposed final decision and readiness, then require
-   `确认分析终稿` before setting the analysis final.
-8. Ask whether to plan only when the confirmed analysis has
-   `decision=proceed` and `planning_readiness=yes`.
-9. Planning and execution consume the analysis final and retain existing user
-   authorization, waiting, node, evidence, and readback boundaries.
+3. The initial draft contains Analysis only: prefill Outcome, Evidence, Scope,
+   Risk, and Next Action, plus only Analysis-side optional sections whose
+   triggers fire. Do not draft an Execution Plan, Planning recommendation, or
+   readiness claim yet. Use the description as factual seed, then inspect
+   sources and label inference or unknowns.
+4. Keep `planning_status=not_assessed` until every decision-changing Analysis
+   question is resolved, the user confirms the Analysis, and the mandatory
+   MCP-bundled Analysis Grill passes. Findings revise Analysis and reopen its
+   confirmation when material. Only then may light work become `not_required`
+   or Planning begin in the same document family.
+5. Load Profile, external Skill, Card, Planning, Delivery, Review, or legacy
+   references progressively rather than preloading the manifest.
+6. After the Plan discussion is complete and the Plan is confirmed as
+   executable, automatically tell the user that execution-readiness review is
+   starting and that a passing document will be uploaded but not executed.
+   Run the mandatory MCP-bundled Readiness Grill against plan sufficiency,
+   prerequisites, authorizations, accounts/login state, secret or key
+   availability, required data/materials, tools/environment, verification, and
+   stop/handoff conditions. Never persist a secret value.
+7. External `grill-finalizer` or specialist reviewers are optional enhancement
+   evidence only. They never replace either bundled Grill gate; route a missing
+   optional helper through the external routing owner without weakening the
+   phase state.
+8. Only after the applicable bundled Grill gates pass, replace the current Task
+   Work slot and require App-owned content/hash readback before switching its
+   active pointer. Upload is forbidden until the description passes the
+   30-second recall gate, Task Work passes the cold-handoff and source-evidence
+   gates, readiness has no unresolved blocker, and the task has no more than two
+   active Task Work slots. After completion, the first later edit uses the
+   `post_completion_revision` slot; later edits never create another slot.
+9. Wait for a separate instruction such as `实施这个任务文档` before execution,
+   even when `planning_status=not_required`.
+10. Preserve existing authorization, waiting, node, Delivery, evidence, and
+    readback boundaries.
 
 Success criteria:
 
 - The selected task is resolved or the user is asked to disambiguate.
 - Project and milestone descriptions are used as context when available, with
   explicit gap codes when unavailable or orphaned.
-- Analysis separates lifecycle status, decision, and planning readiness.
+- Work Document separates Analysis status, Planning status, decision, and
+  runtime task/node state.
+- The initial draft contains Analysis only. Planning cannot start until the
+  Analysis is complete, user-confirmed, and `analysis_grill_status=passed`.
 - The user sees one recommendation-backed decision batch before any draft write.
-- A bundled Grill works without third-party skills, and accepted findings revise
-  the analysis body.
-- Plans consume a user-confirmed analysis final and still pass plan Grill before
-  execution confirmation.
+- MCP-bundled Analysis and Readiness Grill gates are mandatory. Optional
+  external review never substitutes for them and never claims evidence from a
+  provider that did not run.
+- Light tasks stay compact; Planning expands the same document only after
+  Analysis confirmation, a passing Analysis Grill, and user permission.
+- After Plan confirmation, the host automatically emits the readiness reminder,
+  runs the Readiness Grill, blocks on missing prerequisites or authority, and
+  uploads only a passing document with App-owned hash readback.
+- Planning uses ordinary performer-specific Execution Plan steps; only costly,
+  error-prone, subjective, or user-selectable validation/intervention becomes
+  an optional Granoflow node.
+- Completed historical tasks use `decision=completion_audit` and reconstruct
+  actual evidence instead of receiving a fictional future plan.
+- Task Work slot reconciliation succeeds: one `execution` document, plus zero
+  or one `post_completion_revision` document, with superseded records removed or
+  archived from the active set.
 - User-facing explanations use plain language, examples, or analogies when
   helpful.
 - No execution or writeback happens before explicit confirmation.
@@ -527,6 +668,13 @@ Success criteria:
 
 - Keep the MCP server thin. Do not reimplement Granoflow business logic in the
   agent.
+- The host Agent detects and calls external Skills such as `grill-finalizer`.
+  Granoflow MCP never detects, installs, or invokes them and never copies their
+  provider registries.
+- External Skill invocation permission, installation confirmation, phase
+  isolation, and model fallback use `references/external-skill-routing.md`.
+- Installation authorization is separate from task execution and does not
+  authorize a Bundle, installer, license, or redistribution project.
 - Use Granoflow Local HTTP API tools and documented Granoflow tools for writes,
   sync, and readback.
 - Do not print secrets, credentials, API tokens, or hidden task data.
@@ -545,18 +693,25 @@ Success criteria:
 - `references/discussed-requirement-task-capture.md`: Read when the user asks to
   create a task from the requirement currently being discussed.
 - `references/daily-pending-task-triage.md`: Read when the user asks to review
-  all unfinished tasks, classify blockers, write analysis/plans, adversarially review the plan,
+  all unfinished tasks, classify blockers, write per-task Work Documents,
   execute safe tasks, and preserve user-only decisions as task nodes.
-- `references/task-analysis-execution.md`: Read when the user asks to analyze,
-  start, execute, or move forward one selected Granoflow task.
-- `references/task-analysis-template.md`: Single base template for all task
-  analyses.
-- `references/task-analysis-profile-learning.md`: Thin section-8 profile for
-  learning tasks.
-- `references/task-analysis-profile-software-development.md`: Thin section-8
-  profile for software-development tasks.
+- `references/task-work-document-workflow.md` and
+  `references/task-work-document-template.md`: Only new-task owner and adaptive
+  pre-execution template.
+- `references/visual-narrative-task-work.md`: Domain extension for comic-first
+  visual-narrative tasks and explicitly requested animation work.
+- `references/thread-visual-evidence.md`: Inspect and route images from the
+  Agent thread to tasks, Notes, or Cards with safe persistence and readback.
+- `references/task-analysis-execution.md` and
+  `references/task-analysis-template.md`: Legacy Analysis read/redirect only.
+- `references/external-skill-routing.md`: Single owner for host-side external
+  Skill selection, invocation mode, installation confirmation, and fallback.
+- `references/task-analysis-profile-learning.md`: Conditional learning omission
+  check for Task Work.
+- `references/task-analysis-profile-software-development.md`: Conditional
+  software-development omission check for Task Work.
 - `references/task-plan-template.md` and `references/task-plan-workflow.md`:
-  Immutable pre-execution Plan contract and node handoffs.
+  Legacy Plan read/resolve compatibility only.
 - `references/task-delivery-template.md` and
   `references/task-delivery-workflow.md`: Versioned actual-delivery record,
   content/hash readback, and unique completion ownership.

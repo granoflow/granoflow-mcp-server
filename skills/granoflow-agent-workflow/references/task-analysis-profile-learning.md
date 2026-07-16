@@ -1,6 +1,8 @@
-# Learning Task Analysis Profile
+# Learning Task Work Profile
 
-Add only the following material to section 8 of the base analysis template:
+Use this as an omission check when learning is a material Work Document domain.
+Do not render a fixed Profile section. Add only triggered requirements to the
+most relevant core or optional section:
 
 - capability target: remember, understand, apply, analyze, or create;
 - current baseline, difficulty, and prerequisite knowledge;

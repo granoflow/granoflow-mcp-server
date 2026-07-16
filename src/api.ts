@@ -119,6 +119,26 @@ export async function requestGranoflowApi(
     });
     const body = await parseResponseBody(response);
     if (!response.ok) {
+      if (
+        (response.status === 401 || response.status === 403) &&
+        isLocalApiBaseUrl(runtime.apiBaseUrl)
+      ) {
+        return {
+          ok: false,
+          code: "reachable_auth_required",
+          data: {
+            connectionState: "reachable_auth_required",
+            apiBaseUrl: runtime.apiBaseUrl,
+            apiBaseUrlSource: runtime.apiBaseUrlSource,
+            configPath: runtime.configPath,
+            response: body,
+            nextActions: ["Check GRANOFLOW_API_TOKEN, then try again."],
+          },
+          error: { message: "Granoflow Local HTTP API is reachable but requires authentication." },
+          httpStatus: response.status,
+          runtime: runtimeSummary(runtime),
+        };
+      }
       return {
         ok: false,
         code: `http_${response.status}`,
@@ -149,6 +169,10 @@ export async function requestGranoflowApi(
       code: "network_error",
       data: localApi
         ? {
+            connectionState: "unreachable",
+            apiBaseUrl: runtime.apiBaseUrl,
+            apiBaseUrlSource: runtime.apiBaseUrlSource,
+            configPath: runtime.configPath,
             granoflow: GRANOFLOW_INTRODUCTION,
             nextActions: [
               "Open the Granoflow app, then try this MCP tool again.",

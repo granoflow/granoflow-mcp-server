@@ -9,3 +9,5 @@ npm-debug.log*
 .local-ai/
 __pycache__/
 *.py[cod]
+/task-work-*.md
+/task-delivery-*.md

@@ -21,6 +21,8 @@ export interface RuntimeResolution {
   configError?: string;
   apiBaseUrl: string;
   apiBaseUrlSource: "env" | "config" | "default";
+  configuredApiBaseUrl?: string;
+  configurationShadowedByEnv: boolean;
   hasApiToken: boolean;
   apiTokenSource: "env" | "none";
   apiToken?: string;
@@ -28,10 +30,12 @@ export interface RuntimeResolution {
 
 export interface WriteConfigInput {
   apiBaseUrl?: string;
+  apiPort?: number;
   dryRun?: boolean;
 }
 
 export interface WriteConfigResult {
+  code: "ok" | "configuration_shadowed_by_env";
   configPath: string;
   dryRun: boolean;
   written: boolean;
@@ -39,6 +43,12 @@ export interface WriteConfigResult {
   previousConfig: Record<string, unknown>;
   nextConfig: Record<string, unknown>;
   changedKeys: string[];
+  proposedApiBaseUrl?: string;
+  persistedApiBaseUrl?: string;
+  effectiveApiBaseUrl: string;
+  effectiveSource: RuntimeResolution["apiBaseUrlSource"];
+  targetScope: "local" | "remote";
+  shadowedByEnv: boolean;
   nextActions: string[];
 }
 
@@ -87,6 +97,27 @@ function validateApiBaseUrl(apiBaseUrl: string): void {
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error("apiBaseUrl must use http or https.");
   }
+  if (url.username || url.password) {
+    throw new Error("apiBaseUrl must not contain credentials.");
+  }
+}
+
+function apiTargetScope(apiBaseUrl: string): WriteConfigResult["targetScope"] {
+  const hostname = new URL(apiBaseUrl).hostname;
+  return ["localhost", "127.0.0.1", "::1", "[::1]"].includes(hostname) ? "local" : "remote";
+}
+
+function selectedApiBaseUrl(input: WriteConfigInput): string | undefined {
+  if (input.apiBaseUrl !== undefined && input.apiPort !== undefined) {
+    throw new Error("Provide apiBaseUrl or apiPort, not both.");
+  }
+  if (input.apiPort !== undefined) {
+    if (!Number.isInteger(input.apiPort) || input.apiPort < 1 || input.apiPort > 65_535) {
+      throw new Error("apiPort must be an integer between 1 and 65535.");
+    }
+    return `http://127.0.0.1:${input.apiPort}`;
+  }
+  return input.apiBaseUrl;
 }
 
 function stableJson(value: unknown): string {
@@ -171,6 +202,8 @@ export async function resolveMcpRuntime(
     env.GRANOFLOW_API_BASE_URL ??
     (typeof config.apiBaseUrl === "string" ? config.apiBaseUrl : undefined) ??
     DEFAULT_API_BASE_URL;
+  const configuredApiBaseUrl =
+    typeof config.apiBaseUrl === "string" ? config.apiBaseUrl : undefined;
 
   return {
     configPath: configResult.configPath,
@@ -182,6 +215,12 @@ export async function resolveMcpRuntime(
       : typeof config.apiBaseUrl === "string"
         ? "config"
         : "default",
+    configuredApiBaseUrl,
+    configurationShadowedByEnv: Boolean(
+      env.GRANOFLOW_API_BASE_URL &&
+      configuredApiBaseUrl &&
+      env.GRANOFLOW_API_BASE_URL !== configuredApiBaseUrl,
+    ),
     hasApiToken: Boolean(env.GRANOFLOW_API_TOKEN),
     apiTokenSource: env.GRANOFLOW_API_TOKEN ? "env" : "none",
     apiToken: env.GRANOFLOW_API_TOKEN,
@@ -192,13 +231,14 @@ export async function writeMcpConfig(
   input: WriteConfigInput,
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<WriteConfigResult> {
-  if (input.apiBaseUrl !== undefined) {
-    validateApiBaseUrl(input.apiBaseUrl);
+  const apiBaseUrl = selectedApiBaseUrl(input);
+  if (apiBaseUrl !== undefined) {
+    validateApiBaseUrl(apiBaseUrl);
   }
   const readResult = await readMcpConfig(env);
   const nextConfig: GranoflowMcpConfig = { ...readResult.config };
-  if (input.apiBaseUrl !== undefined) {
-    nextConfig.apiBaseUrl = input.apiBaseUrl;
+  if (apiBaseUrl !== undefined) {
+    nextConfig.apiBaseUrl = apiBaseUrl;
   }
 
   const previousConfig = redactConfig(readResult.config);
@@ -207,9 +247,33 @@ export async function writeMcpConfig(
     (key) => previousConfig[key] !== redactedNextConfig[key],
   );
   const dryRun = input.dryRun !== false;
+  const currentApiBaseUrl =
+    typeof readResult.config.apiBaseUrl === "string" ? readResult.config.apiBaseUrl : undefined;
+  const proposedApiBaseUrl =
+    typeof nextConfig.apiBaseUrl === "string" ? nextConfig.apiBaseUrl : undefined;
+  const shadowedByEnv = Boolean(
+    env.GRANOFLOW_API_BASE_URL && proposedApiBaseUrl !== env.GRANOFLOW_API_BASE_URL,
+  );
+  const effectiveApiBaseUrl =
+    env.GRANOFLOW_API_BASE_URL ?? proposedApiBaseUrl ?? DEFAULT_API_BASE_URL;
+  const effectiveSource: RuntimeResolution["apiBaseUrlSource"] = env.GRANOFLOW_API_BASE_URL
+    ? "env"
+    : proposedApiBaseUrl
+      ? "config"
+      : "default";
+  const resultState = (persistedApiBaseUrl: string | undefined) => ({
+    code: shadowedByEnv ? ("configuration_shadowed_by_env" as const) : ("ok" as const),
+    proposedApiBaseUrl,
+    persistedApiBaseUrl,
+    effectiveApiBaseUrl,
+    effectiveSource,
+    targetScope: apiTargetScope(proposedApiBaseUrl ?? effectiveApiBaseUrl),
+    shadowedByEnv,
+  });
 
   if (dryRun) {
     return {
+      ...resultState(currentApiBaseUrl),
       configPath: readResult.configPath,
       dryRun,
       written: false,
@@ -233,6 +297,7 @@ export async function writeMcpConfig(
   await writeConfigFile(readResult.configPath, nextConfig);
 
   return {
+    ...resultState(proposedApiBaseUrl),
     configPath: readResult.configPath,
     dryRun,
     written: true,
@@ -241,8 +306,12 @@ export async function writeMcpConfig(
     nextConfig: redactedNextConfig,
     changedKeys,
     nextActions: [
-      "Restart or reload the MCP client if it keeps a long-running server process.",
       "Call granoflow_setup_status to verify the resolved configuration.",
+      ...(shadowedByEnv
+        ? [
+            "Update or remove GRANOFLOW_API_BASE_URL in the MCP client before this config can apply.",
+          ]
+        : []),
     ],
   };
 }

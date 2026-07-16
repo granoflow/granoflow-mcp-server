@@ -26,6 +26,11 @@ import {
   openSetupConfig,
   writeSetupConfig,
 } from "./setup.js";
+import {
+  BUNDLED_SKILL_IDS,
+  bundledSkillResources,
+  WorkflowResourceError,
+} from "./workflow-resources.js";
 
 const jsonInputSchema = z
   .record(z.string(), z.unknown())
@@ -347,6 +352,37 @@ async function taskNodeApiTool(options: ApiRequestOptions) {
   return apiTool(options);
 }
 
+async function requireTaskAnalysisPlanAttachment(taskId: string) {
+  const attachments = await requestGranoflowApi({
+    path: `/v1/tasks/${taskId}/attachments`,
+  });
+  if (!attachments.ok) return attachments;
+  const items = extractItems(attachments);
+  const names = items
+    .map((item) => (typeof item.displayName === "string" ? item.displayName : ""))
+    .filter(Boolean);
+  const hasTaskWork = names.some((name) => /^task-work-.*\.md$/i.test(name));
+  const hasLegacyAnalysis = names.some((name) => /^task-analysis-.*\.md$/i.test(name));
+  const hasLegacyPlan = names.some((name) => /^task-plan-.*\.md$/i.test(name));
+  if (hasTaskWork || (hasLegacyAnalysis && hasLegacyPlan)) {
+    return { ok: true, code: "task_analysis_plan_attachment_present", data: { names } };
+  }
+  return {
+    ok: false,
+    code: "task_analysis_plan_attachment_required",
+    data: {
+      taskId,
+      attachmentNames: names,
+      accepted: ["task-work-*.md", "task-analysis-*.md + task-plan-*.md"],
+    },
+    error: {
+      message:
+        "Task completion requires an attached and readable Task Work Document, or legacy Task Analysis and Task Plan attachments.",
+    },
+    runtime: attachments.runtime,
+  };
+}
+
 async function completeNodeLessTask(input: {
   taskId: string;
   body?: Record<string, unknown>;
@@ -377,6 +413,8 @@ async function completeNodeLessTask(input: {
       runtime: nodes.runtime,
     };
   }
+  const documentGate = await requireTaskAnalysisPlanAttachment(input.taskId);
+  if (!documentGate.ok) return documentGate;
   return requestGranoflowApi({
     method: "POST",
     path: `/v1/tasks/${input.taskId}/complete`,
@@ -1552,6 +1590,9 @@ async function finishTask(input: {
     };
   }
 
+  const documentGate = await requireTaskAnalysisPlanAttachment(input.taskId);
+  if (!documentGate.ok) return documentGate;
+
   const applied: unknown[] = [];
   if (Object.keys(updateBody).length > 0) {
     const updateResult = await requestGranoflowApi({
@@ -1641,6 +1682,7 @@ export function registerGranoflowTools(server: {
         data: {
           path: "skills/granoflow-agent-workflow/SKILL.md",
           skill: readAgentWorkflowSkill(),
+          references: await bundledSkillResources.listReferences("granoflow-agent-workflow"),
         },
       }),
   );
@@ -1656,13 +1698,14 @@ export function registerGranoflowTools(server: {
         data: {
           path: "skills/granoflow-daily-review/SKILL.md",
           skill: readDailyReviewSkill(),
+          references: await bundledSkillResources.listReferences("granoflow-daily-review"),
         },
       }),
   );
 
   registerTool(
     "granoflow_first_run_import_skill",
-    "Read the bundled Granoflow First-Run Import skill. Call this when a user says 'Initialize Granoflow and import data' or asks in their own language to import data from Cursor, Codex, Hermes, or another agent into Granoflow. The workflow previews authorized source records as projects, monthly milestones, tasks, review-card candidates, and context backfills before writing.",
+    "Read the bundled Granoflow First-Run Import skill. Call this when a user says 'Initialize Granoflow', optionally asks to import data, or uses an equivalent request in their own language. The workflow checks the connection, offers all unavailable recommended AI capability collections using only their names and plain-language functions, and previews authorized Cursor, Codex, Hermes, or other agent records as projects, monthly milestones, tasks, review-card candidates, and context backfills before any requested import write.",
     {},
     async () =>
       jsonTextResult({
@@ -1671,6 +1714,7 @@ export function registerGranoflowTools(server: {
         data: {
           path: "skills/granoflow-first-run-import/SKILL.md",
           skill: readFirstRunImportSkill(),
+          references: await bundledSkillResources.listReferences("granoflow-first-run-import"),
         },
       }),
   );
@@ -1686,6 +1730,7 @@ export function registerGranoflowTools(server: {
         data: {
           path: "skills/granoflow-review-card-draft/SKILL.md",
           skill: readReviewCardDraftSkill(),
+          references: await bundledSkillResources.listReferences("granoflow-review-card-draft"),
         },
       }),
   );
@@ -1701,8 +1746,39 @@ export function registerGranoflowTools(server: {
         data: {
           path: "skills/granoflow-gfmcp-runner/SKILL.md",
           skill: readGfmcpRunnerSkill(),
+          references: await bundledSkillResources.listReferences("granoflow-gfmcp-runner"),
         },
       }),
+  );
+
+  registerTool(
+    "granoflow_bundled_skill_reference",
+    "Read one public Markdown reference from a bundled Granoflow skill. Discover valid referenceId values from that skill's references manifest first. This read-only package operation does not call the Granoflow Local HTTP API or require an API token.",
+    {
+      skillId: z.enum(BUNDLED_SKILL_IDS),
+      referenceId: z
+        .string()
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+        .describe("Reference identifier from the selected bundled skill manifest."),
+    },
+    async ({ skillId, referenceId }) => {
+      try {
+        return jsonTextResult({
+          ok: true,
+          code: "ok",
+          data: await bundledSkillResources.readReference(String(skillId), String(referenceId)),
+        });
+      } catch (error) {
+        if (error instanceof WorkflowResourceError) {
+          return jsonTextResult({
+            ok: false,
+            code: error.code,
+            error: { message: error.message },
+          });
+        }
+        throw error;
+      }
+    },
   );
 
   registerTool(
@@ -1747,7 +1823,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_setup_detect_local_api",
-    "Probe a bounded localhost port list for a running Granoflow Local HTTP API.",
+    "Probe a bounded localhost port list for Granoflow identity. This never scans all ports or writes config.",
     {
       ports: z
         .array(z.number().int().min(1).max(65_535))
@@ -1767,15 +1843,17 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_setup_write_config",
-    "Preview or write MCP-owned non-secret Granoflow connection config. Defaults to dry-run.",
+    "Preview or write one user-confirmed MCP-owned non-secret Granoflow API URL or local port. Defaults to dry-run; writes are reread and verified immediately.",
     {
       apiBaseUrl: z.string().url().optional(),
+      apiPort: z.number().int().min(1).max(65_535).optional(),
       dryRun: z.boolean().default(true),
     },
-    async ({ apiBaseUrl, dryRun }) =>
+    async ({ apiBaseUrl, apiPort, dryRun }) =>
       jsonTextResult(
         await writeSetupConfig({
           apiBaseUrl: typeof apiBaseUrl === "string" ? apiBaseUrl : undefined,
+          apiPort: typeof apiPort === "number" ? apiPort : undefined,
           dryRun: dryRun !== false,
         }),
       ),
@@ -2404,10 +2482,14 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_create_structured",
-    "Create a Granoflow task with common structured fields. Tags not in the local catalog are skipped automatically. Defaults to dry-run.",
+    "Create a Granoflow task with common structured fields. Derive startedAt from the earliest task-related user question in the current agent thread before writing. Tags not in the local catalog are skipped automatically. Defaults to dry-run.",
     {
       title: z.string().min(1),
       description: z.string().optional(),
+      startedAt: z
+        .string()
+        .optional()
+        .describe("Earliest task-related user question time derived from the agent thread."),
       dueAt: z.string().optional(),
       remindAt: z.string().optional(),
       projectId: z.string().min(1).optional(),
@@ -2423,6 +2505,7 @@ export function registerGranoflowTools(server: {
     async ({
       title,
       description,
+      startedAt,
       dueAt,
       remindAt,
       projectId,
@@ -2441,6 +2524,7 @@ export function registerGranoflowTools(server: {
         compactRecord({
           title,
           description,
+          startedAt,
           dueAt,
           remindAt,
           projectId,
@@ -2599,7 +2683,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_complete",
-    "Low-level node-less compatibility endpoint. Never call it for a task with Plan nodes; NodeService owns completion for node-backed tasks.",
+    "Low-level node-less compatibility endpoint. Never call it for a task with Work Document nodes; NodeService owns completion for node-backed tasks.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       input: jsonInputSchema.optional(),
@@ -2627,7 +2711,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_attachment_add_markdown",
-    "Conditionally attach a versioned Task Analysis, Task Plan, or Task Delivery Markdown file and verify App-owned content/hash readback.",
+    "Conditionally attach a versioned Task Work Document, legacy Task Analysis/Plan, or Task Delivery Markdown file and verify App-owned content/hash readback.",
     {
       taskId: z.string().min(1),
       filePath: z.string().min(1),
@@ -2660,7 +2744,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_attachment_read_markdown",
-    "Read a bounded Task Analysis, Task Plan, or Task Delivery Markdown attachment with its App-owned SHA-256 for verification.",
+    "Read a bounded Task Work Document, legacy Task Analysis/Plan, or Task Delivery Markdown attachment with its App-owned SHA-256 for verification.",
     {
       taskId: z.string().min(1),
       attachmentId: z.string().min(1),
@@ -2726,18 +2810,23 @@ export function registerGranoflowTools(server: {
       status: taskNodeStatusSchema.optional(),
       dryRun: z.boolean().default(true),
     },
-    async ({ taskId, nodeId, expectedUpdatedAt, title, status, dryRun }) =>
-      taskNodeApiTool({
+    async ({ taskId, nodeId, expectedUpdatedAt, title, status, dryRun }) => {
+      if (status === "finished" && dryRun === false) {
+        const documentGate = await requireTaskAnalysisPlanAttachment(String(taskId));
+        if (!documentGate.ok) return jsonTextResult(documentGate);
+      }
+      return taskNodeApiTool({
         method: "PATCH",
         path: `/v1/tasks/${String(taskId)}/nodes/${String(nodeId)}`,
         body: compactRecord({ expectedUpdatedAt, title, status }),
         dryRun: dryRun !== false,
-      }),
+      });
+    },
   );
 
   registerTool(
     "granoflow_task_node_delete",
-    "Soft-delete a task node tree after a confirmed Plan amendment and explicit confirmation.",
+    "Soft-delete a task node tree after a confirmed Work Document amendment and explicit confirmation.",
     {
       taskId: z.string().min(1),
       nodeId: z.string().min(1),
@@ -2756,7 +2845,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_finish",
-    "Finish a node-less compatibility task after its required Delivery gate and verify status=done. Do not use for node-backed tasks. taskReview/reviewCardDrafts remain legacy explicit-inline compatibility only; deferred Review is the default.",
+    "Finish a node-less compatibility task after its required Delivery gate and verify status=done. Derive endedAt from the confirmed completion time in the current agent thread; if startedAt is missing, recover it from the thread or mark an evidence-based estimate. Do not use for node-backed tasks. taskReview/reviewCardDrafts remain legacy explicit-inline compatibility only; deferred Review is the default.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       projectId: z

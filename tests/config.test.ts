@@ -48,6 +48,62 @@ describe("MCP config", () => {
     expect(runtime.apiTokenSource).toBe("env");
   });
 
+  it("persists a user-selected local port and reports an environment override", async () => {
+    const configPath = await tempConfigPath("custom-port");
+    const env = { GRANOFLOW_MCP_CONFIG_PATH: configPath };
+
+    const written = await writeMcpConfig({ apiPort: 61_234, dryRun: false }, env);
+    expect(written).toMatchObject({
+      written: true,
+      persistedApiBaseUrl: "http://127.0.0.1:61234",
+      effectiveApiBaseUrl: "http://127.0.0.1:61234",
+      effectiveSource: "config",
+      targetScope: "local",
+      shadowedByEnv: false,
+    });
+
+    const shadowed = await writeMcpConfig(
+      { apiPort: 61_234, dryRun: true },
+      { ...env, GRANOFLOW_API_BASE_URL: "http://127.0.0.1:62000" },
+    );
+    expect(shadowed).toMatchObject({
+      code: "configuration_shadowed_by_env",
+      persistedApiBaseUrl: "http://127.0.0.1:61234",
+      effectiveApiBaseUrl: "http://127.0.0.1:62000",
+      effectiveSource: "env",
+      shadowedByEnv: true,
+    });
+  });
+
+  it("rejects ambiguous or unsafe custom endpoint input", async () => {
+    const configPath = await tempConfigPath("invalid-endpoint");
+    const env = { GRANOFLOW_MCP_CONFIG_PATH: configPath };
+
+    await expect(writeMcpConfig({ apiPort: 0, dryRun: true }, env)).rejects.toThrow(
+      "apiPort must be an integer between 1 and 65535",
+    );
+    await expect(
+      writeMcpConfig({ apiPort: 61_234, apiBaseUrl: "http://127.0.0.1:61234", dryRun: true }, env),
+    ).rejects.toThrow("Provide apiBaseUrl or apiPort, not both");
+    await expect(
+      writeMcpConfig({ apiBaseUrl: "http://user:secret@127.0.0.1:61234", dryRun: true }, env),
+    ).rejects.toThrow("must not contain credentials");
+  });
+
+  it("preserves an explicitly supplied remote URL and labels its data boundary", async () => {
+    const configPath = await tempConfigPath("remote-endpoint");
+    const result = await writeMcpConfig(
+      { apiBaseUrl: "https://granoflow.example.test:8443", dryRun: true },
+      { GRANOFLOW_MCP_CONFIG_PATH: configPath },
+    );
+
+    expect(result).toMatchObject({
+      written: false,
+      proposedApiBaseUrl: "https://granoflow.example.test:8443",
+      targetScope: "remote",
+    });
+  });
+
   it("does not treat config token fields as usable API tokens", async () => {
     const configPath = await tempConfigPath("token");
     await writeMcpConfig(

@@ -9,8 +9,7 @@ task_id: <id>
 profiles: [] | [learning] | [software_development] | [learning, software_development]
 delivery_version: <positive integer>
 delivery_status: draft | delivered | delivered_with_residuals | awaiting_manual_acceptance | superseded
-source_analysis: <attachment reference>
-source_plan: <attachment reference>
+source_work_document: <active task_work attachment reference>
 supersedes: null | <prior attachment>
 delivered_at: <timestamp>
 based_on_task_updated_at: <timestamp>
@@ -23,15 +22,13 @@ acceptance_status_as_of: accepted | partially_accepted | awaiting_manual_accepta
 
 ## Deliverables
 
-## Differences From Analysis
-
-## Differences From Plan
+## Differences From Work Document
 
 ## Card Reconciliation And Card Checkpoint
 
 Use the canonical `card_checkpoint` record from `../../granoflow-review-card-draft/references/lifecycle-card-checkpoints.md` to reconcile cards with actual delivery. Record accepted, overturned, and deferred knowledge without persisting a preview token.
 
-For each Analysis or Plan knowledge expectation that differs from delivery, record:
+For each Work Document knowledge expectation that differs from delivery, record:
 
 - Expected knowledge or card state:
 - Actual delivery evidence:

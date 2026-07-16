@@ -35,6 +35,23 @@ database access, app orchestration, or release workflows. It resolves a local AP
 endpoint, forwards structured requests to the running Granoflow app, and returns
 predictable MCP tool results.
 
+Granoflow App owns task and work-memory truth. Granoflow MCP is the control-plane
+protocol surface. The host Agent/runtime owns traversal, Skill/provider routing,
+and execution handoff; repository, browser, image, video, and other tools perform
+the actual work. A user instruction to implement the active Task Work Document
+authorizes the host, not the MCP server, to enter the execution plane.
+
+External Skill routing is host-owned and capability-based. For a relevant Skill,
+the host may call it only when current metadata permits model invocation;
+user-only Skills are suggested for explicit user invocation. When a Skill is
+missing, the host shows a verified source, actual installation scope, and
+verified command before asking for installation approval, then waits without
+assuming refusal. Refusal, installation, rediscovery, reload, or invocation
+failure uses a documented model capability fallback.
+Granoflow MCP does not scan or modify the host's global Skill environment and
+does not treat Skill invocation as authorization to implement, commit, publish,
+or perform another gated action.
+
 ## Requirements
 
 - Node.js 20 or newer.
@@ -63,6 +80,15 @@ Set `GRANOFLOW_MCP_CONFIG_PATH` to use a different config path for tests,
 temporary setups, or advanced local installs. API tokens are not stored in this
 file; keep `GRANOFLOW_API_TOKEN` in the MCP client environment.
 
+For a non-default port, ask the agent to preview
+`granoflow_setup_write_config` with `apiPort`, review the candidate evidence,
+path, old/new value, and environment override status, then confirm that exact
+write once. The server rereads and verifies the config immediately. A saved
+value is reused on later requests without asking again. If
+`GRANOFLOW_API_BASE_URL` is set, it intentionally overrides this file; setup
+reports `configuration_shadowed_by_env` instead of pretending the saved value
+is active.
+
 ## Install
 
 ```bash
@@ -85,18 +111,20 @@ uses display, confirmation, and write/readback phases.
 
 Agents can use the bundled
 [Granoflow First-Run Import skill](skills/granoflow-first-run-import/SKILL.md)
-for onboarding imports from Cursor, Codex, Hermes, or other agents.
+to initialize the connection, offer all recommended AI capability collections,
+and optionally import data from Cursor, Codex, Hermes, or other agents.
 
 ## Workflow Examples
 
 After installing Granoflow MCP, ask your agent:
 
 ```text
-Initialize Granoflow and import data
+Initialize Granoflow
 ```
 
-Granoflow will help import data from Cursor, Codex, Hermes, or other agents into
-Granoflow.
+Granoflow will check the connection, show only the names and plain-language
+functions of recommended AI capabilities, and offer to install all of them. You
+can then ask it to import data from Cursor, Codex, Hermes, or other agents.
 
 Then ask:
 
@@ -124,8 +152,9 @@ Ask your agent:
 Analyze the first task
 ```
 
-Granoflow will prefill the selected task analysis, show unresolved decisions
-with AI recommendations, and create a grilled final analysis before planning.
+Granoflow will prefill the Analysis state of one adaptive Task Work Document,
+show unresolved decisions with AI recommendations, and add Planning only when
+the task needs it.
 
 More workflows will be added to this catalog as the Granoflow MCP workflow layer
 grows.
@@ -237,10 +266,10 @@ task as done.
 
 The bundled workflow also includes due-task processing. When the user asks an
 agent to process today's tasks, a specific date or range, or all unfinished
-tasks, the agent should write an analysis document first, classify which tasks
-AI can do, which need user input, and which the user must do, then wait for
-confirmation before executing. Executable work should get a plan document and
-adversarial review pass. User-only blockers should be preserved as Granoflow
+tasks, the agent should use a batch ledger to classify which tasks AI can do,
+which need user input, and which the user must do. Each selected task gets one
+adaptive Task Work Document; Planning is expanded only when needed, and
+execution still waits for a separate user instruction. User-only blockers should be preserved as Granoflow
 task nodes, reminders, notification tasks, and sync visibility reports when the
 running app exposes the required tools.
 
@@ -252,18 +281,28 @@ interrupting the user to propose or create project structure. The task keeps
 enough context for later analysis, then returns only a one-sentence placement
 confirmation.
 
-The bundled workflow also includes interactive single-task analysis. The agent
-prefills task evidence, shows all unresolved directional questions once with AI
-recommendations, writes an analysis draft only after approval, grills and
-revises that draft, and requires final-analysis confirmation before planning.
-Plans and execution can proceed only from a confirmed, planning-ready analysis.
-Confirmed Plans are immutable versioned task attachments. Their nodes have
+The bundled workflow also includes interactive single-task work definition. The
+agent prefills evidence, shows unresolved directional questions once with AI
+recommendations, and writes one adaptive Task Work Document after approval.
+Analysis and Planning remain separately confirmed semantic states inside that
+document; small tasks may record `planning_status=not_required`. Task Work
+Documents are immutable versioned task attachments. Their optional nodes have
 deliverable and downstream-start standards, reconcile against the latest
 Granoflow state before writes, and leave manual acceptance available on any
 synced device without blocking later safe AI work. Completing the last active
 node lets Granoflow's existing NodeService complete the parent task.
-Third-party grill skills may enhance this flow when already installed, but the
-bundled workflow remains complete without them.
+When installed, the host Agent may use `grill-finalizer` and let its Provider
+Registry select relevant reviewers for a local working draft. Granoflow MCP does
+not detect, install, or invoke that Skill. For a missing relevant finalizer or
+helper, the host offers one verified installation choice and waits for the user;
+`grill-me` is user-only, and only task-relevant gstack/provider reviewers are
+selected rather than an entire family. Refusal or installation, rediscovery,
+reload, or invocation failure is recorded before bundled Grill continues as an
+honest model fallback, without claiming evidence from a reviewer that did not
+run. Other external Skills follow the bundled `external-skill-routing` reference:
+the Work Document records capability decisions and Planning retains only
+execution-relevant choices. External methods remain subordinate to project rules and
+Granoflow authorization.
 
 ## Agent Delivery And Completion Workflow
 
@@ -274,7 +313,7 @@ Granoflow MCP separates actual delivery from later reflection:
    environment.
 3. Write an immutable, versioned Task Delivery and verify its content or
    App-owned SHA-256 readback.
-4. For a task with Plan nodes, finish the final required node and let
+4. For a task with Work Document nodes, finish the final required node and let
    NodeService complete the parent. For a node-less compatibility task, call
    `granoflow_task_finish` once.
 5. Read back `status=done`; never call a second completion path.
@@ -361,6 +400,7 @@ Initial tools:
 
 - `granoflow_setup_status`
 - `granoflow_agent_workflow_skill`
+- `granoflow_bundled_skill_reference`
 - `granoflow_daily_review_skill`
 - `granoflow_first_run_import_skill`
 - `granoflow_gfmcp_runner_skill`
@@ -413,6 +453,26 @@ Initial tools:
 - `granoflow_milestone_delete`
 - `granoflow_review_day_show`
 - `granoflow_api_request`
+
+Each bundled Skill tool returns its main `SKILL.md` plus a `references` manifest.
+Read one manifest entry with
+`granoflow_bundled_skill_reference(skillId, referenceId)`. The supported Skill
+ids are:
+
+- `granoflow-agent-workflow`
+- `granoflow-daily-review`
+- `granoflow-first-run-import`
+- `granoflow-review-card-draft`
+- `granoflow-gfmcp-runner`
+
+The reference tool is package-local and read-only. It accepts no caller path,
+does not call the Granoflow Local HTTP API, and does not require an API token.
+It returns the stable Skill/reference ids, package-relative path, byte count,
+SHA-256, and UTF-8 Markdown content. Reads are limited to one regular `.md` file
+under a fixed bundled `references/` root and 256 KiB. Unknown, missing, unsafe,
+or oversized references fail with stable `workflow_reference_*` codes. This
+SHA-256 identifies the packaged reference only; it is not a Granoflow App
+attachment hash.
 
 Prefer the structured task, project, and milestone tools for common resource
 operations. The JSON payload tools remain available as escape hatches when the
@@ -491,9 +551,10 @@ Granoflow app without hand-editing every setting first:
   capability summary, and local Granoflow process evidence without printing
   secrets.
 - `granoflow_setup_detect_local_api` probes a small bounded localhost port list
-  only.
-- `granoflow_setup_write_config` previews or writes non-secret config. It
-  defaults to dry-run.
+  only, requires Granoflow-specific identity evidence, and never writes config.
+- `granoflow_setup_write_config` previews or writes one user-confirmed
+  non-secret URL or local port. It defaults to dry-run, then rereads and verifies
+  a confirmed write immediately.
 - `granoflow_setup_open_config` creates and optionally opens the config file for
   manual editing.
 - `granoflow_setup_open_app` previews or opens the installed Granoflow app after
@@ -503,6 +564,8 @@ Granoflow app without hand-editing every setting first:
 When setup status sees a configured localhost API URL that is unreachable, it
 checks whether a local Granoflow process appears to be running. If not, it
 returns a warning and asks the agent to confirm before opening the app.
+401/403 is reported as `reachable_auth_required`, not as a wrong port. A saved
+URL shadowed by `GRANOFLOW_API_BASE_URL` is reported explicitly.
 
 ## Client Support
 
@@ -526,10 +589,7 @@ Add this to `.cursor/mcp.json` in a project or `~/.cursor/mcp.json` globally:
   "mcpServers": {
     "granoflow": {
       "command": "npx",
-      "args": ["-y", "@granoflow/mcp-server"],
-      "env": {
-        "GRANOFLOW_API_BASE_URL": "http://127.0.0.1:56789"
-      }
+      "args": ["-y", "@granoflow/mcp-server"]
     }
   }
 }
@@ -543,9 +603,6 @@ Add this to `~/.codex/config.toml`:
 [mcp_servers.granoflow]
 command = "npx"
 args = ["-y", "@granoflow/mcp-server"]
-
-[mcp_servers.granoflow.env]
-GRANOFLOW_API_BASE_URL = "http://127.0.0.1:56789"
 ```
 
 Restart Codex after changing MCP configuration.
@@ -559,11 +616,11 @@ For clients that support local stdio MCP servers, configure the server with:
   "type": "stdio",
   "command": "npx",
   "args": ["-y", "@granoflow/mcp-server"],
-  "env": {
-    "GRANOFLOW_API_BASE_URL": "http://127.0.0.1:56789",
-  },
 }
 ```
+
+Set `GRANOFLOW_API_BASE_URL` only when you intentionally want an environment
+override. The MCP-owned config is the recommended persistent custom-port path.
 
 ## Development
 

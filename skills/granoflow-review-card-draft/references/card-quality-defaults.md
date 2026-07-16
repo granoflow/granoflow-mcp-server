@@ -2,9 +2,52 @@
 
 These defaults should work across subjects. User wrapper skills may narrow them.
 
-## Note
+## Note And Card Composition
 
-Every new card set has a meaningful note title and a complete `content` explanation. Explain the knowledge in plain language. The note is the durable explanation and may support multiple cards.
+Every memory artifact has two explicit components:
+
+1. **Note:** one durable explanation with a meaningful title and complete
+   `content`; and
+2. **Cards:** one or more concise front/back study prompts derived from that
+   Note.
+
+The Note is the canonical explanation and may support multiple Cards. A Card is
+not a shortened replacement for the Note, and a Note should not be duplicated
+once per Card. Write the Note title as a stable topic or claim, not as a Todo
+action or a filename. Write the Note body so it can be understood without
+seeing the Cards: summary, context, evidence/source, explanation, **at least
+one concrete example**, boundaries, and useful links or follow-up when relevant.
+The example should show a realistic situation in which the knowledge changes an
+understanding, decision, or action. For an abstract rule, unfamiliar concept,
+trade-off, or easy-to-misread boundary, also add a plain-language analogy,
+contrast, or other intuitive explanation. Put these explanations in the Note,
+not in an oversized Card answer. Do not invent an example when the source is
+insufficient; label the uncertainty and defer authoring if the example is
+essential to understanding.
+
+Create one Note with one Card when one recall unit is enough; split into
+multiple Cards when the Note contains multiple independent recall units.
+
+## Choosing A Card Shape
+
+After writing the Note, decide whether each recall unit is best tested as a
+basic front/back, true/false, or multiple-choice Card:
+
+- Use **true/false** when the Note contains a crisp rule, boundary, common
+  misconception, or factual claim whose truth can be judged without hidden
+  context.
+- Use **multiple-choice** when the Note contains a meaningful distinction,
+  classification, trade-off, sequence, or decision among two or more plausible
+  alternatives.
+- Use **basic front/back** when the answer is a definition, explanation,
+  command, short principle, or open recall that would be distorted by options.
+
+When true/false or multiple-choice is appropriate, use the Card's supported
+options field rather than encoding the options into an improvised answer string.
+Options must be mutually distinguishable, the correct answer must be supported
+by the Note, and distractors must be plausible without being ambiguous or
+trick-based. Do not force a choice format merely to make a Note look like a
+quiz.
 
 ## Mandatory Professional-Term Explanation
 
@@ -28,11 +71,18 @@ Example for `skill-polish`:
 - Analogy: like an editor revising an existing manuscript; it improves structure and clarity but does not write the first draft from nothing.
 - Example: after `skill-scaffold` creates `SKILL.md`, call `skill-polish` to move detail into references and preserve preview gates.
 
-An analogy or example may be omitted only when the item is not a professional term. For professional terms, absence of any one of the three parts is a quality failure: rewrite the note before authoring preview. Keep these explanations in note `content`; do not inflate the card back.
+For professional terms, absence of any one of the three parts is a quality
+failure: rewrite the note before authoring preview. For non-professional terms,
+the concrete-example requirement still applies; the analogy is required when
+the idea is abstract, boundary-sensitive, or likely to be misunderstood. Keep
+these explanations in note `content`; do not inflate the card back.
 
-## Front And Back
+## Front And Back Cards
 
-Each card tests one recall unit. Make the front unambiguous without leaking the answer. Make the back the smallest answer that remains correct. Do not copy the entire note content onto the back. Split overloaded cards.
+Each Card tests one recall unit from its shared Note. Make the front unambiguous
+without leaking the answer. Make the back the smallest answer that remains
+correct. Do not copy the entire Note content onto the back. Split overloaded
+Cards, but keep the explanation in the shared Note.
 
 Default to basic front/back cards. A user wrapper can add cloze, multiple-choice, true/false, image, pronunciation, or other formats, but extensions must preserve the official search and controlled-write flow.
 

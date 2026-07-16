@@ -1,77 +1,22 @@
-# Task Plan Template
+# Legacy Task Plan Template
 
-Use this base template after a confirmed analysis final. Local planning-document numbers are repository governance only and never become public task types.
+This reference is retained only to identify and read historical Task Plan
+attachments created before `task_work schema_version: 1`.
 
-```markdown
-# Task Plan: <title>
+Do not use it to create a new Plan or materially amend task work. For every new
+task and material amendment, read:
 
-task_id: <id>
-plan_version: <positive integer>
-profiles: [] | [learning] | [software_development] | [learning, software_development]
-plan_status: draft
-source_analysis: <active analysis final>
-supersedes: null | <prior plan attachment>
-execution_readiness: <state>
+- `task-work-document-workflow.md`
+- `task-work-document-template.md`
 
-> Scope notice: This is the pre-execution plan, not a completion record. Task Delivery governs what was actually delivered.
+Legacy confirmed Plans remain immutable and executable only when the user
+explicitly refers to a unique active, content/hash-verified legacy Plan. Draft,
+superseded, ambiguous, missing, or unverified Plans fail closed.
 
-## Analysis Inheritance
+Preserve legacy nodes, dependencies, Authorization Matrix, Delivery gate,
+summary markers, and attachment identity. Do not migrate, overwrite, delete, or
+claim that a legacy Plan became a Task Work Document.
 
-- Outcome:
-- Final Evidence:
-- Boundaries:
-- Risks:
-- User-confirmed decisions:
-
-## Recommended Approach
-
-## Knowledge And Card Plan
-
-Use the canonical Card Checkpoint from `../../granoflow-review-card-draft/references/lifecycle-card-checkpoints.md`. Record knowledge inherited from Analysis, expected changes, and the evidence or event that would trigger reconciliation.
-
-## Execution Nodes
-
-### Node N: <action + result>
-
-- Owner: AI | user | both
-- Preconditions:
-- Action:
-- Deliverable:
-- Delivery Standard:
-- Completion Condition:
-- Verification Evidence:
-- Acceptance: automated | ai_review | user_manual
-- Manual acceptance instructions: none | <entry, steps, pass criteria>
-- Downstream Startup Requirements:
-- Handoff Decision:
-- Stop Conditions:
-- Knowledge/Card Delta Trigger: none | <material knowledge, correction, rule, or reusable-experience trigger>
-
-## Dependencies And Handoffs
-
-| Upstream | Downstream | Type | Deliverable | Startup requirement | Evidence |
-| -------- | ---------- | ---- | ----------- | ------------------- | -------- |
-
-Types: `execution_required` or `non_blocking_acceptance`.
-
-## Information Readiness
-
-## Authorization Matrix
-
-## Verification Plan
-
-## Failure, Rollback And Stop Conditions
-
-## Granoflow Writeback
-
-- Delivery gate before final required node:
-- Completion owner: NodeService | node-less compatibility
-
-## Plan Grill
-
-## Card Checkpoint
-
-## Confirmation And Execution Readiness
-```
-
-Every node must deliver something observable and sufficient for the next execution node to start. `user_manual` nodes use the title `验收：<object>` in Granoflow and never block later safe execution.
+A material amendment uses a new self-contained `task_work` version and the
+current Analysis/Planning confirmation gates. Progress alone never rewrites the
+legacy Plan or creates a Work Document version.

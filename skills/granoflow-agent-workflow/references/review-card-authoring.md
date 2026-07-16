@@ -10,7 +10,9 @@ Before drafting cards, call `granoflow_review_card_draft_schema` and inspect
 `single_task_ai` capabilities from `granoflow_ai_agent_tools`. Use the app-owned
 schema for card types, note fields, layouts, and unsupported-pattern fallbacks.
 
-Review cards are for future action, not for logging that something happened.
+Every card operation produces or reuses a two-part artifact: one Note with a
+stable title and complete explanation, plus one or more Cards derived from that
+Note. Review cards are for future action, not for logging that something happened.
 When a point is useful but not worth spaced practice, keep it in `taskReview`
 instead.
 
@@ -41,7 +43,13 @@ When no source is present, create a card only for reusable decisions, repeated
 failure modes, project rules, concepts that affect future execution, or ideas
 the user explicitly wants to retain.
 
-## Card Tone
+## Note And Card Tone
+
+Write the Note like a durable knowledge note: a stable title, plain-language
+summary, context, explanation, evidence or source, and examples or boundaries
+when useful. Then write each Card as one compact recall prompt from that Note.
+Do not put the entire Note into a Card back, and do not create a separate Note
+for every Card unless the knowledge is genuinely independent.
 
 Treat each card as a compact note, not a quiz scrap. Card wording should be:
 
@@ -108,11 +116,15 @@ Choose the card shape that fits the material:
 
 - Use normal front/back for definitions, principles, commands, boundaries, and
   "when should I do this?" knowledge.
-- Use multiple-choice style fronts for choosing between plausible alternatives.
-  Put the options on the front and explain why the right answer wins on the
-  back.
-- Use true/false style fronts for common misconceptions, risky assumptions, or
-  sharp rules.
+- Use multiple-choice style cards when the Note requires choosing between
+  plausible alternatives, classifications, trade-offs, or sequences. Put the
+  alternatives in the Card's options field and explain why the right answer
+  wins on the back.
+- Use true/false style cards when the Note contains a crisp rule, boundary,
+  common misconception, or factual claim that can be judged without hidden
+  context. Represent the two choices through the Card's options field.
+- Do not force a choice format when options would distort an explanation or
+  make the answer depend on trick wording; use normal front/back instead.
 - Use image-assisted cards when a screenshot, diagram, UI state, or visual
   artifact is worth remembering. If the current tool contract cannot attach
   media directly, preserve the screenshot path, URL, or visual description in

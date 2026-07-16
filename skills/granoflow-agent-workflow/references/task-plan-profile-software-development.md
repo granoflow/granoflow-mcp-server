@@ -1,6 +1,10 @@
-# Software Development Plan Profile
+# Legacy Software Development Plan Profile
 
-Append this thin profile to the base Plan for software-development tasks:
+This file preserves legacy Plan interpretation. New Work Documents use
+`task-analysis-profile-software-development.md` as the single conditional
+software omission check across Analysis and applicable Planning.
+
+When reading a legacy software Plan, preserve these requirements:
 
 - current and expected behavior;
 - change surface and explicit non-changes;

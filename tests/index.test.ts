@@ -1,7 +1,10 @@
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { promisify } from "node:util";
 
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
@@ -25,5 +28,81 @@ describe("granoflow MCP server executable", () => {
     expect(stdout).toContain("GRANOFLOW_API_BASE_URL");
     expect(stdout).toContain("GRANOFLOW_MCP_CONFIG_PATH");
     expect(stderr).toBe("");
+  });
+
+  it("lists and reads a bundled Analysis reference over the built MCP protocol", async () => {
+    const client = new Client({ name: "granoflow-protocol-smoke", version: "1.0.0" });
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: ["dist/index.js"],
+      cwd: process.cwd(),
+      env: { PATH: process.env.PATH ?? "" },
+      stderr: "pipe",
+    });
+
+    try {
+      await client.connect(transport);
+      const tools = await client.listTools();
+      expect(tools.tools.map((tool) => tool.name)).toContain("granoflow_bundled_skill_reference");
+
+      const skillTools = [
+        ["granoflow_agent_workflow_skill", "granoflow-agent-workflow"],
+        ["granoflow_daily_review_skill", "granoflow-daily-review"],
+        ["granoflow_first_run_import_skill", "granoflow-first-run-import"],
+        ["granoflow_review_card_draft_skill", "granoflow-review-card-draft"],
+        ["granoflow_gfmcp_runner_skill", "granoflow-gfmcp-runner"],
+      ] as const;
+      for (const [toolName, skillId] of skillTools) {
+        const skillResult = await client.callTool({ name: toolName, arguments: {} });
+        const skillText = skillResult.content.find((item) => item.type === "text");
+        const skillPayload = JSON.parse(skillText?.type === "text" ? skillText.text : "null") as {
+          data: { references: Array<{ skillId: string }> };
+        };
+        expect(skillPayload.data.references.length).toBeGreaterThan(0);
+        expect(skillPayload.data.references.every((item) => item.skillId === skillId)).toBe(true);
+      }
+
+      const result = await client.callTool({
+        name: "granoflow_bundled_skill_reference",
+        arguments: {
+          skillId: "granoflow-agent-workflow",
+          referenceId: "task-analysis-execution",
+        },
+      });
+      const text = result.content.find((item) => item.type === "text");
+      expect(text?.type).toBe("text");
+      const payload = JSON.parse(text?.type === "text" ? text.text : "null") as {
+        ok: boolean;
+        data: { content: string; sha256: string; bytes: number; path: string };
+      };
+      const packaged = await readFile(
+        "skills/granoflow-agent-workflow/references/task-analysis-execution.md",
+        "utf8",
+      );
+      expect(payload).toMatchObject({
+        ok: true,
+        data: {
+          path: "skills/granoflow-agent-workflow/references/task-analysis-execution.md",
+          bytes: Buffer.byteLength(packaged),
+          content: packaged,
+          sha256: createHash("sha256").update(packaged).digest("hex"),
+        },
+      });
+
+      const missingResult = await client.callTool({
+        name: "granoflow_bundled_skill_reference",
+        arguments: {
+          skillId: "granoflow-agent-workflow",
+          referenceId: "does-not-exist",
+        },
+      });
+      const missingText = missingResult.content.find((item) => item.type === "text");
+      expect(JSON.parse(missingText?.type === "text" ? missingText.text : "null")).toMatchObject({
+        ok: false,
+        code: "workflow_reference_not_found",
+      });
+    } finally {
+      await client.close();
+    }
   });
 });

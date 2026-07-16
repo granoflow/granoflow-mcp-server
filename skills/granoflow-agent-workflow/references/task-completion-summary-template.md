@@ -7,8 +7,8 @@
 
 - Final outcome:
 - Delivery status:
-- Task Analysis:
-- Task Plan:
+- Task Work Document:
+- Legacy Task Analysis/Plan: none | <verified legacy references>
 - Task Delivery:
 - Delivery Card Checkpoint: <status/change summary and linked card ids>
 - Deferred Card Work: none | <reason, owner, and next entry point>

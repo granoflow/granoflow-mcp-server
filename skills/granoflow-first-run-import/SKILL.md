@@ -1,6 +1,6 @@
 ---
 name: granoflow-first-run-import
-description: Use when a user asks to initialize Granoflow and import data from Cursor, Codex, Hermes, or another agent into Granoflow; especially for first-run onboarding, agent history import, project and monthly milestone setup, task extraction, review-card candidate extraction, and post-import context backfill.
+description: Use when a user asks to initialize Granoflow, optionally import data from Cursor, Codex, Hermes, or another agent, install recommended external capabilities during first-run onboarding, or perform agent history import, project and monthly milestone setup, task extraction, review-card candidate extraction, and post-import context backfill.
 ---
 
 # Granoflow First-Run Import
@@ -8,12 +8,14 @@ description: Use when a user asks to initialize Granoflow and import data from C
 Use this skill when the user asks:
 
 ```text
+Initialize Granoflow
 Initialize Granoflow and import data
 ```
 
 Also accept equivalent requests in the user's language, including:
 
 ```text
+初始化 Granoflow
 初始化 Granoflow 并导入数据
 ```
 
@@ -23,10 +25,11 @@ and continue prompts, confirmations, preview summaries, blockers, task
 descriptions, and final reports in the user's language by default unless the
 user asks otherwise.
 
-This workflow helps import data from Cursor, Codex, Hermes, or other agents into
-Granoflow. It is an onboarding orchestration skill: it previews source records as
-Granoflow projects, monthly milestones, tasks, review-card candidates, and
-context-description updates before writing.
+This workflow initializes the Granoflow connection, offers all recommended
+external capability collections, and optionally imports data from Cursor,
+Codex, Hermes, or other agents. It is an onboarding orchestration skill. A
+plain initialization request may stop after connection and capability setup;
+data import runs only when requested.
 
 This skill does not read hidden chat histories, scrape browser history, access
 cloud accounts by itself, or write directly to Granoflow storage. It uses only
@@ -52,18 +55,20 @@ call `granoflow_daily_review_skill`; do not draft or write it during import.
 
 Follow this order. Do not redesign the workflow from scratch.
 
-1. Connect and inspect capabilities.
-2. Discover import sources and record authorization.
-3. Build a source ledger.
-4. Create a local import preview document.
-5. Propose projects and monthly milestones.
-6. Propose task candidates.
-7. Propose review-card candidates.
-8. Ask for confirmation before any write.
-9. Import in bounded batches.
-10. Read back created or reused objects.
-11. Backfill project and milestone descriptions.
-12. Report imported, skipped, failed, and deferred items.
+1. Connect and inspect Granoflow capabilities.
+2. Offer all unavailable recommended external capability collections.
+3. Stop after setup when the user requested initialization only.
+4. Discover import sources and record authorization when import was requested.
+5. Build a source ledger.
+6. Create a local import preview document.
+7. Propose projects and monthly milestones.
+8. Propose task candidates.
+9. Propose review-card candidates.
+10. Ask for confirmation before any data write.
+11. Import in bounded batches.
+12. Read back created or reused objects.
+13. Backfill project and milestone descriptions.
+14. Report imported, skipped, failed, and deferred items.
 
 ## Phase 0: Connect And Capability Check
 
@@ -80,6 +85,30 @@ Before source analysis:
    enable the Local HTTP API. Do not create a fake preview from chat memory.
 
 Fail closed when there is no safe task or project write surface.
+
+## Phase 0.5: Recommended External Capabilities
+
+After the connection check and before import source discovery, read
+`references/recommended-external-skills.md`.
+
+The host discovers which recommended collections are already available. If any
+are unavailable, show the reference's localized `User Prompt`: names and
+plain-language functions only. Recommend installing all offered collections;
+do not require item-by-item selection.
+
+Use the reference states `all_available`, `awaiting_confirmation`,
+`approved_all`, `declined_for_onboarding`, and `partial_failure`. On the first
+refusal, explain the overall value once and ask one final time. On the second
+refusal, do not ask again during this initialization. Approval may lead to a
+host-native confirmation. After installation, rediscover availability and
+account for required host reload; do not infer success from a command result.
+
+This phase does not run `setup-matt-pocock-skills`; that setup needs a real
+software repository. Installation approval does not authorize data import.
+
+If the user requested only `Initialize Granoflow` or `初始化 Granoflow`, report
+connection and recommended-capability readiness, then stop. Continue to Phase 1
+only when the user also requested import or later asks to import data.
 
 ## Phase 1: Source Discovery
 
