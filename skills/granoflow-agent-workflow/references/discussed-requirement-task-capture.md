@@ -189,6 +189,22 @@ Lightly adapt what is retained without expanding the workflow:
 Task-profile classification remains an internal writing aid. It does not create
 a persisted field, ask the user questions, or trigger full analysis.
 
+## Deadline Selection For Milestone Tasks
+
+A task placed in a milestone must have `dueAt`. Read the selected milestone's
+deadline before writing, then preserve an explicit user date or infer the most
+appropriate date from the conversation. The usual choices are today for urgent
+or already-started work, tomorrow for a near-term next action without same-day
+urgency, and the milestone deadline when no earlier signal exists or the task is
+itself a milestone deliverable. Strong context may justify another date.
+
+Use the caller's local end of day for a date-only inference. Do not assign every
+task the same default, do not place a task after the milestone deadline, and do
+not silently clamp an explicit conflicting date. If the milestone deadline is
+missing, invalid, already passed, or earlier than the user's requested task
+date, leave the quick path and report the conflict so the user can change the
+task date, milestone deadline, or placement.
+
 ## Pre-Write Recall Gate
 
 Before writing, apply the 30-second recall test using only the proposed title and
@@ -216,7 +232,9 @@ Write only supported fields:
 - `title`;
 - `description`;
 - both `projectId` and `milestoneId` only for strong placement;
-- `dueAt` or `remindAt` only when explicitly stated or strongly implied;
+- `dueAt` for every milestone-bound task, selected by the deadline rules above;
+- `dueAt` or `remindAt` for an inbox task only when explicitly stated or
+  strongly implied;
 - existing catalog tags only when the user supplied them or the surrounding
   workflow already established them.
 

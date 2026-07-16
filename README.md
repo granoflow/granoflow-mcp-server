@@ -331,10 +331,11 @@ language term, person, organization, place, engineering convention, security
 principle, or general knowledge. Professional terms introduced by the agent can
 become cards when they matter to future work.
 
-The bundled workflow skill contains the detailed authoring rules for compact
-note-like cards, experience cards, language-learning cards, source preservation,
-internal self-review, image-assisted cards, pronunciation fields, and fallback
-behavior when enhanced note fields are not advertised by the running app.
+The bundled workflow skill keeps Evidence, independent Experience, Knowledge
+assessment, and Card materialization separate. Raw Experience is not a Card
+type. The detailed rules decide whether a source should remain searchable,
+become a system-enforced control, reuse existing Knowledge, or produce one Note
+with active or archived-reference Cards.
 
 Minimal enhanced card example:
 
@@ -415,6 +416,48 @@ Initial tools:
 - `granoflow_version`
 - `granoflow_capabilities`
 - `granoflow_ai_agent_tools`
+- `granoflow_evidence_list`
+- `granoflow_evidence_search`
+- `granoflow_evidence_get`
+- `granoflow_evidence_authoring_preview`
+- `granoflow_evidence_authoring_apply`
+- `granoflow_evidence_update`
+- `granoflow_evidence_delete`
+- `granoflow_experience_list`
+- `granoflow_experience_get`
+- `granoflow_project_experiences`
+- `granoflow_milestone_experiences`
+- `granoflow_experience_search`
+- `granoflow_experience_authoring_preview`
+- `granoflow_experience_authoring_apply`
+- `granoflow_experience_update`
+- `granoflow_experience_delete_impact`
+- `granoflow_experience_delete`
+- `granoflow_experience_merge_preview`
+- `granoflow_experience_merge_apply`
+- `granoflow_experience_usage_link`
+- `granoflow_experience_usage_unlink_impact`
+- `granoflow_experience_usage_unlink`
+- `granoflow_knowledge_assessment_list`
+- `granoflow_knowledge_assessment_get`
+- `granoflow_knowledge_assessment_preview`
+- `granoflow_knowledge_assessment_apply`
+- `granoflow_knowledge_materialization_list`
+- `granoflow_knowledge_materialization_get`
+- `granoflow_knowledge_materialization_preview`
+- `granoflow_knowledge_materialization_apply`
+- `granoflow_knowledge_control_preview`
+- `granoflow_knowledge_control_apply`
+- `granoflow_task_knowledge_pack`
+- `granoflow_task_knowledge_references`
+- `granoflow_task_knowledge_adoption_preview`
+- `granoflow_task_knowledge_adoption_apply`
+- `granoflow_task_knowledge_audit_preview`
+- `granoflow_task_knowledge_audit_apply`
+- `granoflow_task_knowledge_usage_preview`
+- `granoflow_task_knowledge_usage_apply`
+- `granoflow_project_knowledge_usages`
+- `granoflow_milestone_knowledge_usages`
 - `granoflow_context_pack`
 - `granoflow_context_steward_status`
 - `granoflow_project_context_update`
@@ -477,6 +520,24 @@ attachment hash.
 Prefer the structured task, project, and milestone tools for common resource
 operations. The JSON payload tools remain available as escape hatches when the
 running app exposes newer fields before this package has first-class schemas.
+
+Knowledge-distillation tools are thin Local HTTP API forwards. Before every
+call they verify the exact App resource action. An older App receives a stable
+`unsupported_capability` result; the MCP server never falls back to its own
+eligibility, duplicate, vector, learning-budget, association, or Usage logic.
+Authoring remains `preview -> user approval -> apply -> App readback`, with
+partial approval and idempotency owned by the running App.
+
+Every milestone created through `granoflow_milestone_create` has a deadline. An
+explicit `dueAt` is preserved. When omitted, the tool uses the strictly next
+local Saturday at `23:59:59.000`, then advances by seven-day increments until
+the date is later than all existing milestone deadlines in the same project.
+
+When creating a task inside a milestone, the bundled workflow reads the
+milestone deadline and selects a context-appropriate task `dueAt`. The usual
+choices are today, tomorrow, or the milestone deadline; explicit dates and
+stronger contextual timing signals take precedence, and the workflow never
+silently schedules a task after its milestone deadline.
 
 For historical, decision, lesson, or similar-work questions, use the bundled
 workflow skill first. When the running app advertises `context_pack_v1`, prefer

@@ -51,6 +51,9 @@ Follow these phases in order:
   approval path.
 - Weekly and monthly reviews remain with `granoflow-agent-workflow`; they may
   consume confirmed daily records as evidence but do not replace this owner.
+- After daily-review readback, the user may explicitly approve a separate
+  Experience proposal pass. It uses the App-owned Experience preview/apply
+  flow and never turns diary prose directly into Experience or Cards.
 
 ## Success Criteria
 
@@ -59,3 +62,5 @@ Follow these phases in order:
   confirmation.
 - The final report distinguishes confirmed writes, declined fields, unavailable
   fields, and separate deferred follow-ups.
+- Any Experience candidates are shown and confirmed separately after diary
+  readback; daily review completion never implies their acceptance.

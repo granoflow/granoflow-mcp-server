@@ -31,9 +31,9 @@ review, mood note, efficiency note, or daily journal, call
 - Do not rewrite task start time, end time, actual duration, or flow time from a
   review flow. If task time is wrong, tell the user to adjust it in Granoflow
   task details.
-- Candidate task reviews and review cards should capture durable lessons,
-  decisions, repeated failure modes, unresolved risks, or reusable process
-  details.
+- Candidate Experience should capture durable lessons, decisions, repeated
+  failure modes, unresolved risks, or reusable process details. Review Cards
+  require a later Knowledge assessment/materialization gate.
 
 ## User-Initiated Weekly Or Monthly Review Session
 
@@ -96,6 +96,12 @@ Rules:
   approved value score/note entries, approved patterns, and approved next-week
   experiments separately from deferred or rejected items.
 - Save only the approved weekly `content` or value entries, then read them back.
+
+After weekly readback, offer a separate Experience distillation preview based
+on the week's confirmed Experience/Evidence and historical vector search. Show
+duplicate, conflict, boundary, and degraded-search signals; apply only the
+user-approved Experience operations. Do not create Knowledge or Cards merely
+because a weekly pattern was identified.
 
 ## Monthly Reviews
 
@@ -166,3 +172,8 @@ Rules:
   interpretations, and approved next-month experiments separately from deferred
   or rejected items.
 - Save only confirmed monthly `content`, then read it back.
+
+After monthly readback, the same separate Experience preview/apply gate may
+summarize month-level patterns and compare them with all historical Experience.
+Knowledge assessment and Card materialization remain later, separately approved
+operations.

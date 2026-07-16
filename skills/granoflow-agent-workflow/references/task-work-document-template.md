@@ -164,11 +164,15 @@ triggered, use these stable headings:
 - `Dependencies And Handoffs`
 - `Verification Plan`
 - `Rollback / Stop Conditions`
-- `Grill Review`
-- `Analysis Grill`
-- `Execution Readiness Grill`
 - `Knowledge / Card Checkpoint`
+- `Granoflow References`
 - `Visual Narrative Mode`
+
+Grill headings are forbidden in the rendered Task Work Document. Do not add
+`Grill Review`, `Analysis Grill`, `Execution Readiness Grill`, reviewer
+findings, or a review ledger. Grill findings must revise the relevant existing
+section without leaving process commentary. Preserve only the phase result in
+`analysis_grill_status` and `readiness_grill_status`.
 
 Profiles are omission checks, not mandatory rendered sections. Put a triggered
 Profile requirement into the most relevant core or optional section. Do not
@@ -191,6 +195,12 @@ resume; it is not a refusal, failure, or fallback.
 When card work is triggered, use the canonical lifecycle Card Checkpoint. When
 it is not triggered, the compact `card_checkpoint: not_triggered` metadata is
 sufficient and the card reference need not be loaded.
+
+When task analysis actually adopts Evidence, Experience, or Knowledge, render
+`Granoflow References` as a compact list of App-owned internal links plus one
+sentence explaining how each source changes this task. Omit considered,
+rejected, stale, and unused results. Rebuild this section from structured
+references after every full rewrite; never preserve it by copying old prose.
 
 Planning sections appear only after confirmed Analysis,
 `analysis_grill_status: passed`, and explicit permission to enter Planning.
@@ -246,17 +256,20 @@ owner. Runtime execution status belongs to the latest
 task, Granoflow nodes, and the managed summary; this immutable document never
 contains `execution_status`.
 
-## Mandatory Two-Stage Grill Record
+## Mandatory Two-Stage Grill Integration
 
 The MCP-bundled Grill is a required phase gate, not an optional external Skill.
-After Analysis is complete and user-confirmed, add `Analysis Grill` with the
-checked assumptions, unresolved decision-changing questions, findings,
-revisions, and result. Planning cannot begin unless the result is `passed`.
+After Analysis is complete and user-confirmed, run the Analysis Grill over the
+checked assumptions, unresolved decision-changing questions, false-success
+paths, and internal consistency. Apply each finding directly to Outcome,
+Evidence, Scope, Risk, Decision, Next Action, or another relevant Analysis
+section. Do not add a Grill heading, findings appendix, reviewer ledger, or
+before/after commentary. Planning cannot begin unless the result is `passed`.
 
 After the Plan discussion is complete and the Plan is user-confirmed as
 executable, notify the user that readiness review is starting and that a passing
 document will be uploaded but will still require a separate execution command.
-Then add `Execution Readiness Grill`, covering at least:
+Then run the Execution Readiness Grill, covering at least:
 
 - whether the steps are sufficient to complete the stated Outcome;
 - whether prerequisites and upstream outputs are actually ready;
@@ -269,6 +282,27 @@ Then add `Execution Readiness Grill`, covering at least:
 - whether verification, rollback, stop, and handoff conditions are actionable;
   and
 - which missing item blocks upload or execution.
+
+Integrate every finding into the relevant Execution Plan, Dependencies And
+Handoffs, Authorization Matrix, Verification Plan, or Rollback / Stop
+Conditions. The final Task Work body must contain the corrected contract, not a
+record of how the Grill corrected it.
+
+After either bundled Grill reaches its phase result, perform a complete clean
+rewrite into a new versioned local file. Rebuild the whole document from
+confirmed facts and accepted findings; rewrite transitions, remove repetition,
+drop stale questions and superseded alternatives, and leave no patch or review
+residue. Increment `work_version`, preserve `document_slot` and lineage, update
+`updated_at`, and validate the new file before deleting the prior local file.
+If the replacement cannot be created or validated, retain the prior file and
+return `post_grill_rewrite_failed`.
+
+Only the validated rewritten file and its hash are eligible for attachment
+upload. A pre-Grill draft, patch artifact, or findings appendix returns
+`post_grill_rewrite_required`. After successful local validation, delete the
+old local document; do not keep it beside the replacement as another draft.
+App attachment replacement remains transactional and happens only through
+upload plus content/hash readback.
 
 Set `readiness_grill_status: passed` only when no execution-blocking unknown is
 left. A finding that changes Outcome, Evidence, Scope, Risk, or Decision reopens
@@ -293,14 +327,15 @@ replacement must leave the previous active document intact. A task with more
 than two active Task Work attachments fails closed with
 `task_work_slot_count_exceeded`.
 
-Use stable logical names such as:
+Use versioned local names while keeping the logical slot stable:
 
-- `task-work-<task-id>-execution.md`
-- `task-work-<task-id>-post-completion-revision.md`
+- `task-work-<task-id>-execution-v<work_version>.md`
+- `task-work-<task-id>-post-completion-revision-v<work_version>.md`
 
-The `work_version` field may increase for auditability, but it does not create a
-new active slot. The active summary must identify `document_slot` and the
-current attachment id.
+The `work_version` field increases for every successful post-Grill clean
+rewrite, but it does not create a new active slot. After local validation, only
+the newest local version remains. The active summary must identify
+`document_slot` and the current attachment id.
 
 ## Completed Historical Task Branch
 

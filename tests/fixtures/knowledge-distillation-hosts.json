@@ -1,0 +1,17 @@
+{
+  "hosts": ["Cursor", "Codex", "Claude Code", "OpenCode", "OpenClaw"],
+  "requiredTools": [
+    "granoflow_evidence_authoring_preview",
+    "granoflow_experience_authoring_preview",
+    "granoflow_knowledge_assessment_preview",
+    "granoflow_knowledge_materialization_preview",
+    "granoflow_task_knowledge_pack",
+    "granoflow_task_knowledge_audit_preview"
+  ],
+  "stableUnsupportedShape": {
+    "ok": false,
+    "code": "unsupported_capability",
+    "dataFields": ["resource", "requiredActions", "endpoint"],
+    "errorFields": ["message"]
+  }
+}

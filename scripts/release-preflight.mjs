@@ -17,7 +17,7 @@ Usage:
 
 Checks:
   - npm run check unless --skip-check is set
-  - package.json and src/metadata.ts version consistency
+  - package.json, src/metadata.ts, and server.json version consistency
   - npm pack --dry-run --json contents unless --skip-pack is set
   - dist/index.js and the optional GFMCP runner launcher are executable
   - docs included in the package
@@ -47,6 +47,7 @@ function run(command, commandArgs, options = {}) {
 }
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
+const serverJson = JSON.parse(readFileSync("server.json", "utf8"));
 const metadata = readFileSync("src/metadata.ts", "utf8");
 const metadataVersion = metadata.match(/SERVER_VERSION\s*=\s*"([^"]+)"/)?.[1];
 record(
@@ -55,6 +56,16 @@ record(
   packageJson.version === metadataVersion
     ? undefined
     : `package.json=${packageJson.version} metadata=${metadataVersion ?? "[missing]"}`,
+);
+const registryPackage = serverJson.packages?.find(
+  (entry) => entry.registryType === "npm" && entry.identifier === packageJson.name,
+);
+record(
+  serverJson.version === packageJson.version && registryPackage?.version === packageJson.version,
+  "server.json versions match package.json",
+  serverJson.version === packageJson.version && registryPackage?.version === packageJson.version
+    ? undefined
+    : `package.json=${packageJson.version} server.json=${serverJson.version ?? "[missing]"} registry=${registryPackage?.version ?? "[missing]"}`,
 );
 
 if (!skipCheck) {
@@ -101,6 +112,10 @@ if (!skipPack) {
     record(
       fileNames.has("skills/granoflow-gfmcp-runner/scripts/gfmcp_runner.py"),
       "package contains the GFMCP Python worker",
+    );
+    record(
+      files.every((file) => !file.path.includes("/__pycache__/") && !file.path.endsWith(".pyc")),
+      "package excludes Python bytecode caches",
     );
     record(!fileNames.has("dist/cli.js"), "package does not contain obsolete dist/cli.js");
   } catch (error) {

@@ -6,6 +6,32 @@ const reference = (name: string) =>
   readFileSync(`skills/granoflow-agent-workflow/references/${name}`, "utf8");
 
 describe("Task Delivery and Deferred Task Review contracts", () => {
+  it("uses one cross-host Knowledge Distillation workflow and stable capability failure", () => {
+    const workflow = reference("knowledge-distillation-workflow.md");
+    const taskWorkflow = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
+    const daily = readFileSync("skills/granoflow-daily-review/SKILL.md", "utf8");
+    const fixture = JSON.parse(
+      readFileSync("tests/fixtures/knowledge-distillation-hosts.json", "utf8"),
+    ) as {
+      hosts: string[];
+      requiredTools: string[];
+      stableUnsupportedShape: { code: string };
+    };
+
+    expect(fixture.hosts).toEqual(["Cursor", "Codex", "Claude Code", "OpenCode", "OpenClaw"]);
+    expect(fixture.stableUnsupportedShape.code).toBe("unsupported_capability");
+    for (const tool of fixture.requiredTools) expect(workflow).toContain(tool);
+    for (const lane of ["Evidence", "Experience", "Knowledge"]) {
+      expect(workflow).toContain(lane);
+    }
+    expect(workflow).toMatch(/considered and rejected results remain zero-write/i);
+    expect(workflow).toContain("Checklist, Skill, Linter, Test, App Guard");
+    expect(workflow).toContain("full Task Work rewrite");
+    expect(workflow).toContain("applied, validated, or contradicted");
+    expect(taskWorkflow).toContain("knowledge-distillation-workflow.md");
+    expect(daily).toMatch(/separate\s+Experience proposal pass/);
+    expect(workflow).not.toMatch(/^## Grill Review$/m);
+  });
   it("initializes Granoflow with one beginner-facing all-recommended Skill offer", () => {
     const onboarding = readFileSync("skills/granoflow-first-run-import/SKILL.md", "utf8");
     const catalog = readFileSync(
@@ -123,6 +149,27 @@ describe("Task Delivery and Deferred Task Review contracts", () => {
     );
     expect(routing).toMatch(/MCP-bundled[\s\S]*mandatory phase gates/i);
     expect(routing).toMatch(/grill-finalizer[\s\S]*does not replace/i);
+    for (const forbiddenHeading of [
+      "## Grill Review",
+      "## Analysis Grill",
+      "## Execution Readiness Grill",
+    ]) {
+      expect(template).not.toContain(forbiddenHeading);
+    }
+    expect(combined).toMatch(/Grill[\s\S]*invisible authoring (?:gate|pass)/i);
+    expect(combined).toMatch(/findings[\s\S]*revis(?:e|ing)[\s\S]*relevant[\s\S]*section/i);
+    expect(combined).toMatch(/standalone Grill (?:heading|section)[\s\S]*forbidden/i);
+    expect(combined).toMatch(/phase result[\s\S]*analysis_grill_status/i);
+    expect(combined).toMatch(
+      /(?:every completed bundled Grill|either bundled Grill)[\s\S]*full[\s-]*clean rewrite/i,
+    );
+    expect(combined).toMatch(/new versioned local (?:document|path|file)[\s\S]*work_version \+ 1/i);
+    expect(combined).toMatch(/validate[\s\S]*delete the prior local file/i);
+    expect(combined).toMatch(
+      /only[\s\S]*rewritten (?:path|document|file)[\s\S]*hash[\s\S]*upload/i,
+    );
+    expect(combined).toContain("post_grill_rewrite_failed");
+    expect(combined).toContain("post_grill_rewrite_required");
   });
 
   it("keeps comic as the static default and animation as an explicit extension", () => {

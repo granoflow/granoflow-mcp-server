@@ -24,6 +24,8 @@
     "dist",
     "docs",
     "skills",
+    "!skills/**/__pycache__/**",
+    "!skills/**/*.pyc",
     "README.md",
     "LICENSE"
   ],

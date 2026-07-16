@@ -139,3 +139,10 @@ Offer such actions only as separately named follow-ups after daily-review
 readback. If the user accepts a card follow-up, call
 `granoflow_review_card_draft_skill`; if the user accepts task review, route to
 `granoflow_agent_workflow_skill`.
+
+If the user wants lessons distilled, call the public Knowledge Distillation
+workflow after diary readback. Preview Experience candidates from the day's
+confirmed Task Reviews and Evidence, display all candidates, and apply only the
+approved subset. Experience is independent of the diary and may later be linked
+to many Tasks. Do not create Cards from raw diary prose or raw Experience; Card
+work begins only after a separate Knowledge assessment and materialization gate.

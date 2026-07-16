@@ -4,8 +4,7 @@ import { readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { afterEach, beforeEach } from "vitest";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { z } from "zod";
 
 import { registerGranoflowTools } from "../src/tools.js";
@@ -73,6 +72,7 @@ function localDateKey(date: Date): string {
 }
 
 afterEach(async () => {
+  vi.useRealTimers();
   delete process.env.GRANOFLOW_API_BASE_URL;
   delete process.env.GRANOFLOW_MCP_CONFIG_PATH;
   while (servers.length > 0) {
@@ -137,6 +137,27 @@ describe("MCP tool registration", () => {
         "granoflow_review_card_similar",
         "granoflow_review_card_authoring_preview",
         "granoflow_review_card_authoring_apply",
+        "granoflow_evidence_authoring_preview",
+        "granoflow_evidence_get",
+        "granoflow_evidence_authoring_apply",
+        "granoflow_experience_authoring_preview",
+        "granoflow_experience_authoring_apply",
+        "granoflow_project_experiences",
+        "granoflow_milestone_experiences",
+        "granoflow_experience_usage_unlink_impact",
+        "granoflow_knowledge_assessment_preview",
+        "granoflow_knowledge_assessment_apply",
+        "granoflow_knowledge_materialization_preview",
+        "granoflow_knowledge_materialization_apply",
+        "granoflow_task_knowledge_pack",
+        "granoflow_task_knowledge_adoption_preview",
+        "granoflow_task_knowledge_adoption_apply",
+        "granoflow_task_knowledge_audit_preview",
+        "granoflow_task_knowledge_audit_apply",
+        "granoflow_task_knowledge_usage_preview",
+        "granoflow_task_knowledge_usage_apply",
+        "granoflow_project_knowledge_usages",
+        "granoflow_milestone_knowledge_usages",
         "granoflow_task_create_structured",
         "granoflow_task_update",
         "granoflow_task_update_structured",
@@ -161,6 +182,148 @@ describe("MCP tool registration", () => {
         "granoflow_api_request",
       ]),
     );
+  });
+
+  it("fails Knowledge Pack closed when the App does not advertise the resource action", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify({ ok: true, data: { resources: {} } }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_knowledge_pack")?.({
+      taskId: "task-1",
+      query: "release verification",
+      limitPerLane: 5,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        resource: "task-knowledge",
+        requiredActions: ["pack"],
+      },
+    });
+    expect(requestedUrls).toEqual(["/v1/capabilities"]);
+  });
+
+  it("forwards Knowledge Pack unchanged after capability confirmation", async () => {
+    const requested: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/capabilities") {
+        requested.push({ method: request.method, url: request.url });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: { resources: { "task-knowledge": ["pack"] } },
+          }),
+        );
+        return;
+      }
+      requested.push({
+        method: request.method,
+        url: request.url,
+        body: await readJsonBody(request),
+      });
+      response.end(
+        JSON.stringify({
+          ok: true,
+          data: { writesPerformed: false, lanes: { evidence: {}, experience: {}, knowledge: {} } },
+        }),
+      );
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_knowledge_pack")?.({
+      taskId: "task-1",
+      query: "release verification",
+      limitPerLane: 5,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      data: { data: { writesPerformed: false } },
+    });
+    expect(requested).toEqual([
+      { method: "GET", url: "/v1/capabilities" },
+      {
+        method: "POST",
+        url: "/v1/task-knowledge/task-1/pack",
+        body: { query: "release verification", limitPerLane: 5 },
+      },
+    ]);
+  });
+
+  it("forwards final Experience merge and Knowledge control payload contracts", async () => {
+    const requested: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/capabilities") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              resources: {
+                experience: ["merge-apply"],
+                "knowledge-materialization": ["control-preview"],
+              },
+            },
+          }),
+        );
+        return;
+      }
+      requested.push({
+        method: request.method,
+        url: request.url,
+        body: await readJsonBody(request),
+      });
+      response.end(JSON.stringify({ ok: true, data: { forwarded: true } }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    await handlers.get("granoflow_experience_merge_apply")?.({
+      canonicalExperienceId: "canonical-1",
+      mergedExperienceId: "merged-1",
+      expectedCanonicalRevision: 2,
+      expectedMergedRevision: 3,
+      previewHash: "hash-1",
+      confirmed: true,
+    });
+    await handlers.get("granoflow_knowledge_control_preview")?.({
+      materializationId: "knowledge-1",
+      status: "verified",
+      evidence: { readback: "ok" },
+    });
+
+    expect(requested).toEqual([
+      {
+        method: "POST",
+        url: "/v1/experiences/canonical-1/merge/apply",
+        body: {
+          expectedCanonicalRevision: 2,
+          expectedMergedRevision: 3,
+          previewHash: "hash-1",
+          confirmed: true,
+          mergedId: "merged-1",
+        },
+      },
+      {
+        method: "POST",
+        url: "/v1/knowledge-materializations/control/preview",
+        body: {
+          materializationId: "knowledge-1",
+          status: "verified",
+          evidence: { readback: "ok" },
+        },
+      },
+    ]);
   });
 
   it("previews a persistent custom Local API port without writing", async () => {
@@ -420,7 +583,9 @@ describe("MCP tool registration", () => {
       "utf8",
     );
 
-    expect(workflow).toContain("task-work-<safe-task-id>-execution.md");
+    expect(workflow).toContain("task-work-<safe-task-id>-execution-v<work_version>.md");
+    expect(workflow).toContain("delete the prior local file");
+    expect(workflow).toContain("post_grill_rewrite_required");
     expect(workflow).toContain("granoflow_task_attachment_add_markdown");
     expect(workflow).toContain("Task Delivery");
     expect(workflow).toContain("Historical Task Analysis and Task Plan");
@@ -449,6 +614,25 @@ describe("MCP tool registration", () => {
     expect(combined).toContain("Never present inferred mood");
     expect(combined).toContain("review July");
     expect(combined).toContain("写周报");
+  });
+
+  it("documents the project-aware default deadline for milestone creation", () => {
+    const skill = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
+    const taskCapture = readFileSync(
+      "skills/granoflow-agent-workflow/references/discussed-requirement-task-capture.md",
+      "utf8",
+    );
+
+    expect(skill).toContain("## Milestone Creation Deadlines");
+    expect(skill).toContain("preserve it unchanged");
+    expect(skill).toMatch(/strictly\s+next Saturday/);
+    expect(skill).toContain("23:59:59.000");
+    expect(skill).toContain("seven-day increments");
+    expect(skill).toContain("fails closed");
+    expect(skill).toContain("## Task Deadlines Within Milestones");
+    expect(skill).toMatch(/today, tomorrow, or the milestone\s+deadline/);
+    expect(skill).toContain("Do not default every milestone task");
+    expect(taskCapture).toContain("A task placed in a milestone must have `dueAt`");
   });
 
   it("defines weekly review as an interactive, evidence-bounded recall session", () => {
@@ -618,6 +802,12 @@ describe("MCP tool registration", () => {
       "lifecycle Card Checkpoint",
     );
     expect(descriptions.get("granoflow_review_card_authoring_preview")).toContain("inbox task");
+    expect(descriptions.get("granoflow_task_create_structured")).toContain(
+      "today, tomorrow, or the milestone deadline",
+    );
+    expect(descriptions.get("granoflow_task_update_structured")).toContain(
+      "today, tomorrow, or the milestone deadline",
+    );
   });
 
   it("previews structured task creation through the Local HTTP API", async () => {
@@ -844,8 +1034,125 @@ describe("MCP tool registration", () => {
         path: "/v1/milestones",
         body: {
           projectId: "project-1",
+          dueAt: "2026-07-08T23:59:59.000",
         },
       },
+    });
+  });
+
+  it("defaults an omitted milestone deadline to the next local Saturday", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 16, 12));
+    const port = await startServer((request, response) => {
+      expect(request.method).toBe("GET");
+      expect(request.url).toBe("/v1/milestones");
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify({ ok: true, code: "ok", data: { items: [] } }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_milestone_create")?.({
+      projectId: "project-1",
+      title: "Default deadline",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        body: {
+          projectId: "project-1",
+          dueAt: "2026-07-18T23:59:59.000",
+        },
+      },
+    });
+  });
+
+  it("uses the following Saturday when a milestone is created on Saturday", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 18, 12));
+    const port = await startServer((_request, response) => {
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify({ ok: true, code: "ok", data: { items: [] } }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_milestone_create")?.({
+      projectId: "project-1",
+      title: "Saturday milestone",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      data: { body: { dueAt: "2026-07-25T23:59:59.000" } },
+    });
+  });
+
+  it("advances an omitted milestone deadline past later deadlines in the same project", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 16, 12));
+    const port = await startServer((_request, response) => {
+      response.setHeader("content-type", "application/json");
+      response.end(
+        JSON.stringify({
+          ok: true,
+          code: "ok",
+          data: {
+            items: [
+              {
+                id: "same-project-1",
+                projectId: "project-1",
+                dueAt: "2026-07-18T23:59:59.000",
+              },
+              {
+                id: "same-project-2",
+                projectId: "project-1",
+                dueAt: "2026-07-31T23:59:59.000",
+              },
+              {
+                id: "other-project",
+                projectId: "project-2",
+                dueAt: "2027-01-01T23:59:59.000",
+              },
+            ],
+          },
+        }),
+      );
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_milestone_create")?.({
+      projectId: "project-1",
+      title: "Later milestone",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      data: { body: { dueAt: "2026-08-01T23:59:59.000" } },
+    });
+  });
+
+  it("fails closed when the default milestone deadline cannot inspect the project schedule", async () => {
+    const port = await startServer((_request, response) => {
+      response.statusCode = 500;
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify({ message: "schedule unavailable" }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_milestone_create")?.({
+      projectId: "project-1",
+      title: "Blocked milestone",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "http_500",
     });
   });
 

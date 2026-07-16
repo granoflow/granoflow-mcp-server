@@ -63,34 +63,19 @@ Use analogies, concrete examples, and simple language only when they make the
 idea easier to remember. Preserve source title, URL, screenshot path, or local
 reference path in `sourceSummary` or a visible note field when available.
 
-## Experience Cards
+## Experience Is Not A Card Type
 
-Experience cards are separate from general knowledge cards. They capture
-situated facts that books or general model knowledge may not contain:
+An Experience is an independent reusable lesson, not a study Card. Keep it
+searchable and available to future task analysis even when it never becomes
+Knowledge. Only after the App-owned Knowledge assessment approves the source may
+materialization create or reuse a Note and Card.
 
-- a customer preference;
-- a project-specific recurring failure mode;
-- a vendor habit;
-- a local workflow constraint;
-- a team-specific decision boundary.
-
-Do not create an experience card merely because something happened. Create it
-only when the experience is likely to change a future action, conversation,
-estimate, design choice, risk check, or relationship decision.
-
-Keep useful experience cards dense. A good private preference card can be:
-
-```text
-front: Customer A likes what food?
-back: Roasted lamb leg.
-```
-
-Add only the smallest useful qualifier when ambiguity or safety requires it:
-
-```text
-front: When choosing food for Customer A, what preference matters?
-back: Roasted lamb leg; still confirm dietary constraints and context.
-```
+Situated facts such as one customer's preference, one project's temporary
+constraint, or one vendor's current habit usually remain Evidence, Experience,
+or searchable reference. Card them only when the Knowledge gate shows that a
+person must actively recall a stable, reusable boundary at the moment of action.
+If a system, checklist, Skill, Linter, Test, or App Guard can enforce the rule,
+prefer that carrier over memory practice.
 
 ## Internal Self-Grill
 

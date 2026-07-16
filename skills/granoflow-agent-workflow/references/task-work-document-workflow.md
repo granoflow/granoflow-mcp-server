@@ -98,10 +98,12 @@ inspect its content before using it as evidence. Do not turn the template into
 a blank questionnaire or convert inference into fact to fill a section.
 
 Create one local working copy for the current slot, using
-`task-work-<safe-task-id>-execution.md` while the task is unfinished. If a
-completed task already has a post-completion revision, use
-`task-work-<safe-task-id>-post-completion-revision.md` instead. Fill the five
-core sections and only triggered optional content. Analysis starts with:
+`task-work-<safe-task-id>-execution-v<work_version>.md` while the task is
+unfinished. If a completed task already has a post-completion revision, use
+`task-work-<safe-task-id>-post-completion-revision-v<work_version>.md` instead.
+Only one local version per slot may remain after a successful post-Grill
+rewrite. Fill the five core sections and only triggered optional content.
+Analysis starts with:
 
 ```yaml
 analysis_status: draft
@@ -134,11 +136,18 @@ cleanly.
 | Dependencies And Handoffs     | Upstream/downstream startup contracts exist                                                                                 |
 | Verification Plan             | Evidence needs multiple gates, runtime checks, or human acceptance                                                          |
 | Rollback / Stop Conditions    | Failure is not trivially reversible or risk can expand                                                                      |
-| Grill Review                  | Direction uncertainty, false success, high risk, or complex dependency                                                      |
 | Knowledge / Card Checkpoint   | Card search, candidate, link, update, or create work is triggered                                                           |
+| Granoflow References          | Task analysis adopted Evidence, Experience, or Knowledge that materially changes the document                               |
 | Visual Narrative Mode         | Comic, manga, storyboard, animation, video shot, or motion-design work                                                      |
 
 Do not render an optional heading merely to say it is unused.
+Grill is an authoring gate, not a reader-facing section trigger. Never render
+`Grill Review`, `Analysis Grill`, `Execution Readiness Grill`, a reviewer
+ledger, raw findings, or provider/tool transcripts in Task Work. Apply every
+accepted finding directly to the section it improves, such as Evidence, Scope,
+Risk, Decision, Execution Plan, Verification Plan, or Rollback / Stop
+Conditions. Keep only the machine-stable phase result in
+`analysis_grill_status` or `readiness_grill_status`.
 
 ## Progressive Loading And Small-Task Budget
 
@@ -179,8 +188,10 @@ MCP-bundled Analysis Grill. It checks source discipline, decision-changing
 unknowns, Outcome/Evidence/Scope/Risk/Decision consistency, concrete examples,
 false-success paths, and whether the Planning recommendation is justified. Set
 `analysis_grill_status=passed` only when all material findings are resolved.
-Material revisions reopen Analysis confirmation. Analysis confirmation does not
-authorize Planning, node creation, attachment upload, or execution.
+Resolve findings by revising the relevant Analysis prose and acceptance
+contracts; do not append a Grill section or finding ledger. Material revisions
+reopen Analysis confirmation. Analysis confirmation does not authorize
+Planning, node creation, attachment upload, or execution.
 
 Before confirming Analysis, recommend one Planning outcome:
 
@@ -215,9 +226,10 @@ confirm Planning or authorize execution.
 
 ## Planning
 
-Planning extends the same local working copy with only triggered Planning
-sections. It does not repeat a second template or candidate-Skill inventory.
-It may start only when Analysis is confirmed and
+Planning starts from the clean rewritten Analysis document produced after the
+Analysis Grill and adds only triggered Planning sections during discussion. It
+does not repeat a second template or candidate-Skill inventory. It may start
+only when Analysis is confirmed and
 `analysis_grill_status=passed`. Planning confirmation sets:
 
 ```yaml
@@ -360,7 +372,7 @@ the workflow must not expose every historical replacement as an active Task
 Work document. `supersedes` points to the immediately replaced record in the
 same slot.
 
-Only a document that passes the quality gates, has
+Only the latest clean post-Grill rewrite that passes the quality gates, has
 `analysis_grill_status=passed`, and has `readiness_grill_status=passed` may be
 uploaded through `granoflow_task_attachment_add_markdown` with idempotency key,
 latest task revision, and expected local hash. Read the App-owned content and
@@ -369,8 +381,16 @@ managed summary. Filename or HTTP success alone is insufficient. After the
 pointer switches, reconcile the superseded attachment so the task still has at
 most two active Task Work documents.
 
-Finalizer rewrite/archive affects only a local working copy, never App
-attachments. Runtime progress never creates or overwrites a Work Document.
+The built-in post-Grill clean rewrite affects the local working copy first; App
+attachments change only through the transactional upload/readback/active-slot
+flow. Runtime progress never creates or overwrites a Work Document.
+
+Before uploading a rewritten version and again before Delivery, rebuild its
+`Granoflow References` from the App-owned adopted set and run the dedicated
+reference-audit preview/apply flow. Removing an unused current reference must
+not erase applied, validated, or contradicted Knowledge Usage history. A
+considered or rejected search result never enters this section or creates a
+relationship.
 
 ## Grill
 
@@ -379,6 +399,39 @@ Planning, and Execution Readiness Grill before upload. For a genuinely
 `not_required` task, the second check is still required but may be compact and
 must prove the single action's inputs, authorization, evidence, and stop
 condition are ready.
+
+Both checks are invisible authoring passes. A finding changes the relevant
+body section and, when material, reopens confirmation. The final reader-facing
+document must look as though it was written correctly once: no standalone
+Grill heading, checklist, reviewer attribution, before/after commentary, or
+review-process residue. A blocked result belongs in the relevant unknown,
+dependency, authorization, risk, or stop condition as well as the phase status;
+it does not justify a separate Grill record.
+
+### Post-Grill Clean Rewrite
+
+When either bundled Grill reaches a phase result, do not finish by patching the
+current file. Reconstruct the complete Task Work as a new document from the
+confirmed facts, decisions, accepted findings, and still-valid content. Rewrite
+transitions and section order for a cold reader; collapse duplicate statements,
+remove superseded alternatives and stale questions, and omit all review-process
+residue. Copying the old body and appending corrections is not a clean rewrite.
+
+Write the replacement to a new versioned local path with `work_version + 1`,
+preserve the logical `document_slot` and original lineage, update `updated_at`,
+and set the real Grill status. Validate the replacement's Markdown, metadata,
+source discipline, cold-handoff completeness, and content hash before deleting
+the prior local file. If creation or validation fails, keep the prior file and
+report `post_grill_rewrite_failed`; never leave the slot without a readable
+local document. After success, delete the prior local file rather than keeping
+it as a parallel draft or archive.
+
+Only the successfully validated replacement path and hash may be selected for
+attachment upload. Uploading the pre-Grill file, a patch file, a findings
+appendix, or an unvalidated replacement fails with
+`post_grill_rewrite_required`. If an older App attachment already occupies the
+logical slot, upload/read back the replacement before reconciling that
+superseded attachment; local deletion does not authorize App deletion.
 
 An available `model_allowed` `grill-finalizer` may add enhanced evidence before
 a bundled gate concludes, but it never replaces the bundled checklist or owns

@@ -61,6 +61,8 @@ Use this skill when the user asks to:
   `Analyze the first task`;
 - create a task from the requirement currently being discussed, such as
   `Create a task from this requirement`;
+- create a milestone, including choosing its default deadline when the user did
+  not provide one;
 - process today's tasks, tasks for another user-specified date or range, more
   tasks, all unfinished Granoflow tasks, or the older pending-task triage flow;
   decide which are actionable, blocked, obsolete, already done, conflicting, or
@@ -118,6 +120,45 @@ Success criteria:
 - The user knows Granoflow is the local app behind this MCP bridge.
 - The next action is clear: open Granoflow, enable Local HTTP API, or call a
   setup diagnostic tool.
+
+## Milestone Creation Deadlines
+
+Every new milestone must have a deadline. If the user explicitly provides
+`dueAt`, preserve it unchanged. Otherwise call `granoflow_milestone_create`
+without `dueAt`; the tool reads the existing milestones and selects the strictly
+next Saturday in the user's local time at `23:59:59.000`.
+
+The default is project-aware. If any milestone in the same project has a valid
+deadline equal to or later than that candidate Saturday, the tool advances the
+candidate by seven-day increments until it is later than every existing
+deadline in that project. Milestones in other projects and milestones without a
+valid deadline do not affect the result. If the existing milestone schedule
+cannot be read, creation without an explicit deadline fails closed; do not guess
+or create a milestone with no deadline.
+
+## Task Deadlines Within Milestones
+
+Before creating or moving a task into a milestone, read that milestone's
+`dueAt` and choose a task deadline from the task's real urgency, scope,
+dependencies, and wording. Unless the user or evidence indicates another
+specific date, the normal candidates are today, tomorrow, or the milestone
+deadline:
+
+- choose today for explicitly urgent work, work already under way, or a small
+  prerequisite that must unblock other near-term work;
+- choose tomorrow for a concrete next action that should happen soon but has no
+  same-day urgency;
+- choose the milestone deadline when there is no nearer timing signal, the work
+  may happen at any point in the milestone, or the task represents a milestone
+  deliverable.
+
+Do not default every milestone task to today, and do not default every milestone
+task to the milestone deadline. A strong explicit or contextual signal may
+justify another date. A task inferred from date-only context uses the caller's
+local end of day. Never silently assign a task after its milestone deadline. If
+the user's explicit date is later, or the milestone is already overdue, expose
+the conflict and ask whether to change the task date, milestone deadline, or
+placement instead of silently clamping it.
 
 ## Discussed Requirement Task Capture
 
@@ -255,6 +296,12 @@ Success criteria:
   missing-information, and user-only blockers are visible before execution.
 - Every task has one adaptive Work Document; triggered Grill findings revise it
   before safe work starts.
+- Grill is an invisible authoring gate: findings revise the relevant Task Work
+  sections, while standalone Grill headings, findings ledgers, and reviewer
+  transcripts are forbidden in the reader-facing document.
+- Every completed bundled Grill ends with a full clean rewrite into a new
+  versioned local document. Validate it, then delete the prior local file; only
+  the rewritten path and hash may be uploaded.
 - The immutable active Work Document is attached and read back when supported,
   or honestly linked with a recorded upload failure.
 - Every optional validation node has a stated mode, cost, evidence requirement,
@@ -468,16 +515,18 @@ prompts, node plans, and final reports in that language by default. For example,
 `请分析第一个任务`, `执行第一个任务`, and `处理排在最前面的任务` are localized
 triggers accepted inside the skill, not public README or directory copy.
 
-Read `references/task-work-document-workflow.md` and its template before applying
-this branch. Read legacy Analysis/Plan references only when resolving historical
-attachments.
+Read `references/task-work-document-workflow.md`, its template, and
+`references/knowledge-distillation-workflow.md` before applying this branch.
+Read legacy Analysis/Plan references only when resolving historical attachments.
 
 High-level contract:
 
 1. Resolve the intended task before analysis. If `first task` cannot be proven
    from the running app/API order, ask the user to choose.
 2. Read task details plus project and milestone descriptions when ids are
-   present. Separate task facts, project/milestone context, and AI inference.
+   present. Build the App-owned Knowledge Pack with independent Evidence,
+   Experience, and Knowledge lanes; separate task facts, project/milestone
+   context, adopted references, and AI inference.
 3. The initial draft contains Analysis only: prefill Outcome, Evidence, Scope,
    Risk, and Next Action, plus only Analysis-side optional sections whose
    triggers fire. Do not draft an Execution Plan, Planning recommendation, or
@@ -486,8 +535,12 @@ High-level contract:
 4. Keep `planning_status=not_assessed` until every decision-changing Analysis
    question is resolved, the user confirms the Analysis, and the mandatory
    MCP-bundled Analysis Grill passes. Findings revise Analysis and reopen its
-   confirmation when material. Only then may light work become `not_required`
-   or Planning begin in the same document family.
+   confirmation when material. Integrate findings into the relevant body
+   sections without adding `Grill Review`, `Analysis Grill`, or a findings
+   ledger. When the phase result is known, clean-rewrite the entire Analysis
+   document into `work_version + 1`, validate it, and delete the prior local
+   file. Only then may light work become `not_required` or Planning begin in the
+   same document family.
 5. Load Profile, external Skill, Card, Planning, Delivery, Review, or legacy
    references progressively rather than preloading the manifest.
 6. After the Plan discussion is complete and the Plan is confirmed as
@@ -496,21 +549,30 @@ High-level contract:
    Run the mandatory MCP-bundled Readiness Grill against plan sufficiency,
    prerequisites, authorizations, accounts/login state, secret or key
    availability, required data/materials, tools/environment, verification, and
-   stop/handoff conditions. Never persist a secret value.
+   stop/handoff conditions. Revise the relevant Plan, dependency, verification,
+   authorization, or stop-condition prose; do not add a standalone Readiness
+   Grill section. When the phase result is known, clean-rewrite and validate the
+   complete Analysis + Plan document, then delete the prior local file. Never
+   persist a secret value.
 7. External `grill-finalizer` or specialist reviewers are optional enhancement
    evidence only. They never replace either bundled Grill gate; route a missing
    optional helper through the external routing owner without weakening the
    phase state.
-8. Only after the applicable bundled Grill gates pass, replace the current Task
-   Work slot and require App-owned content/hash readback before switching its
-   active pointer. Upload is forbidden until the description passes the
+8. Only after the applicable bundled Grill gates pass and the latest clean
+   rewrite is validated, upload that rewritten document and require App-owned
+   content/hash readback before switching the current Task Work slot's active
+   pointer. Uploading the pre-Grill document or a patch artifact is forbidden.
+   Upload is also forbidden until the description passes the
    30-second recall gate, Task Work passes the cold-handoff and source-evidence
    gates, readiness has no unresolved blocker, and the task has no more than two
    active Task Work slots. After completion, the first later edit uses the
    `post_completion_revision` slot; later edits never create another slot.
 9. Wait for a separate instruction such as `实施这个任务文档` before execution,
    even when `planning_status=not_required`.
-10. Preserve existing authorization, waiting, node, Delivery, evidence, and
+10. On every full rewrite and before Delivery, audit structured Task Work
+    references. Keep only adopted sources still used by the current document;
+    preserve applied/validated/contradicted Knowledge Usage history.
+11. Preserve existing authorization, waiting, node, Delivery, evidence, and
     readback boundaries.
 
 Success criteria:
@@ -526,6 +588,9 @@ Success criteria:
 - MCP-bundled Analysis and Readiness Grill gates are mandatory. Optional
   external review never substitutes for them and never claims evidence from a
   provider that did not run.
+- Each completed bundled Grill produces a coherent full-document rewrite with
+  incremented `work_version`; the prior local file is deleted only after the
+  replacement validates, and only the replacement is eligible for upload.
 - Light tasks stay compact; Planning expands the same document only after
   Analysis confirmation, a passing Analysis Grill, and user permission.
 - After Plan confirmation, the host automatically emits the readiness reminder,
@@ -585,15 +650,17 @@ confirmed monthly `content`. Monthly aggregates remain read-only, and all
 follow-up work remains a separate preview/confirmation/write/readback flow.
 
 Read `references/review-drafting.md` before drafting weekly or monthly review
-content.
+content, and read `references/knowledge-distillation-workflow.md` before
+proposing Experience or Knowledge work.
 
 Success criteria:
 
 - AI drafts accelerate the review without pretending to know the user's inner
   state.
 - Review content is saved only after user confirmation.
-- Candidate reviews and review cards contain durable lessons rather than plain
-  activity logs.
+- Candidate Experience contains reusable lessons rather than plain activity
+  logs; Knowledge and Cards require their separate eligibility and approval
+  gates.
 - Weekly and monthly reviews describe patterns, direction, and tradeoffs rather
   than exhaustive task listings.
 - Weekly recall cues are evidence-bounded, skippable, and never become automatic
