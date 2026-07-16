@@ -6,6 +6,7 @@ docs-temp/
 .DS_Store
 npm-debug.log*
 .npm_recovery_codes.txt
+.mcp_registry_private_key.txt
 .local-ai/
 __pycache__/
 *.py[cod]

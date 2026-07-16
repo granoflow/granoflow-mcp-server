@@ -172,9 +172,17 @@ Verify the published package:
 ```bash
 npm access get status @granoflow/mcp-server
 npm dist-tag ls @granoflow/mcp-server
-npx -y @granoflow/mcp-server@<version> --version
-npx -y @granoflow/mcp-server --version
+fresh_cwd="$(mktemp -d -t granoflow-npx-cwd)"
+fresh_cache="$(mktemp -d -t granoflow-npx-cache)"
+cd "$fresh_cwd"
+npm_config_cache="$fresh_cache" npx --yes --package=@granoflow/mcp-server@<version> granoflow-mcp-server --version
+npm_config_cache="$fresh_cache" npx --yes --package=@granoflow/mcp-server@latest granoflow-mcp-server --version
+npm_config_cache="$fresh_cache" npx --yes --package=@granoflow/mcp-server@<version> granoflow-mcp-server gfmcp-runner --help
 ```
+
+Use both a fresh cache and a directory outside the source repository. Running
+`npx` from the package worktree can resolve a local `node_modules/.bin` entry
+and falsely report an older build even when the public tarball is correct.
 
 Run one MCP stdio smoke against the published version:
 
@@ -203,6 +211,13 @@ platforms that users may discover from:
   to `https://github.com/granoflow/granoflow-mcp-server` and uses current
   positioning. If the project name, repository, category, or run command changed,
   open or update the pull request and wait for checks to pass.
+
+For a platform where no Granoflow listing or pull request exists, record
+`absent` rather than claiming freshness. A routine package release does not
+silently create a previously deferred third-party submission; creation needs
+the corresponding distribution task or explicit release scope. Existing
+listings must still be checked whenever the install command, repository,
+description, privacy boundary, or public capability set changes.
 
 Use `docs/directory-listings.md` as the canonical copy for these platforms.
 

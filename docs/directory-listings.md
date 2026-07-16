@@ -236,13 +236,20 @@ Connect AI agents to Granoflow for local task workflows, task analysis, requirem
 
 ## Directory Publication Status
 
-| Surface               | Prepared in repo | Publication status   | Notes                                                             |
-| --------------------- | ---------------- | -------------------- | ----------------------------------------------------------------- |
-| GitHub README         | yes              | repo-owned           | Updated by git commit.                                            |
-| npm package page      | yes              | publish-time         | Uses README/package metadata on a future npm publish.             |
-| Official MCP Registry | yes              | publish-time         | Uses `server.json` on a future registry publish.                  |
-| Glama                 | yes              | deferred_manual_copy | Paste platform copy later if the listing supports manual edits.   |
-| mcp.so                | yes              | deferred_manual_copy | Paste platform copy later if the listing supports manual edits.   |
-| mcpservers.org        | yes              | deferred_manual_copy | Paste platform copy later if the listing supports manual edits.   |
-| Awesome MCP Servers   | yes              | deferred_manual_copy | Use the prepared row later if updating a row or pull request.     |
-| Smithery / MCPB       | yes              | deferred_manual_copy | Use the prepared copy later if the marketplace listing is active. |
+Verified on 2026-07-17 after publishing `@granoflow/mcp-server@0.1.15`:
+
+| Surface               | Prepared in repo | Publication status          | Notes                                                                                          |
+| --------------------- | ---------------- | --------------------------- | ---------------------------------------------------------------------------------------------- |
+| GitHub README         | yes              | published                   | Release commit is present on `main` and `develop`.                                             |
+| npm package page      | yes              | published                   | npm `latest` and package version both resolve to `0.1.15`.                                     |
+| Official MCP Registry | yes              | published                   | `com.granoflow/mcp-server@0.1.15` is `active` and `isLatest=true`.                             |
+| Glama                 | yes              | listed_auto_sync            | Listing and current README expose Knowledge/Experience positioning; derived schema may lag.    |
+| mcp.so                | yes              | listed                      | Listing contains the current npm command, Knowledge/Experience copy, and privacy positioning.  |
+| mcpservers.org        | yes              | absent_deferred_submission  | No Granoflow listing was found; this release does not claim that a deferred submission exists. |
+| Awesome MCP Servers   | yes              | absent_deferred_submission  | No Granoflow row was found on the current main README.                                         |
+| Smithery / MCPB       | yes              | not_verified_for_this_scope | Canonical copy remains ready; this release makes no publication claim for this surface.        |
+
+Third-party directory entries are discovery mirrors, not release truth. npm
+and the Official MCP Registry are authoritative for the published version;
+existing directory copy must still be checked for stale commands, repository
+links, positioning, and privacy claims.
