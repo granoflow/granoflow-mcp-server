@@ -8,9 +8,18 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
-const packageJson = JSON.parse(await readFile("package.json", "utf8")) as { version: string };
+const packageJson = JSON.parse(await readFile("package.json", "utf8")) as {
+  version: string;
+  bin: Record<string, string>;
+};
 
 describe("granoflow MCP server executable", () => {
+  it("keeps an npm-exec default bin alongside the named runner bin", () => {
+    expect(packageJson.bin["mcp-server"]).toBe("dist/index.js");
+    expect(packageJson.bin["granoflow-mcp-server"]).toBe("dist/index.js");
+    expect(packageJson.bin["granoflow-gfmcp-runner"]).toBe("dist/gfmcp-runner-launcher.js");
+  });
+
   it("prints a version without starting stdio transport", async () => {
     const { stdout, stderr } = await execFileAsync(process.execPath, [
       "dist/index.js",
