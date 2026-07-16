@@ -250,13 +250,13 @@ app to perform sync only when current authorization permits it, and delegates at
 most one eligible task to a local agent. Preview it first:
 
 ```bash
-granoflow-gfmcp-runner --dry-run --once
+npx -y @granoflow/mcp-server gfmcp-runner --dry-run --once
 ```
 
 Run continuously with an explicit workspace:
 
 ```bash
-granoflow-gfmcp-runner --workspace /absolute/project/path
+npx -y @granoflow/mcp-server gfmcp-runner --workspace /absolute/project/path
 ```
 
 The tag is not blanket authorization. Publishing, payment, login, external

@@ -11,6 +11,7 @@ function printHelp() {
 
 Usage:
   granoflow-mcp-server
+  granoflow-mcp-server gfmcp-runner [runner options]
   granoflow-mcp-server --help
   granoflow-mcp-server --version
 
@@ -21,6 +22,12 @@ Environment:
   GRANOFLOW_API_TOKEN       Optional Granoflow Local HTTP API token.
   GRANOFLOW_MCP_CONFIG_PATH Optional path for MCP-owned non-secret config.
 `);
+}
+
+if (process.argv[2] === "gfmcp-runner") {
+  process.argv.splice(2, 1);
+  await import("./gfmcp-runner-launcher.js");
+  process.exit(0);
 }
 
 if (process.argv.includes("--version") || process.argv.includes("-v")) {

@@ -14,10 +14,9 @@ const packageJson = JSON.parse(await readFile("package.json", "utf8")) as {
 };
 
 describe("granoflow MCP server executable", () => {
-  it("keeps an npm-exec default bin alongside the named runner bin", () => {
-    expect(packageJson.bin["mcp-server"]).toBe("dist/index.js");
+  it("keeps one unambiguous npm-exec bin", () => {
     expect(packageJson.bin["granoflow-mcp-server"]).toBe("dist/index.js");
-    expect(packageJson.bin["granoflow-gfmcp-runner"]).toBe("dist/gfmcp-runner-launcher.js");
+    expect(Object.keys(packageJson.bin)).toEqual(["granoflow-mcp-server"]);
   });
 
   it("prints a version without starting stdio transport", async () => {
@@ -36,6 +35,17 @@ describe("granoflow MCP server executable", () => {
     expect(stdout).toContain(`granoflow-mcp-server ${packageJson.version}`);
     expect(stdout).toContain("GRANOFLOW_API_BASE_URL");
     expect(stdout).toContain("GRANOFLOW_MCP_CONFIG_PATH");
+    expect(stderr).toBe("");
+  });
+
+  it("dispatches the bundled GFMCP runner through the single public bin", async () => {
+    const { stdout, stderr } = await execFileAsync(process.execPath, [
+      "dist/index.js",
+      "gfmcp-runner",
+      "--help",
+    ]);
+
+    expect(stdout).toContain("Poll and safely execute GFMCP-tagged Granoflow tasks.");
     expect(stderr).toBe("");
   });
 

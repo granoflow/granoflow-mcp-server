@@ -1,6 +1,6 @@
 {
   "name": "@granoflow/mcp-server",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "mcpName": "com.granoflow/mcp-server",
   "description": "Connect MCP-capable AI agents to Granoflow workflows for local tasks, requirement capture, approval requests, due-task processing, reviews, first-run import, review cards, and work memory.",
   "license": "MIT",
@@ -17,9 +17,7 @@
     "access": "public"
   },
   "bin": {
-    "mcp-server": "dist/index.js",
-    "granoflow-mcp-server": "dist/index.js",
-    "granoflow-gfmcp-runner": "dist/gfmcp-runner-launcher.js"
+    "granoflow-mcp-server": "dist/index.js"
   },
   "files": [
     "dist",

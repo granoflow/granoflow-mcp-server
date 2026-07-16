@@ -26,13 +26,13 @@ Use this skill when installing, operating, or diagnosing the optional GFMCP auto
 Preview without writes or agent execution:
 
 ```bash
-granoflow-gfmcp-runner --dry-run --once
+npx -y @granoflow/mcp-server gfmcp-runner --dry-run --once
 ```
 
 Run continuously at the default five-minute interval:
 
 ```bash
-granoflow-gfmcp-runner --workspace /absolute/project/path
+npx -y @granoflow/mcp-server gfmcp-runner --workspace /absolute/project/path
 ```
 
 The runner uses `GRANOFLOW_API_BASE_URL` and `GRANOFLOW_API_TOKEN` through the local API contract. State, leases, retry fingerprints, and the process lock stay in a private local state directory. See [runtime contract](references/runtime-contract.md).
