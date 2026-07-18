@@ -10,9 +10,9 @@ own environment.
 
 ## Routing Record
 
-The active Task Work Document owns the complete pre-execution capability
-decision. When Planning is triggered, it adds only node-relevant strategy in the
-same document family.
+Confirmed Project Work owns the project-level routing profile. The active Task
+Work Document records which routed capability was actually relevant and used;
+it does not reopen the user's pack or visual-style decision.
 
 ```yaml
 external_skills:
@@ -69,25 +69,20 @@ For a relevant Skill:
 1. If it is `available` and `model_allowed`, invoke it and record `used` plus
    evidence.
 2. If it is `available` and `user_only`, suggest explicit user invocation.
-3. If it is `missing` or `unknown` and materially relevant, make one installation
-   suggestion and record `install_offered + pending_user_decision`.
-4. If there is no answer, remain waiting. Do not install, infer refusal, or claim
-   fallback. Resume from the same waiting record without repeating the offer.
-5. If the user approves the displayed source, scope, and command, record
-   `install_approved`, install only that confirmed unit, then rediscover it and
-   account for any required host reload before treating it as available.
-6. If the user declines, record `declined` and `model_fallback`, acknowledge the
-   fallback once, and continue with the current model's capabilities.
-7. If installation, rediscovery, reload, or invocation fails, record the failure and
-   continue with `model_fallback`.
+3. If the confirmed project routing profile requires it but it is `missing` or
+   `unknown`, return `capability_pack_drift` and stop the dependent automatic
+   phase. Do not reopen item-by-item installation choices during the task.
+4. Manual work that does not depend on the missing capability may continue with
+   honest `model_fallback`; never claim equivalence to the locked profile.
+5. Pack repair is a separate initialization action and uses the one-pack
+   confirmation contract. After repair, rediscover availability and account for
+   any required host reload before treating it as available.
+6. If invocation fails, record `invocation_failed`; retry or fallback only when
+   Project Work and the active action permit it.
 
-Do not repeat the same suggestion for the same task, Skill, source, installation
-scope, and missing reason. This is not a permanent refusal: a new task, a user
-request, or a material capability change may justify a new suggestion.
-
-Only block when the user explicitly made the Skill a hard dependency and the
-task objectively cannot continue without it. A missing optional Skill never
-cancels the task.
+Do not ask which Skill the user prefers. Project initialization already locked
+the routing profile. Optional condition-based capabilities simply remain
+`not_required` when their condition is false.
 
 For Task Work Grill work, the MCP-bundled Analysis and Execution Readiness
 checks remain mandatory phase gates. An available model-invocable
@@ -107,7 +102,8 @@ when `granoflow-first-run-import/references/recommended-external-skills.md` is
 active, the host may offer every unavailable recommended collection as one
 default all-install choice. This exception changes installation breadth only.
 Runtime routing still invokes only relevant, permitted Skills and never invokes
-an entire family mechanically.
+an entire family mechanically. Relevant `model_allowed` Skills run silently and
+record observable evidence; no repeated user notification is required.
 
 ## Installation Confirmation
 

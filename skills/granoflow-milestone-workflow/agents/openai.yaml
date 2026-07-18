@@ -1,0 +1,4 @@
+interface:
+  display_name: "Granoflow Milestone Workflow"
+  short_description: "Coordinate one milestone across evolving child tasks and integration acceptance"
+  default_prompt: "Use the bundled Granoflow Milestone Workflow skill to define one milestone contract, decompose it into child tasks, coordinate bounded execution, replan from live evidence, and prove milestone-level integration before closure."

@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createHash } from "node:crypto";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
@@ -114,6 +115,11 @@ describe("MCP tool registration", () => {
         "granoflow_daily_review_skill",
         "granoflow_first_run_import_skill",
         "granoflow_gfmcp_runner_skill",
+        "granoflow_delegated_authorization_skill",
+        "granoflow_task_orchestrator_skill",
+        "granoflow_milestone_workflow_skill",
+        "granoflow_persistent_milestone_runner_skill",
+        "granoflow_project_definition_skill",
         "granoflow_gfmcp_prepare",
         "granoflow_gfmcp_safe_sync",
         "granoflow_gfmcp_candidates",
@@ -123,6 +129,7 @@ describe("MCP tool registration", () => {
         "granoflow_setup_open_app",
         "granoflow_version",
         "granoflow_context_pack",
+        "granoflow_historical_task_candidates",
         "granoflow_memory_batch_preview",
         "granoflow_context_steward_status",
         "granoflow_project_context_attachments_ensure",
@@ -162,6 +169,12 @@ describe("MCP tool registration", () => {
         "granoflow_task_update",
         "granoflow_task_update_structured",
         "granoflow_task_attachment_list",
+        "granoflow_logical_attachment_replace",
+        "granoflow_logical_attachment_read",
+        "granoflow_project_design_baseline_import",
+        "granoflow_project_design_baseline_read",
+        "granoflow_project_work_evaluate",
+        "granoflow_project_work_confirm",
         "granoflow_task_attachment_add_markdown",
         "granoflow_task_attachment_delete",
         "granoflow_task_node_list",
@@ -182,6 +195,40 @@ describe("MCP tool registration", () => {
         "granoflow_api_request",
       ]),
     );
+  });
+
+  it("forwards exact prototype export controls to the App", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.setHeader("content-type", "application/json");
+      response.end(
+        JSON.stringify({
+          ok: true,
+          data: { executionAdmission: { allowed: true } },
+        }),
+      );
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_export")?.({
+      taskId: "task-1",
+      includePrototypes: true,
+      assetMode: "file",
+      ttlSeconds: 300,
+      fetchMissing: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      data: {
+        data: { executionAdmission: { allowed: true } },
+      },
+    });
+    expect(requestedUrls).toEqual([
+      "/v1/ai-agent/tasks/task-1/export?includePrototypes=true&assetMode=file&ttlSeconds=300&fetchMissing=true",
+    ]);
   });
 
   it("fails Knowledge Pack closed when the App does not advertise the resource action", async () => {
@@ -420,7 +467,7 @@ describe("MCP tool registration", () => {
     expect(serialized).toContain("hidden chat histories");
     expect(serialized).toContain("recommended-external-skills.md");
     expect(serialized).toContain("approved_all");
-    expect(serialized).toContain("declined_for_onboarding");
+    expect(serialized).toContain("capability_pack_not_ready");
   });
 
   it("exposes the bundled daily-review owner skill", async () => {
@@ -468,6 +515,82 @@ describe("MCP tool registration", () => {
       code: "dry_run",
       data: { method: "POST", path: "/v1/sync/gfmcp-safe-run" },
     });
+  });
+
+  it("exposes the bundled delegated-authorization skill and public references", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = parseToolText(
+      await handlers.get("granoflow_delegated_authorization_skill")?.({}),
+    );
+    expect(result).toMatchObject({
+      ok: true,
+      code: "ok",
+      data: {
+        path: "skills/granoflow-delegated-authorization/SKILL.md",
+        skill: expect.stringContaining("conditional delegation"),
+      },
+    });
+    expect(JSON.stringify(result)).toContain("authorization-envelope.md");
+    expect(JSON.stringify(result)).toContain("host-routing-and-waiting.md");
+    expect(JSON.stringify(result)).toContain("unattended-interaction-contract.md");
+  });
+
+  it("exposes the bundled task-orchestrator skill and short-command contract", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = parseToolText(await handlers.get("granoflow_task_orchestrator_skill")?.({}));
+    expect(result).toMatchObject({
+      ok: true,
+      code: "ok",
+      data: {
+        path: "skills/granoflow-task-orchestrator/SKILL.md",
+        skill: expect.stringContaining("single upper-layer task entrypoint"),
+      },
+    });
+    const serialized = JSON.stringify(result);
+    expect(serialized).toContain("short-command-contract.md");
+    expect(serialized).toContain("gf做");
+    expect(serialized).toContain("finish_audit");
+  });
+
+  it("exposes the bundled milestone workflow and its contract references", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = parseToolText(await handlers.get("granoflow_milestone_workflow_skill")?.({}));
+    expect(result).toMatchObject({
+      ok: true,
+      code: "ok",
+      data: {
+        path: "skills/granoflow-milestone-workflow/SKILL.md",
+        skill: expect.stringContaining("milestone-level integration evidence"),
+      },
+    });
+    const serialized = JSON.stringify(result);
+    expect(serialized).toContain("milestone-work-document-template.md");
+    expect(serialized).toContain("milestone-collaboration-workflow.md");
+    expect(serialized).toContain("controller Task");
+    expect(serialized).toContain("Child Task Work");
+  });
+
+  it("exposes the provider-neutral persistent milestone runner", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = parseToolText(
+      await handlers.get("granoflow_persistent_milestone_runner_skill")?.({}),
+    );
+    expect(result).toMatchObject({
+      ok: true,
+      code: "ok",
+      data: {
+        path: "skills/granoflow-persistent-milestone-runner/SKILL.md",
+        skill: expect.stringContaining("provider-neutral"),
+      },
+    });
+    const serialized = JSON.stringify(result);
+    expect(serialized).toContain("authorization-manifest.md");
+    expect(serialized).toContain("runtime-contract.md");
+    expect(serialized).toContain("worker-report.md");
   });
 
   it("documents the long-term work memory reference contract", () => {
@@ -805,9 +928,166 @@ describe("MCP tool registration", () => {
     expect(descriptions.get("granoflow_task_create_structured")).toContain(
       "today, tomorrow, or the milestone deadline",
     );
+    expect(descriptions.get("granoflow_task_create")).toContain("authoringEvidence");
+    expect(descriptions.get("granoflow_task_create_structured")).toContain(
+      "real-analogy and concrete-example",
+    );
+    expect(descriptions.get("granoflow_task_create_structured")).toContain("App records startedAt");
+    expect(descriptions.get("granoflow_task_create")).toContain("pending state");
+    expect(descriptions.get("granoflow_task_update_structured")).toContain("status=doing");
+    expect(descriptions.get("granoflow_task_history_mutate")).toContain(
+      "Every create mutation requires",
+    );
     expect(descriptions.get("granoflow_task_update_structured")).toContain(
       "today, tomorrow, or the milestone deadline",
     );
+  });
+
+  it("rejects structured task creation without authoring quality evidence", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.statusCode = 500;
+      response.end();
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_create_structured")?.({
+      title: "统一任务创建标准",
+      description: "让所有自动创建的任务都遵守同一套质量标准。",
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "task_authoring_quality_failed",
+      data: {
+        issues: expect.arrayContaining([
+          expect.objectContaining({ field: "authoringEvidence.titleIntent" }),
+          expect.objectContaining({ field: "authoringEvidence.plainLanguageReviewed" }),
+          expect.objectContaining({ field: "authoringEvidence.analogyExcerpt" }),
+          expect.objectContaining({ field: "authoringEvidence.exampleExcerpt" }),
+        ]),
+      },
+    });
+    expect(requestedUrls).toEqual([]);
+  });
+
+  it("requires different analogy and example excerpts", async () => {
+    const { handlers } = collectHandlers();
+    const sharedExcerpt = "比如，这像所有入口共用同一位检票员。";
+
+    const result = await handlers.get("granoflow_task_create_structured")?.({
+      title: "统一任务创建标准",
+      description: `让所有入口遵守同一标准。${sharedExcerpt}`,
+      authoringEvidence: {
+        titleIntent: "action_or_outcome",
+        plainLanguageReviewed: true,
+        analogyExcerpt: sharedExcerpt,
+        exampleExcerpt: sharedExcerpt,
+      },
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "task_authoring_quality_failed",
+      data: {
+        issues: expect.arrayContaining([
+          { field: "authoringEvidence.exampleExcerpt", reason: "must_differ" },
+        ]),
+      },
+    });
+  });
+
+  it("rejects historical fields locally instead of attempting ordinary task creation", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.statusCode = 500;
+      response.end();
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+    const description =
+      "先创建待办任务。打个比方，这像先把车停在起跑线。比如，真正执行时再切换为 doing。";
+
+    const result = await handlers.get("granoflow_task_create")?.({
+      input: {
+        title: "规范任务启动时机",
+        description,
+        startedAt: "2026-07-18T09:00:00.000Z",
+        authoringEvidence: {
+          titleIntent: "action_or_outcome",
+          plainLanguageReviewed: true,
+          analogyExcerpt: "打个比方，这像先把车停在起跑线。",
+          exampleExcerpt: "比如，真正执行时再切换为 doing。",
+        },
+      },
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "historical_fields_not_supported",
+      data: {
+        operation: "create",
+        unsupportedFields: ["startedAt"],
+        historicalCorrectionTool: "granoflow_task_history_mutate",
+      },
+    });
+    expect(requestedUrls).toEqual([]);
+  });
+
+  it("requires ordinary current tasks to be created pending", async () => {
+    const { handlers } = collectHandlers();
+    const result = await handlers.get("granoflow_task_create_structured")?.({
+      title: "规范任务启动时机",
+      description:
+        "先创建待办任务。打个比方，这像先把车停在起跑线。比如，真正执行时再切换为 doing。",
+      status: "doing",
+      authoringEvidence: {
+        titleIntent: "action_or_outcome",
+        plainLanguageReviewed: true,
+        analogyExcerpt: "打个比方，这像先把车停在起跑线。",
+        exampleExcerpt: "比如，真正执行时再切换为 doing。",
+      },
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "task_creation_must_start_pending",
+      data: {
+        requestedStatus: "doing",
+        requiredStatus: "pending",
+      },
+    });
+  });
+
+  it("rejects historical fields locally on ordinary task update", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.statusCode = 500;
+      response.end();
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_update")?.({
+      taskId: "task-1",
+      input: { startedAt: "2026-07-18T09:00:00.000Z" },
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "historical_fields_not_supported",
+      data: { operation: "update", unsupportedFields: ["startedAt"] },
+    });
+    expect(requestedUrls).toEqual([]);
   });
 
   it("previews structured task creation through the Local HTTP API", async () => {
@@ -815,7 +1095,14 @@ describe("MCP tool registration", () => {
 
     const result = await handlers.get("granoflow_task_create_structured")?.({
       title: "Ship MCP v0",
-      description: "Release the package.",
+      description:
+        "Release the package. 打个比方，这像给包裹贴好地址再交给快递。比如，发布后用 npx 安装并验证版本号。",
+      authoringEvidence: {
+        titleIntent: "action_or_outcome",
+        plainLanguageReviewed: true,
+        analogyExcerpt: "打个比方，这像给包裹贴好地址再交给快递。",
+        exampleExcerpt: "比如，发布后用 npx 安装并验证版本号。",
+      },
       remindAt: "2026-07-05T10:05:00.000",
       projectId: "project-1",
       milestoneId: "milestone-1",
@@ -833,6 +1120,7 @@ describe("MCP tool registration", () => {
       },
     });
     expect(JSON.stringify(parseToolText(result))).not.toContain('"tags"');
+    expect(JSON.stringify(parseToolText(result))).not.toContain('"authoringEvidence"');
   });
 
   it("filters unknown tags before structured task creation", async () => {
@@ -870,6 +1158,14 @@ describe("MCP tool registration", () => {
 
     const result = await handlers.get("granoflow_task_create_structured")?.({
       title: "Tagged task",
+      description:
+        "保留已知标签。打个比方，这像门卫只放名单上的访客进门。比如，请求中的 known-tag 会保留，unknown-tag 会跳过。",
+      authoringEvidence: {
+        titleIntent: "action_or_outcome",
+        plainLanguageReviewed: true,
+        analogyExcerpt: "打个比方，这像门卫只放名单上的访客进门。",
+        exampleExcerpt: "比如，请求中的 known-tag 会保留，unknown-tag 会跳过。",
+      },
       tags: ["known-tag", "unknown-tag"],
       dryRun: false,
     });
@@ -917,6 +1213,14 @@ describe("MCP tool registration", () => {
     const result = await handlers.get("granoflow_task_create")?.({
       input: {
         title: "No tags",
+        description:
+          "标签目录不可用时仍创建任务。打个比方，这像通讯录打不开时先记下事情。比如，maybe-tag 会被跳过，任务仍会创建。",
+        authoringEvidence: {
+          titleIntent: "action_or_outcome",
+          plainLanguageReviewed: true,
+          analogyExcerpt: "打个比方，这像通讯录打不开时先记下事情。",
+          exampleExcerpt: "比如，maybe-tag 会被跳过，任务仍会创建。",
+        },
         tags: ["maybe-tag"],
       },
       dryRun: false,
@@ -936,6 +1240,71 @@ describe("MCP tool registration", () => {
       },
     });
     expect(JSON.stringify(parseToolText(result))).not.toContain('"tags"');
+  });
+
+  it("rejects generic task creation when analogy and example evidence are invalid", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.statusCode = 500;
+      response.end();
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_create")?.({
+      input: {
+        title: "统一任务创建标准",
+        description: "所有入口都遵守同一套标准。",
+        authoringEvidence: {
+          titleIntent: "action_or_outcome",
+          plainLanguageReviewed: true,
+          analogyExcerpt: "无",
+          exampleExcerpt: "文中没有这个例子",
+        },
+      },
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "task_authoring_quality_failed",
+      data: {
+        issues: expect.arrayContaining([
+          { field: "authoringEvidence.analogyExcerpt", reason: "placeholder" },
+          { field: "authoringEvidence.exampleExcerpt", reason: "not_in_description" },
+        ]),
+      },
+    });
+    expect(requestedUrls).toEqual([]);
+  });
+
+  it("strips valid generic authoring evidence from the API preview", async () => {
+    const { handlers } = collectHandlers();
+    const result = await handlers.get("granoflow_task_create")?.({
+      input: {
+        title: "统一任务创建标准",
+        description:
+          "让入口共用规则。打个比方，这像每扇门都由同一位检票员检查。比如，项目自动生成的任务也必须给出通俗例子。",
+        authoringEvidence: {
+          titleIntent: "action_or_outcome",
+          plainLanguageReviewed: true,
+          analogyExcerpt: "打个比方，这像每扇门都由同一位检票员检查。",
+          exampleExcerpt: "比如，项目自动生成的任务也必须给出通俗例子。",
+        },
+      },
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        body: {
+          title: "统一任务创建标准",
+        },
+      },
+    });
+    expect(JSON.stringify(parseToolText(result))).not.toContain('"authoringEvidence"');
   });
 
   it("lists tasks filtered by tag query param", async () => {
@@ -1016,6 +1385,26 @@ describe("MCP tool registration", () => {
         },
       },
     });
+  });
+
+  it("starts current execution through status doing without sending startedAt", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_update_structured")?.({
+      taskId: "task-1",
+      status: "doing",
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        method: "PATCH",
+        path: "/v1/tasks/task-1",
+        body: { status: "doing" },
+      },
+    });
+    expect(JSON.stringify(parseToolText(result))).not.toContain("startedAt");
   });
 
   it("previews milestone creation through the Local HTTP API", async () => {
@@ -1184,7 +1573,14 @@ describe("MCP tool registration", () => {
         previewMode: "local_request_sequence_only",
         steps: expect.arrayContaining([
           expect.objectContaining({ method: "PATCH", path: "/v1/tasks/task-1" }),
-          expect.objectContaining({ method: "POST", path: "/v1/tasks/task-1/complete" }),
+          expect.objectContaining({
+            method: "POST",
+            path: "/v1/tasks/task-1/complete",
+            body: {
+              startedAt: "2026-07-02T09:00:00.000",
+              endedAt: "2026-07-02T10:15:00.000",
+            },
+          }),
           expect.objectContaining({
             method: "POST",
             path: "/v1/ai-agent/tasks/import",
@@ -1372,8 +1768,16 @@ describe("MCP tool registration", () => {
           op: "create",
           fields: {
             title: "Historical import",
+            description:
+              "补录已经发生的任务。打个比方，这像把旧收据补进账本。比如，将 7 月 1 日创建的工作保留原始时间。",
             createdAt: "2026-07-01T09:00:00.000",
             startedAt: "2026-06-30T10:00:00.000",
+          },
+          authoringEvidence: {
+            titleIntent: "action_or_outcome",
+            plainLanguageReviewed: true,
+            analogyExcerpt: "打个比方，这像把旧收据补进账本。",
+            exampleExcerpt: "比如，将 7 月 1 日创建的工作保留原始时间。",
           },
           reason: "Import existing work history.",
         },
@@ -1402,6 +1806,43 @@ describe("MCP tool registration", () => {
         },
       },
     });
+    expect(JSON.stringify(parseToolText(result))).not.toContain('"authoringEvidence"');
+  });
+
+  it("rejects historical create mutations without task authoring evidence", async () => {
+    const requestedUrls: string[] = [];
+    const port = await startServer((request, response) => {
+      requestedUrls.push(request.url ?? "");
+      response.statusCode = 500;
+      response.end();
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_task_history_mutate")?.({
+      mutations: [
+        {
+          clientMutationId: "mutation-1",
+          op: "create",
+          fields: {
+            title: "补录历史任务",
+            description: "补录已经完成的工作。",
+          },
+        },
+      ],
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "task_authoring_quality_failed",
+      data: {
+        mutationIndex: 0,
+        clientMutationId: "mutation-1",
+        issues: expect.any(Array),
+      },
+    });
+    expect(requestedUrls).toEqual([]);
   });
 
   it("previews context-pack requests through the dedicated AI-agent API", async () => {
@@ -1427,6 +1868,31 @@ describe("MCP tool registration", () => {
           query: "Fix flaky CI",
           limit: 8,
           client: "codex",
+        },
+      },
+    });
+  });
+
+  it("previews historical task candidate requests through the App-owned API", async () => {
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_historical_task_candidates")?.({
+      taskId: "task-current",
+      summary: "Fix sync regression",
+      limit: 3,
+      dryRun: true,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      code: "dry_run",
+      data: {
+        method: "POST",
+        path: "/v1/ai-agent/tasks/similar-solutions",
+        body: {
+          taskId: "task-current",
+          summary: "Fix sync regression",
+          limit: 3,
+          client: "mcp",
         },
       },
     });
@@ -2065,6 +2531,87 @@ describe("MCP tool registration", () => {
     ]);
   });
 
+  it("forwards historical task candidates only after capability confirmation", async () => {
+    const requested: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/ai-agent/tools") {
+        requested.push({ method: request.method, url: request.url });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              tools: [
+                {
+                  toolId: "granoflow_historical_task_candidates_v2",
+                  enabled: true,
+                  capabilities: {
+                    capability: "historical_task_candidates_v2",
+                    taskAnchored: true,
+                    appOwnedEvidence: true,
+                    relationshipFacts: true,
+                    recommendations: false,
+                  },
+                },
+              ],
+            },
+          }),
+        );
+        return;
+      }
+      if (request.url === "/v1/ai-agent/tasks/similar-solutions") {
+        requested.push({
+          method: request.method,
+          url: request.url,
+          body: await readJsonBody(request),
+        });
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              contract: "granoflow_historical_task_candidates_v2",
+              candidates: [],
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+    const { handlers } = collectHandlers();
+
+    const result = await handlers.get("granoflow_historical_task_candidates")?.({
+      taskId: "task-current",
+      limit: 8,
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: true,
+      data: {
+        ok: true,
+        data: {
+          contract: "granoflow_historical_task_candidates_v2",
+          candidates: [],
+        },
+      },
+    });
+    expect(requested).toEqual([
+      { method: "GET", url: "/v1/ai-agent/tools" },
+      {
+        method: "POST",
+        url: "/v1/ai-agent/tasks/similar-solutions",
+        body: {
+          taskId: "task-current",
+          limit: 8,
+          client: "mcp",
+        },
+      },
+    ]);
+  });
+
   it("previews controlled work-memory write endpoints without writing", async () => {
     const { handlers } = collectHandlers();
 
@@ -2417,6 +2964,165 @@ describe("MCP tool registration", () => {
 });
 
 describe("task plan attachments and nodes", () => {
+  it("accepts self-contained HTML only for the acceptance report slot", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "granoflow-acceptance-"));
+    const filePath = join(dir, "acceptance-report.html");
+    await writeFile(filePath, "<!doctype html><title>Accepted evidence</title>", "utf8");
+    const requests: Array<{ url?: string; body: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      requests.push({
+        url: request.url,
+        body: request.method === "GET" ? null : await readJsonBody(request),
+      });
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/capabilities") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              resources: {
+                task: ["attachment.conditional-add", "attachment.read-content-hash"],
+              },
+            },
+          }),
+        );
+        return;
+      }
+      response.end(JSON.stringify({ ok: true, data: { entity: { id: "report-1" } } }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+
+    const { handlers } = collectHandlers();
+    await handlers.get("granoflow_logical_attachment_replace")?.({
+      entityType: "task",
+      entityId: "task-1",
+      logicalSlot: "acceptance_report",
+      filePath,
+      expectedUpdatedAt: "2026-07-18T10:00:00.000Z",
+      idempotencyKey: "acceptance-v01",
+      visualConfirmed: false,
+      dryRun: false,
+    });
+
+    expect(requests[1]).toMatchObject({
+      url: "/v1/tasks/task-1/attachments",
+      body: { logicalSlot: "acceptance_report" },
+    });
+  });
+
+  it("forwards explicit UI prototype visual confirmation", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "granoflow-prototype-"));
+    const filePath = join(dir, "demo-ui-prototype.zip");
+    await writeFile(filePath, Buffer.from("deterministic-zip-fixture"));
+    const requests: Array<{ url?: string; body: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      requests.push({
+        url: request.url,
+        body: request.method === "GET" ? null : await readJsonBody(request),
+      });
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/capabilities") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              resources: {
+                project: ["attachment.conditional-add", "attachment.read-content-hash"],
+              },
+            },
+          }),
+        );
+        return;
+      }
+      response.end(JSON.stringify({ ok: true, data: { entity: { id: "prototype-1" } } }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+
+    const { handlers } = collectHandlers();
+    await handlers.get("granoflow_logical_attachment_replace")?.({
+      entityType: "project",
+      entityId: "project-1",
+      logicalSlot: "ui_prototype",
+      filePath,
+      expectedUpdatedAt: "2026-07-17T10:00:00.000Z",
+      idempotencyKey: "prototype-v01",
+      visualConfirmed: true,
+      dryRun: false,
+    });
+
+    expect(requests[1]).toMatchObject({
+      url: "/v1/projects/project-1/attachments",
+      body: {
+        logicalSlot: "ui_prototype",
+        visualConfirmed: true,
+      },
+    });
+  });
+
+  it("imports and reads one exact App-owned project design baseline", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "granoflow-design-baseline-"));
+    const filePath = join(dir, "project-design-baseline.zip");
+    const bytes = Buffer.from("deterministic-project-design-baseline");
+    await writeFile(filePath, bytes);
+    const requests: Array<{ url?: string; body: unknown }> = [];
+    const port = await startServer(async (request, response) => {
+      requests.push({ url: request.url, body: await readJsonBody(request) });
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify({ ok: true, data: { current: true } }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+
+    const { handlers } = collectHandlers();
+    await handlers.get("granoflow_project_design_baseline_import")?.({
+      projectId: "project-1",
+      filePath,
+      idempotencyKey: "baseline-v1",
+      dryRun: false,
+    });
+    const packageSha256 = createHash("sha256").update(bytes).digest("hex");
+    await handlers.get("granoflow_project_design_baseline_read")?.({
+      projectId: "project-1",
+      prototypeId: "prototype-1",
+      versionId: "version-1",
+      expectedPackageSha256: packageSha256,
+    });
+
+    expect(requests[0]).toMatchObject({
+      url: "/v1/ai-agent/project-design-baseline/import",
+      body: {
+        projectId: "project-1",
+        displayName: "project-design-baseline.zip",
+        packageBase64: bytes.toString("base64"),
+        expectedPackageSha256: packageSha256,
+        idempotencyKey: "baseline-v1",
+      },
+    });
+    expect(requests[1]).toMatchObject({
+      url: "/v1/ai-agent/project-design-baseline/read",
+      body: {
+        projectId: "project-1",
+        prototypeId: "prototype-1",
+        versionId: "version-1",
+        expectedPackageSha256: packageSha256,
+      },
+    });
+  });
+
+  it("rejects a relative project design baseline path", async () => {
+    const { handlers } = collectHandlers();
+    const result = await handlers.get("granoflow_project_design_baseline_import")?.({
+      projectId: "project-1",
+      filePath: "project-design-baseline.zip",
+      idempotencyKey: "baseline-v1",
+      dryRun: false,
+    });
+
+    expect(parseToolText(result)).toMatchObject({
+      ok: false,
+      code: "unsafe_project_design_baseline_path",
+    });
+  });
+
   it("blocks completion when no analysis or plan attachment is present", async () => {
     const port = await startServer((request, response) => {
       response.setHeader("content-type", "application/json");

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Granoflow Task Orchestrator"
+  short_description: "Context-aware GF task lifecycle orchestration"

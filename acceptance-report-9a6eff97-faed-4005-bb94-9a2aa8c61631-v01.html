@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>软件 Plan 结构预算与执行告知</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      body {
+        margin: 0;
+        background: #f4f6fa;
+        color: #172033;
+      }
+      main {
+        max-width: 980px;
+        margin: auto;
+        padding: 32px 20px;
+      }
+      section,
+      header {
+        background: white;
+        border: 1px solid #dce2eb;
+        border-radius: 16px;
+        padding: 24px;
+        margin: 16px 0;
+        box-shadow: 0 8px 24px #1d2a4412;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      h2 {
+        font-size: 1.12rem;
+      }
+      .muted {
+        color: #647087;
+      }
+      code {
+        background: #edf1f7;
+        border-radius: 6px;
+        padding: 2px 6px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid #e3e7ee;
+        padding: 10px;
+      }
+      img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        border: 1px solid #dce2eb;
+      }
+      figcaption {
+        margin-top: 8px;
+        color: #647087;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #111722;
+          color: #e8edf7;
+        }
+        section,
+        header {
+          background: #1b2432;
+          border-color: #344156;
+        }
+        code {
+          background: #283548;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main data-schema="granoflow_acceptance_report_v1">
+      <header>
+        <p class="muted">Granoflow 验收报告 · 2026-07-18T20:01:14+08:00</p>
+        <h1>软件 Plan 结构预算与执行告知</h1>
+        <p>
+          验收通过：公共 bundled Skill 已形成从项目初始化、Planning、执行告知到 Delivery/acceptance
+          的单一结构预算合同；无人值守展示告知后直接继续。
+        </p>
+      </header>
+      <section>
+        <h2>代码变化</h2>
+        <ul>
+          <li>
+            新增 canonical software-structural-budget reference，并由 7 个 Task Work、Project
+            Work、Project Definition、Delivery 与 acceptance 合同引用。
+          </li>
+          <li>
+            最小变更预算：实际触点为 8 个 Skill/reference 文档和 4 个契约测试文件；src/tools.ts、MCP
+            参数、App/API/schema、依赖、版本与发布流程是已检查且未变的保护面。
+          </li>
+          <li>
+            结构预算：canonical reference 117 行；最大契约测试文件 818 行，新增或扩展 callback
+            不超过 21 行；测试硬限制 1000/150 通过。
+          </li>
+          <li>
+            仓库尚未把物理行限制接入 lint、hooks 或 CI，因此 enforcement status 如实为
+            recorded_pending_enforcement。
+          </li>
+        </ul>
+        <h2>数据库变化</h2>
+        <ul>
+          <li>not_required：无数据库、Granoflow App schema 或迁移变化。</li>
+        </ul>
+        <h2>流程变化</h2>
+        <ul>
+          <li>
+            项目已有更严格规则优先；没有规则时由 Agent 选择并记录可追溯
+            fallback，普通技术默认无需用户确认。
+          </li>
+          <li>
+            首次编辑前展示文件、符号、职责、规模、拆分边界、最小完整迭代和保护面；无人值守模式随后自动继续。
+          </li>
+          <li>
+            发现新触点先告知，只有真实范围漂移、保护面变化或外部权限才暂停；Delivery
+            对账计划值与实际值。
+          </li>
+          <li>
+            npm pack dry-run 已确认新 reference 位于发布包；fresh-process resource readback 为 5484
+            bytes，SHA-256 15dbb66ae2878d02b326d9cb10e88b19d93eace1a48f01bfc359893bd16b6aaf。
+          </li>
+          <li>
+            当前对话连接的旧 MCP 进程保留了变更前 manifest；重启后按新构建动态发现。npm
+            发布、版本递增、commit、push 和部署均未执行。
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>自动化验证</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>检查</th>
+              <th>状态</th>
+              <th>证据</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Targeted contract tests</td>
+              <td><code>passed</code></td>
+              <td>4 files, 63 tests passed</td>
+            </tr>
+            <tr>
+              <td>MCP full quality gate</td>
+              <td><code>passed</code></td>
+              <td>
+                npm run check: Prettier, ESLint, Ruff, Pyright, TypeScript build, 56 Python tests
+                and 186 Vitest tests passed
+              </td>
+            </tr>
+            <tr>
+              <td>Patch integrity</td>
+              <td><code>passed</code></td>
+              <td>git diff --check exited 0</td>
+            </tr>
+            <tr>
+              <td>Publishable package contents</td>
+              <td><code>passed</code></td>
+              <td>
+                npm pack --dry-run --json includes
+                skills/granoflow-agent-workflow/references/software-structural-budget.md
+              </td>
+            </tr>
+            <tr>
+              <td>Fresh bundled-resource readback</td>
+              <td><code>passed</code></td>
+              <td>
+                manifest listed reference; 5484 bytes; expected forecast content present; SHA-256
+                matched
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>集成测试</h2>
+        <p>
+          <code>not_required</code>
+          这是 Markdown 工作流合同和确定性资源发现变更，没有 UI、API、schema
+          或外部集成路径；替代证据为全量门禁、npm 包清单和 fresh-process readback。
+        </p>
+        <p class="muted">没有编排脚本。</p>
+      </section>
+      <section>
+        <h2>截图验证</h2>
+        <p>
+          <code>not_required</code>
+          没有用户界面变化或运行时视觉主张，截图不能增加有效验收证据。
+        </p>
+        <p class="muted">本报告没有关键截图。</p>
+      </section>
+    </main>
+  </body>
+</html>

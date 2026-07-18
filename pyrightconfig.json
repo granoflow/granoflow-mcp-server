@@ -1,6 +1,19 @@
 {
-  "include": ["skills/granoflow-gfmcp-runner/scripts", "tests/python"],
-  "extraPaths": ["skills/granoflow-gfmcp-runner/scripts"],
+  "include": [
+    "skills/granoflow-gfmcp-runner/scripts",
+    "skills/granoflow-delegated-authorization/scripts",
+    "skills/granoflow-task-orchestrator/scripts",
+    "skills/granoflow-persistent-milestone-runner/scripts",
+    "skills/granoflow-project-definition/scripts",
+    "tests/python"
+  ],
+  "extraPaths": [
+    "skills/granoflow-gfmcp-runner/scripts",
+    "skills/granoflow-delegated-authorization/scripts",
+    "skills/granoflow-task-orchestrator/scripts",
+    "skills/granoflow-persistent-milestone-runner/scripts",
+    "skills/granoflow-project-definition/scripts"
+  ],
   "pythonVersion": "3.11",
   "typeCheckingMode": "basic"
 }

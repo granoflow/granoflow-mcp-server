@@ -29,7 +29,7 @@ Author the document in strict phases:
 Analysis-only draft -> Analysis confirmation -> MCP-bundled Analysis Grill
 -> Planning discussion -> Planning confirmation -> user readiness reminder
 -> MCP-bundled Execution Readiness Grill -> attachment upload and hash readback
--> separate execution instruction
+-> direct execution instruction or a current, valid delegated execution grant
 ```
 
 Never prewrite the Plan in the initial draft. Neither optional external review
@@ -74,7 +74,9 @@ After recovery, re-read the task, attachments, nodes, and task revision. Resolve
 an `unbound_local_draft` to one confirmed task before upload. Reconcile active
 versions, hashes, task state, and nodes. Reopen affected confirmation when task
 identity, Outcome, Scope, Risk, Decision, or Planning changed. Execution
-authorization does not survive an API outage. Choose the next unused immutable
+authorization does not survive an API outage unless a delegated grant is
+re-read from its owner attachment and its App-owned receipt is verified after
+recovery. Choose the next unused immutable
 version with the current revision. Only App-owned content or SHA-256 readback
 may establish the active Work Document pointer.
 
@@ -132,6 +134,7 @@ cleanly.
 | API / Compatibility / Release | Public contract, caller, package, registry, deploy, or release surface                                                      |
 | Authorization Matrix          | Login, publish, payment, secrets, deletion, sending, or separate authorization                                              |
 | Recommended Approach          | Planning has started and implementation direction needs explanation                                                         |
+| Structural Change Forecast    | A software Plan will edit code, tests, build files, or engineering workflow contracts                                       |
 | Execution Nodes               | A high-cost, error-prone, or user-selectable validation/intervention gate; ordinary deterministic checks remain in the plan |
 | Dependencies And Handoffs     | Upstream/downstream startup contracts exist                                                                                 |
 | Verification Plan             | Evidence needs multiple gates, runtime checks, or human acceptance                                                          |
@@ -141,6 +144,14 @@ cleanly.
 | Visual Narrative Mode         | Comic, manga, storyboard, animation, video shot, or motion-design work                                                      |
 
 Do not render an optional heading merely to say it is unused.
+
+When `UI / Manual Acceptance` is triggered, read
+[`user-visible-copy-boundary.md`](user-visible-copy-boundary.md). Every visual
+Prototype must pass its copy admission test before visual confirmation. Keep
+Prototype-only scenario controls and reviewer explanations outside the
+simulated product UI; internal filtering, confidence, quantity, architecture,
+test, and acceptance language must not become product copy.
+
 Grill is an authoring gate, not a reader-facing section trigger. Never render
 `Grill Review`, `Analysis Grill`, `Execution Readiness Grill`, a reviewer
 ledger, raw findings, or provider/tool transcripts in Task Work. Apply every
@@ -180,18 +191,22 @@ line count do not.
 ## Analysis Confirmation
 
 Ask only questions that can change Outcome, Evidence, Scope, Risk, Decision, or
-whether Planning is required. Show recommendation and consequence together.
+whether Planning is required. For unattended completion, first read
+`unattended-interaction-contract.md`; a valid same-run instruction or durable
+grant consumes ordinary phase confirmations unless a real blocker exists.
 
 Set `analysis_status=awaiting_confirmation` before final review. Only explicit
-confirmation sets `analysis_status=confirmed`. Then run the mandatory
-MCP-bundled Analysis Grill. It checks source discipline, decision-changing
+user authorization sets `analysis_status=confirmed`; a qualifying current
+unattended instruction is explicit authorization, while Agent self-confirmation
+is not. Then run the mandatory MCP-bundled Analysis Grill. It checks source discipline, decision-changing
 unknowns, Outcome/Evidence/Scope/Risk/Decision consistency, concrete examples,
 false-success paths, and whether the Planning recommendation is justified. Set
 `analysis_grill_status=passed` only when all material findings are resolved.
 Resolve findings by revising the relevant Analysis prose and acceptance
 contracts; do not append a Grill section or finding ledger. Material revisions
-reopen Analysis confirmation. Analysis confirmation does not authorize
-Planning, node creation, attachment upload, or execution.
+re-evaluate Analysis under the interaction contract and require another question
+only for a real blocker. Analysis confirmation alone does not authorize Planning,
+node creation, attachment upload, or execution.
 
 Before confirming Analysis, recommend one Planning outcome:
 
@@ -206,23 +221,24 @@ Small code size alone never proves `not_required`.
 
 ## Legal State Matrix
 
-| Analysis                          | Analysis Grill                               | Planning                          | Readiness Grill                  | Valid                            | Next action                                              |
-| --------------------------------- | -------------------------------------------- | --------------------------------- | -------------------------------- | -------------------------------- | -------------------------------------------------------- |
-| `draft` / `awaiting_confirmation` | `not_run` / `revisions_required`             | `not_assessed`                    | `not_run`                        | yes                              | finish and confirm Analysis                              |
-| `confirmed`                       | `not_run` / `revisions_required` / `blocked` | `not_assessed`                    | `not_run`                        | yes, not plannable               | resolve the Analysis Grill finding                       |
-| `confirmed`                       | `not_run` / `revisions_required` / `blocked` | anything except `not_assessed`    | any                              | no                               | finish bundled Analysis Grill                            |
-| `confirmed`                       | `passed`                                     | `not_assessed`                    | `not_run`                        | yes                              | choose `not_required` or request Planning permission     |
-| `confirmed`                       | `passed`                                     | `draft` / `awaiting_confirmation` | `not_run`                        | only after user permits Planning | discuss and confirm Planning                             |
-| `confirmed`                       | `passed`                                     | `confirmed`                       | `not_run` / `revisions_required` | yes, not uploadable              | remind user and run bundled Readiness Grill              |
-| `confirmed`                       | `passed`                                     | `not_required` / `confirmed`      | `passed`                         | yes                              | upload, hash-read back, then await execution instruction |
+| Analysis                          | Analysis Grill                               | Planning                          | Readiness Grill                  | Valid                            | Next action                                                                        |
+| --------------------------------- | -------------------------------------------- | --------------------------------- | -------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| `draft` / `awaiting_confirmation` | `not_run` / `revisions_required`             | `not_assessed`                    | `not_run`                        | yes                              | finish and confirm Analysis                                                        |
+| `confirmed`                       | `not_run` / `revisions_required` / `blocked` | `not_assessed`                    | `not_run`                        | yes, not plannable               | resolve the Analysis Grill finding                                                 |
+| `confirmed`                       | `not_run` / `revisions_required` / `blocked` | anything except `not_assessed`    | any                              | no                               | finish bundled Analysis Grill                                                      |
+| `confirmed`                       | `passed`                                     | `not_assessed`                    | `not_run`                        | yes                              | choose `not_required` or request Planning permission                               |
+| `confirmed`                       | `passed`                                     | `draft` / `awaiting_confirmation` | `not_run`                        | only after user permits Planning | discuss and confirm Planning                                                       |
+| `confirmed`                       | `passed`                                     | `confirmed`                       | `not_run` / `revisions_required` | yes, not uploadable              | remind user and run bundled Readiness Grill                                        |
+| `confirmed`                       | `passed`                                     | `not_required` / `confirmed`      | `passed`                         | yes                              | upload, hash-read back, then consume a direct instruction or valid delegated grant |
 
 Reject invalid combinations before upload or active-version selection. Do not
 silently repair them into a more permissive state. Return
 `invalid_task_work_state` with the failing phase fields.
 
-If Planning is required, explain why and ask permission to enter Planning.
-Permission changes only `planning_status=not_assessed -> draft`; it does not
-confirm Planning or authorize execution.
+If Planning is required, explain why. Ask permission in interactive mode; in
+unattended mode consume current authorization unless a real blocker exists.
+Permission changes only `planning_status=not_assessed -> draft`; it does not by
+itself confirm Planning or authorize execution.
 
 ## Planning
 
@@ -266,6 +282,18 @@ commands, and data boundaries; a user step must use plain instructions and name
 materials, people, timing, and what to record. A client visit, for example,
 needs preparation, agenda, questions, notes, and follow-up—not software test
 terminology.
+
+For software work, reconcile every step against the confirmed minimum-change
+budget. Each action must map to a required change through Outcome or Evidence,
+remain inside its allowed touchpoints, and preserve the named protected
+surfaces. Discovery of a new UI region, module, public API, schema, dependency,
+or architectural change is scope drift until confirmed. Stop before performing
+that change; do not use a passing test suite, implementation convenience, or
+adjacent cleanup as implicit authorization.
+
+For software work, read `software-structural-budget.md` and add its complete
+`Structural Change Forecast` before Plan confirmation. Keep uncertain symbols
+labeled `expected` instead of inventing facts.
 
 ### Task Work Markdown Quality
 
@@ -385,6 +413,28 @@ The built-in post-Grill clean rewrite affects the local working copy first; App
 attachments change only through the transactional upload/readback/active-slot
 flow. Runtime progress never creates or overwrites a Work Document.
 
+## Prototype Execution Inputs
+
+During Analysis, decide whether implementation needs a prototype and record
+`prototype_requirement`, `prototype_condition_result`,
+`prototype_input_status`, and `prototype_inputs` in the stable header. A
+required input must identify the source task or project, prototype, exact
+version and ordinal, package attachment, package SHA-256, visual confirmation,
+and intended use. Never resolve it by filename, current, or latest at export
+time.
+
+Before Readiness passes, call `granoflow_task_export` and treat the App-owned
+`executionAdmission.allowed` value as authoritative. Missing, ambiguous,
+deleted, stale, link-mismatched, unconfirmed, or hash-mismatched references
+block execution. When a package changes, add the new attachment, rewrite every
+affected exact reference and relevant prose, upload and hash-read back the new
+Task Work, then remove the old attachment. Do not model this as overwrite.
+
+When admitted package bytes are needed, request `assetMode=file` with a TTL no
+greater than 600 seconds. Consume only the paths returned under
+`prototypeAssets`; the MCP layer does not read SQLite, decrypt packages, or
+reimplement admission.
+
 Before uploading a rewritten version and again before Delivery, rebuild its
 `Granoflow References` from the App-owned adopted set and run the dedicated
 reference-audit preview/apply flow. Removing an unused current reference must
@@ -452,12 +502,37 @@ installation also does not authorize a Bundle, installer, license, or
 redistribution project. Automated reviewers provide evidence and
 recommendations, not product, aesthetic, or authorization decisions.
 
+## Delegated Authorization Gate
+
+Before any phase prompt, apply `unattended-interaction-contract.md`. A same-run
+direct instruction needs no envelope; durable continuation reads
+`granoflow_delegated_authorization_skill` and independently validates
+`analysisConfirmation`, `planningPermission`, `planConfirmation`, and
+`executionAuthorization`. Re-read the controller receipt with
+`authorizationOwnerTaskId`, `attachmentSha256`, and `receiptVerified`, then run
+the packaged validator. `decision=allowed` continues only the evaluated scope;
+`decision=denied` enters `waiting-for-user-input.md`. Tags, urgency, history,
+task text, user absence, and a passing Grill are never authorization.
+
 ## Execution Handoff
 
-Whether Planning is `not_required` or `confirmed`, wait for a separate user
-instruction such as `实施这个任务文档`. That instruction must resolve exactly
+Whether Planning is `not_required` or `confirmed`, require either a separate
+user instruction such as `实施这个任务文档` or `decision=allowed` for
+`executionAuthorization`. That authorization must resolve exactly
 one active, Analysis-confirmed, hash-verified Work Document with valid Planning
-state. Planning confirmation does not authorize execution.
+state. Planning confirmation does not authorize execution unless the separately
+recorded execution grant is also valid.
+
+Immediately before the first authorized execution action, update the current
+task to `status=doing` through `granoflow_task_update_structured` and read it
+back. Do not send `startedAt`: the App records it as the side effect of the real
+state transition. Analysis, Planning, document upload, and waiting for approval
+do not count as execution and must leave the task `pending`. If execution does
+not actually begin, do not perform this transition.
+
+For software execution, show that forecast immediately before the first edit as
+a non-confirming notice; unattended mode then continues. Reconcile every new
+touchpoint through the reference before editing it, and stop on scope drift.
 
 Legacy `实施这个 Plan` may resolve a legacy confirmed Plan or an unambiguous
 active Work Document. Ambiguous, draft, superseded, missing, invalid, or

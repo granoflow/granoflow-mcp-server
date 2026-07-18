@@ -17,6 +17,12 @@ the user's language by default.
 
 Use the Granoflow Local HTTP API or documented Granoflow tools.
 
+When this branch follows delegated-authorization evaluation, preserve the stable
+deny reason from `decision=denied` in the waiting node. Missing envelope,
+unreadable owner attachment, `attachmentSha256` mismatch, or
+`receiptVerified=false` is `stale_state`, not permission to continue. A GFMCP tag
+is eligibility only and is never authorization.
+
 1. Complete any already-finished task nodes when a node-aware API path is
    available.
 2. Move safe, non-authorized nodes before the authorization node when they can be

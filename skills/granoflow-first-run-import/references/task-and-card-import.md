@@ -5,6 +5,11 @@ and review-card candidates.
 
 This reference defines import boundaries. Delegate every discovered card candidate to the bundled `granoflow-review-card-draft` skill. First-run import does not own card search, filtering, quality, confirmation, or writes.
 
+Read and apply `granoflow-agent-workflow/task-authoring-quality-contract` before
+creating any retained task. Historical source material may supply the facts, but
+import does not lower the title, plain-language, analogy, example, or change
+evidence standard.
+
 ## Task Candidate Gate
 
 Create a task candidate only when the source contains at least one of:
@@ -40,6 +45,8 @@ Each candidate should include:
 - task review candidate when the source has durable review value;
 - dedupe key;
 - completion source: `ai`, `human`, or `unknown`.
+- exact `authoringEvidence` excerpts for the analogy and concrete example when
+  the candidate will be created through an MCP task-write tool.
 
 Completed work should become completed tasks only when the source clearly
 records an outcome. Otherwise keep it as pending, blocked, or

@@ -18,17 +18,28 @@ supersedes: null | <prior task_work attachment in the same slot>
 profiles: [] | [learning] | [software_development] | [...future profiles]
 domain: <optional domain such as visual_narrative>
 task_mode: <optional domain mode such as comic | animation>
+prototype_requirement: required | not_required | conditional
+prototype_condition_result: required | not_required | unresolved | not_applicable
+prototype_input_status: not_applicable | awaiting_reference | awaiting_visual_confirmation | ready | stale | blocked
+prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":"<id>","prototype_id":"<id>","version_id":"<id>","version_ordinal":1,"package_attachment_id":"<id>","package_sha256":"<64 lowercase hex>","visually_confirmed":true,"intended_use":"<purpose>"}]
 analysis_status: draft | awaiting_confirmation | confirmed
 analysis_grill_status: not_run | passed | revisions_required | blocked
 decision: proceed | needs_input | user_action | split | redefine | defer | abandon | completion_audit
 planning_status: not_assessed | not_required | draft | awaiting_confirmation | confirmed
 readiness_grill_status: not_run | not_applicable | passed | revisions_required | blocked
+execution_authorization: not_requested | awaiting_confirmation | direct_confirmed | delegated_confirmed | denied
 skill_routing: not_triggered | completed | declined | fallback | failed
 card_checkpoint: not_triggered | completed | partial | deferred | conflict | verification_failed
 created_at: <local timestamp>
 updated_at: <local timestamp>
 
 > Scope notice: This is a pre-execution governance document. It records confirmed Analysis and applicable Planning, not execution progress or actual Delivery.
+
+When `execution_authorization: delegated_confirmed`, include an authorization
+receipt with `envelopeId`, `authorizationOwnerTaskId`, `attachmentId`,
+`attachmentSha256`, evaluated phase, Plan hash, `receiptVerified=true`, decision,
+reason code, and evaluated scope. Do not copy the full envelope into every target
+Task Work. Only the controller Task owns the envelope body.
 
 ## Reader Summary
 
@@ -61,6 +72,12 @@ Keep machine-stable metadata keys in English. Write the body headings and prose
 in the user's language; a host may localize `Reader Summary`, `Outcome`,
 `Evidence`, `Scope`, `Risk`, and `Next Action` while preserving their semantics.
 Explain necessary professional terms in plain language on first use.
+
+Prototype inputs are exact execution references, never filename/current/latest
+hints. `not_required` requires `prototype_condition_result: not_applicable`,
+`prototype_input_status: not_applicable`, and an empty list. `required` requires
+at least one complete exact reference, visual confirmation, and `ready` before
+Readiness can pass. An unresolved `conditional` requirement fails closed.
 
 The persisted Granoflow task description has a separate mandatory five-
 dimension prose contract: problem, proposed solution, prerequisites and
@@ -122,7 +139,8 @@ The five core sections are always present and contain task-specific substance:
 
 - `Outcome`: what becomes true when the task succeeds;
 - `Evidence`: what rules out false success;
-- `Scope`: the work and the minimum necessary non-goals;
+- `Scope`: a semantic minimum-change budget containing required changes,
+  allowed touchpoints, protected surfaces, and the minimum necessary non-goals;
 - `Risk`: the material risk, or one evidence-backed low-risk sentence;
 - `Next Action`: the state-level next step currently allowed.
 
@@ -159,6 +177,7 @@ triggered, use these stable headings:
 - `API / Compatibility / Release`
 - `Authorization Matrix`
 - `Recommended Approach`
+- `Structural Change Forecast`
 - `Skill Execution Strategy`
 - `Execution Nodes`
 - `Dependencies And Handoffs`
@@ -220,6 +239,19 @@ can follow without the original thread. Each ordinary plan step records:
 - Expected focused time: <range and basis, or explicit unknown>
 ```
 
+For software work, every step's `Purpose` must map the action to a confirmed
+Outcome or Evidence item. Its `Action` must stay inside the allowed touchpoints,
+and `Stop / Handoff` must stop before changing a protected surface. A file or
+line-count budget may support review, but it never replaces this semantic
+mapping.
+
+When software Planning is required, render `Structural Change Forecast` using
+`software-structural-budget.md`. The forecast names expected files and symbols,
+current responsibilities and sizes when available, projected change, applicable
+limits and sources, split seams, protected surfaces, and why the proposal is the
+smallest complete iteration. It is later shown as a non-confirming execution
+notice.
+
 Adapt the `Action` to the performer. An AI-oriented step names files, APIs,
 commands, data boundaries, and observable output. A user-oriented step uses
 plain instructions, required materials, timing, people, and what to record—for
@@ -268,7 +300,8 @@ before/after commentary. Planning cannot begin unless the result is `passed`.
 
 After the Plan discussion is complete and the Plan is user-confirmed as
 executable, notify the user that readiness review is starting and that a passing
-document will be uploaded but will still require a separate execution command.
+document will be uploaded but will still require either a separate execution
+command or a separately valid delegated `executionAuthorization` grant.
 Then run the Execution Readiness Grill, covering at least:
 
 - whether the steps are sufficient to complete the stated Outcome;

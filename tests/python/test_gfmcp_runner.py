@@ -12,8 +12,13 @@ sys.path.insert(0, str(SCRIPTS))
 
 from gfmcp_api import GranoflowApiError  # noqa: E402
 from gfmcp_executor import ExecutorResult, build_prompt  # noqa: E402
-from gfmcp_runner import DEFAULT_INTERVAL_SECONDS, run_cycle  # noqa: E402
-from gfmcp_state import StateStore, lease_available  # noqa: E402
+from gfmcp_runner import (  # noqa: E402
+    DEFAULT_INTERVAL_SECONDS,
+    main,
+    run_cycle,
+    should_poll_immediately,
+)
+from gfmcp_state import EVENT_LIMIT, StateStore, lease_available  # noqa: E402
 
 
 class FakeApi:
@@ -80,8 +85,64 @@ class GfmcpRunnerTest(unittest.TestCase):
             status = run_cycle(
                 api, StateStore(Path(directory)), Path(directory), "codex", 30, False
             )
+            runtime = StateStore(Path(directory)).load()["runtime"]
         self.assertEqual(status, "task_completed")
         self.assertEqual(api.calls[:4], ["health", "prepare", "safe_sync", "candidates"])
+        self.assertEqual(runtime["phase"], "verifying")
+        self.assertEqual(runtime["currentTaskId"], "task-1")
+
+    def test_only_completed_task_triggers_immediate_recheck(self) -> None:
+        self.assertTrue(should_poll_immediately("task_completed"))
+        self.assertFalse(should_poll_immediately("no_candidates"))
+        self.assertFalse(should_poll_immediately("task_still_pending"))
+
+    def test_runtime_events_are_bounded_and_contain_no_task_body(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = StateStore(Path(directory))
+            for index in range(EVENT_LIMIT + 5):
+                store.update_runtime("polling", status=f"poll_{index}", task_id="task-1")
+            state = store.load()
+            self.assertEqual(len(state["events"]), EVENT_LIMIT)
+            serialized = str(state)
+            self.assertNotIn("description", serialized)
+            self.assertNotIn("executor prompt", serialized)
+
+    def test_status_reports_stopped_when_lock_is_not_owned(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = StateStore(Path(directory))
+            store.update_runtime("waiting", status="no_candidates")
+            status = store.status()
+            self.assertFalse(status["active"])
+            self.assertEqual(status["phase"], "stopped")
+            self.assertEqual(status["lastKnownPhase"], "waiting")
+
+    def test_interruptible_wait_stops_immediately_after_request(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = StateStore(Path(directory))
+            store.directory.mkdir(parents=True, exist_ok=True)
+            store.stop_path.write_text("stop\n", encoding="utf-8")
+            self.assertFalse(store.interruptible_wait(300))
+
+    def test_status_cli_never_calls_local_api(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with patch("gfmcp_runner.GranoflowApi") as api:
+                result = main(["--status", "--state-dir", directory])
+            self.assertEqual(result, 0)
+            api.assert_not_called()
+
+    def test_main_rechecks_immediately_after_completion(self) -> None:
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch("gfmcp_runner.GranoflowApi"),
+            patch(
+                "gfmcp_runner.run_cycle",
+                side_effect=["task_completed", "no_candidates"],
+            ) as cycle,
+            patch.object(StateStore, "interruptible_wait", return_value=False),
+        ):
+            result = main(["--state-dir", directory, "--interval-seconds", "300"])
+        self.assertEqual(result, 0)
+        self.assertEqual(cycle.call_count, 2)
 
     def test_sync_failure_degrades_to_local_queue(self) -> None:
         task = {"id": "task-1", "title": "T", "status": "pending"}
@@ -134,6 +195,12 @@ class GfmcpRunnerTest(unittest.TestCase):
         self.assertIn("Deferred Task Review", prompt)
         self.assertIn("Delivery Card Checkpoint", prompt)
         self.assertIn("not infer approval", prompt)
+        self.assertIn("granoflow-delegated-authorization", prompt)
+        self.assertIn("validate_delegated_authorization.py", prompt)
+        self.assertIn("decision=allowed", prompt)
+        self.assertIn("GFMCP tag is eligibility only", prompt)
+        self.assertIn("decision=denied", prompt)
+        self.assertIn("waiting-for-user-input", prompt)
 
 
 if __name__ == "__main__":

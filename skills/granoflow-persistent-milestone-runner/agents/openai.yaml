@@ -1,0 +1,4 @@
+interface:
+  display_name: "Granoflow Persistent Milestone Runner"
+  short_description: "Run long milestones with recovery and evidence gates"
+  default_prompt: "Use the persistent milestone runner contract to continue a Granoflow milestone safely across finite worker sessions."

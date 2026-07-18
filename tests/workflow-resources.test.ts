@@ -32,6 +32,79 @@ afterEach(async () => {
 });
 
 describe("bundled skill workflow resources", () => {
+  it("publishes the unattended interaction contract through the public manifest", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-agent-workflow");
+
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "unattended-interaction-contract",
+      path: "skills/granoflow-agent-workflow/references/unattended-interaction-contract.md",
+    });
+    await expect(
+      resources.readReference("granoflow-agent-workflow", "unattended-interaction-contract"),
+    ).resolves.toMatchObject({
+      content: expect.stringContaining("interaction_budget: 0"),
+    });
+  });
+
+  it("discovers the persistent milestone runner contracts", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-persistent-milestone-runner");
+
+    expect(manifest.map((item) => item.referenceId)).toEqual([
+      "acceptance-report-manifest",
+      "authorization-manifest",
+      "runtime-contract",
+      "worker-report",
+    ]);
+  });
+
+  it("discovers milestone workflow contract references", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-milestone-workflow");
+
+    expect(manifest.map((item) => item.referenceId)).toEqual([
+      "milestone-collaboration-workflow",
+      "milestone-work-document-template",
+    ]);
+    await expect(
+      resources.readReference("granoflow-milestone-workflow", "milestone-work-document-template"),
+    ).resolves.toMatchObject({
+      skillId: "granoflow-milestone-workflow",
+      path: "skills/granoflow-milestone-workflow/references/milestone-work-document-template.md",
+    });
+  });
+
+  it("discovers task-orchestrator public references", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-task-orchestrator");
+
+    expect(manifest.map((item) => item.referenceId)).toEqual(
+      expect.arrayContaining([
+        "intent-and-maturity-routing",
+        "task-depth-placement-and-dates",
+        "short-command-contract",
+        "end-to-end-orchestration",
+      ]),
+    );
+    await expect(
+      resources.readReference("granoflow-task-orchestrator", "short-command-contract"),
+    ).resolves.toMatchObject({
+      skillId: "granoflow-task-orchestrator",
+      path: "skills/granoflow-task-orchestrator/references/short-command-contract.md",
+    });
+  });
+
+  it("discovers delegated-authorization public references", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-delegated-authorization");
+
+    expect(manifest.map((item) => item.referenceId)).toEqual(
+      expect.arrayContaining(["authorization-envelope", "host-routing-and-waiting"]),
+    );
+  });
+
   it("discovers and reads the first-run recommended external Skills owner", async () => {
     const resources = createBundledSkillResources(new URL("../", import.meta.url));
     const manifest = await resources.listReferences("granoflow-first-run-import");
@@ -74,6 +147,7 @@ describe("bundled skill workflow resources", () => {
     const manifest = await resources.listReferences("granoflow-agent-workflow");
 
     for (const referenceId of [
+      "software-structural-budget",
       "task-work-document-template",
       "task-work-document-workflow",
       "visual-narrative-task-work",

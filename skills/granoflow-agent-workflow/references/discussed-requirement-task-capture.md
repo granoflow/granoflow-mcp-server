@@ -11,6 +11,10 @@ Create a task from this requirement
 At runtime, accept equivalent commands in the user's language, including
 `把我们讨论的需求建一个任务`, `插入任务`, and `加入任务`.
 
+Read `granoflow-agent-workflow/task-authoring-quality-contract` first. Its
+title, plain-language, analogy, example, and change-evidence rules are mandatory
+for this quick path too.
+
 ## Purpose
 
 This is a quick-capture workflow. Preserve enough context for later analysis
@@ -66,16 +70,21 @@ Examples:
    milestone under that project are an unambiguous strong match.
 5. For every other default placement state, create the task in inbox/default
    placement by omitting both `projectId` and `milestoneId`.
-6. Treat the user's explicit task-creation request as confirmation. Call
-   `granoflow_task_create_structured` with `dryRun=false`.
+6. Build `authoringEvidence` from exact, different analogy and example excerpts
+   in the description. Treat the user's explicit task-creation request as
+   confirmation. Call `granoflow_task_create_structured` with `dryRun=false`,
+   omit all historical physical fields, and leave the task `pending`.
 7. Use the task id returned by creation to read the task back. Do not resolve the
    newly created task by title. If a supported field was dropped, patch it once
    and read back by id again.
 8. Return exactly one success sentence from [Success Reply](#success-reply).
 
-Before writing the task, recover the earliest task-related user question in the
-current agent thread and write that timestamp as `startedAt`. Do not use task
-creation time when the thread provides an earlier start.
+Ordinary capture never writes `createdAt`, `updatedAt`, `startedAt`, `endedAt`,
+or `deletedAt`. Discussion is not execution. After Analysis/Plan readiness and
+separate execution authorization, start current work by updating the task to
+`status=doing`; the App records `startedAt` at that transition. Use
+`granoflow_task_history_mutate` only when correcting genuine historical facts,
+not as a retry path for current-task capture.
 
 Do not ask the user to choose a project or milestone in the default quick path.
 Do not create, restore, reopen, or rename project structure during capture.
@@ -124,8 +133,8 @@ failed, who is affected, and under what circumstances. The solution must state
 the intended behavior change, and the acceptance condition must name the
 observable evidence that distinguishes success from the original failure.
 
-Every description must include at least one concrete example of the real or
-plausible situation being addressed. The example should say what the user,
+Every description must include one real analogy. Every description must include at least one concrete example
+of the real or plausible situation being addressed. The example should say what the user,
 agent, system, or other affected party encounters and why that encounter is a
 problem; for example, “用户只看到‘实现分层超时’，无法知道哪个请求会被截断，
 也无法判断修复是否生效” is useful, while “完善相关目标” is not. When the

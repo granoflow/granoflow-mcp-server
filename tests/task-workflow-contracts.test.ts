@@ -6,6 +6,151 @@ const reference = (name: string) =>
   readFileSync(`skills/granoflow-agent-workflow/references/${name}`, "utf8");
 
 describe("Task Delivery and Deferred Task Review contracts", () => {
+  it("publishes one structural-budget owner from init through delivery", () => {
+    const budget = reference("software-structural-budget.md");
+    const software = reference("task-analysis-profile-software-development.md");
+    const workflow = reference("task-work-document-workflow.md");
+    const template = reference("task-work-document-template.md");
+    const modes = reference("execution-modes-and-acceptance-reports.md");
+    const delivery = reference("task-delivery-profile-software-development.md");
+
+    const normalizedBudget = budget.replace(/\s+/g, " ");
+    expect(normalizedBudget).toMatch(/production source \| 400 \/ 600 \| 60 \/ 100/);
+    expect(normalizedBudget).toMatch(/tests \| 700 \/ 1000 \| 100 \/ 150/);
+    expect(budget).toContain("does not require confirmation");
+    expect(budget).toContain("recorded_pending_enforcement");
+    expect(budget).toContain("Structural Change Forecast");
+    expect(budget).toMatch(/execution notice, not a user-confirmation gate/i);
+    for (const consumer of [software, workflow, template, modes, delivery]) {
+      expect(consumer).toContain("software-structural-budget.md");
+    }
+    expect(workflow).toMatch(/unattended mode[\s\S]*continues/i);
+    expect(delivery).toContain("actual final file and function/method sizes");
+  });
+
+  it("enforces one semantic minimum-change budget from authoring through acceptance", () => {
+    const authoring = reference("task-authoring-quality-contract.md");
+    const software = reference("task-analysis-profile-software-development.md");
+    const template = reference("task-work-document-template.md");
+    const workflow = reference("task-work-document-workflow.md");
+    const delivery = reference("task-delivery-profile-software-development.md");
+    const acceptance = reference("execution-modes-and-acceptance-reports.md");
+
+    for (const contract of [authoring, software, template]) {
+      const normalized = contract.replace(/\s+/g, " ");
+      expect(normalized).toContain("required changes");
+      expect(normalized).toContain("allowed touchpoints");
+      expect(normalized).toContain("protected surfaces");
+    }
+    expect(authoring).toMatch(/smallest complete semantic change/i);
+    expect(authoring).toMatch(/prototype\nonly the authorized delta/i);
+    expect(authoring).toMatch(/whole-page redesign/i);
+    expect(software).toMatch(/drive-by refactor/i);
+    expect(workflow).toMatch(/map to a required change through Outcome or Evidence/i);
+    expect(workflow).toMatch(/scope drift until confirmed/i);
+    expect(delivery).toContain("planned-versus-actual minimum-change budget");
+    expect(delivery).toContain("unplanned UI, code, API, schema, dependency, or architecture");
+    expect(acceptance).toContain("planned-versus-actual minimum-change budget");
+  });
+
+  it("defines explicit execution modes, capability lanes, and always-on acceptance HTML", () => {
+    const modes = reference("execution-modes-and-acceptance-reports.md");
+    const workflow = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
+
+    for (const mode of ["interactive", "unattended", "layered_handoff"]) {
+      expect(modes).toContain(mode);
+    }
+    for (const lane of [
+      "[analysis]",
+      "[plan]",
+      "[dev]",
+      "[test]",
+      "[integration]",
+      "[user]",
+      "[action]",
+      "[confirm]",
+    ]) {
+      expect(modes).toContain(lane);
+    }
+    expect(modes).toContain("legacy_v1");
+    expect(modes).toContain("batch_v2");
+    expect(modes).toMatch(/cannot\nreliably identify its own model or reasoning tier/i);
+    expect(modes).toContain("acceptance_report");
+    expect(modes).toContain("not_required");
+    expect(modes).toContain("planned_not_run");
+    expect(modes).toMatch(/Every implementation produces a self-contained acceptance HTML/i);
+    expect(workflow).toContain("execution-modes-and-acceptance-reports.md");
+  });
+
+  it("gives unattended runs one general zero-interruption contract", () => {
+    const interaction = reference("unattended-interaction-contract.md");
+    const normalizedInteraction = interaction.replace(/\s+/g, " ");
+    const modes = reference("execution-modes-and-acceptance-reports.md");
+    const taskWork = reference("task-work-document-workflow.md");
+    const orchestrator = readFileSync(
+      "skills/granoflow-task-orchestrator/references/end-to-end-orchestration.md",
+      "utf8",
+    );
+    const delegated = readFileSync("skills/granoflow-delegated-authorization/SKILL.md", "utf8");
+
+    expect(interaction).toContain("interaction_budget: 0");
+    for (const phase of [
+      "Analysis confirmation",
+      "Planning permission",
+      "Plan confirmation",
+      "Execution authorization",
+      "test repair",
+      "Delivery",
+      "completion",
+    ]) {
+      expect(normalizedInteraction).toContain(phase);
+    }
+    for (const blockerClass of [
+      "direction_change",
+      "scope_drift",
+      "forbidden_action",
+      "missing_user_only_input",
+      "subjective_acceptance",
+    ]) {
+      expect(interaction).toContain(blockerClass);
+    }
+    expect(normalizedInteraction).toMatch(
+      /complete all independent safe work.*one batched question/i,
+    );
+    expect(normalizedInteraction).toMatch(
+      /same active run.*does not require an envelope round trip/i,
+    );
+    expect(normalizedInteraction).toMatch(/later host turn.*confirmed envelope/i);
+    expect(taskWork).toMatch(
+      /qualifying current\s+unattended instruction is explicit authorization/i,
+    );
+    expect(taskWork).toMatch(/Agent self-confirmation\s+is not/i);
+    for (const consumer of [modes, taskWork, orchestrator, delegated]) {
+      expect(consumer).toContain("unattended-interaction-contract.md");
+    }
+  });
+
+  it("routes task lifecycle intent through one context-aware orchestrator", () => {
+    const orchestrator = readFileSync("skills/granoflow-task-orchestrator/SKILL.md", "utf8");
+    const shortCommands = readFileSync(
+      "skills/granoflow-task-orchestrator/references/short-command-contract.md",
+      "utf8",
+    );
+    const agentWorkflow = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
+    const delegated = readFileSync("skills/granoflow-delegated-authorization/SKILL.md", "utf8");
+
+    for (const route of ["capture", "enrich", "analyze", "plan", "run", "finish_audit"]) {
+      expect(orchestrator).toContain(route);
+    }
+    for (const shortcut of ["gf记", "gf析", "gf规", "gf做", "gf完"]) {
+      expect(shortCommands).toContain(shortcut);
+    }
+    expect(agentWorkflow).toContain("granoflow_task_orchestrator_skill");
+    expect(delegated).toContain("gf-local-safe-v1");
+    expect(shortCommands).toMatch(/Publish|publish/);
+    expect(shortCommands).toContain("target is\nambiguous");
+  });
+
   it("uses one cross-host Knowledge Distillation workflow and stable capability failure", () => {
     const workflow = reference("knowledge-distillation-workflow.md");
     const taskWorkflow = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
@@ -43,21 +188,35 @@ describe("Task Delivery and Deferred Task Review contracts", () => {
     expect(onboarding).toContain("初始化 Granoflow");
     expect(onboarding).toContain("recommended-external-skills.md");
     expect(onboarding).toContain("approved_all");
-    expect(onboarding).toContain("declined_for_onboarding");
-    expect(onboarding).toMatch(/ask one final time[\s\S]*do not ask again/i);
+    expect(onboarding).toContain("capability_pack_not_ready");
+    expect(onboarding).toMatch(/Ask exactly once/i);
     expect(onboarding).toMatch(/does not run[\s\S]*setup-matt-pocock-skills/i);
 
-    for (const capability of ["Grill Finalizer", "Grill Me", "gstack", "Matt Pocock Skills"]) {
+    for (const capability of [
+      "Grill Finalizer",
+      "Grill Me",
+      "gstack",
+      "Matt Pocock Skills",
+      "Huashu Design",
+      "Impeccable",
+      "Apple Design",
+      "GSAP Skills",
+      "Baoyu Skills",
+    ]) {
       expect(catalog).toContain(capability);
     }
-    expect(catalog).toContain("install all recommended capabilities");
+    expect(catalog).toContain("granoflow_product_builder_v1");
+    expect(catalog).toContain("complete recommended capability pack");
     expect(catalog).toContain("host-native confirmation");
     expect(catalog).toMatch(/runtime[\s\S]*only[\s\S]*relevant/i);
+    expect(catalog).toContain("capability_pack_not_ready");
 
     const externalRouting = reference("external-skill-routing.md");
     expect(externalRouting).toContain("first-run onboarding contract");
     expect(externalRouting).toContain("default all-install choice");
     expect(externalRouting).toMatch(/installation breadth only[\s\S]*Runtime routing/i);
+    expect(externalRouting).toContain("capability_pack_drift");
+    expect(externalRouting).toMatch(/model_allowed[\s\S]*silently/i);
 
     const prompt = catalog.match(/## User Prompt\n([\s\S]*?)\n## /)?.[1] ?? "";
     expect(prompt).not.toBe("");
@@ -89,6 +248,12 @@ describe("Task Delivery and Deferred Task Review contracts", () => {
     expect(template).toContain(
       "readiness_grill_status: not_run | not_applicable | passed | revisions_required | blocked",
     );
+    expect(template).toContain("prototype_requirement: required | not_required | conditional");
+    expect(template).toContain("package_attachment_id");
+    expect(template).toContain("package_sha256");
+    expect(workflow).toContain("executionAdmission.allowed");
+    expect(workflow).toContain("assetMode=file");
+    expect(workflow).toMatch(/no\s+greater than 600 seconds/);
     expect(template).not.toContain("execution_status:");
     expect(template).toContain("pre-execution governance document");
     expect(template).toContain("five-\ndimension prose contract");
@@ -116,6 +281,36 @@ describe("Task Delivery and Deferred Task Review contracts", () => {
     expect(workflow).toContain("does not authorize execution");
     expect(workflow).toMatch(/complete, self-contained\s+checkpoint/);
     expect(workflow).toMatch(/App-owned content and\s+SHA-256/);
+  });
+
+  it("uses one task authoring quality contract across every creation route", () => {
+    const contract = reference("task-authoring-quality-contract.md");
+    const routeFiles = [
+      "skills/granoflow-agent-workflow/references/discussed-requirement-task-capture.md",
+      "skills/granoflow-task-orchestrator/SKILL.md",
+      "skills/granoflow-milestone-workflow/references/milestone-collaboration-workflow.md",
+      "skills/granoflow-project-definition/SKILL.md",
+      "skills/granoflow-first-run-import/references/task-and-card-import.md",
+      "skills/granoflow-delegated-authorization/references/host-routing-and-waiting.md",
+    ];
+
+    expect(contract).toContain("single semantic owner");
+    expect(contract).toContain("non-programmer");
+    expect(contract).toContain("one real analogy");
+    expect(contract).toContain("one concrete example");
+    expect(contract).toContain("task_authoring_quality_failed");
+    expect(contract).toContain("old complete text");
+    expect(contract).toContain("HTML prototype");
+    expect(contract).toContain("two-dimensional Markdown table");
+    expect(contract).toContain("bold formatting on every changed field");
+    expect(contract).toContain("Mermaid flowchart");
+    expect(contract).toContain("at most one such Markdown file per task");
+    expect(contract).toContain("Human title-only quick capture");
+    for (const path of routeFiles) {
+      expect(readFileSync(path, "utf8")).toContain(
+        "granoflow-agent-workflow/task-authoring-quality-contract",
+      );
+    }
   });
 
   it("keeps the initial draft analysis-only and gates attachment on two bundled Grills", () => {
@@ -147,6 +342,10 @@ describe("Task Delivery and Deferred Task Review contracts", () => {
     expect(workflow).toMatch(
       /analysis_grill_status=passed[\s\S]*readiness_grill_status=passed[\s\S]*uploaded/i,
     );
+    expect(workflow).toMatch(
+      /before the first authorized execution action[\s\S]*status=doing[\s\S]*App records/i,
+    );
+    expect(workflow).toMatch(/Analysis, Planning[\s\S]*must leave the task `pending`/i);
     expect(routing).toMatch(/MCP-bundled[\s\S]*mandatory phase gates/i);
     expect(routing).toMatch(/grill-finalizer[\s\S]*does not replace/i);
     for (const forbiddenHeading of [
@@ -492,7 +691,9 @@ describe("Task Delivery and Deferred Task Review contracts", () => {
     expect(routing).toContain("install_offered");
     expect(routing).toContain("pending_user_decision");
     expect(routing).toContain("model_fallback");
-    expect(routing).toMatch(/no answer[\s\S]*remain(?:s)? waiting/i);
+    expect(routing).toContain("capability_pack_drift");
+    expect(routing).toMatch(/Do not reopen item-by-item installation choices/i);
+    expect(routing).toMatch(/model_allowed[\s\S]*silently/i);
     expect(routing).toMatch(/rediscover[\s\S]*reload/i);
     expect(routing).toMatch(/grill-me[\s\S]*user_only/i);
     expect(routing).toMatch(/only[\s\S]*relevant[\s\S]*(?:provider|reviewer)/i);
@@ -501,6 +702,34 @@ describe("Task Delivery and Deferred Task Review contracts", () => {
     expect(routing).toContain("Project and Granoflow rules take precedence");
     expect(routing).toMatch(/does not\s+authorize implementation/);
     expect(routing).not.toContain("Do not pause that fallback");
+  });
+
+  it("consumes a hash-verified delegated authorization before repeating a phase prompt", () => {
+    const workflow = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-work-document-workflow.md",
+      "utf8",
+    );
+    const template = readFileSync(
+      "skills/granoflow-agent-workflow/references/task-work-document-template.md",
+      "utf8",
+    );
+    const waiting = readFileSync(
+      "skills/granoflow-agent-workflow/references/waiting-for-user-input.md",
+      "utf8",
+    );
+    const combined = `${workflow}\n${template}\n${waiting}`;
+
+    expect(combined).toContain("granoflow_delegated_authorization_skill");
+    expect(combined).toContain("authorizationOwnerTaskId");
+    expect(combined).toContain("attachmentSha256");
+    expect(combined).toContain("receiptVerified");
+    expect(combined).toContain("analysisConfirmation");
+    expect(combined).toContain("planningPermission");
+    expect(combined).toContain("planConfirmation");
+    expect(combined).toContain("executionAuthorization");
+    expect(combined).toMatch(/decision=allowed[\s\S]*continue/i);
+    expect(combined).toMatch(/decision=denied[\s\S]*waiting/i);
+    expect(combined).toMatch(/tag[\s\S]*(?:not|never)[\s\S]*authorization/i);
   });
 
   it("offers relevant Grill helpers once and waits before honest fallback", () => {

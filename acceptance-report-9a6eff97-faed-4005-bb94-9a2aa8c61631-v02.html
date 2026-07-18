@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>无人值守零人工打断合同验收</title>
+    <style>
+      :root {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #172033;
+        background: #f4f6fa;
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        max-width: 920px;
+        margin: auto;
+        padding: 28px 18px;
+      }
+      header,
+      section {
+        background: #fff;
+        border: 1px solid #dce2eb;
+        border-radius: 14px;
+        padding: 22px;
+        margin: 14px 0;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      code {
+        background: #edf1f7;
+        border-radius: 5px;
+        padding: 2px 6px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid #e3e7ee;
+        padding: 9px;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <main data-schema="granoflow_acceptance_report_v1">
+      <header>
+        <p>Granoflow 补充验收 · 2026-07-18T20:13:22+08:00</p>
+        <h1>无人值守零人工打断合同验收</h1>
+        <p>
+          验收通过：规则从屏蔽某一句确认提示，升级为覆盖
+          Analysis、Planning、执行、修复、验证、Delivery 和完成的统一判定。
+        </p>
+      </header>
+      <section>
+        <h2>用户可观察行为</h2>
+        <ul>
+          <li>
+            同一轮明确的有界无人值守请求使用
+            <code>interaction_budget: 0</code>，普通阶段门禁不再逐项询问。
+          </li>
+          <li>
+            只允许五类真实阻断：方向改变、范围漂移、禁止动作、用户独有输入、必须人工完成的主观验收。
+          </li>
+          <li>阻断前先完成独立安全工作，剩余问题只合并询问一次。</li>
+          <li>跨后续线程或进程的持久授权仍要求确认并验证 delegated envelope。</li>
+        </ul>
+      </section>
+      <section>
+        <h2>验证证据</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>检查</th>
+              <th>结果</th>
+              <th>证据</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>TDD 回归</td>
+              <td>通过</td>
+              <td>测试先因规则 owner 缺失而失败，实施后通过。</td>
+            </tr>
+            <tr>
+              <td>定向合同</td>
+              <td>通过</td>
+              <td>3 个文件，18 项相关测试通过。</td>
+            </tr>
+            <tr>
+              <td>全量门禁</td>
+              <td>通过</td>
+              <td>
+                Prettier、ESLint、Ruff、Pyright、TypeScript、56 个 Python 测试、190 个 Vitest 测试。
+              </td>
+            </tr>
+            <tr>
+              <td>发布包内容</td>
+              <td>通过</td>
+              <td>npm pack dry-run 包含新 reference。</td>
+            </tr>
+            <tr>
+              <td>fresh-process readback</td>
+              <td>通过</td>
+              <td>5,576 bytes，SHA-256 a0ebf064…d9ab0f。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>不适用项与边界</h2>
+        <p>
+          数据库、App schema、MCP 参数、UI、集成脚本和截图均为 <code>not_required</code>。npm
+          发布、版本递增、commit、push 和部署未执行。
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

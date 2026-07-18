@@ -11,6 +11,14 @@ review-card drafts, long-term work memory retrieval, local MCP setup, or user
 feedback about generated Granoflow content. Delegate an explicitly requested
 daily review to `granoflow-daily-review`.
 
+When a request may mean capture, enrichment, Analysis, Planning, end-to-end
+execution, or completion audit, call `granoflow_task_orchestrator_skill` first.
+The Orchestrator owns route selection and stopping points; this skill remains the
+downstream owner for Task Work, Grill, waiting, Delivery, completion, cards, and
+context contracts. Do not run the older quick-capture branch merely because the
+request contains “create task” when the surrounding context clearly requests a
+later lifecycle phase.
+
 Granoflow is a local-first app for planning work, reviewing completed tasks, and
 turning durable lessons into review cards. Granoflow MCP connects MCP-capable AI
 agents to a local task, review, and long-term work memory layer; it is not a code
@@ -164,7 +172,8 @@ placement instead of silently clamping it.
 
 Use this section when the user asks the agent to `Create a task from this
 requirement`, `Create a task from what we discussed`, or an equivalent command
-in the user's language. This workflow quickly captures a requirement as a
+in the user's language and the Orchestrator selected `capture`. This workflow
+quickly captures a requirement as a
 Granoflow task without interrupting the user's current work. It is not a
 plan-writing, attachment, execution, or card-creation workflow.
 
@@ -204,9 +213,12 @@ necessary qualifier`. Do not use document types, filenames, or abstract
 7. When the Agent thread contains images, inspect them for task evidence, Note
    source material, or Card study value and persist only relevant, safe images
    through supported App media/attachment paths. Read the destination back.
-8. Before writing, search the current agent thread and use the earliest
-   task-related user question as `startedAt`; do not substitute task creation
-   time when an earlier thread timestamp exists.
+8. Create the current task as `pending` and omit `createdAt`, `updatedAt`,
+   `startedAt`, `endedAt`, and `deletedAt`. Ordinary task creation is not a
+   historical-write surface. Only after Analysis/Plan readiness and separate
+   execution authorization, update the task to `status=doing`; the App records
+   `startedAt` at that real execution transition. Use
+   `granoflow_task_history_mutate` only for genuine historical correction.
 9. The user's explicit task-creation request confirms this write. Skip dry-run,
    planning, nodes, cards, history retrieval, and duplicate search by default.
 10. Read back by the task id returned from creation. Patch dropped supported
@@ -269,15 +281,21 @@ High-level contract:
    Grill gates passed, then update the relevant task descriptions with
    plain-language explanations. Execute only a unique active,
    Analysis-confirmed, valid-Planning, content/hash-verified Work Document after
-   the user's separate execution instruction.
+   the user's separate execution instruction or a current validator
+   `decision=allowed` for the separately recorded execution grant.
 8. For blockers, use the waiting-for-user-input workflow: add a current node on
    the original task, verify local readback, set a 3-minute reminder on the
    original task, create a separate notification task with a 10-minute reminder,
    tell the user to respond by adding a new explicit node under the original
    task, attempt sync when available, and report sync visibility honestly.
-9. Run phase Card Checkpoints through the sole bundled card owner; Completion
-   only verifies the Delivery checkpoint and does not start a new card pass.
-10. Write completion evidence back to the document and Granoflow. Finish only
+9. Before repeating a phase confirmation prompt, call
+   `granoflow_delegated_authorization_skill` when Task Work contains an envelope
+   receipt. Continue only after owner attachment/hash readback and validator
+   `decision=allowed`; otherwise run the waiting workflow with the stable deny
+   reason. Tags and skill invocation never grant permission.
+10. Run phase Card Checkpoints through the sole bundled card owner; Completion
+    only verifies the Delivery checkpoint and does not start a new card pass.
+11. Write completion evidence back to the document and Granoflow. Finish only
     tasks that are actually done and verified.
 
 The host may traverse a project or milestone and process tasks in order, but a
@@ -359,6 +377,17 @@ current context map for future agents, or when project-level context YAML
 attachments should be created, read, reconciled, or safely updated.
 
 Read `references/project-context-attachments.md` before applying this branch.
+Read `references/project-work-document-template.md` when drafting, validating,
+or checking readiness for a project-level automation definition. The template
+allows partial attachment but fail-closes automatic project actions until the
+document is complete, confirmed, current, and supported by an App-owned
+attachment capability.
+
+When the user wants to interactively create or refine that Project Work
+document, call the bundled `granoflow_project_definition_skill`. It owns the
+step-by-step and vague-request interview modes plus prototype, data-model, and
+workflow artifact routing. This Agent Workflow continues to own task lifecycle,
+waiting, Delivery, completion, and context boundaries.
 
 High-level contract:
 
@@ -415,9 +444,12 @@ routes before completing work that entered Execution.
   Work Document attachment, or the complete legacy Task Analysis + Task Plan
   attachment pair. Missing documents fail closed with
   `task_analysis_plan_attachment_required`.
-- At completion, inspect the current agent thread and write the confirmed finish
-  point as `endedAt`. If `startedAt` is missing, recover it from the thread;
-  estimate only after failed recovery, and label the estimate explicitly.
+- At completion, use the confirmed finish point as `endedAt`. `startedAt` must
+  represent the real transition into Execution, normally App-recorded when the
+  task moved to `doing`; never substitute the earlier discussion or creation
+  time. If correction is genuinely required, use only a supported completion
+  action or the dedicated historical mutation surface, with evidence and
+  readback.
 - Default completion does not create a deep Task Review or a new card
   checkpoint. It reads the Delivery Card Checkpoint summary; explicitly
   deferred card work does not block task completion.
@@ -755,8 +787,19 @@ Success criteria:
 
 ## References
 
+- Bundled `granoflow_task_orchestrator_skill`: Read first when task lifecycle
+  intent or the correct stopping point must be inferred from context.
+- `references/execution-modes-and-acceptance-reports.md`: Read when the user
+  names unattended or layered-handoff mode, asks which mode is active, asks how
+  modes differ, or when implementation acceptance evidence is being assembled.
+- `references/unattended-interaction-contract.md`: Single owner for the
+  zero-interruption budget, same-run versus durable authorization, real blocker
+  classes, and one-batch waiting behavior in unattended work.
 - `references/waiting-for-user-input.md`: Read when work is blocked on a
   user-only action and the agent must create reminders.
+- Bundled `granoflow_delegated_authorization_skill`: Read when the user requests
+  bounded unattended continuation or current Task Work references a delegated
+  authorization receipt.
 - `references/discussed-requirement-task-capture.md`: Read when the user asks to
   create a task from the requirement currently being discussed.
 - `references/daily-pending-task-triage.md`: Read when the user asks to review
@@ -803,3 +846,6 @@ Success criteria:
   lesson, reflection, or similar-work retrieval.
 - `references/project-context-attachments.md`: Read before project context YAML
   attachment creation, bounded reading, reconcile, or update.
+- `references/project-work-document-template.md`: Target YAML contract for
+  partial project-definition attachment, dependency-aware manual-definition
+  checks, and complete-document automation admission.

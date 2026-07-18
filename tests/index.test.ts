@@ -70,6 +70,10 @@ describe("granoflow MCP server executable", () => {
         ["granoflow_first_run_import_skill", "granoflow-first-run-import"],
         ["granoflow_review_card_draft_skill", "granoflow-review-card-draft"],
         ["granoflow_gfmcp_runner_skill", "granoflow-gfmcp-runner"],
+        ["granoflow_delegated_authorization_skill", "granoflow-delegated-authorization"],
+        ["granoflow_task_orchestrator_skill", "granoflow-task-orchestrator"],
+        ["granoflow_milestone_workflow_skill", "granoflow-milestone-workflow"],
+        ["granoflow_persistent_milestone_runner_skill", "granoflow-persistent-milestone-runner"],
       ] as const;
       for (const [toolName, skillId] of skillTools) {
         const skillResult = await client.callTool({ name: toolName, arguments: {} });

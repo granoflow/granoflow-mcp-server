@@ -10,6 +10,10 @@ Use this skill when installing, operating, or diagnosing the optional GFMCP auto
 ## Safety Contract
 
 - The tag is an eligibility signal, not blanket authorization.
+- Before any phase that needs authorization, re-read the delegated owner receipt
+  and run `granoflow-delegated-authorization`'s validator. Continue only on
+  `decision=allowed`; `decision=denied` routes to the existing visible waiting
+  workflow. The worker never constructs or confirms its own envelope.
 - Call `POST /v1/ai-agent/gfmcp/prepare` before polling. Granoflow owns the localized tag description template.
 - Call `POST /v1/sync/gfmcp-safe-run` before reading candidates. Granoflow decides whether cloud sync is allowed; guests continue locally and uncertain authorization fails closed.
 - Never print API tokens, task bodies, private failure details, or agent transcripts.
@@ -35,11 +39,41 @@ Run continuously at the default five-minute interval:
 npx -y @granoflow/mcp-server gfmcp-runner --workspace /absolute/project/path
 ```
 
+Inspect the real runner process, current phase, last and next check, current task
+lease, last result, and bounded recent events:
+
+```bash
+granoflow-gfmcp-runner --status
+```
+
+Request a graceful stop. The runner finishes its current finite agent execution,
+or wakes from its interruptible idle wait, then records `stopped` and exits:
+
+```bash
+granoflow-gfmcp-runner --stop
+```
+
+The visible phase machine is `idle -> polling -> executing -> verifying`, then
+either an immediate recheck after `task_completed` or `waiting` until the next
+five-minute check. Only verified completion skips the wait; failures and empty
+queues cannot create a hot loop.
+
 The runner uses `GRANOFLOW_API_BASE_URL` and `GRANOFLOW_API_TOKEN` through the local API contract. State, leases, retry fingerprints, and the process lock stay in a private local state directory. See [runtime contract](references/runtime-contract.md).
+
+Codex cron/heartbeat automation is an optional wake-up layer, not proof that a
+runner is alive. A scheduler must invoke this runner with `--once` instead of
+claiming GFMCP tasks directly, so every entry path shares the process lock,
+lease, completion readback, and visible event history.
 
 ## Agent Execution
 
 The default executor invokes `codex exec` with a bounded prompt that requires `granoflow-task-runner`. Override the executable with `--executor-command` only when the replacement accepts the generated prompt as its final argument and follows this same safety contract.
+
+If the task instruction uses `gf`, `gf做`, or another lifecycle shortcut, read
+`granoflow_task_orchestrator_skill` to resolve the route and stopping point.
+The `GFMCP` tag still supplies eligibility only; it cannot activate
+`gf-local-safe-v1` or replace a direct current command or validated delegated
+receipt.
 
 After three identical unresolved outcomes, the worker writes a stable sanitized blocker section to the task and pauses that task until its task fingerprint changes. Other eligible tasks remain runnable.
 
@@ -51,3 +85,5 @@ After three identical unresolved outcomes, the worker writes a stable sanitized 
 - Concurrent workers cannot execute the same local queue.
 - Retries are bounded and persisted.
 - Completion and blocker writeback are observable from the Granoflow Local HTTP API.
+- `--status` distinguishes a live lock owner from stale PID/state data.
+- A completed task is followed by an immediate queue check; idle queues wait 300 seconds.

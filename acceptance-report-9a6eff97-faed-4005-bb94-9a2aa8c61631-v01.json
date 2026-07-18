@@ -1,0 +1,61 @@
+{
+  "schema": "granoflow_acceptance_report_v1",
+  "title": "软件 Plan 结构预算与执行告知",
+  "generatedAt": "2026-07-18T20:01:14+08:00",
+  "summary": "验收通过：公共 bundled Skill 已形成从项目初始化、Planning、执行告知到 Delivery/acceptance 的单一结构预算合同；无人值守展示告知后直接继续。",
+  "changes": {
+    "code": [
+      "新增 canonical software-structural-budget reference，并由 7 个 Task Work、Project Work、Project Definition、Delivery 与 acceptance 合同引用。",
+      "最小变更预算：实际触点为 8 个 Skill/reference 文档和 4 个契约测试文件；src/tools.ts、MCP 参数、App/API/schema、依赖、版本与发布流程是已检查且未变的保护面。",
+      "结构预算：canonical reference 117 行；最大契约测试文件 818 行，新增或扩展 callback 不超过 21 行；测试硬限制 1000/150 通过。",
+      "仓库尚未把物理行限制接入 lint、hooks 或 CI，因此 enforcement status 如实为 recorded_pending_enforcement。"
+    ],
+    "database": ["not_required：无数据库、Granoflow App schema 或迁移变化。"],
+    "workflow": [
+      "项目已有更严格规则优先；没有规则时由 Agent 选择并记录可追溯 fallback，普通技术默认无需用户确认。",
+      "首次编辑前展示文件、符号、职责、规模、拆分边界、最小完整迭代和保护面；无人值守模式随后自动继续。",
+      "发现新触点先告知，只有真实范围漂移、保护面变化或外部权限才暂停；Delivery 对账计划值与实际值。",
+      "npm pack dry-run 已确认新 reference 位于发布包；fresh-process resource readback 为 5484 bytes，SHA-256 15dbb66ae2878d02b326d9cb10e88b19d93eace1a48f01bfc359893bd16b6aaf。",
+      "当前对话连接的旧 MCP 进程保留了变更前 manifest；重启后按新构建动态发现。npm 发布、版本递增、commit、push 和部署均未执行。"
+    ]
+  },
+  "verification": {
+    "automated": [
+      {
+        "name": "Targeted contract tests",
+        "status": "passed",
+        "evidence": "4 files, 63 tests passed"
+      },
+      {
+        "name": "MCP full quality gate",
+        "status": "passed",
+        "evidence": "npm run check: Prettier, ESLint, Ruff, Pyright, TypeScript build, 56 Python tests and 186 Vitest tests passed"
+      },
+      {
+        "name": "Patch integrity",
+        "status": "passed",
+        "evidence": "git diff --check exited 0"
+      },
+      {
+        "name": "Publishable package contents",
+        "status": "passed",
+        "evidence": "npm pack --dry-run --json includes skills/granoflow-agent-workflow/references/software-structural-budget.md"
+      },
+      {
+        "name": "Fresh bundled-resource readback",
+        "status": "passed",
+        "evidence": "manifest listed reference; 5484 bytes; expected forecast content present; SHA-256 matched"
+      }
+    ],
+    "integration": {
+      "status": "not_required",
+      "reason": "这是 Markdown 工作流合同和确定性资源发现变更，没有 UI、API、schema 或外部集成路径；替代证据为全量门禁、npm 包清单和 fresh-process readback。",
+      "scripts": []
+    },
+    "screenshots": {
+      "status": "not_required",
+      "reason": "没有用户界面变化或运行时视觉主张，截图不能增加有效验收证据。",
+      "items": []
+    }
+  }
+}

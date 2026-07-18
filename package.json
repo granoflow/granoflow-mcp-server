@@ -30,14 +30,14 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsc -p tsconfig.json && chmod +x dist/index.js dist/gfmcp-runner-launcher.js",
+    "build": "npm run clean && tsc -p tsconfig.json && chmod +x dist/index.js dist/gfmcp-runner-launcher.js dist/persistent-milestone-runner-launcher.js",
     "dev": "tsx src/index.ts",
     "lint": "eslint .",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "test": "vitest run",
     "test:python": "python3 -m unittest discover -s tests/python -p 'test_*.py'",
-    "check:python": "ruff check skills/granoflow-gfmcp-runner/scripts tests/python && ruff format --check skills/granoflow-gfmcp-runner/scripts tests/python && pyright skills/granoflow-gfmcp-runner/scripts tests/python && npm run test:python",
+    "check:python": "ruff check skills/granoflow-gfmcp-runner/scripts skills/granoflow-delegated-authorization/scripts skills/granoflow-task-orchestrator/scripts skills/granoflow-persistent-milestone-runner/scripts skills/granoflow-project-definition/scripts tests/python && ruff format --check skills/granoflow-gfmcp-runner/scripts skills/granoflow-delegated-authorization/scripts skills/granoflow-task-orchestrator/scripts skills/granoflow-persistent-milestone-runner/scripts skills/granoflow-project-definition/scripts tests/python && pyright skills/granoflow-gfmcp-runner/scripts skills/granoflow-delegated-authorization/scripts skills/granoflow-task-orchestrator/scripts skills/granoflow-persistent-milestone-runner/scripts skills/granoflow-project-definition/scripts tests/python && npm run test:python",
     "check": "npm run format && npm run lint && npm run check:python && npm run build && npm run test",
     "release:preflight": "node scripts/release-preflight.mjs",
     "prepublishOnly": "npm run check"

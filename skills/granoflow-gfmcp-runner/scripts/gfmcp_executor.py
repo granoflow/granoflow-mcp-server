@@ -15,6 +15,11 @@ class ExecutorResult:
 def build_prompt(task_id: str) -> str:
     return f"""Execute Granoflow task {task_id} using the granoflow-task-runner skill.
 Analyze and classify it before acting. Safe, reversible local workspace work is allowed.
+The GFMCP tag is eligibility only. Before consuming any delegated phase grant, read the
+granoflow-delegated-authorization bundled skill, re-read the owner attachment/hash receipt,
+and run validate_delegated_authorization.py with current structured facts. Continue only on
+decision=allowed and only for its evaluated scope. On decision=denied or stale/missing state,
+apply the waiting-for-user-input contract and write/read back the visible waiting state.
 Ask for explicit user authorization before publishing, payment, login, external messages,
 destructive changes, secret access, or scope expansion.
 If necessary information is missing or execution is truly blocked, write a concise

@@ -25,8 +25,8 @@ and continue prompts, confirmations, preview summaries, blockers, task
 descriptions, and final reports in the user's language by default unless the
 user asks otherwise.
 
-This workflow initializes the Granoflow connection, offers all recommended
-external capability collections, and optionally imports data from Cursor,
+This workflow initializes the Granoflow connection, offers the fixed
+`granoflow_product_builder_v1` capability pack as one decision, and optionally imports data from Cursor,
 Codex, Hermes, or other agents. It is an onboarding orchestration skill. A
 plain initialization request may stop after connection and capability setup;
 data import runs only when requested.
@@ -56,7 +56,7 @@ call `granoflow_daily_review_skill`; do not draft or write it during import.
 Follow this order. Do not redesign the workflow from scratch.
 
 1. Connect and inspect Granoflow capabilities.
-2. Offer all unavailable recommended external capability collections.
+2. Offer the complete unavailable portion of the fixed capability pack as one decision.
 3. Stop after setup when the user requested initialization only.
 4. Discover import sources and record authorization when import was requested.
 5. Build a source ledger.
@@ -96,12 +96,13 @@ are unavailable, show the reference's localized `User Prompt`: names and
 plain-language functions only. Recommend installing all offered collections;
 do not require item-by-item selection.
 
-Use the reference states `all_available`, `awaiting_confirmation`,
-`approved_all`, `declined_for_onboarding`, and `partial_failure`. On the first
-refusal, explain the overall value once and ask one final time. On the second
-refusal, do not ask again during this initialization. Approval may lead to a
-host-native confirmation. After installation, rediscover availability and
-account for required host reload; do not infer success from a command result.
+Use the reference states `ready`, `awaiting_confirmation`, `approved_all`,
+`declined`, and `partial_failure`. Ask exactly once. A refusal or partial
+failure leaves connection and manual use available but records
+`capability_pack_not_ready`; automatic project design initialization must stop
+instead of offering item-by-item choices. Approval may lead to a host-native
+confirmation. After installation, rediscover availability and account for
+required host reload; do not infer success from a command result.
 
 This phase does not run `setup-matt-pocock-skills`; that setup needs a real
 software repository. Installation approval does not authorize data import.

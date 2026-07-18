@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { extname, isAbsolute, relative, resolve } from "node:path";
+import { basename, extname, isAbsolute, relative, resolve } from "node:path";
 
 import { z } from "zod";
 
@@ -41,11 +41,18 @@ const completionSourceSchema = z
   .describe(
     "When ai or human, attach the matching AI/人工 source tag after ensuring it exists. Omit or unknown means no source tag.",
   );
+const taskAuthoringEvidenceInputSchema = z
+  .record(z.string(), z.unknown())
+  .optional()
+  .describe(
+    "Required for AI or automation task creation: declare an action/outcome title, plain-language review, and exact analogy/example excerpts from the description.",
+  );
 const historicalTaskMutationSchema = z.object({
   clientMutationId: z.string().min(1),
   op: z.enum(["create", "update", "softDelete"]),
   taskId: z.string().min(1).optional(),
   fields: z.record(z.string(), z.unknown()).optional(),
+  authoringEvidence: taskAuthoringEvidenceInputSchema,
   reason: z.string().min(1).optional(),
 });
 const memoryBatchItemSchema = z.object({
@@ -61,6 +68,30 @@ const memoryBatchItemSchema = z.object({
 const projectContextAttachmentSchema = z
   .enum(["snapshot", "rules", "project_snapshot.yaml", "project_rules.yaml"])
   .default("snapshot");
+const logicalAttachmentEntityTypeSchema = z.enum(["project", "milestone", "task"]);
+const logicalAttachmentSlotSchema = z.enum([
+  "project_work",
+  "milestone_work",
+  "task_work_execution",
+  "task_work_post_completion_revision",
+  "task_delivery",
+  "ui_prototype",
+  "data_model",
+  "workflows",
+  "acceptance_report",
+]);
+const projectWorkActionSchema = z.enum([
+  "attach_partial_project_work",
+  "create_milestone_manually",
+  "create_task_manually",
+  "create_milestone_automatically",
+  "execute_task_automatically",
+  "complete_task_automatically",
+  "continue_project_automatically",
+  "publish_automatically",
+  "deploy_automatically",
+  "complete_project_automatically",
+]);
 const contextPackScopeSchema = z.enum(["task", "project", "repo"]);
 const contextPackSourceSchema = z.object({
   taskId: z.string().min(1).optional(),
@@ -161,6 +192,26 @@ const GFMCP_RUNNER_SKILL_URL = new URL(
   "../skills/granoflow-gfmcp-runner/SKILL.md",
   import.meta.url,
 );
+const DELEGATED_AUTHORIZATION_SKILL_URL = new URL(
+  "../skills/granoflow-delegated-authorization/SKILL.md",
+  import.meta.url,
+);
+const TASK_ORCHESTRATOR_SKILL_URL = new URL(
+  "../skills/granoflow-task-orchestrator/SKILL.md",
+  import.meta.url,
+);
+const MILESTONE_WORKFLOW_SKILL_URL = new URL(
+  "../skills/granoflow-milestone-workflow/SKILL.md",
+  import.meta.url,
+);
+const PERSISTENT_MILESTONE_RUNNER_SKILL_URL = new URL(
+  "../skills/granoflow-persistent-milestone-runner/SKILL.md",
+  import.meta.url,
+);
+const PROJECT_DEFINITION_SKILL_URL = new URL(
+  "../skills/granoflow-project-definition/SKILL.md",
+  import.meta.url,
+);
 
 function compactRecord(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
@@ -214,6 +265,26 @@ function readGfmcpRunnerSkill(): string {
   return readFileSync(GFMCP_RUNNER_SKILL_URL, "utf8");
 }
 
+function readDelegatedAuthorizationSkill(): string {
+  return readFileSync(DELEGATED_AUTHORIZATION_SKILL_URL, "utf8");
+}
+
+function readTaskOrchestratorSkill(): string {
+  return readFileSync(TASK_ORCHESTRATOR_SKILL_URL, "utf8");
+}
+
+function readMilestoneWorkflowSkill(): string {
+  return readFileSync(MILESTONE_WORKFLOW_SKILL_URL, "utf8");
+}
+
+function readPersistentMilestoneRunnerSkill(): string {
+  return readFileSync(PERSISTENT_MILESTONE_RUNNER_SKILL_URL, "utf8");
+}
+
+function readProjectDefinitionSkill(): string {
+  return readFileSync(PROJECT_DEFINITION_SKILL_URL, "utf8");
+}
+
 function isWithin(root: string, target: string): boolean {
   const path = relative(root, target);
   return path === "" || (!path.startsWith("..") && !isAbsolute(path));
@@ -234,6 +305,63 @@ function validatedWorkflowMarkdownPath(filePath: string): string {
     throw new Error("Task workflow attachment path must reference a regular file.");
   }
   return absolute;
+}
+
+function validatedLogicalAttachmentPath(filePath: string, slot: string): string {
+  const absolute = realpathSync(resolve(filePath));
+  const roots = [realpathSync(process.cwd()), realpathSync(tmpdir())];
+  const extension = extname(absolute).toLowerCase();
+  const allowed =
+    slot === "project_work"
+      ? [".yaml", ".yml"]
+      : slot === "ui_prototype"
+        ? [".zip"]
+        : slot === "acceptance_report"
+          ? [".html"]
+          : [".md"];
+  if (!allowed.includes(extension) || !roots.some((root) => isWithin(root, absolute))) {
+    throw new Error(
+      `Logical attachment ${slot} must use ${allowed.join(" or ")} under the current workspace or system temp directory.`,
+    );
+  }
+  if (!statSync(absolute).isFile()) {
+    throw new Error("Logical attachment path must reference a regular file.");
+  }
+  return absolute;
+}
+
+function validatedProjectDesignBaselinePath(filePath: string): string {
+  if (!isAbsolute(filePath)) {
+    throw new Error("Project design baseline path must be absolute.");
+  }
+  const absolute = realpathSync(filePath);
+  const roots = [realpathSync(process.cwd()), realpathSync(tmpdir())];
+  if (
+    extname(absolute).toLowerCase() !== ".zip" ||
+    !roots.some((root) => isWithin(root, absolute))
+  ) {
+    throw new Error(
+      "Project design baseline must be a .zip file under the current workspace or system temp directory.",
+    );
+  }
+  const stat = statSync(absolute);
+  if (!stat.isFile()) {
+    throw new Error("Project design baseline path must reference a regular file.");
+  }
+  if (stat.size > 32 * 1024 * 1024) {
+    throw new Error("Project design baseline package must not exceed 32 MiB.");
+  }
+  return absolute;
+}
+
+function logicalAttachmentResource(entityType: string): string {
+  return entityType;
+}
+
+function logicalAttachmentPath(entityType: string, entityId: string): string {
+  const resource =
+    entityType === "project" ? "projects" : entityType === "milestone" ? "milestones" : "tasks";
+  return `/v1/${resource}/${entityId}/attachments`;
 }
 
 function supportsTaskNodeWorkflow(payload: unknown): boolean {
@@ -574,6 +702,130 @@ async function apiTool(options: ApiRequestOptions) {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+type TaskAuthoringQualityIssue = {
+  field: string;
+  reason: string;
+};
+
+const TASK_AUTHORING_PLACEHOLDERS = new Set([
+  "none",
+  "n/a",
+  "na",
+  "无",
+  "没有",
+  "不适用",
+  "待分析",
+  "待确认",
+]);
+
+function validateTaskAuthoringQuality(
+  title: unknown,
+  description: unknown,
+  evidence: unknown,
+): TaskAuthoringQualityIssue[] {
+  const issues: TaskAuthoringQualityIssue[] = [];
+  const normalizedTitle = typeof title === "string" ? title.trim() : "";
+  const normalizedDescription = typeof description === "string" ? description.trim() : "";
+  const evidenceRecord = isObject(evidence) ? evidence : {};
+
+  if (!normalizedTitle) issues.push({ field: "title", reason: "missing" });
+  if (!normalizedDescription) issues.push({ field: "description", reason: "missing" });
+  if (evidenceRecord.titleIntent !== "action_or_outcome") {
+    issues.push({ field: "authoringEvidence.titleIntent", reason: "unsupported_value" });
+  }
+  if (evidenceRecord.plainLanguageReviewed !== true) {
+    issues.push({
+      field: "authoringEvidence.plainLanguageReviewed",
+      reason: "must_be_true",
+    });
+  }
+
+  const excerpts = [
+    ["authoringEvidence.analogyExcerpt", evidenceRecord.analogyExcerpt],
+    ["authoringEvidence.exampleExcerpt", evidenceRecord.exampleExcerpt],
+  ] as const;
+  const validExcerpts = new Map<string, string>();
+  for (const [field, value] of excerpts) {
+    const excerpt = typeof value === "string" ? value.trim() : "";
+    if (!excerpt) {
+      issues.push({ field, reason: "missing" });
+    } else if (TASK_AUTHORING_PLACEHOLDERS.has(excerpt.toLowerCase())) {
+      issues.push({ field, reason: "placeholder" });
+    } else if (!normalizedDescription.includes(excerpt)) {
+      issues.push({ field, reason: "not_in_description" });
+    } else {
+      validExcerpts.set(field, excerpt);
+    }
+  }
+  const analogyExcerpt = validExcerpts.get("authoringEvidence.analogyExcerpt");
+  const exampleExcerpt = validExcerpts.get("authoringEvidence.exampleExcerpt");
+  if (analogyExcerpt !== undefined && analogyExcerpt === exampleExcerpt) {
+    issues.push({ field: "authoringEvidence.exampleExcerpt", reason: "must_differ" });
+  }
+  return issues;
+}
+
+function taskAuthoringQualityFailure(title: unknown, description: unknown, evidence: unknown) {
+  const issues = validateTaskAuthoringQuality(title, description, evidence);
+  if (issues.length === 0) return null;
+  return jsonTextResult({
+    ok: false,
+    code: "task_authoring_quality_failed",
+    data: { issues },
+    error: {
+      message:
+        "AI and automation task creation requires an action/outcome title, a plain-language description, a real analogy, and a concrete example.",
+    },
+  });
+}
+
+const ORDINARY_TASK_HISTORICAL_FIELDS = [
+  "createdAt",
+  "updatedAt",
+  "startedAt",
+  "endedAt",
+  "deletedAt",
+] as const;
+
+function ordinaryTaskWriteFailure(record: Record<string, unknown>, operation: "create" | "update") {
+  const unsupportedFields = ORDINARY_TASK_HISTORICAL_FIELDS.filter((field) =>
+    Object.prototype.hasOwnProperty.call(record, field),
+  );
+  if (unsupportedFields.length > 0) {
+    return jsonTextResult({
+      ok: false,
+      code: "historical_fields_not_supported",
+      data: {
+        operation,
+        unsupportedFields,
+        currentTaskFlow:
+          operation === "create"
+            ? "Create the task as pending without historical fields. After Analysis/Plan readiness and execution authorization, update status to doing; the App records startedAt."
+            : "For a current task, use status actions such as status=doing; the App owns startedAt/endedAt side effects.",
+        historicalCorrectionTool: "granoflow_task_history_mutate",
+      },
+      error: {
+        message:
+          "Ordinary task writes do not accept historical physical fields. Do not retry the same write against the App.",
+      },
+    });
+  }
+  if (operation === "create" && record.status !== undefined && record.status !== "pending") {
+    return jsonTextResult({
+      ok: false,
+      code: "task_creation_must_start_pending",
+      data: {
+        requestedStatus: record.status,
+        requiredStatus: "pending",
+        nextAction:
+          "Create the task as pending. When execution actually begins after Analysis/Plan readiness and authorization, update it to status=doing; the App records startedAt.",
+      },
+      error: { message: "Ordinary current-task creation must start in pending state." },
+    });
+  }
+  return null;
 }
 
 function unwrapApiData(value: unknown): unknown {
@@ -929,6 +1181,29 @@ function supportsContextPack(payload: unknown): boolean {
   });
 }
 
+function supportsHistoricalTaskCandidates(payload: unknown): boolean {
+  const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
+  const data = isObject(root) && isObject(root.data) ? root.data : root;
+  const tools = isObject(data) && Array.isArray(data.tools) ? data.tools : [];
+  return tools.some((tool) => {
+    if (
+      !isObject(tool) ||
+      tool.toolId !== "granoflow_historical_task_candidates_v2" ||
+      tool.enabled !== true
+    ) {
+      return false;
+    }
+    const capabilities = isObject(tool.capabilities) ? tool.capabilities : {};
+    return (
+      capabilities.capability === "historical_task_candidates_v2" &&
+      capabilities.taskAnchored === true &&
+      capabilities.appOwnedEvidence === true &&
+      capabilities.relationshipFacts === true &&
+      capabilities.recommendations === false
+    );
+  });
+}
+
 function supportsMemoryBatchPreview(payload: unknown): boolean {
   const root = isObject(payload) && isObject(payload.data) ? payload.data : payload;
   const data = isObject(root) && isObject(root.data) ? root.data : root;
@@ -1029,6 +1304,28 @@ async function contextPackApiTool(options: ApiRequestOptions) {
       },
       error: {
         message: "The running Granoflow app does not advertise context_pack_v1.",
+      },
+      runtime: toolsResult.runtime,
+    });
+  }
+  return apiTool(options);
+}
+
+async function historicalTaskCandidatesApiTool(options: ApiRequestOptions) {
+  if (options.dryRun) {
+    return apiTool(options);
+  }
+  const toolsResult = await requestGranoflowApi({ path: "/v1/ai-agent/tools" });
+  if (!toolsResult.ok || !supportsHistoricalTaskCandidates(toolsResult)) {
+    return jsonTextResult({
+      ok: false,
+      code: "unsupported_capability",
+      data: {
+        requiredCapability: "historical_task_candidates_v2",
+        endpoint: options.path,
+      },
+      error: {
+        message: "The running Granoflow app does not advertise historical_task_candidates_v2.",
       },
       runtime: toolsResult.runtime,
     });
@@ -1526,10 +1823,6 @@ async function finishTask(input: {
   dryRun?: boolean;
 }) {
   const completionSource = input.completionSource ?? "ai";
-  const updateBody = compactRecord({
-    startedAt: input.startedAt,
-    endedAt: input.endedAt,
-  });
   const normalizedCardDrafts = input.reviewCardDrafts?.map(normalizeReviewCardDraft);
   const hasEnhancedCardDrafts = input.reviewCardDrafts?.some(draftUsesEnhancedFields) ?? false;
   const hasReviewImport =
@@ -1597,9 +1890,6 @@ async function finishTask(input: {
       }
     : undefined;
   const steps = [
-    ...(Object.keys(updateBody).length > 0
-      ? [{ method: "PATCH", path: `/v1/tasks/${input.taskId}`, body: updateBody }]
-      : []),
     ...(completionSource === "unknown"
       ? []
       : [
@@ -1612,7 +1902,7 @@ async function finishTask(input: {
     {
       method: "POST",
       path: `/v1/tasks/${input.taskId}/complete`,
-      body: compactRecord({ endedAt: input.endedAt }),
+      body: compactRecord({ startedAt: input.startedAt, endedAt: input.endedAt }),
     },
     ...(reviewImportBody
       ? [
@@ -1630,7 +1920,11 @@ async function finishTask(input: {
     const preview = await requestGranoflowApi({
       method: "POST",
       path: `/v1/tasks/${input.taskId}/complete`,
-      body: compactRecord({ taskReview: input.taskReview, endedAt: input.endedAt }),
+      body: compactRecord({
+        taskReview: input.taskReview,
+        startedAt: input.startedAt,
+        endedAt: input.endedAt,
+      }),
       dryRun: true,
     });
     return {
@@ -1686,17 +1980,6 @@ async function finishTask(input: {
   if (!documentGate.ok) return documentGate;
 
   const applied: unknown[] = [];
-  if (Object.keys(updateBody).length > 0) {
-    const updateResult = await requestGranoflowApi({
-      method: "PATCH",
-      path: `/v1/tasks/${input.taskId}`,
-      body: updateBody,
-    });
-    applied.push({ step: "update_task", result: updateResult });
-    if (!updateResult.ok) {
-      return updateResult;
-    }
-  }
 
   const sourceTagPatch = await patchTaskCompletionSourceTag(input.taskId, completionSource);
   if (sourceTagPatch && !sourceTagPatch.ok) {
@@ -1709,7 +1992,7 @@ async function finishTask(input: {
   const completeResult = await requestGranoflowApi({
     method: "POST",
     path: `/v1/tasks/${input.taskId}/complete`,
-    body: compactRecord({ endedAt: input.endedAt }),
+    body: compactRecord({ startedAt: input.startedAt, endedAt: input.endedAt }),
   });
   applied.push({ step: "complete_task", result: completeResult });
   if (!completeResult.ok) {
@@ -1850,6 +2133,90 @@ export function registerGranoflowTools(server: {
           path: "skills/granoflow-gfmcp-runner/SKILL.md",
           skill: readGfmcpRunnerSkill(),
           references: await bundledSkillResources.listReferences("granoflow-gfmcp-runner"),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_delegated_authorization_skill",
+    "Read the bundled Granoflow Delegated Authorization skill. Use it when a user wants bounded unattended continuation or when a Task Work phase gate may consume a confirmed, current authorization envelope. The skill and its validator never infer consent from tags, urgency, or absence.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-delegated-authorization/SKILL.md",
+          skill: readDelegatedAuthorizationSkill(),
+          references: await bundledSkillResources.listReferences(
+            "granoflow-delegated-authorization",
+          ),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_task_orchestrator_skill",
+    "Read the bundled context-aware Granoflow Task Orchestrator. Use it as the single upper-layer entrypoint when natural language or gf shortcuts may mean quick capture, context enrichment, Analysis, Planning, end-to-end local-safe execution, or completion audit. It delegates every phase to the existing workflow owners and never turns inferred intent into external or destructive authorization.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-task-orchestrator/SKILL.md",
+          skill: readTaskOrchestratorSkill(),
+          references: await bundledSkillResources.listReferences("granoflow-task-orchestrator"),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_milestone_workflow_skill",
+    "Read the bundled Granoflow Milestone Workflow skill. Use it when one delegated outcome spans multiple child tasks and needs a stable milestone charter, evolving task portfolio, dependency and handoff coordination, bounded authorization, replanning, cross-task integration evidence, and milestone-level acceptance before closure. Child implementation remains owned by Task Work.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-milestone-workflow/SKILL.md",
+          skill: readMilestoneWorkflowSkill(),
+          references: await bundledSkillResources.listReferences("granoflow-milestone-workflow"),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_persistent_milestone_runner_skill",
+    "Read the bundled provider-neutral Granoflow Persistent Milestone Runner skill. Use it for restart-safe milestone execution with leases, heartbeat, bounded attempt history, no-progress replanning, resumable interaction nodes, explicit authorization manifests, and evidence-gated completion. A separate user Skill may choose the worker command or model.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-persistent-milestone-runner/SKILL.md",
+          skill: readPersistentMilestoneRunnerSkill(),
+          references: await bundledSkillResources.listReferences(
+            "granoflow-persistent-milestone-runner",
+          ),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_project_definition_skill",
+    "Read the bundled Granoflow Project Definition skill. Use it to build or refine one Project Work YAML step by step or from a vague request, then gate manual and automatic project actions through App-owned readiness and artifact readback.",
+    {},
+    async () =>
+      jsonTextResult({
+        ok: true,
+        code: "ok",
+        data: {
+          path: "skills/granoflow-project-definition/SKILL.md",
+          skill: readProjectDefinitionSkill(),
+          references: await bundledSkillResources.listReferences("granoflow-project-definition"),
         },
       }),
   );
@@ -2659,6 +3026,38 @@ export function registerGranoflowTools(server: {
   );
 
   registerTool(
+    "granoflow_historical_task_candidates",
+    "Read App-owned historical task candidate facts and bounded evidence for one current task. The tool never ranks again or turns relationship facts into recommendations.",
+    {
+      taskId: z.string().min(1),
+      summary: z.string().max(500).optional(),
+      errorText: z.string().max(1000).optional(),
+      module: z.string().min(1).optional(),
+      paths: z.array(z.string().min(1).max(240)).max(20).optional(),
+      limit: z.number().int().min(1).max(12).default(8),
+      dryRun: z
+        .boolean()
+        .default(false)
+        .describe("When true, previews the request without calling the app."),
+    },
+    async ({ taskId, summary, errorText, module, paths, limit, dryRun }) =>
+      historicalTaskCandidatesApiTool({
+        method: "POST",
+        path: "/v1/ai-agent/tasks/similar-solutions",
+        body: compactRecord({
+          taskId,
+          summary,
+          errorText,
+          module,
+          paths,
+          limit: limit ?? 8,
+          client: "mcp",
+        }),
+        dryRun: dryRun === true,
+      }),
+  );
+
+  registerTool(
     "granoflow_memory_batch_preview",
     "Ask the running Granoflow app to preview an AI-agent memory batch before any write. Granoflow owns project/milestone matching and duplicate signals; this MCP tool only forwards after capability checks.",
     {
@@ -3038,9 +3437,40 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_export",
-    "Export task details, completion review, project context, and reusable lessons for evidence-based task or memory retrieval.",
-    { taskId: z.string().min(1).describe("Granoflow task id.") },
-    async ({ taskId }) => apiTool({ path: `/v1/ai-agent/tasks/${String(taskId)}/export` }),
+    "Export task details, reusable lessons, and App-admitted prototype inputs. The App is the sole execution-admission authority; this tool never guesses current or latest prototype versions.",
+    {
+      taskId: z.string().min(1).describe("Granoflow task id."),
+      includePrototypes: z
+        .boolean()
+        .default(true)
+        .describe("Include structured prototype admission and admitted assets."),
+      assetMode: z
+        .enum(["metadata", "file"])
+        .default("metadata")
+        .describe("Use file to request short-lived decrypted package paths."),
+      ttlSeconds: z
+        .number()
+        .int()
+        .min(1)
+        .max(600)
+        .default(600)
+        .describe("Temporary prototype asset lifetime, capped at 600 seconds."),
+      fetchMissing: z
+        .boolean()
+        .default(false)
+        .describe("Allow the App to fetch a missing local package before export."),
+    },
+    async ({ taskId, includePrototypes, assetMode, ttlSeconds, fetchMissing }) => {
+      const query = new URLSearchParams({
+        includePrototypes: String(includePrototypes),
+        assetMode: String(assetMode),
+        ttlSeconds: String(ttlSeconds),
+        fetchMissing: String(fetchMissing),
+      });
+      return apiTool({
+        path: `/v1/ai-agent/tasks/${String(taskId)}/export?${query.toString()}`,
+      });
+    },
   );
 
   registerTool(
@@ -3072,7 +3502,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_history_mutate",
-    "Create, update, or soft-delete historical Granoflow task facts through the dedicated AI-agent API. Use dryRun first; when dryRun=false, the running app must advertise historical_task_mutations_v1.",
+    "Create, update, or soft-delete historical Granoflow task facts through the dedicated AI-agent API. Every create mutation requires shared AI/automation authoringEvidence for an action/outcome title, plain language, a real analogy, and a concrete example. Use dryRun first; when dryRun=false, the running app must advertise historical_task_mutations_v1.",
     {
       source: z
         .record(z.string(), z.unknown())
@@ -3086,21 +3516,51 @@ export function registerGranoflowTools(server: {
           "When true, previews without writing. Set false only with explicit user approval.",
         ),
     },
-    async ({ source, mutations, dryRun }) =>
-      jsonTextResult(
+    async ({ source, mutations, dryRun }) => {
+      const typedMutations = Array.isArray(mutations)
+        ? (mutations as z.infer<typeof historicalTaskMutationSchema>[])
+        : [];
+      const preparedMutations = [];
+      for (const [mutationIndex, mutation] of typedMutations.entries()) {
+        const { authoringEvidence, ...mutationForApi } = mutation;
+        if (mutation.op === "create") {
+          const fields = isObject(mutation.fields) ? mutation.fields : {};
+          const issues = validateTaskAuthoringQuality(
+            fields.title,
+            fields.description,
+            authoringEvidence,
+          );
+          if (issues.length > 0) {
+            return jsonTextResult({
+              ok: false,
+              code: "task_authoring_quality_failed",
+              data: {
+                mutationIndex,
+                clientMutationId: mutation.clientMutationId,
+                issues,
+              },
+              error: {
+                message:
+                  "Historical create mutations require the shared task authoring quality evidence.",
+              },
+            });
+          }
+        }
+        preparedMutations.push(mutationForApi);
+      }
+      return jsonTextResult(
         await mutateTaskHistory({
           source: isObject(source) ? source : undefined,
-          mutations: Array.isArray(mutations)
-            ? (mutations as z.infer<typeof historicalTaskMutationSchema>[])
-            : undefined,
+          mutations: preparedMutations,
           dryRun: dryRun !== false,
         }),
-      ),
+      );
+    },
   );
 
   registerTool(
     "granoflow_task_create",
-    "Create a Granoflow task from a JSON payload. Tags not in the local catalog are skipped automatically. Optional completionSource attaches AI/人工 source tags for completed-work capture.",
+    "Create a current Granoflow task from a JSON payload in pending state. Do not include createdAt, updatedAt, startedAt, endedAt, or deletedAt. After Analysis/Plan readiness and execution authorization, update status to doing; the App records startedAt. Use granoflow_task_history_mutate only for genuine historical correction. AI and automation callers must include input.authoringEvidence proving an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. Tags not in the local catalog are skipped automatically. Optional completionSource attaches AI/人工 source tags for completed-work capture.",
     {
       input: jsonInputSchema,
       dryRun: z
@@ -3110,6 +3570,16 @@ export function registerGranoflowTools(server: {
     },
     async ({ input, dryRun }) => {
       const record = isObject(input) ? { ...input } : {};
+      const authoringEvidence = record.authoringEvidence;
+      delete record.authoringEvidence;
+      const qualityFailure = taskAuthoringQualityFailure(
+        record.title,
+        record.description,
+        authoringEvidence,
+      );
+      if (qualityFailure) return qualityFailure;
+      const writeFailure = ordinaryTaskWriteFailure(record, "create");
+      if (writeFailure) return writeFailure;
       const completionSource = parseCompletionSource(record.completionSource);
       delete record.completionSource;
       return apiToolForTaskWrite(
@@ -3126,14 +3596,10 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_create_structured",
-    "Create a Granoflow task with common structured fields. Derive startedAt from the earliest task-related user question in the current agent thread before writing. For a milestone-bound task, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Tags not in the local catalog are skipped automatically. Defaults to dry-run.",
+    "Create a current Granoflow task in pending state with common structured fields. Ordinary creation never accepts startedAt or other historical physical fields. After Analysis/Plan readiness and execution authorization, update status to doing; the App records startedAt. Use granoflow_task_history_mutate only for genuine historical correction. AI and automation callers must provide authoringEvidence for an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. For a milestone-bound task, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Tags not in the local catalog are skipped automatically. Defaults to dry-run.",
     {
       title: z.string().min(1),
       description: z.string().optional(),
-      startedAt: z
-        .string()
-        .optional()
-        .describe("Earliest task-related user question time derived from the agent thread."),
       dueAt: z
         .string()
         .optional()
@@ -3143,9 +3609,13 @@ export function registerGranoflowTools(server: {
       remindAt: z.string().optional(),
       projectId: z.string().min(1).optional(),
       milestoneId: z.string().min(1).optional(),
-      status: resourceStatusSchema,
+      status: z
+        .literal("pending")
+        .optional()
+        .describe("Ordinary current-task creation starts pending; omit or pass pending."),
       tags: z.array(z.string().min(1)).optional(),
       completionSource: completionSourceSchema,
+      authoringEvidence: taskAuthoringEvidenceInputSchema,
       dryRun: z
         .boolean()
         .default(true)
@@ -3154,7 +3624,6 @@ export function registerGranoflowTools(server: {
     async ({
       title,
       description,
-      startedAt,
       dueAt,
       remindAt,
       projectId,
@@ -3162,32 +3631,38 @@ export function registerGranoflowTools(server: {
       status,
       tags,
       completionSource,
+      authoringEvidence,
       dryRun,
-    }) =>
-      apiToolForTaskWrite(
+    }) => {
+      const qualityFailure = taskAuthoringQualityFailure(title, description, authoringEvidence);
+      if (qualityFailure) return qualityFailure;
+      const taskBody = compactRecord({
+        title,
+        description,
+        dueAt,
+        remindAt,
+        projectId,
+        milestoneId,
+        status,
+        tags,
+      });
+      const writeFailure = ordinaryTaskWriteFailure(taskBody, "create");
+      if (writeFailure) return writeFailure;
+      return apiToolForTaskWrite(
         {
           method: "POST",
           path: "/v1/tasks",
           dryRun: dryRun !== false,
         },
-        compactRecord({
-          title,
-          description,
-          startedAt,
-          dueAt,
-          remindAt,
-          projectId,
-          milestoneId,
-          status,
-          tags,
-        }),
+        taskBody,
         parseCompletionSource(completionSource),
-      ),
+      );
+    },
   );
 
   registerTool(
     "granoflow_task_update",
-    "Update a Granoflow task through the Local HTTP API. Tags not in the local catalog are skipped automatically.",
+    "Update a current Granoflow task through the Local HTTP API. Do not include historical physical fields. To begin actual execution, set status=doing after Analysis/Plan readiness and authorization; the App records startedAt. Use granoflow_task_history_mutate only for genuine historical correction. Tags not in the local catalog are skipped automatically.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       input: jsonInputSchema,
@@ -3196,20 +3671,24 @@ export function registerGranoflowTools(server: {
         .default(true)
         .describe("When true, previews the request without writing."),
     },
-    async ({ taskId, input, dryRun }) =>
-      apiToolForTaskWrite(
+    async ({ taskId, input, dryRun }) => {
+      const record = isObject(input) ? { ...input } : {};
+      const writeFailure = ordinaryTaskWriteFailure(record, "update");
+      if (writeFailure) return writeFailure;
+      return apiToolForTaskWrite(
         {
           method: "PATCH",
           path: `/v1/tasks/${String(taskId)}`,
           dryRun: dryRun !== false,
         },
-        input as Record<string, unknown>,
-      ),
+        record,
+      );
+    },
   );
 
   registerTool(
     "granoflow_task_update_structured",
-    "Update a Granoflow task with common structured fields. When moving it into a milestone, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Defaults to dry-run.",
+    "Update a current Granoflow task with common structured fields. To begin actual execution, set status=doing only after Analysis/Plan readiness and execution authorization; the App records startedAt automatically, so do not use a historical timestamp write. When moving it into a milestone, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Defaults to dry-run.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       title: z.string().min(1).optional(),
@@ -3364,6 +3843,189 @@ export function registerGranoflowTools(server: {
   );
 
   registerTool(
+    "granoflow_logical_attachment_replace",
+    "Replace the current typed project, milestone, or task artifact and require App-owned SHA-256 readback before it becomes current.",
+    {
+      entityType: logicalAttachmentEntityTypeSchema,
+      entityId: z.string().min(1),
+      logicalSlot: logicalAttachmentSlotSchema,
+      filePath: z.string().min(1),
+      expectedUpdatedAt: z.string().datetime(),
+      idempotencyKey: z.string().min(1),
+      visualConfirmed: z
+        .boolean()
+        .default(false)
+        .describe("Must be true when logicalSlot is ui_prototype."),
+      dryRun: z.boolean().default(true),
+    },
+    async ({
+      entityType,
+      entityId,
+      logicalSlot,
+      filePath,
+      expectedUpdatedAt,
+      idempotencyKey,
+      visualConfirmed,
+      dryRun,
+    }) => {
+      let file: string;
+      try {
+        file = validatedLogicalAttachmentPath(String(filePath), String(logicalSlot));
+      } catch (error) {
+        return jsonTextResult({
+          ok: false,
+          code: "unsafe_attachment_path",
+          error: { message: error instanceof Error ? error.message : String(error) },
+        });
+      }
+      const contentSha256 = createHash("sha256").update(readFileSync(file)).digest("hex");
+      return resourceCapabilityApiTool(
+        logicalAttachmentResource(String(entityType)),
+        ["attachment.conditional-add", "attachment.read-content-hash"],
+        {
+          method: "POST",
+          path: logicalAttachmentPath(String(entityType), String(entityId)),
+          body: {
+            file,
+            logicalSlot: String(logicalSlot),
+            expectedUpdatedAt: String(expectedUpdatedAt),
+            expectedContentSha256: contentSha256,
+            idempotencyKey: String(idempotencyKey),
+            visualConfirmed: visualConfirmed === true,
+          },
+          dryRun: dryRun !== false,
+        },
+      );
+    },
+  );
+
+  registerTool(
+    "granoflow_logical_attachment_read",
+    "Read bounded Markdown or YAML content and App-owned SHA-256 for one current logical attachment. Acceptance HTML is previewed by the App and uses replace-response hash readback.",
+    {
+      entityType: logicalAttachmentEntityTypeSchema,
+      entityId: z.string().min(1),
+      attachmentId: z.string().min(1),
+    },
+    async ({ entityType, entityId, attachmentId }) =>
+      resourceCapabilityApiTool(
+        logicalAttachmentResource(String(entityType)),
+        ["attachment.read-content-hash"],
+        {
+          path: `${logicalAttachmentPath(String(entityType), String(entityId))}/${String(attachmentId)}`,
+        },
+      ),
+  );
+
+  registerTool(
+    "granoflow_project_design_baseline_import",
+    "Import one validated high-fidelity prototype package as the App-owned project design baseline. The App owns package validation, immutable versions, project linking, deduplication, and exact SHA-256 readback.",
+    {
+      projectId: z.string().min(1),
+      filePath: z.string().min(1).describe("Absolute path to a local .zip package."),
+      prototypeId: z
+        .string()
+        .min(1)
+        .optional()
+        .describe("Existing App-owned prototype id when adding a new baseline version."),
+      idempotencyKey: z.string().min(1),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ projectId, filePath, prototypeId, idempotencyKey, dryRun }) => {
+      let file: string;
+      try {
+        file = validatedProjectDesignBaselinePath(String(filePath));
+      } catch (error) {
+        return jsonTextResult({
+          ok: false,
+          code: "unsafe_project_design_baseline_path",
+          error: { message: error instanceof Error ? error.message : String(error) },
+        });
+      }
+      const bytes = readFileSync(file);
+      const packageSha256 = createHash("sha256").update(bytes).digest("hex");
+      return apiTool({
+        method: "POST",
+        path: "/v1/ai-agent/project-design-baseline/import",
+        body: {
+          projectId: String(projectId),
+          displayName: basename(file),
+          packageBase64: bytes.toString("base64"),
+          expectedPackageSha256: packageSha256,
+          idempotencyKey: String(idempotencyKey),
+          ...(prototypeId ? { prototypeId: String(prototypeId) } : {}),
+        },
+        dryRun: dryRun !== false,
+      });
+    },
+  );
+
+  registerTool(
+    "granoflow_project_design_baseline_read",
+    "Read back one exact App-owned project design baseline reference. Never guesses the latest version.",
+    {
+      projectId: z.string().min(1),
+      prototypeId: z.string().min(1),
+      versionId: z.string().min(1),
+      expectedPackageSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    },
+    async ({ projectId, prototypeId, versionId, expectedPackageSha256 }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/ai-agent/project-design-baseline/read",
+        body: {
+          projectId: String(projectId),
+          prototypeId: String(prototypeId),
+          versionId: String(versionId),
+          expectedPackageSha256: String(expectedPackageSha256),
+        },
+      }),
+  );
+
+  registerTool(
+    "granoflow_project_work_evaluate",
+    "Evaluate the current Project Work YAML for a manual or automatic action. Partial attachment is allowed; gated actions fail with all relevant missing paths.",
+    {
+      projectId: z.string().min(1),
+      action: projectWorkActionSchema,
+      requiredPaths: z.array(z.string().min(1)).optional(),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ projectId, action, requiredPaths, dryRun }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/ai-agent/project-work/evaluate",
+        body: {
+          projectId: String(projectId),
+          action: String(action),
+          ...(requiredPaths ? { requiredPaths } : {}),
+        },
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
+    "granoflow_project_work_confirm",
+    "Confirm the exact current Project Work content hash in the App. Confirmation does not authorize execution, commit, push, publish, deploy, deletion, payment, or messaging.",
+    {
+      projectId: z.string().min(1),
+      expectedContentSha256: z.string().regex(/^[a-f0-9]{64}$/),
+      confirmed: z.literal(true),
+      dryRun: z.boolean().default(true),
+    },
+    async ({ projectId, expectedContentSha256, dryRun }) =>
+      apiTool({
+        method: "POST",
+        path: "/v1/ai-agent/project-work/confirm",
+        body: {
+          projectId: String(projectId),
+          expectedContentSha256: String(expectedContentSha256),
+        },
+        dryRun: dryRun !== false,
+      }),
+  );
+
+  registerTool(
     "granoflow_task_attachment_add_markdown",
     "Conditionally attach a versioned Task Work Document, legacy Task Analysis/Plan, or Task Delivery Markdown file and verify App-owned content/hash readback.",
     {
@@ -3499,7 +4161,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_task_finish",
-    "Finish a node-less compatibility task after its required Delivery gate and verify status=done. Derive endedAt from the confirmed completion time in the current agent thread; if startedAt is missing, recover it from the thread or mark an evidence-based estimate. Do not use for node-backed tasks. taskReview/reviewCardDrafts remain legacy explicit-inline compatibility only; deferred Review is the default.",
+    "Finish a node-less compatibility task after its required Delivery gate and verify status=done. Derive endedAt from the confirmed completion time. startedAt must represent when execution actually began, normally already App-recorded by the status=doing transition; never substitute the earlier task discussion or creation time. If an evidence-based correction is required at completion, this tool sends it only through the supported complete action. Do not use for node-backed tasks. taskReview/reviewCardDrafts remain legacy explicit-inline compatibility only; deferred Review is the default.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       projectId: z
@@ -3520,7 +4182,7 @@ export function registerGranoflowTools(server: {
         .string()
         .optional()
         .describe(
-          "Task start time inferred from the current agent conversation, preferably ISO-like.",
+          "Actual execution start time, only for evidence-based correction through the complete action. Do not use task discussion or creation time.",
         ),
       taskReview: z
         .string()

@@ -8,11 +8,12 @@ is the immutable, versioned record of what this task actually delivered. It is
 required before completion for work that entered Execution and is not a Task
 Review, including `planning_status=not_required` work.
 
-Time reconciliation is part of completion evidence: `startedAt` is the earliest
-task-related user question found in the agent thread, while `endedAt` is the
-confirmed completion point in the thread. If the stored start is missing, first
-recall the thread; only after failed recall may the Agent write an evidence-based
-estimated start and label it as estimated.
+Time reconciliation is part of completion evidence: `startedAt` is the actual
+transition into Execution, normally App-recorded when the task moved to
+`doing`, while `endedAt` is the confirmed completion point. The earlier task
+discussion, capture, Analysis, or Planning time is not execution time and must
+not be substituted. If a historical correction is genuinely required, use the
+dedicated historical mutation surface with evidence and readback.
 
 1. Re-read the task, nodes, description, attachments, active Work Document, and current evidence. For legacy work, read the verified Analysis and Plan instead. Stop with `task_analysis_plan_attachment_required` when the required document attachment is absent.
 2. Select base plus composable profiles. Determine the highest `task-delivery-vNN.md`; use the next version.

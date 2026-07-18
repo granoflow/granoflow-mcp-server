@@ -114,6 +114,21 @@ Agents can use the bundled
 to initialize the connection, offer all recommended AI capability collections,
 and optionally import data from Cursor, Codex, Hermes, or other agents.
 
+For one context-aware task entrypoint, use the bundled
+[Granoflow Task Orchestrator](skills/granoflow-task-orchestrator/SKILL.md). Plain
+language or `gf` selects quick capture, context enrichment, Analysis, Planning,
+safe local execution, or completion audit. Optional shortcuts are `gf记`/`gf+`,
+`gf析`/`gf?`, `gf规`/`gf>`, `gf做`/`gf!`, and `gf完`/`gf.`. User-facing status
+uses `A`, `P`, and `D` for Analysis, Plan, and Delivery while attachments keep
+their canonical metadata and filenames.
+
+For outcomes that span multiple tasks, use the bundled
+[Granoflow Milestone Workflow](skills/granoflow-milestone-workflow/SKILL.md).
+It keeps one stable milestone charter, lets the child-task portfolio evolve,
+coordinates dependencies and handoffs, and requires cross-task integration
+evidence before milestone acceptance. Each child task still owns its own Task
+Work lifecycle.
+
 ## Workflow Examples
 
 After installing Granoflow MCP, ask your agent:
@@ -224,6 +239,12 @@ workflow layer around those tools: task state, completion review, durable
 lessons, review cards, and local historical context.
 
 Agents that have access to this MCP server should call
+`granoflow_task_orchestrator_skill` first for task lifecycle intent, including
+natural-language capture, analysis, planning, execution, and completion. The
+Orchestrator selects the route and stopping point, then delegates each phase to
+its existing owner. It does not replace the detailed workflow contracts.
+
+Agents should call
 `granoflow_agent_workflow_skill` before handling task completion, review-card
 drafting, long-term memory lookup, weekly/monthly review drafting, or user
 feedback about Granoflow output. Call `granoflow_daily_review_skill` directly
@@ -259,17 +280,80 @@ Run continuously with an explicit workspace:
 npx -y @granoflow/mcp-server gfmcp-runner --workspace /absolute/project/path
 ```
 
+The runner exposes its real process and workflow state instead of asking users
+to trust a “monitoring started” message:
+
+```bash
+granoflow-gfmcp-runner --status
+granoflow-gfmcp-runner --stop
+```
+
+Status includes the live-lock result, `idle` / `polling` / `executing` /
+`verifying` / `waiting` phase, recent and next check times, current task lease,
+last stable result, and bounded recent events. A verified completed task triggers
+an immediate queue recheck; an empty queue returns to the five-minute wait.
+Codex cron or heartbeat automation is only an optional wake-up layer and should
+call `granoflow-gfmcp-runner --once`, never claim the same queue directly.
+
 The tag is not blanket authorization. Publishing, payment, login, external
 messages, destructive changes, secrets, and scope expansion still require user
 approval. Completion is accepted only after Local HTTP API readback reports the
 task as done.
+
+Thread execution has three user-facing modes. If the user says nothing, the
+agent uses the default interactive mode. Explicit `unattended` mode requires the
+thread to report its mode and declare responsible node lanes, allowed actions,
+stop conditions, and handoff; ordinary confirmation nodes are skipped, but real
+external-action boundaries remain. Explicit `layered_handoff` mode assigns
+versioned capability prefixes to separate workers. New `batch_v2` tasks use
+`[analysis]`, `[plan]`, `[dev]`, `[test]`, `[integration]`, `[user]`,
+and `[action]`; historical `legacy_v1` tasks retain `[confirm]` and the
+old `[test]` meaning.
+The prefix names a responsibility, not a model. The user or host chooses models
+because an agent cannot reliably identify its own model or reasoning tier.
+
+Unattended mode has one general zero-interruption contract, not a list of prompt
+phrases to suppress. A bounded same-run request uses an interaction budget of
+zero across Analysis, Planning, implementation, repair, verification, Delivery,
+and completion. The agent may wait only for a proven direction change, scope
+drift, forbidden action, user-only input, or required subjective acceptance;
+before waiting it completes independent safe work and asks one batched question.
+Durable continuation across a later host turn still uses the confirmed delegated
+authorization envelope.
+
+The persistent milestone runner supports those explicit modes with
+`--execution-mode` and repeatable `--lane`. `[dev]` prepares and statically
+validates integration/screenshot scripts; `[test]` means a later worker actually
+runs them. Every completed implementation produces a self-contained acceptance
+HTML, including when integration and screenshots are `not_required`; the report
+then explains why and shows the alternative automated evidence.
+
+For bounded unattended Task Work, call
+`granoflow_delegated_authorization_skill`. It defines a confirmed, expiring
+envelope with separate Analysis confirmation, Planning permission, Plan
+confirmation, and Execution authorization grants. Hosts re-read the controller
+task attachment and App-owned SHA-256 receipt, then run the packaged read-only
+validator against current Grill, Plan, repository, path, and action facts. A
+matching decision may continue only its evaluated scope; expired, revoked,
+stale, unknown, forbidden, or drifted state fails closed into the existing
+visible waiting-node and reminder workflow. Skill invocation and the `GFMCP`
+tag never grant authorization.
+
+The optional `gf做` / `gf!` local-safe profile is also not blanket
+authorization. After its fixed contract has been previewed and approved, it can
+continue only an explicitly targeted run whose Analysis and Readiness Grills
+pass and whose requested actions stay inside the declared local/GF allowlist.
+Publish, deploy, commit, push, deletion, login, payment, secret/2FA access,
+external messages, approved-asset overwrite, and scope expansion always remain
+outside the profile.
 
 The bundled workflow also includes due-task processing. When the user asks an
 agent to process today's tasks, a specific date or range, or all unfinished
 tasks, the agent should use a batch ledger to classify which tasks AI can do,
 which need user input, and which the user must do. Each selected task gets one
 adaptive Task Work Document; Planning is expanded only when needed, and
-execution still waits for a separate user instruction. User-only blockers should be preserved as Granoflow
+execution still requires a separate user instruction or a current delegated
+execution grant. User-only blockers should be preserved as Granoflow
 task nodes, reminders, notification tasks, and sync visibility reports when the
 running app exposes the required tools.
 
@@ -280,6 +364,15 @@ active milestone. Every other default placement goes straight to inbox without
 interrupting the user to propose or create project structure. The task keeps
 enough context for later analysis, then returns only a one-sentence placement
 confirmation.
+
+Every task authored by an AI agent or automation follows one shared quality
+contract, including tasks created directly, from project or milestone work,
+during import, or as notification tasks. The title must name an action or
+observable outcome. The description must use non-programmer-friendly language
+and include both a real analogy and a different concrete example. Task-create
+tools require exact `authoringEvidence` excerpts and fail with
+`task_authoring_quality_failed` before any write when the evidence is missing or
+invalid. Human title-only quick capture in the App remains unchanged.
 
 The bundled workflow also includes interactive single-task work definition. The
 agent prefills evidence, shows unresolved directional questions once with AI
@@ -405,6 +498,9 @@ Initial tools:
 - `granoflow_daily_review_skill`
 - `granoflow_first_run_import_skill`
 - `granoflow_gfmcp_runner_skill`
+- `granoflow_delegated_authorization_skill`
+- `granoflow_task_orchestrator_skill`
+- `granoflow_milestone_workflow_skill`
 - `granoflow_gfmcp_prepare`
 - `granoflow_gfmcp_safe_sync`
 - `granoflow_gfmcp_candidates`
@@ -507,6 +603,9 @@ ids are:
 - `granoflow-first-run-import`
 - `granoflow-review-card-draft`
 - `granoflow-gfmcp-runner`
+- `granoflow-delegated-authorization`
+- `granoflow-task-orchestrator`
+- `granoflow-milestone-workflow`
 
 The reference tool is package-local and read-only. It accepts no caller path,
 does not call the Granoflow Local HTTP API, and does not require an API token.

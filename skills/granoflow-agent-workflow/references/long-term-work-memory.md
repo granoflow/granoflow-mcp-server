@@ -129,6 +129,22 @@ When the user asks whether something happened before, answer with:
 If there are multiple candidates, rank them by directness, project match, date
 proximity, and whether they contain a task review or review card.
 
+When the running app advertises `historical_task_candidates_v2`, use
+`granoflow_historical_task_candidates` for a known current task. Treat every
+returned item as an App-owned candidate, not as a conclusion. Keep a candidate
+only when the agent can state all three of the following:
+
+- the inferred relationship, such as `regression_of`, `supersedes`,
+  `requirement_changed_from`, `follow_up_to`, `reuses_solution_from`, or
+  `avoids_failure_from`;
+- the exact App-returned evidence source supporting that inference;
+- the concrete change this evidence makes to the current analysis, plan, or
+  verification.
+
+Discard the candidate when any one of these is missing. Never write the inferred
+relationship back as an App fact, and never replace an empty or degraded result
+with generic search just to produce an answer.
+
 ## Missing Memory Handling
 
 If Granoflow has no clear record, say that directly:

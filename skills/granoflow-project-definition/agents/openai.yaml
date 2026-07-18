@@ -1,0 +1,4 @@
+interface:
+  display_name: Granoflow Project Definition
+  short_description: Define a software project step by step or from a vague request, with App-owned automation gates.
+  default_prompt: Define or refine this Granoflow project and keep one current Project Work YAML.

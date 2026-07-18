@@ -1,0 +1,3 @@
+interface:
+  display_name: "Granoflow Delegated Authorization"
+  short_description: "Validate bounded unattended Task Work grants"

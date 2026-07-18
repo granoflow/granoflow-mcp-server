@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -11,7 +12,7 @@ from typing import Any, Protocol
 
 from gfmcp_api import GranoflowApi, GranoflowApiError
 from gfmcp_executor import execute
-from gfmcp_state import RunnerAlreadyActive, StateStore, lease_available
+from gfmcp_state import RunnerAlreadyActive, StateStore, lease_available, utc_timestamp
 
 DEFAULT_INTERVAL_SECONDS = 300
 BLOCK_MARKER = "\n\n---\nGFMCP 自动执行状态："
@@ -114,11 +115,26 @@ def run_cycle(
             "leaseUntil": time.time() + timeout_seconds + 60,
         }
         store.save(state)
+        store.update_runtime(
+            "executing",
+            status="task_started",
+            task_id=task_id,
+            lease_until=float(tasks_state[task_id]["leaseUntil"]),
+            record_result=False,
+        )
         result = execute(task_id, workspace, executor_command, timeout_seconds)
+        store.update_runtime(
+            "verifying",
+            status="executor_timeout" if result.timed_out else f"executor_exit_{result.exit_code}",
+            task_id=task_id,
+            record_result=False,
+        )
         readback = api.task(task_id)
         if readback and readback.get("status") == "done":
-            tasks_state.pop(task_id, None)
-            store.save(state)
+            latest_state = store.load()
+            latest_tasks = latest_state.setdefault("tasks", {})
+            latest_tasks.pop(task_id, None)
+            store.save(latest_state)
             return "task_completed"
         reason = (
             "executor_timeout"
@@ -127,7 +143,7 @@ def run_cycle(
             if result.exit_code
             else "task_still_pending"
         )
-        record_failure(api, store, state, readback or task, reason)
+        record_failure(api, store, store.load(), readback or task, reason)
         return reason
     return "no_eligible_candidates"
 
@@ -138,6 +154,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument("--status", action="store_true")
+    action.add_argument("--stop", action="store_true")
     parser.add_argument("--interval-seconds", type=int, default=DEFAULT_INTERVAL_SECONDS)
     parser.add_argument(
         "--state-dir", type=Path, default=Path.home() / ".local" / "state" / "granoflow-gfmcp"
@@ -151,13 +170,44 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
+def should_poll_immediately(status: str) -> bool:
+    return status == "task_completed"
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     store = StateStore(args.state_dir)
+    if args.status:
+        print(json.dumps({"ok": True, "status": "runner_status", "data": store.status()}))
+        return 0
+    if args.stop:
+        requested = store.request_stop()
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "status": "stop_requested" if requested else "runner_not_active",
+                }
+            )
+        )
+        return 0
     api = GranoflowApi()
     try:
         with store.process_lock():
+            store.clear_stop_request()
+            store.update_runtime(
+                "idle", status="runner_started", pid=os.getpid(), record_result=False
+            )
             while True:
+                if store.stop_requested():
+                    break
+                checked_at = utc_timestamp()
+                store.update_runtime(
+                    "polling",
+                    status="poll_started",
+                    last_check_at=checked_at,
+                    record_result=False,
+                )
                 try:
                     status = run_cycle(
                         api,
@@ -168,7 +218,21 @@ def main(argv: list[str] | None = None) -> int:
                         args.dry_run,
                     )
                     print(json.dumps({"ok": True, "status": status}))
+                    result_phase = (
+                        "idle"
+                        if status
+                        in {
+                            "task_completed",
+                            "no_candidates",
+                            "no_eligible_candidates",
+                            "candidate_ready",
+                        }
+                        else "waiting"
+                    )
+                    store.update_runtime(result_phase, status=status)
                 except GranoflowApiError:
+                    status = "local_api_unavailable"
+                    store.update_runtime("waiting", status=status)
                     print(
                         json.dumps({"ok": False, "status": "local_api_unavailable"}),
                         file=sys.stderr,
@@ -177,10 +241,21 @@ def main(argv: list[str] | None = None) -> int:
                         return 1
                 if args.once:
                     return 0
-                time.sleep(args.interval_seconds)
+                if should_poll_immediately(status):
+                    store.update_runtime("idle", status="immediate_recheck", record_result=False)
+                    continue
+                next_check_at = utc_timestamp(time.time() + args.interval_seconds)
+                store.update_runtime("waiting", status=status, next_check_at=next_check_at)
+                if not store.interruptible_wait(args.interval_seconds):
+                    break
     except RunnerAlreadyActive:
         print(json.dumps({"ok": False, "status": "runner_already_active"}), file=sys.stderr)
         return 2
+    finally:
+        if not store.runner_active():
+            store.update_runtime("stopped", status="runner_stopped", record_result=False)
+            store.clear_stop_request()
+    return 0
 
 
 if __name__ == "__main__":
