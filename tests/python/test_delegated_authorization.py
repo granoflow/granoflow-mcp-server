@@ -17,12 +17,9 @@ SCRIPT = (
     / "scripts"
     / "validate_delegated_authorization.py"
 )
-ENVELOPE_PATH = (
-    ROOT
-    / "docs-temp"
-    / "authorization"
-    / "granoflow-delegated-authorization-current-batch-preview.json"
-)
+TEST_TASK_ID = "task-delegated-authorization-test"
+TEST_REPO = "/workspace/granoflow-mcp-server"
+TEST_PLAN_HASH = "568c4e182bb62b33a68de19b1c97b1d0706155c42f3a9ae4981f4861842d40d3"
 
 
 def load_module() -> Any:
@@ -34,17 +31,71 @@ def load_module() -> Any:
 
 
 def base_envelope() -> dict[str, Any]:
-    return json.loads(ENVELOPE_PATH.read_text(encoding="utf-8"))
+    return {
+        "schema": "granoflow_delegated_authorization_v1",
+        "status": "confirmed",
+        "envelopeId": "delegated-authorization-test-envelope",
+        "authorizationOwnerTaskId": TEST_TASK_ID,
+        "receiptPolicy": "app_readback_external",
+        "issuedAt": "2026-07-17T09:00:00+08:00",
+        "expiresAt": "2026-07-18T09:00:00+08:00",
+        "sourceRef": "test-fixture",
+        "taskIds": [TEST_TASK_ID],
+        "phaseGrants": {
+            "analysisConfirmation": True,
+            "planningPermission": True,
+            "planConfirmation": True,
+            "executionAuthorization": True,
+        },
+        "planBindings": [
+            {
+                "taskIds": [TEST_TASK_ID],
+                "path": "/workspace/plan.md",
+                "sha256": TEST_PLAN_HASH,
+            }
+        ],
+        "allowedRepos": [TEST_REPO],
+        "allowedPathGlobs": {
+            TEST_REPO: [
+                "skills/granoflow-delegated-authorization/**",
+                "tests/python/test_delegated_authorization.py",
+            ]
+        },
+        "allowedActions": ["local_versioned_code_edit", "local_test"],
+        "forbiddenActions": [
+            "filesystem_delete_outside_versioned_plan",
+            "user_data_delete",
+            "approved_asset_overwrite",
+            "git_commit",
+            "git_push",
+            "publish",
+            "deploy",
+            "login",
+            "payment",
+            "secret_access",
+            "two_factor_authentication",
+            "external_message",
+        ],
+        "requiredGateFacts": {
+            "analysisGrillPassed": True,
+            "planningConfirmed": True,
+            "readinessGrillPassed": True,
+            "unresolvedDecisionCount": 0,
+            "scopeEscalated": False,
+            "stateFresh": True,
+        },
+        "invalidationConditions": ["test fixture invalidated"],
+    }
 
 
 def base_facts(host: str = "codex") -> dict[str, Any]:
     return {
         "host": host,
-        "taskId": "0b785355-290c-42d2-93ee-775718b9e44e",
+        "taskId": TEST_TASK_ID,
         "phase": "executionAuthorization",
         "now": "2026-07-17T10:00:00+08:00",
-        "planHash": "568c4e182bb62b33a68de19b1c97b1d0706155c42f3a9ae4981f4861842d40d3",
-        "repo": "/Users/will/code/granoflow-mcp-server",
+        "planHash": TEST_PLAN_HASH,
+        "repo": TEST_REPO,
         "paths": [
             "skills/granoflow-delegated-authorization/SKILL.md",
             "tests/python/test_delegated_authorization.py",
@@ -169,14 +220,16 @@ class DelegatedAuthorizationTest(unittest.TestCase):
         self.assertEqual(json.loads(dry_run.stdout)["mode"], "dry-run")
 
         with tempfile.TemporaryDirectory() as directory:
+            envelope_path = Path(directory) / "envelope.json"
             facts_path = Path(directory) / "facts.json"
+            envelope_path.write_text(json.dumps(base_envelope()), encoding="utf-8")
             facts_path.write_text(json.dumps(base_facts()), encoding="utf-8")
             result = subprocess.run(
                 [
                     sys.executable,
                     str(SCRIPT),
                     "--envelope",
-                    str(ENVELOPE_PATH),
+                    str(envelope_path),
                     "--facts",
                     str(facts_path),
                     "--now",
