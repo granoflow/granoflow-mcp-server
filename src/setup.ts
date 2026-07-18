@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { lstat, mkdir, rmdir, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 
 import { GRANOFLOW_INTRODUCTION, requestGranoflowApi } from "./api.js";
 import {
@@ -25,6 +26,8 @@ export interface SetupOptions {
   env?: NodeJS.ProcessEnv;
   fetch?: typeof fetch;
   runCommand?: CommandRunner;
+  launchLockPath?: string;
+  now?: () => number;
 }
 
 export interface LocalApiDetectionInput {
@@ -41,6 +44,7 @@ export interface OpenAppInput {
 const DEFAULT_PORTS = [56789, 47631, 38080];
 const MAX_PORT_CANDIDATES = 20;
 const PROBE_PATHS = ["/health", "/api/capabilities", "/v1/health", "/v1/capabilities"];
+const APP_LAUNCH_LEASE_MS = 30_000;
 
 function safeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -48,6 +52,48 @@ function safeError(error: unknown): string {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isFileSystemError(error: unknown, code: string): boolean {
+  return isObject(error) && error.code === code;
+}
+
+async function acquireAppLaunchLease(lockPath: string, now: () => number): Promise<boolean> {
+  try {
+    await mkdir(lockPath);
+    return true;
+  } catch (error) {
+    if (!isFileSystemError(error, "EEXIST")) {
+      throw error;
+    }
+  }
+
+  try {
+    const existing = await lstat(lockPath);
+    if (now() - existing.mtimeMs < APP_LAUNCH_LEASE_MS) {
+      return false;
+    }
+    await rmdir(lockPath);
+  } catch (error) {
+    if (!isFileSystemError(error, "ENOENT")) {
+      return false;
+    }
+  }
+
+  try {
+    await mkdir(lockPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function releaseAppLaunchLease(lockPath: string): Promise<void> {
+  try {
+    await rmdir(lockPath);
+  } catch {
+    // A missing or externally replaced lease must not turn setup reporting into an error.
+  }
 }
 
 function validatePorts(ports: number[]): void {
@@ -147,19 +193,19 @@ async function checkGranoflowProcess(
     };
   }
   try {
-    const result = await runCommandImpl("pgrep", ["-ifl", "granoflow"]);
+    const result = await runCommandImpl("pgrep", ["-ix", "granoflow"]);
     const matches =
       result.exitCode === 0
         ? result.stdout
             .split("\n")
             .filter(Boolean)
-            .filter((line) => !line.toLowerCase().includes("granoflow-mcp-server"))
+            .map((line) => line.trim())
         : [];
     return {
       checked: true,
       running: matches.length > 0,
       count: matches.length,
-      matches: matches.map((line) => line.trim()),
+      matches,
     };
   } catch (error) {
     return {
@@ -481,62 +527,142 @@ export async function openGranoflowApp(input: OpenAppInput = {}, options: SetupO
     };
   }
 
-  const command = "open";
-  const attempts = [
-    ...(input.appPath ? [{ kind: "path", args: [input.appPath] }] : []),
-    { kind: "path", args: ["/Applications/granoflow.app"] },
-    { kind: "path", args: ["/Applications/Granoflow.app"] },
-    { kind: "appName", args: ["-a", appName] },
-    { kind: "appName", args: ["-a", "granoflow"] },
-  ];
-  if (dryRun) {
-    return {
-      ok: true,
-      dryRun,
-      appName,
-      appPath: input.appPath ?? null,
-      command,
-      attempts,
-      nextActions: [
-        "Ask the user to confirm opening Granoflow.",
-        "Call this tool again with dryRun=false only after the user approves.",
-      ],
-    };
+  const launchLockPath = options.launchLockPath ?? join(tmpdir(), "granoflow-mcp-app-launch.lock");
+  let launchLeaseAcquired = false;
+  let retainLaunchLease = false;
+  if (!dryRun) {
+    try {
+      launchLeaseAcquired = await acquireAppLaunchLease(launchLockPath, options.now ?? Date.now);
+    } catch (error) {
+      return {
+        ok: false,
+        code: "granoflow_app_launch_guard_failed",
+        dryRun,
+        appName,
+        appPath: input.appPath ?? null,
+        error: `The MCP server could not establish its single-launch guard: ${safeError(error)}`,
+        nextActions: [
+          "Check local temporary-directory permissions.",
+          "Open Granoflow manually only after confirming that no Granoflow instance is running.",
+        ],
+      };
+    }
+    if (!launchLeaseAcquired) {
+      return {
+        ok: false,
+        code: "granoflow_app_launch_in_progress",
+        dryRun,
+        appName,
+        appPath: input.appPath ?? null,
+        error:
+          "Another Granoflow MCP launch request is still in progress, so this request will not inspect or open the app again.",
+        nextActions: [
+          "Do not open another Granoflow instance.",
+          "Wait for the existing launch request, then call granoflow_setup_status.",
+        ],
+      };
+    }
   }
 
-  const results = [];
-  for (const attempt of attempts) {
-    const result = await runCommandImpl(command, attempt.args);
-    results.push({
-      kind: attempt.kind,
-      args: attempt.args,
-      exitCode: result.exitCode,
-      stderr: result.stderr.trim() ? "[present]" : "[empty]",
-    });
-    if (result.exitCode === 0) {
+  try {
+    const appProcess = await checkGranoflowProcess(runCommandImpl);
+    if (appProcess.running === true) {
+      return {
+        ok: false,
+        code: "granoflow_app_already_running",
+        dryRun,
+        appName,
+        appPath: input.appPath ?? null,
+        appProcess,
+        error:
+          "Granoflow is already running. The MCP server will not try to open another instance, even when the configured Local HTTP API URL or port is unreachable.",
+        nextActions: [
+          "Do not open another Granoflow instance.",
+          "Ask the user to resolve duplicate Granoflow instances, Local HTTP API availability, or the configured API URL or port.",
+          "Call granoflow_setup_status again after the existing Granoflow instance is ready and correctly configured.",
+        ],
+      };
+    }
+    if (appProcess.checked !== true || appProcess.running !== false) {
+      return {
+        ok: false,
+        code: "granoflow_process_check_failed",
+        dryRun,
+        appName,
+        appPath: input.appPath ?? null,
+        appProcess,
+        error:
+          "The MCP server could not verify whether Granoflow is already running, so it refused to open another instance.",
+        nextActions: [
+          "Check local process-inspection permissions or open Granoflow manually.",
+          "Call granoflow_setup_status again after the process check is available.",
+        ],
+      };
+    }
+
+    const command = "open";
+    const attempts = [
+      ...(input.appPath ? [{ kind: "path", args: [input.appPath] }] : []),
+      { kind: "path", args: ["/Applications/granoflow.app"] },
+      { kind: "path", args: ["/Applications/Granoflow.app"] },
+      { kind: "appName", args: ["-a", appName] },
+      { kind: "appName", args: ["-a", "granoflow"] },
+    ];
+    if (dryRun) {
       return {
         ok: true,
         dryRun,
         appName,
         appPath: input.appPath ?? null,
         command,
-        attempts: results,
+        attempts,
         nextActions: [
-          "Wait briefly for Granoflow to start, then call granoflow_setup_status again.",
+          "Ask the user to confirm opening Granoflow.",
+          "Call this tool again with dryRun=false only after the user approves.",
         ],
       };
     }
-  }
 
-  return {
-    ok: false,
-    dryRun,
-    appName,
-    appPath: input.appPath ?? null,
-    command,
-    attempts: results,
-    nextActions: ["Open Granoflow manually, then call granoflow_setup_status again."],
-  };
+    const results = [];
+    for (const attempt of attempts) {
+      const result = await runCommandImpl(command, attempt.args);
+      results.push({
+        kind: attempt.kind,
+        args: attempt.args,
+        exitCode: result.exitCode,
+        stderr: result.stderr.trim() ? "[present]" : "[empty]",
+      });
+      if (result.exitCode === 0) {
+        retainLaunchLease = true;
+        return {
+          ok: true,
+          dryRun,
+          appName,
+          appPath: input.appPath ?? null,
+          command,
+          attempts: results,
+          launchLeaseMs: APP_LAUNCH_LEASE_MS,
+          nextActions: [
+            "Wait briefly for Granoflow to start, then call granoflow_setup_status again.",
+          ],
+        };
+      }
+    }
+
+    return {
+      ok: false,
+      dryRun,
+      appName,
+      appPath: input.appPath ?? null,
+      command,
+      attempts: results,
+      nextActions: ["Open Granoflow manually, then call granoflow_setup_status again."],
+    };
+  } finally {
+    if (launchLeaseAcquired && !retainLaunchLease) {
+      await releaseAppLaunchLease(launchLockPath);
+    }
+  }
 }
 
 export async function openSetupConfig(

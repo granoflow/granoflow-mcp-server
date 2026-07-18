@@ -619,8 +619,17 @@ Granoflow app without hand-editing every setting first:
 - `granoflow_setup_open_config` creates and optionally opens the config file for
   manual editing.
 - `granoflow_setup_open_app` previews or opens the installed Granoflow app after
-  user approval. On macOS it tries the formal `/Applications/granoflow.app`
-  path before app-name fallbacks. It defaults to dry-run.
+  user approval. Before either a preview or a real open attempt, it checks for
+  any existing Granoflow process. If one or more instances already exist, or if
+  process state cannot be verified, the MCP server refuses to call `open`.
+  Real open requests also use a shared 30-second launch lease so two MCP clients
+  cannot both pass the process check while the first app process is still
+  starting.
+  This remains true when the configured Local HTTP API URL or port is wrong or
+  unreachable: the user must resolve the existing app instances or connection
+  configuration instead of starting another instance. On macOS the tool tries
+  the formal `/Applications/granoflow.app` path before app-name fallbacks. It
+  defaults to dry-run.
 
 When setup status sees a configured localhost API URL that is unreachable, it
 checks whether a local Granoflow process appears to be running. If not, it

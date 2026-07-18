@@ -1980,7 +1980,7 @@ export function registerGranoflowTools(server: {
 
   registerTool(
     "granoflow_setup_open_app",
-    "Preview or open the installed Granoflow app after user approval. Defaults to dry-run.",
+    "Preview or open the installed Granoflow app after user approval. Uses a cross-process launch lease for real opens, and refuses if another MCP launch is in progress, any Granoflow process is already running, or process state cannot be verified, even when the configured Local HTTP API URL or port is unreachable. Defaults to dry-run.",
     {
       appPath: z.string().min(1).optional(),
       appName: z.string().min(1).optional(),
