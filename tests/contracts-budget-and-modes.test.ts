@@ -80,4 +80,34 @@ describe("contracts-budget-and-modes", () => {
     expect(modes).toMatch(/Every implementation produces a self-contained acceptance HTML/i);
     expect(workflow).toContain("execution-modes-and-acceptance-reports.md");
   });
+
+  it("defines one read-only Git detection and workflow owner", () => {
+    const git = reference("git-capability-detection.md");
+    for (const contract of [
+      "granoflow_agent_preferences_get",
+      "granoflow_git_missing_notice_record",
+      "current_branch",
+      "develop",
+      "git_flow",
+      "normal skip",
+    ]) {
+      expect(git).toContain(contract);
+    }
+    expect(git).toMatch(/Preferences[\s\S]*never authorize push/i);
+    expect(git).toMatch(/Detection[\s\S]*must not change refs/i);
+  });
+
+  it("defines one test-gated local Git checkpoint owner", () => {
+    const git = reference("git-checkpoint-workflow.md");
+    const workflow = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
+    for (const contract of [
+      "git add -A",
+      "--no-verify",
+      "task-owned",
+      "Never push automatically",
+    ]) {
+      expect(git).toContain(contract);
+    }
+    expect(workflow).toContain("git-checkpoint-workflow.md");
+  });
 });
