@@ -30,6 +30,14 @@ resolve the project's explanation style with
 detail. The AI recommends and chooses normal paths; explanations describe the
 reason and likely consequence without turning specialist work into a quiz.
 
+Prefer `granoflow_agent_preferences_get` for the current combined contract. It
+resolves project YAML over MCP-local defaults and safe defaults, so interaction,
+unattended behavior, Git detection, and checkpoint policy do not ask the same
+question again. Keep `granoflow_project_interaction_style` as a compatibility
+read. For software Git handling, read
+`references/git-capability-detection.md` first, then read
+`references/git-checkpoint-workflow.md` only when a local checkpoint is enabled.
+
 ## Control-Plane Ownership And Reference Discovery
 
 Granoflow App owns task, attachment, node, delivery, and long-term work-memory
@@ -864,3 +872,7 @@ Success criteria:
 - `references/project-work-document-template.md`: Target YAML contract for
   partial project-definition attachment, dependency-aware manual-definition
   checks, and complete-document automation admission.
+- `references/git-capability-detection.md`: Host-side read-only Git detection,
+  project workflow selection, and one-time missing-Git notice.
+- `references/git-checkpoint-workflow.md`: Task-owned test gate, explicit
+  staging, commit readback, and no-push boundary.

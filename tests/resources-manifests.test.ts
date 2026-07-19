@@ -14,6 +14,16 @@ describe("resources-manifests", () => {
       referenceId: "unattended-interaction-contract",
       path: "skills/granoflow-agent-workflow/references/unattended-interaction-contract.md",
     });
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "git-capability-detection",
+      path: "skills/granoflow-agent-workflow/references/git-capability-detection.md",
+    });
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "git-checkpoint-workflow",
+      path: "skills/granoflow-agent-workflow/references/git-checkpoint-workflow.md",
+    });
     await expect(
       resources.readReference("granoflow-agent-workflow", "unattended-interaction-contract"),
     ).resolves.toMatchObject({
