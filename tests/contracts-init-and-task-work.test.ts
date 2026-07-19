@@ -1,0 +1,143 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+
+const reference = (name: string) =>
+  readFileSync(`skills/granoflow-agent-workflow/references/${name}`, "utf8");
+
+describe("contracts-init-and-task-work", () => {
+  it("initializes Granoflow with one beginner-facing all-recommended Skill offer", () => {
+    const onboarding = readFileSync("skills/granoflow-first-run-import/SKILL.md", "utf8");
+    const catalog = readFileSync(
+      "skills/granoflow-first-run-import/references/recommended-external-skills.md",
+      "utf8",
+    );
+
+    expect(onboarding).toContain("Initialize Granoflow");
+    expect(onboarding).toContain("初始化 Granoflow");
+    expect(onboarding).toContain("recommended-external-skills.md");
+    expect(onboarding).toContain("approved_all");
+    expect(onboarding).toContain("capability_pack_not_ready");
+    expect(onboarding).toMatch(/Ask exactly once/i);
+    expect(onboarding).toMatch(/does not run[\s\S]*setup-matt-pocock-skills/i);
+
+    for (const capability of [
+      "Grill Finalizer",
+      "Grill Me",
+      "gstack",
+      "Matt Pocock Skills",
+      "Huashu Design",
+      "Impeccable",
+      "Apple Design",
+      "GSAP Skills",
+      "Baoyu Skills",
+    ]) {
+      expect(catalog).toContain(capability);
+    }
+    expect(catalog).toContain("granoflow_product_builder_v1");
+    expect(catalog).toContain("complete recommended capability pack");
+    expect(catalog).toContain("host-native confirmation");
+    expect(catalog).toMatch(/runtime[\s\S]*only[\s\S]*relevant/i);
+    expect(catalog).toContain("capability_pack_not_ready");
+
+    const externalRouting = reference("external-skill-routing.md");
+    expect(externalRouting).toContain("first-run onboarding contract");
+    expect(externalRouting).toContain("default all-install choice");
+    expect(externalRouting).toMatch(/installation breadth only[\s\S]*Runtime routing/i);
+    expect(externalRouting).toContain("capability_pack_drift");
+    expect(externalRouting).toMatch(/model_allowed[\s\S]*silently/i);
+
+    const prompt = catalog.match(/## User Prompt\n([\s\S]*?)\n## /)?.[1] ?? "";
+    expect(prompt).not.toBe("");
+    for (const technicalField of [
+      "repository",
+      "license",
+      "command",
+      "scope",
+      "reload",
+      "network",
+    ]) {
+      expect(prompt.toLowerCase()).not.toContain(technicalField);
+    }
+  });
+
+  it("uses one adaptive pre-execution Task Work Document for new tasks", () => {
+    const template = reference("task-work-document-template.md");
+    const workflow = reference("task-work-document-workflow.md");
+    const capture = reference("discussed-requirement-task-capture.md");
+
+    expect(template).toContain("document_type: task_work");
+    expect(template).toContain("analysis_status: draft | awaiting_confirmation | confirmed");
+    expect(template).toContain(
+      "planning_status: not_assessed | not_required | draft | awaiting_confirmation | confirmed",
+    );
+    expect(template).toContain(
+      "analysis_grill_status: not_run | passed | revisions_required | blocked",
+    );
+    expect(template).toContain(
+      "readiness_grill_status: not_run | not_applicable | passed | revisions_required | blocked",
+    );
+    expect(template).toContain("prototype_requirement: required | not_required | conditional");
+    expect(template).toContain("package_attachment_id");
+    expect(template).toContain("package_sha256");
+    expect(workflow).toContain("executionAdmission.allowed");
+    expect(workflow).toContain("assetMode=file");
+    expect(workflow).toMatch(/no\s+greater than 600 seconds/);
+    expect(template).not.toContain("execution_status:");
+    expect(template).toContain("pre-execution governance document");
+    expect(template).toContain("five-\ndimension prose contract");
+    expect(capture).toContain("Mandatory Description Standard");
+    expect(capture).toContain("Title Standard");
+    expect(capture).toContain("action verb + clear object or outcome");
+    expect(capture).toContain("Do not make `Plan文档`");
+    expect(capture).toContain("fluent, readable piece of task copy");
+    expect(capture).toContain("not a\nquestionnaire");
+    expect(capture).toContain("optional");
+    expect(capture).toContain("evidence-based basis");
+    expect(capture).not.toContain("Every task description must contain these five headings");
+    expect(capture).toContain("历史工时未知");
+    for (const core of ["Outcome", "Evidence", "Scope", "Risk", "Next Action"]) {
+      expect(template).toContain(`## ${core}`);
+    }
+    expect(template).toContain("skill_routing: not_triggered");
+    expect(template).toContain("card_checkpoint: not_triggered");
+    expect(template).not.toContain("## Database / Migration");
+    expect(template).not.toContain("## Execution Nodes");
+
+    expect(workflow).toContain("Legal State Matrix");
+    expect(workflow).toContain("invalid_task_work_state");
+    expect(workflow).toContain("实施这个任务文档");
+    expect(workflow).toContain("does not authorize execution");
+    expect(workflow).toMatch(/complete, self-contained\s+checkpoint/);
+    expect(workflow).toMatch(/App-owned content and\s+SHA-256/);
+  });
+
+  it("uses one task authoring quality contract across every creation route", () => {
+    const contract = reference("task-authoring-quality-contract.md");
+    const routeFiles = [
+      "skills/granoflow-agent-workflow/references/discussed-requirement-task-capture.md",
+      "skills/granoflow-task-orchestrator/SKILL.md",
+      "skills/granoflow-milestone-workflow/references/milestone-collaboration-workflow.md",
+      "skills/granoflow-project-definition/SKILL.md",
+      "skills/granoflow-first-run-import/references/task-and-card-import.md",
+      "skills/granoflow-delegated-authorization/references/host-routing-and-waiting.md",
+    ];
+
+    expect(contract).toContain("single semantic owner");
+    expect(contract).toContain("non-programmer");
+    expect(contract).toContain("one real analogy");
+    expect(contract).toContain("one concrete example");
+    expect(contract).toContain("task_authoring_quality_failed");
+    expect(contract).toContain("old complete text");
+    expect(contract).toContain("HTML prototype");
+    expect(contract).toContain("two-dimensional Markdown table");
+    expect(contract).toContain("bold formatting on every changed field");
+    expect(contract).toContain("Mermaid flowchart");
+    expect(contract).toContain("at most one such Markdown file per task");
+    expect(contract).toContain("Human title-only quick capture");
+    for (const path of routeFiles) {
+      expect(readFileSync(path, "utf8")).toContain(
+        "granoflow-agent-workflow/task-authoring-quality-contract",
+      );
+    }
+  });
+});

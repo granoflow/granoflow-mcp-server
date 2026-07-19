@@ -71,13 +71,11 @@ export type BundledSkillResources = {
   >;
 };
 
-export function createBundledSkillResources(
-  packageRootUrl: URL = new URL("../", import.meta.url),
-): BundledSkillResources {
-  const packageRoot = fileURLToPath(packageRootUrl);
-  const manifests = new Map<BundledSkillId, BundledSkillReferenceManifestItem[]>();
-
-  const listReferences = async (skillId: string): Promise<BundledSkillReferenceManifestItem[]> => {
+function createReferenceLister(
+  packageRoot: string,
+  manifests: Map<BundledSkillId, BundledSkillReferenceManifestItem[]>,
+) {
+  return async (skillId: string): Promise<BundledSkillReferenceManifestItem[]> => {
     const safeSkillId = requireBundledSkillId(skillId);
     const referencesRoot = join(packageRoot, "skills", safeSkillId, "references");
     const entries = await readdir(referencesRoot, { withFileTypes: true });
@@ -92,17 +90,30 @@ export function createBundledSkillResources(
     manifests.set(safeSkillId, manifest);
     return manifest;
   };
+}
+
+function validateReferenceId(referenceId: string): void {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(referenceId)) {
+    throw new WorkflowResourceError(
+      "workflow_reference_unsafe",
+      "The bundled workflow reference identifier is unsafe.",
+    );
+  }
+}
+
+export function createBundledSkillResources(
+  packageRootUrl: URL = new URL("../", import.meta.url),
+): BundledSkillResources {
+  const packageRoot = fileURLToPath(packageRootUrl);
+  const manifests = new Map<BundledSkillId, BundledSkillReferenceManifestItem[]>();
+
+  const listReferences = createReferenceLister(packageRoot, manifests);
 
   return {
     listReferences,
     async readReference(skillId, referenceId) {
       const safeSkillId = requireBundledSkillId(skillId);
-      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(referenceId)) {
-        throw new WorkflowResourceError(
-          "workflow_reference_unsafe",
-          "The bundled workflow reference identifier is unsafe.",
-        );
-      }
+      validateReferenceId(referenceId);
       const manifest = manifests.get(safeSkillId) ?? (await listReferences(safeSkillId));
       const item = manifest.find((candidate) => candidate.referenceId === referenceId);
       if (!item) {

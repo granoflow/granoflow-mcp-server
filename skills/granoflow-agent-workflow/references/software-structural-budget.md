@@ -57,6 +57,12 @@ repository initialization does authorize writes, prefer the existing linter or
 unified project script and add the least invasive compatible gate. Never report
 a documented number as an installed gate.
 
+For this MCP server, the configured enforcement entrypoint is `npm run check`.
+Its lint stage must enforce the hard physical-line limits for ordinary source
+and tests. The lint result is a structural test result, not permission to split
+code mechanically: a failure requires a responsibility-based redesign and a
+new or updated Structural Change Forecast before the next edit.
+
 ## Soft, Hard, And Legacy Semantics
 
 - Soft-limit crossing requires a split decision or a recorded responsibility-
@@ -72,6 +78,15 @@ Split only along a real seam such as domain responsibility, protocol or
 serialization, storage or IO, side effect, UI composition, or policy decision.
 Mechanical line splitting, random helper extraction, wrapper-only indirection,
 and moving code without reducing responsibility are threshold bypasses.
+
+Before the first edit of every software task, the agent must display a
+Structural Change Forecast as a non-confirming notice. The forecast must state
+the current and intended responsibility of every touched or new file and
+symbol, the real seam for each split, the projected size, and why the proposed
+shape is the smallest complete iteration. A forecast that only cites line
+counts, or proposes one-file-per-helper extraction, is not execution-ready.
+The agent must revise the forecast before editing when the readiness review
+finds a hard split, mixed responsibilities, or an unexplained boundary.
 
 ## Planning Forecast
 

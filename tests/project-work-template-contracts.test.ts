@@ -80,6 +80,13 @@ describe("Project Work YAML template", () => {
     }
   });
 
+  it("treats structural enforcement as an executable pre-write and test gate", () => {
+    expect(template).toContain("npm run check");
+    expect(template).toContain("Structural Change Forecast");
+    expect(template).toMatch(/responsibility seam/i);
+    expect(template).toMatch(/mechanical\s+line\s+splitting/i);
+  });
+
   it("allows partial attachment while fail-closing automatic work", () => {
     expect(template).toContain("schema: granoflow_project_work_v1");
     expect(template).toContain("document_gate: partial_allowed");
@@ -121,5 +128,12 @@ describe("Project Work YAML template", () => {
     expect(template).toMatch(/Never store tokens,[\s\S]*credential values/);
     expect(template).not.toContain("confirmed_attachment_sha256:");
     expect(template).toContain("doing so would change the");
+  });
+
+  it("treats Project Work as living context at completion and commit gates", () => {
+    expect(template).toContain("living project contract");
+    expect(template).toContain("before a commit that");
+    expect(template).toContain("Never restore code to satisfy a stale Project Work rule");
+    expect(template).toContain("A mismatch must be reported as a document");
   });
 });

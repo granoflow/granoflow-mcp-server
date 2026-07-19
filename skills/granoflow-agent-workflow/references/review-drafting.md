@@ -35,6 +35,30 @@ review, mood note, efficiency note, or daily journal, call
   failure modes, unresolved risks, or reusable process details. Review Cards
   require a later Knowledge assessment/materialization gate.
 
+## Milestone Focus For Every Periodic Review
+
+Daily, weekly, and monthly reviews include a bounded milestone pass when
+milestones are available. Read each active milestone's title, description,
+`dueAt`, status, and linked tasks. Report the deadline in local time and classify
+it as future, due soon, overdue, missing, or invalid. Treat title/description
+wording as signals, not facts, and label each as recorded fact, user-confirmed
+interpretation, tentative inference, or unknown.
+
+Return one recommendation per milestone: `accelerate_internal_tasks`,
+`continue`, `archive_candidate`, or `needs_user_direction`. Acceleration names
+unfinished tasks and blockers but does not silently change status or dates.
+Archive candidacy requires readable task/Delivery evidence, milestone-level
+integration evidence, and a destination for unfinished work. An empty task
+list, old deadline, or worker summary alone never proves archival. Review
+recommendations do not authorize writes.
+
+In unattended mode, emit an explicit non-question notice naming the milestone,
+deadline classification, signals, evidence, recommendation, and next action.
+Continue only when authorization covers the exact action, the App advertises a
+safe archive capability for archival, and evidence/readback gates pass.
+Otherwise persist a visible blocker; never simulate archive with a status patch
+or description update.
+
 ## User-Initiated Weekly Or Monthly Review Session
 
 Examples of user initiation include:

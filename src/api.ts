@@ -80,6 +80,83 @@ async function parseResponseBody(response: Response): Promise<unknown> {
   }
 }
 
+function responseResult(runtime: RuntimeResolution, response: Response, body: unknown): ApiResult {
+  if (!response.ok) {
+    if (
+      (response.status === 401 || response.status === 403) &&
+      isLocalApiBaseUrl(runtime.apiBaseUrl)
+    ) {
+      return {
+        ok: false,
+        code: "reachable_auth_required",
+        data: {
+          connectionState: "reachable_auth_required",
+          apiBaseUrl: runtime.apiBaseUrl,
+          apiBaseUrlSource: runtime.apiBaseUrlSource,
+          configPath: runtime.configPath,
+          response: body,
+          nextActions: ["Check GRANOFLOW_API_TOKEN, then try again."],
+        },
+        error: { message: "Granoflow Local HTTP API is reachable but requires authentication." },
+        httpStatus: response.status,
+        runtime: runtimeSummary(runtime),
+      };
+    }
+    return {
+      ok: false,
+      code: `http_${response.status}`,
+      data: body,
+      error: { message: `Granoflow Local HTTP API returned HTTP ${response.status}.` },
+      httpStatus: response.status,
+      runtime: runtimeSummary(runtime),
+    };
+  }
+  if (typeof body === "object" && body !== null && "ok" in body && "code" in body) {
+    return {
+      ...(body as Omit<ApiResult, "runtime">),
+      httpStatus: response.status,
+      runtime: runtimeSummary(runtime),
+    };
+  }
+  return {
+    ok: true,
+    code: "ok",
+    data: body,
+    httpStatus: response.status,
+    runtime: runtimeSummary(runtime),
+  };
+}
+
+function networkErrorResult(runtime: RuntimeResolution, error: unknown): ApiResult {
+  const localApi = isLocalApiBaseUrl(runtime.apiBaseUrl);
+  return {
+    ok: false,
+    code: "network_error",
+    data: localApi
+      ? {
+          connectionState: "unreachable",
+          apiBaseUrl: runtime.apiBaseUrl,
+          apiBaseUrlSource: runtime.apiBaseUrlSource,
+          configPath: runtime.configPath,
+          granoflow: GRANOFLOW_INTRODUCTION,
+          nextActions: [
+            "Open the Granoflow app, then try this MCP tool again.",
+            "If Granoflow is already open, verify that the Local HTTP API is enabled.",
+            "Call granoflow_setup_status for a structured local setup diagnosis.",
+          ],
+        }
+      : undefined,
+    error: {
+      message: localApi
+        ? `Could not reach the Granoflow Local HTTP API at ${runtime.apiBaseUrl}. Open Granoflow first, or visit ${GRANOFLOW_INTRODUCTION.website} to learn what Granoflow is.`
+        : error instanceof Error
+          ? error.message
+          : String(error),
+    },
+    runtime: runtimeSummary(runtime),
+  };
+}
+
 export async function requestGranoflowApi(
   options: ApiRequestOptions,
   env: NodeJS.ProcessEnv = process.env,
@@ -118,77 +195,8 @@ export async function requestGranoflowApi(
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
     const body = await parseResponseBody(response);
-    if (!response.ok) {
-      if (
-        (response.status === 401 || response.status === 403) &&
-        isLocalApiBaseUrl(runtime.apiBaseUrl)
-      ) {
-        return {
-          ok: false,
-          code: "reachable_auth_required",
-          data: {
-            connectionState: "reachable_auth_required",
-            apiBaseUrl: runtime.apiBaseUrl,
-            apiBaseUrlSource: runtime.apiBaseUrlSource,
-            configPath: runtime.configPath,
-            response: body,
-            nextActions: ["Check GRANOFLOW_API_TOKEN, then try again."],
-          },
-          error: { message: "Granoflow Local HTTP API is reachable but requires authentication." },
-          httpStatus: response.status,
-          runtime: runtimeSummary(runtime),
-        };
-      }
-      return {
-        ok: false,
-        code: `http_${response.status}`,
-        data: body,
-        error: { message: `Granoflow Local HTTP API returned HTTP ${response.status}.` },
-        httpStatus: response.status,
-        runtime: runtimeSummary(runtime),
-      };
-    }
-    if (typeof body === "object" && body !== null && "ok" in body && "code" in body) {
-      return {
-        ...(body as Omit<ApiResult, "runtime">),
-        httpStatus: response.status,
-        runtime: runtimeSummary(runtime),
-      };
-    }
-    return {
-      ok: true,
-      code: "ok",
-      data: body,
-      httpStatus: response.status,
-      runtime: runtimeSummary(runtime),
-    };
+    return responseResult(runtime, response, body);
   } catch (error) {
-    const localApi = isLocalApiBaseUrl(runtime.apiBaseUrl);
-    return {
-      ok: false,
-      code: "network_error",
-      data: localApi
-        ? {
-            connectionState: "unreachable",
-            apiBaseUrl: runtime.apiBaseUrl,
-            apiBaseUrlSource: runtime.apiBaseUrlSource,
-            configPath: runtime.configPath,
-            granoflow: GRANOFLOW_INTRODUCTION,
-            nextActions: [
-              "Open the Granoflow app, then try this MCP tool again.",
-              "If Granoflow is already open, verify that the Local HTTP API is enabled.",
-              "Call granoflow_setup_status for a structured local setup diagnosis.",
-            ],
-          }
-        : undefined,
-      error: {
-        message: localApi
-          ? `Could not reach the Granoflow Local HTTP API at ${runtime.apiBaseUrl}. Open Granoflow first, or visit ${GRANOFLOW_INTRODUCTION.website} to learn what Granoflow is.`
-          : error instanceof Error
-            ? error.message
-            : String(error),
-      },
-      runtime: runtimeSummary(runtime),
-    };
+    return networkErrorResult(runtime, error);
   }
 }

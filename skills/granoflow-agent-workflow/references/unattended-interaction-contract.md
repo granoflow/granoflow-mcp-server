@@ -28,6 +28,15 @@ permission, Plan confirmation, Execution authorization, implementation choices,
 local tool selection, test repair, deterministic verification, Delivery,
 attachment readback, and completion.
 
+For periodic reviews, milestone escalation and archival follow the same
+zero-interruption rule but require a notice before action. The notice names the
+milestone, deadline classification, title/description signals, linked-task
+evidence, recommendation, and next action. A notice is not a question and does
+not consume the interaction budget. Continue only when authorization covers the
+exact action and milestone, the App exposes the safe capability, and
+evidence/readback gates pass. Missing archive capability is a blocker, not
+permission to PATCH status or overwrite the final description.
+
 ## Current Run Versus Durable Delegation
 
 A user-origin instruction that explicitly asks to run or complete one exact or

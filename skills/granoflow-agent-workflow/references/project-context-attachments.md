@@ -8,6 +8,11 @@ Granoflow exposes two canonical project document attachments:
 - `project_snapshot.yaml`
 - `project_rules.yaml`
 
+`project_rules.yaml` may contain the project-only `interaction_style` section.
+Resolve it with `granoflow_project_interaction_style`; if it is absent, use the
+newcomer-friendly default. This is a presentation preference, not a second
+source of project facts.
+
 These files are project consistency guards, not a second automatic source of
 truth. Prefer app-owned project-context-attachment tools when
 `granoflow_ai_agent_tools` advertises `granoflow_project_context_attachments_v1`.

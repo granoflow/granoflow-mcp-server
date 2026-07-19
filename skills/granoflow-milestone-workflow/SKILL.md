@@ -139,6 +139,21 @@ Preview archive/closure through the App-owned milestone context workflow. After
 approval, persist the completion summary, move follow-ups, archive or complete the
 milestone through supported App/API behavior, and read the final state back.
 
+## Periodic Review And Unattended Closure
+
+Daily, weekly, and monthly reviews inspect milestone deadline,
+title/description signals, status, and linked internal tasks. Classify whether
+to accelerate, continue, or consider archival; wording signals remain inference
+until backed by evidence or user confirmation. An overdue milestone is not
+automatically obsolete.
+
+In unattended mode, announce the recommendation and evidence as a notice before
+any action. Archive only when authorization covers this exact milestone, the App
+exposes a safe archive operation, completion and integration evidence are
+readable, follow-ups have a destination, and final state is read back. Otherwise
+stop at a visible blocker; never emulate archive with a generic status or
+description update.
+
 ## Hard Rules
 
 - Freeze the confirmed Outcome, acceptance boundary, Scope, and non-goals; allow

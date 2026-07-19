@@ -533,6 +533,12 @@ not actually begin, do not perform this transition.
 For software execution, show that forecast immediately before the first edit as
 a non-confirming notice; unattended mode then continues. Reconcile every new
 touchpoint through the reference before editing it, and stop on scope drift.
+The notice is a required write-precondition, not merely delivery metadata:
+the forecast must include a responsibility seam for each planned split and
+must explicitly reject mechanical line splitting, random helper extraction,
+wrapper-only indirection, and moving code without reducing responsibility.
+If the forecast cannot explain the intended responsibility of a file or symbol,
+do not enter `[dev]`; revise the Plan first.
 
 Legacy `实施这个 Plan` may resolve a legacy confirmed Plan or an unambiguous
 active Work Document. Ambiguous, draft, superseded, missing, invalid, or

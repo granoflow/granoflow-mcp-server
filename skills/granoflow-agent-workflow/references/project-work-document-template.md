@@ -19,6 +19,17 @@ The attachment gate and the automation gate are deliberately different:
   readback truth. MCP remains a thin interface and must fail closed while that
   app-owned capability is unavailable.
 
+Project Work is a living project contract, not a one-time setup form. At task
+completion, milestone review, release preparation, and before a commit that
+changes behavior or a quality gate, compare the implementation and gate output
+with this document. If the current state, boundary, rationale, commands,
+acceptance evidence, or quality rules changed, update the same Project Work
+attachment, increment its document version when the change is material, and
+obtain the required App-owned validation/readback before relying on it again.
+Never restore code to satisfy a stale Project Work rule without first checking
+whether the rule itself is obsolete. A mismatch must be reported as a document
+refresh or conflict, not silently resolved by reverting the implementation.
+
 Store secret availability or a private reference only. Never store tokens,
 passwords, OTPs, recovery codes, auth URLs, or credential values.
 
@@ -410,7 +421,14 @@ engineering:
     measurement: physical_lines
     initialization_notice: null
     enforcement_status: unassessed | configured | recorded_pending_enforcement
-    enforcement_commands: []
+    enforcement_commands:
+      - npm run check
+    pre_write_forecast_required: true
+    forecast_schema: Structural Change Forecast
+    forecast_display: non_confirming_notice_before_first_edit
+    # Every planned split must name its responsibility seam.
+    forecast_requires_responsibility_seam: true
+    # Mechanical line splitting is forbidden.
     file_soft_limits: []
     file_hard_limits: []
     method_soft_limits: []

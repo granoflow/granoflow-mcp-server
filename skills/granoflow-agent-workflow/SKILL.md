@@ -24,6 +24,12 @@ turning durable lessons into review cards. Granoflow MCP connects MCP-capable AI
 agents to a local task, review, and long-term work memory layer; it is not a code
 analyzer, CI fixer, or repository automation framework.
 
+For every project workflow, read `references/project-interaction-style.md` and
+resolve the project's explanation style with
+`granoflow_project_interaction_style`. Missing settings mean newcomer-friendly
+detail. The AI recommends and chooses normal paths; explanations describe the
+reason and likely consequence without turning specialist work into a quiz.
+
 ## Control-Plane Ownership And Reference Discovery
 
 Granoflow App owns task, attachment, node, delivery, and long-term work-memory
@@ -413,6 +419,15 @@ High-level contract:
    may be reconciled automatically.
 8. If MCP is unavailable, do not block unrelated user work. Report that context
    upkeep was skipped or blocked.
+9. Treat Project Work as living context. At task completion, milestone review,
+   release preparation, and before a behavior-changing commit, compare the
+   implementation and quality-gate output with the current Project Work
+   attachment. Update it when the project's current state, boundary,
+   implementation rationale, commands, acceptance evidence, or quality rules
+   have changed; use the App-owned revision/validation/readback flow and bump
+   the document version for material changes. Do not revert a verified
+   implementation merely to satisfy a stale document; report and refresh the
+   document instead.
 
 Success criteria:
 
