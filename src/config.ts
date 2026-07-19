@@ -1,10 +1,13 @@
 import { mkdir, open, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { mergeAgentPreferences, type AgentPreferencesOverride } from "./agent-preferences.js";
 
 export interface GranoflowMcpConfig {
   apiBaseUrl?: string;
   dailyReviewSuggestionLastShownDate?: string;
+  agentPreferences?: AgentPreferencesOverride;
+  gitMissingNoticeShown?: boolean;
   [key: string]: unknown;
 }
 
@@ -31,6 +34,8 @@ export interface RuntimeResolution {
 export interface WriteConfigInput {
   apiBaseUrl?: string;
   apiPort?: number;
+  agentPreferences?: AgentPreferencesOverride;
+  gitMissingNoticeShown?: boolean;
   dryRun?: boolean;
 }
 
@@ -240,11 +245,20 @@ export async function writeMcpConfig(
   if (apiBaseUrl !== undefined) {
     nextConfig.apiBaseUrl = apiBaseUrl;
   }
+  if (input.agentPreferences !== undefined) {
+    nextConfig.agentPreferences = mergeAgentPreferences(
+      readResult.config.agentPreferences,
+      input.agentPreferences,
+    );
+  }
+  if (input.gitMissingNoticeShown !== undefined) {
+    nextConfig.gitMissingNoticeShown = input.gitMissingNoticeShown;
+  }
 
   const previousConfig = redactConfig(readResult.config);
   const redactedNextConfig = redactConfig(nextConfig);
   const changedKeys = Object.keys(redactedNextConfig).filter(
-    (key) => previousConfig[key] !== redactedNextConfig[key],
+    (key) => JSON.stringify(previousConfig[key]) !== JSON.stringify(redactedNextConfig[key]),
   );
   const dryRun = input.dryRun !== false;
   const currentApiBaseUrl =
