@@ -39,6 +39,11 @@ not need `[test]` when integration or screenshot execution is not required.
 
 ## Authorization Before Run
 
+Resolve project defaults once with `granoflow_agent_preferences_get(projectId)`
+before selecting the execution mode or Git checkpoint policy. The runner may
+consume those values, but preferences never create authorization and never
+weaken task, test, Delivery, secret, destructive-action, or acceptance gates.
+
 Every non-dry run requires a confirmed `granoflow_milestone_authorization_v1` manifest. It records full-runtime-access readiness, internal phase preauthorization, every required external capability as `granted`, `excluded`, or `interaction_required`, credential references, expiry, and a reference-only secret policy. It never contains secret values.
 
 An updated manifest or a changed Granoflow task releases the applicable wait on the next cycle. The runner consumes authorization; it never writes or confirms its own grant.

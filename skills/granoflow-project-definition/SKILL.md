@@ -23,6 +23,11 @@ packaging, and execution tools.
    recommending values.
 3. Read `references/project-artifact-workflows.md` when UI prototypes, data
    models, workflows, or cross-artifact consistency are discussed.
+4. Call `granoflow_agent_preferences_get(projectId)` when preferences already
+   exist. During initialization, recommend and write the `agent_preferences`
+   project-rule section so later workflows can reuse explanation, execution,
+   and Git choices without asking again. Preferences never weaken readiness,
+   quality, authorization, acceptance, or external-action gates.
 
 ## Entry Modes
 

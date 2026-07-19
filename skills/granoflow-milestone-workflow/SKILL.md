@@ -42,6 +42,12 @@ Use the bundled Granoflow Agent Workflow for each child task.
 
 ## Workflow
 
+At milestone entry, call `granoflow_agent_preferences_get(projectId)` once and
+pass the compact resolved preferences to child task workflows. Project and local
+defaults may control explanation detail, unattended defaults, and Git policy;
+they never weaken Task Work, test, Delivery, authorization, acceptance, or
+external-action gates.
+
 ### 1. Resolve One Milestone And Its Controller
 
 Read the project, active milestone, milestone description, completion summary,

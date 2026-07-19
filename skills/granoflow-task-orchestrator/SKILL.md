@@ -31,6 +31,12 @@ Use this bundled MCP skill as the single upper-layer task entrypoint. It decides
 
 ## Workflow
 
+Before routing a project-bound request, call
+`granoflow_agent_preferences_get(projectId)`. Apply the resolved explanation and
+execution defaults without asking repeated setup questions. Preferences may
+select a normal path, but they never weaken Task Work, test, Delivery,
+authorization, acceptance, Git-checkpoint, or external-action gates.
+
 ### 1. Classify lifecycle intent from context
 
 Choose exactly one route: capture, enrich, analyze, plan, run, or finish_audit.

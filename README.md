@@ -89,6 +89,37 @@ value is reused on later requests without asking again. If
 reports `configuration_shadowed_by_env` instead of pretending the saved value
 is active.
 
+The same MCP-owned file may store non-secret Agent defaults. Use
+`granoflow_agent_preferences_write_defaults` to preview or update them and
+`granoflow_agent_preferences_get` to resolve a project's effective values:
+
+```json
+{
+  "agentPreferences": {
+    "audience": "beginner",
+    "explanation": "detailed",
+    "executionMode": "interactive",
+    "git": {
+      "missingNotice": "once",
+      "workflow": "current_branch",
+      "checkpoint": { "enabled": false }
+    }
+  }
+}
+```
+
+Projects can override individual values in the `agent_preferences` section of
+their App-owned `project_rules.yaml`. Project values win field by field; local
+defaults and then newcomer-safe defaults fill the gaps. Missing Git produces at
+most one short newcomer notice by default and never forces an installation
+choice.
+
+When checkpoint is enabled, the host Agent may create a local commit only after
+the current Task Work explicitly authorizes it, all required tests and project
+gates pass, staged content contains only task-owned files, secret and hook checks
+pass, and commit SHA/readback succeeds. Preferences never authorize push,
+publish, deploy, deletion, login, secrets, branch creation, or history changes.
+
 ## Install
 
 ```bash
@@ -710,6 +741,12 @@ Granoflow app without hand-editing every setting first:
   presence, MCP server version, Local HTTP API health, version metadata,
   capability summary, and local Granoflow process evidence without printing
   secrets.
+- `granoflow_agent_preferences_get` resolves project overrides, local defaults,
+  safe defaults, and the source of each effective field.
+- `granoflow_agent_preferences_write_defaults` previews or writes MCP-local
+  non-secret defaults and rereads a real write.
+- `granoflow_git_missing_notice_record` stores only the boolean marker used to
+  avoid repeating the newcomer Git-unavailable notice.
 - `granoflow_setup_detect_local_api` probes a small bounded localhost port list
   only, requires Granoflow-specific identity evidence, and never writes config.
 - `granoflow_setup_write_config` previews or writes one user-confirmed

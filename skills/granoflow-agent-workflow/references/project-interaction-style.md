@@ -1,8 +1,9 @@
 # Project Interaction Style
 
-Use this contract for every user-visible explanation in a project. The style is
-saved in that project's `project_rules.yaml`, so two projects can teach in two
-different ways without changing a global account setting.
+Use this contract for every user-visible explanation in a project. It is one
+part of resolved Agent Preferences. A project override is saved in that
+project's `project_rules.yaml`; MCP-local defaults apply only when the project
+does not override the same field.
 
 ## Default
 
@@ -28,6 +29,22 @@ interaction_style:
   record_copy: beginner_detailed
   record_copy_reason: Records may later be shown to a newcomer.
 ```
+
+The equivalent current project-level contract is:
+
+```yaml
+agent_preferences:
+  audience: beginner | professional
+  explanation: detailed | concise
+  execution_mode: interactive | unattended
+  git:
+    missing_notice: once | always | never
+    workflow: ask | current_branch | develop | git_flow
+    checkpoint_enabled: false
+```
+
+Read it through `granoflow_agent_preferences_get`; do not duplicate precedence
+logic inside each Skill.
 
 `audience: professional` and `explanation: concise` mean “use shorter,
 professional wording and explain only when asked.” This is still respectful;

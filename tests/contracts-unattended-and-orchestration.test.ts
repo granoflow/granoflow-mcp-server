@@ -5,6 +5,20 @@ const reference = (name: string) =>
   readFileSync(`skills/granoflow-agent-workflow/references/${name}`, "utf8");
 
 describe("contracts-unattended-and-orchestration", () => {
+  it("resolves project Agent preferences across workflow entrypoints without weakening gates", () => {
+    const paths = [
+      "skills/granoflow-task-orchestrator/SKILL.md",
+      "skills/granoflow-milestone-workflow/SKILL.md",
+      "skills/granoflow-project-definition/SKILL.md",
+      "skills/granoflow-persistent-milestone-runner/SKILL.md",
+    ];
+    for (const path of paths) {
+      const contract = readFileSync(path, "utf8");
+      expect(contract).toContain("granoflow_agent_preferences_get");
+      expect(contract).toMatch(/never (weaken|create authorization)/i);
+    }
+  });
+
   it("gives unattended runs one general zero-interruption contract", () => {
     const interaction = reference("unattended-interaction-contract.md");
     const normalizedInteraction = interaction.replace(/\s+/g, " ");
