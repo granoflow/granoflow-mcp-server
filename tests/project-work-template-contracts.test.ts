@@ -15,6 +15,7 @@ describe("Project Work YAML template", () => {
       "project_lifecycle:",
       "scope:",
       "product:",
+      "agent_preferences:",
       "acceptance:",
       "repositories:",
       "engineering:",
@@ -61,6 +62,22 @@ describe("Project Work YAML template", () => {
       "package_sha256:",
     ]) {
       expect(template).toContain(designLock);
+    }
+  });
+
+  it("stores project-specific Agent and Git preferences without granting external actions", () => {
+    for (const contract of [
+      "execution_mode:",
+      "missing_notice:",
+      "workflow: ask",
+      "checkpoint_enabled: false",
+      "checkpoint_trigger: after_required_tests",
+      "task_owned_files_only: true",
+      "push: false",
+      "preferences_never_authorize:",
+      "destructive_git_history",
+    ]) {
+      expect(template).toContain(contract);
     }
   });
 

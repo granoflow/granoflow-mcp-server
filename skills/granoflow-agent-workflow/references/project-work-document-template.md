@@ -112,6 +112,31 @@ identity:
   owners: []
   stakeholders: []
 
+agent_preferences:
+  # Project values override MCP-local defaults field by field.
+  # Missing fields use local defaults, then newcomer-safe defaults.
+  audience: beginner
+  explanation: detailed
+  execution_mode: interactive
+  git:
+    # Missing Git never creates a mandatory choice or installation request.
+    missing_notice: once
+    # ask | current_branch | develop | git_flow
+    workflow: ask
+    checkpoint_enabled: false
+    checkpoint_trigger: after_required_tests
+    task_owned_files_only: true
+    push: false
+  safety:
+    preferences_never_authorize:
+      - push
+      - publish
+      - deploy
+      - delete
+      - login
+      - secrets
+      - destructive_git_history
+
 requirement:
   original_request: null
   problem: null
