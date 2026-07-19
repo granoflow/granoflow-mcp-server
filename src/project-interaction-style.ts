@@ -55,7 +55,12 @@ export function resolveProjectInteractionStyle(
 function readContent(result: ApiResult): string | undefined {
   const data = result.data;
   if (!data || typeof data !== "object") return undefined;
-  const content = (data as { content?: unknown }).content;
+  const direct = data as { content?: unknown; data?: unknown };
+  const nested =
+    direct.data && typeof direct.data === "object"
+      ? (direct.data as { content?: unknown }).content
+      : undefined;
+  const content = direct.content ?? nested;
   return typeof content === "string" ? content : undefined;
 }
 

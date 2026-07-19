@@ -23,6 +23,9 @@ describe("tools-surface-registration", () => {
     expect(names).toEqual(
       expect.arrayContaining([
         "granoflow_setup_status",
+        "granoflow_agent_preferences_get",
+        "granoflow_agent_preferences_write_defaults",
+        "granoflow_git_missing_notice_record",
         "granoflow_agent_workflow_skill",
         "granoflow_daily_review_skill",
         "granoflow_first_run_import_skill",

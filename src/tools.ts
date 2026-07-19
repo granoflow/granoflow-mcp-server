@@ -28,6 +28,7 @@ import { registerAttachmentTools } from "./tool-registration-attachments.js";
 import { registerTaskNodeTools } from "./tool-registration-task-nodes.js";
 import { registerProjectMilestoneTools } from "./tool-registration-project-milestone.js";
 import { registerUtilityTools } from "./tool-registration-utility.js";
+import { registerAgentPreferenceTools } from "./tool-registration-agent-preferences.js";
 import type { CapabilityRegistrar } from "./tool-registration-evidence.js";
 import {
   AGENT_WORKFLOW_SKILL_URL,
@@ -497,6 +498,7 @@ export function registerGranoflowTools(server: ToolServer) {
   registerAuthorizationAndProjectSkillTools(registerTool, foundationDependencies);
 
   registerSetupAndHealthTools(registerTool, foundationDependencies);
+  registerAgentPreferenceTools(registerTool, { jsonTextResult });
 
   registerEvidenceTools(registerCapabilityTool, resourceIdSchema, approvedAuthoringSchema);
 
