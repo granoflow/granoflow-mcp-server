@@ -58,6 +58,10 @@ describe("contracts-unattended-and-orchestration", () => {
       /same active run.*does not require an envelope round trip/i,
     );
     expect(normalizedInteraction).toMatch(/later host turn.*confirmed envelope/i);
+    expect(normalizedInteraction).toMatch(
+      /Review Note\/Card authoring is also excluded from unattended authorization/i,
+    );
+    expect(normalizedInteraction).toMatch(/exact latest preview.*subjective_acceptance/i);
     expect(taskWork).toMatch(
       /qualifying current\s+unattended instruction is explicit authorization/i,
     );

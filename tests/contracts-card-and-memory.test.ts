@@ -73,6 +73,33 @@ describe("contracts-card-and-memory", () => {
     expect(completion).not.toContain("card_checkpoint:");
   });
 
+  it("ends every review with an open-ended zero-write Note/Card approval session", () => {
+    const cardSkill = readFileSync("skills/granoflow-review-card-draft/SKILL.md", "utf8");
+    const checkpoints = readFileSync(
+      "skills/granoflow-review-card-draft/references/lifecycle-card-checkpoints.md",
+      "utf8",
+    );
+    const reviewDrafting = reference("review-drafting.md");
+    const taskReview = reference("task-review-workflow.md");
+    const unattended = reference("unattended-interaction-contract.md");
+    const combined = `${cardSkill}\n${checkpoints}\n${reviewDrafting}\n${taskReview}\n${unattended}`;
+
+    expect(cardSkill).toContain("## Review-Ending Authoring Session");
+    expect(combined).toContain("writesPerformed: false");
+    expect(combined).toMatch(/complete planned Note\/Card\s+set/i);
+    expect(combined).toContain("open-ended editing conversation");
+    expect(combined).toMatch(/addition or edit as a draft change, not write\s+approval/i);
+    expect(combined).toMatch(/latest\s+unchanged preview/i);
+    expect(combined).toContain("只建第二张");
+    expect(combined).toContain("partial approval");
+    expect(combined).toContain("practiceReady: true");
+    expect(taskReview).toContain("final interactive authoring");
+    expect(unattended).toContain("blocker_class: subjective_acceptance");
+    expect(unattended).toMatch(
+      /Review Note\/Card authoring is also excluded from unattended authorization/i,
+    );
+  });
+
   it("uses base plus composable profiles without public local plan numbers", () => {
     const work = reference("task-work-document-template.md");
     const legacyAnalysis = reference("task-analysis-template.md");

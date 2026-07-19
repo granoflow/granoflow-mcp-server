@@ -697,6 +697,14 @@ later asks to review the task, Granoflow writes a revisioned paired-marker
 review, then separately previews and confirms any cards or durable context
 promotion. Completed inbox tasks are reviewable without project or milestone.
 
+Task, daily, weekly, and monthly reviews finish with one shared Note/Card
+authoring session when candidates exist. The Agent shows the complete App-owned
+dry-run, lets the user freely add, reject, rewrite, split, merge, or partially
+approve Notes and Cards, refreshes the preview after every change, and writes
+only the exact latest-preview operations the user confirms. Unattended reviews
+may prepare and display this final dry-run but never create, link, or modify
+Notes/Cards without genuine user approval.
+
 After 16:30 local time, tool results may include a `dailyReviewSuggestion`. It is
 stored in the non-secret MCP config and appears at most once per local day. When
 present, agents should mention it only after the user's current request has been
@@ -724,7 +732,9 @@ progress, friction, changes, and rework evidence. Agents save only confirmed
 supported fields: the summary/free record becomes daily journal/report `content`
 when available, while `moodNote` and `efficiencyNote` stay concise personal
 review notes rather than scoring explanations or interaction text. Card outcome
-remains separate from a completed Task Review. For weekly reviews, the Agent
+remains separate from a completed Task Review. After diary and approved
+Experience/Knowledge work, daily review delegates the final Note/Card dry-run
+and open-ended confirmation session to the shared card owner. For weekly reviews, the Agent
 Workflow skill uses a small, evidence-bounded set of recall cues to discuss
 patterns across the week, then writes only user-confirmed content and value
 scores/notes; any follow-up work remains a separate confirmed flow. For monthly

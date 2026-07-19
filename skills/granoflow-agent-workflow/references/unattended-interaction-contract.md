@@ -62,6 +62,15 @@ secret or 2FA access, external messages, approved-asset overwrite, irreversible
 actions, or scope expansion unless the user separately and explicitly grants
 the exact action and the owning workflow allows it.
 
+Review Note/Card authoring is also excluded from unattended authorization. A
+review may run unattended through evidence collection, discussion-draft
+assembly, similarity search, and App-owned dry-run preview, but creation,
+linking, or modification of Notes/Cards requires the user's judgment over the
+exact latest preview. The review therefore puts the shared Note/Card session
+last, displays every planned Note and Card, and waits with
+`blocker_class: subjective_acceptance`. This required stop does not authorize
+the Agent to omit candidates or mark them rejected.
+
 ## Continue Without Asking
 
 Set `interaction_decision: continue` when the Agent can choose a recommended
@@ -106,6 +115,9 @@ from current evidence:
 A failed test, incomplete draft, unfamiliar code, ordinary implementation
 choice, available local fallback, or preference for reassurance is not a real
 blocker. Retry, diagnose, replan, or use the best evidence-backed local option.
+Review Note/Card approval is an explicit exception because card quality and
+study value require genuine user judgment; general same-run or durable
+unattended authorization cannot consume this gate.
 
 ## Waiting Behavior
 

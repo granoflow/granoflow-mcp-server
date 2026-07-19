@@ -23,9 +23,21 @@ Review body.
 Use one stable `review_operation_id` and persist step state after each material result:
 
 1. safe taskReview write with latest `expectedUpdatedAt`, then readback;
-2. run the Deferred Review Card Checkpoint and delegate search/preview/approval/apply/readback to the sole card authoring owner; resume from earlier phase provenance instead of treating Review as the first card pass;
-3. promote only durable project/milestone context;
-4. update Completion Summary and perform final readback.
+2. promote only durable project/milestone context;
+3. run the Deferred Review Card Checkpoint as the final interactive authoring
+   stage and delegate the complete dry-run/open-ended editing/explicit
+   approval/apply/readback session to the sole card authoring owner; resume from
+   earlier phase provenance instead of treating Review as the first card pass;
+4. update Completion Summary with the confirmed or deferred card outcome and
+   perform final readback.
+
+In unattended mode, complete the Review and other authorized safe steps first,
+then prepare and display the full Note/Card dry-run. Wait for the user to add,
+remove, rewrite, split, merge, approve, or defer items in natural language.
+Never apply a Note/Card operation from unattended authorization. A requested
+edit changes the draft and requires a refreshed preview plus another display;
+only a fresh confirmation of explicit operations from that latest preview may
+write.
 
 Retry from the latest Granoflow state. Never replay completed steps. A 409 requires re-read and recomputing only the affected diff. If the new state changes confirmation meaning, reconfirm that part.
 

@@ -704,6 +704,15 @@ user-confirmed interpretation, tentative inference, and unknown, and write only
 confirmed monthly `content`. Monthly aggregates remain read-only, and all
 follow-up work remains a separate preview/confirmation/write/readback flow.
 
+Every task, daily, weekly, or monthly review routes supported Note/Card
+candidates to the shared `granoflow-review-card-draft` owner as its final
+interactive authoring stage. The owner shows the complete zero-write App
+preview, accepts open-ended additions, rejections, rewrites, splits, merges, and
+partial selections, refreshes changed previews, and applies only operations the
+user freshly confirms from the latest display. An unattended review may prepare
+that full dry-run but must stop there for genuine user judgment; unattended
+authorization never writes Notes or Cards.
+
 Read `references/review-drafting.md` before drafting weekly or monthly review
 content, and read `references/knowledge-distillation-workflow.md` before
 proposing Experience or Knowledge work.
@@ -722,6 +731,8 @@ Success criteria:
   follow-up writes.
 - Monthly review stays open-ended when evidence is empty or unavailable, and its
   default discussion frame never becomes a required form or automatic follow-up.
+- Review Note/Card authoring remains open-ended and zero-write until the user
+  confirms explicit operations from the latest displayed preview.
 
 ## Daily Review Nudge
 

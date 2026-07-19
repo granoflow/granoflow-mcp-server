@@ -28,6 +28,11 @@ describe("tools-review-memory-copy", () => {
     expect(combined).toContain("card outcome");
     expect(combined).toContain("does not directly write `taskReview`");
     expect(combined).toContain("rework evidence");
+    expect(combined).toContain("Final Note/Card session");
+    expect(combined).toContain("complete App dry-run");
+    expect(combined).toContain("freely add, reject, rewrite, split, merge");
+    expect(combined).toContain("latest-preview");
+    expect(combined).toMatch(/unattended mode[\s\S]*never apply Note\/Card writes/i);
     expect(workflowReference).toContain("granoflow_daily_review_skill");
     expect(workflowReference).not.toContain("## Daily Reviews");
   });

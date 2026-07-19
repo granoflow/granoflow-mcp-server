@@ -22,6 +22,10 @@ describe("tools-review-and-dates", () => {
     expect(combined).toContain("Never present inferred mood");
     expect(combined).toContain("review July");
     expect(combined).toContain("写周报");
+    expect(combined).toContain("shared Note/Card authoring session");
+    expect(combined).toContain("zero-write App preview");
+    expect(combined).toContain("unrestricted natural-language additions");
+    expect(combined).toContain("latest displayed preview");
   });
 
   it("documents the project-aware default deadline for milestone creation", () => {
@@ -62,6 +66,8 @@ describe("tools-review-and-dates", () => {
     expect(combined).toContain("sensitive, relationship, or emotional details");
     expect(combined).toContain("partial confirmation");
     expect(combined).toMatch(/does not automatically\s+create tasks, reminders, cards/);
+    expect(combined).toMatch(/complete\s+zero-write result/);
+    expect(combined).toContain("open-ended");
   });
 
   it("defines monthly review as an interactive, open-ended recall session", () => {
@@ -86,5 +92,7 @@ describe("tools-review-and-dates", () => {
     expect(combined).toContain("unknown");
     expect(combined).toContain("monthly `content`");
     expect(combined).toMatch(/does not automatically\s+create tasks, reminders, cards/);
+    expect(combined).toMatch(/entire\s+dry-run set/);
+    expect(combined).toContain("free-form additions and revisions");
   });
 });

@@ -35,6 +35,54 @@ delegate here instead of restating card rules. The public MCP tool name remains
 
 Do not infer confirmation from search, classification, prior general interest, or task completion. If the user explicitly authorizes a defined batch maintenance operation in advance, that authorization may cover its previewed operations, but the agent must still use App preview before apply.
 
+## Review-Ending Authoring Session
+
+Task, daily, weekly, and monthly reviews use one shared Note/Card authoring
+session as their final interactive authoring stage. Review owners collect
+evidence and confirmed review content, then delegate here instead of drafting
+or applying cards independently.
+
+1. Finish the review discussion and any separately approved Experience or
+   Knowledge assessment work first. Raw diary prose, an unreviewed task log, or
+   an unapproved Experience is not Note/Card input.
+2. Gather every supported Note/Card candidate for the reviewed scope, including
+   relevant candidates deferred by earlier lifecycle checkpoints. Prefer a
+   small, strong set, but do not hide a candidate merely to shorten the
+   confirmation view.
+3. Run similarity search and the App-owned authoring preview in dry-run mode.
+   Require `writesPerformed: false`, then show the complete planned Note/Card
+   set together: stable operation id, create/link/update action, Note title and
+   full content summary, every Card front/options/back, source, task links,
+   reason, duplicate/conflict signals, and shared-note impact.
+4. Enter an open-ended editing conversation. The user may approve any item,
+   reject or defer any item, rewrite a Note or Card, split or merge knowledge,
+   change card shape, add a missing Note/Card, or ask for another alternative in
+   ordinary language. Do not force a questionnaire, fixed command syntax, or
+   all-or-nothing batch decision.
+5. Treat every requested addition or edit as a draft change, not write
+   approval. Re-run affected similarity checks and the App preview, then show
+   the complete changed result. A broad unattended instruction, earlier review
+   confirmation, or approval of a superseded preview never authorizes apply.
+6. Accept partial approval only for explicit operation ids from the latest
+   unchanged preview. Translate natural-language choices such as “只建第二张”
+   into those ids, restate the exact approved subset, and require a fresh user
+   confirmation of that subset before apply. Unapproved items remain rejected
+   or deferred; they are never silently included.
+7. Apply only the freshly confirmed operations, then require App-owned Note,
+   Card, task-link, and `practiceReady: true` readback. Report failed or stale
+   items separately and never retry them against a changed preview.
+
+### Unattended Review Boundary
+
+An unattended review may complete all read-only evidence collection, quality
+checks, similarity searches, drafting, and App dry-run preview. Note/Card
+creation, linking, and modification always require genuine user judgment over
+the exact latest preview, so unattended authorization never applies them. Put
+this session at the end of the review, display the full dry-run set, record the
+operations as `deferred`, and wait for the user's open-ended edits and explicit
+approval. This is a required `subjective_acceptance` stop, not an unattended-run
+failure and not permission to omit the candidates.
+
 ## Supported Actions
 
 - `link_existing`: associate an unchanged existing card with the target task.

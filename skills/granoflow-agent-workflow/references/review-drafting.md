@@ -34,6 +34,17 @@ review, mood note, efficiency note, or daily journal, call
 - Candidate Experience should capture durable lessons, decisions, repeated
   failure modes, unresolved risks, or reusable process details. Review Cards
   require a later Knowledge assessment/materialization gate.
+- Every task, daily, weekly, or monthly review ends with the shared Note/Card
+  authoring session when supported candidates exist. Delegate it to
+  `granoflow-review-card-draft`: run a zero-write App preview, display every
+  planned Note and Card, allow unrestricted natural-language additions,
+  removals, rewrites, splits, merges, and partial selections, refresh the
+  preview after each change, and apply only operations freshly confirmed from
+  the latest displayed preview.
+- In unattended mode, finish all earlier safe review work before that final
+  session. The Agent may draft and dry-run the whole set, but it must wait for
+  genuine user approval and cannot treat unattended authorization as Note/Card
+  write approval.
 
 ## Milestone Focus For Every Periodic Review
 
@@ -125,7 +136,10 @@ After weekly readback, offer a separate Experience distillation preview based
 on the week's confirmed Experience/Evidence and historical vector search. Show
 duplicate, conflict, boundary, and degraded-search signals; apply only the
 user-approved Experience operations. Do not create Knowledge or Cards merely
-because a weekly pattern was identified.
+because a weekly pattern was identified. After approved assessment work, end
+the review with the shared Note/Card authoring session. Show its complete
+zero-write result and keep the conversation open-ended until the user confirms
+specific latest-preview operations or defers them.
 
 ## Monthly Reviews
 
@@ -200,4 +214,7 @@ Rules:
 After monthly readback, the same separate Experience preview/apply gate may
 summarize month-level patterns and compare them with all historical Experience.
 Knowledge assessment and Card materialization remain later, separately approved
-operations.
+operations. When supported candidates reach Note/Card drafting, the shared
+Note/Card authoring session is the final interactive stage: display the entire
+dry-run set, accept free-form additions and revisions, refresh changed previews,
+and write only the explicitly confirmed latest-preview subset.

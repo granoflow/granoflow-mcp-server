@@ -70,4 +70,4 @@ For an older App that advertises `projectTaskRequired=true`, project tasks may u
 - Delivery reconciles cards with the actual result and records accepted, overturned, or deferred Work Document assumptions. Legacy Delivery may refer to Analysis/Plan assumptions.
 - Deferred Review performs final deduplication, quality audit, and evidence-backed experience capture; it is not the first bulk-card pass.
 
-An unattended runner may read cards and record candidates, but it cannot infer operation approval. It records proposed writes as `deferred` and continues safe work when the task contract permits.
+An unattended runner may read cards and record candidates, but it cannot infer operation approval. During a review, it must carry those candidates into the parent skill's final Review-Ending Authoring Session, run the App-owned dry-run preview, display the complete Note/Card set, and stop for genuine user editing and approval. It records proposed writes as `deferred` and continues safe work before that final stop when the task contract permits. A general unattended instruction never authorizes Note/Card creation, linking, or modification.

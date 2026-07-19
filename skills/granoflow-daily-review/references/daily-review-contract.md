@@ -135,10 +135,10 @@ Never from this flow:
 - create a task, card, or project/milestone context entry;
 - bypass another owner's preview and confirmation gate.
 
-Offer such actions only as separately named follow-ups after daily-review
-readback. If the user accepts a card follow-up, call
-`granoflow_review_card_draft_skill`; if the user accepts task review, route to
-`granoflow_agent_workflow_skill`.
+Route such actions through their separately owned flows after daily-review
+readback. Task review goes to `granoflow_agent_workflow_skill`. Note/Card work
+is the review's final interactive authoring stage and goes to
+`granoflow_review_card_draft_skill`; this daily owner never writes cards itself.
 
 If the user wants lessons distilled, call the public Knowledge Distillation
 workflow after diary readback. Preview Experience candidates from the day's
@@ -146,3 +146,22 @@ confirmed Task Reviews and Evidence, display all candidates, and apply only the
 approved subset. Experience is independent of the diary and may later be linked
 to many Tasks. Do not create Cards from raw diary prose or raw Experience; Card
 work begins only after a separate Knowledge assessment and materialization gate.
+
+## 4. Final Note/Card Authoring Session
+
+After diary readback and approved Experience/Knowledge gates, gather all
+supported Note/Card candidates from the day's reviewed tasks and deferred phase
+checkpoints. Delegate to `granoflow-review-card-draft`, run the App-owned
+zero-write preview, and display the complete planned Note and Card set.
+
+Keep the conversation fully open-ended. The user may say which items to create,
+which to reject or defer, what wording or examples to change, and what missing
+Note or Card to add. Every change produces a new draft, refreshed similarity
+check where affected, refreshed App preview, and another complete display. An
+edit request is never itself write authorization. Apply only a subset that the
+user freshly confirms from the latest unchanged preview, then require Note/Card
+and `practiceReady: true` readback.
+
+For an unattended daily review, perform this stage last. Draft and dry-run all
+candidates, show them, and wait with no Note/Card writes. General unattended
+authorization cannot approve creation, linking, or modification.

@@ -31,6 +31,13 @@ Follow these phases in order:
    App-advertised Local HTTP API surface. Delegate each approved missing Task
    Review to its existing owner, read it back, then write and read back the daily
    review. Do not treat a request success response as proof.
+4. **Final Note/Card session**: after diary readback and any separately approved
+   Experience/Knowledge work, delegate all supported candidates to
+   `granoflow-review-card-draft`. Display the complete App dry-run, let the user
+   freely add, reject, rewrite, split, merge, or select items, refresh the
+   preview after every draft change, and write only the exact latest-preview
+   operations the user confirms. In unattended mode, prepare this stage last
+   and wait; never apply Note/Card writes from unattended authorization.
 
 ## Ownership Boundaries
 
@@ -54,6 +61,9 @@ Follow these phases in order:
 - After daily-review readback, the user may explicitly approve a separate
   Experience proposal pass. It uses the App-owned Experience preview/apply
   flow and never turns diary prose directly into Experience or Cards.
+- Daily review does not implement its own card rules. Its final Note/Card stage
+  always delegates to the shared authoring owner, including dry-run,
+  open-ended revision, partial confirmation, apply, and practice-ready readback.
 
 ## Success Criteria
 
@@ -64,3 +74,5 @@ Follow these phases in order:
   fields, and separate deferred follow-ups.
 - Any Experience candidates are shown and confirmed separately after diary
   readback; daily review completion never implies their acceptance.
+- Any Note/Card candidate is fully displayed at the end and remains zero-write
+  until the user explicitly confirms operations from the latest preview.
