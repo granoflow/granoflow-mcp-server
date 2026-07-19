@@ -77,6 +77,13 @@ mandatory acceptance condition must have one accountable task or the controller
 Task. A task may contribute to several conditions, but no condition may be
 considered covered merely because a related task title exists.
 
+When the milestone originates from product documents, user stories, notes, or
+chat, also read the shared
+'granoflow-agent-workflow/requirement-intake-and-traceability' reference.
+Decompose from the canonical Project Work requirement ids, including preserved
+extra requirements and unresolved conflict boundaries, rather than from
+headings or filenames.
+
 Run the bundled decomposition check. It passes only when the task portfolio is
 minimal but sufficient, dependencies are acyclic or intentionally gated, handoff
 outputs are observable, and every required integration check has an owner.
@@ -85,8 +92,13 @@ outputs are observable, and every required integration check has an owner.
 
 For each ready child task, delegate Analysis, Planning, readiness review,
 execution, Delivery, and local acceptance to the bundled single-task workflow.
-Run independent tasks in parallel only when their write surfaces, inputs, and
-acceptance evidence do not conflict.
+Read the shared
+`granoflow-agent-workflow/parallel-task-execution` contract. The AI must build a
+pairwise conflict inventory from current Task Work and repository/runtime facts.
+Run the whole compatible batch concurrently when every pair is
+`parallel_safe`; serialize dependencies, write/side-effect conflicts, and
+unknown surfaces. `doing` is a human focus state and is never an AI worker
+lease.
 
 The milestone contract may authorize bounded continuation, but every action must
 also pass the current delegated-authorization envelope. Missing authorization,

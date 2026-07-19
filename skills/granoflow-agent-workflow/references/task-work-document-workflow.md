@@ -12,6 +12,14 @@ provides structured reads/writes and bundled rules; the host Agent owns
 reasoning, Skill routing, orchestration, and execution. This workflow does not
 add App schema, API endpoints, MCP runtime state, or host filesystem scanning.
 
+When source material contains product requirements or user stories, read
+'requirement-intake-and-traceability.md' before Analysis. Treat arbitrary
+format and unexpected sections as valid evidence, preserve extra requirements,
+surface product-document/user-story omissions and conflicts, and inherit stable
+Project Work requirement ids. Do not demand a separate SRS, technical design,
+data model, test plan, or Development Plan from an individual developer before
+Analysis.
+
 The persisted task description is the user's 30-second recall summary and the
 starting source for Task Work. The Work Document is a cold-start execution
 manual for an Agent or person who may not have the original thread. It expands
@@ -523,12 +531,13 @@ one active, Analysis-confirmed, hash-verified Work Document with valid Planning
 state. Planning confirmation does not authorize execution unless the separately
 recorded execution grant is also valid.
 
-Immediately before the first authorized execution action, update the current
-task to `status=doing` through `granoflow_task_update_structured` and read it
-back. Do not send `startedAt`: the App records it as the side effect of the real
-state transition. Analysis, Planning, document upload, and waiting for approval
-do not count as execution and must leave the task `pending`. If execution does
-not actually begin, do not perform this transition.
+Immediately before AI-owned execution, read `parallel-task-execution.md`,
+capture the real start instant, keep the current task `pending`, and write the
+AI execution `startedAt` through `granoflow_task_history_mutate` with readback.
+Never claim the user's sole `doing` focus slot as an AI lease. Analysis,
+Planning, document upload, and waiting for approval do not count as execution
+and must not write an execution start time. Human manual execution retains the
+normal `pending -> doing` transition and App-recorded start time.
 
 For software execution, show that forecast immediately before the first edit as
 a non-confirming notice; unattended mode then continues. Reconcile every new

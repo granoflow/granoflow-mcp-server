@@ -139,9 +139,13 @@ describe("tools-review-memory-copy", () => {
     expect(descriptions.get("granoflow_task_create_structured")).toContain(
       "real-analogy and concrete-example",
     );
-    expect(descriptions.get("granoflow_task_create_structured")).toContain("App records startedAt");
+    expect(descriptions.get("granoflow_task_create_structured")).toContain(
+      "never claims the human doing focus slot",
+    );
     expect(descriptions.get("granoflow_task_create")).toContain("pending state");
-    expect(descriptions.get("granoflow_task_update_structured")).toContain("status=doing");
+    expect(descriptions.get("granoflow_task_update_structured")).toContain(
+      "AI execution never sets status=doing",
+    );
     expect(descriptions.get("granoflow_task_history_mutate")).toContain(
       "Every create mutation requires",
     );

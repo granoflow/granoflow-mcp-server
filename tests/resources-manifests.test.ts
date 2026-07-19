@@ -24,10 +24,30 @@ describe("resources-manifests", () => {
       referenceId: "git-checkpoint-workflow",
       path: "skills/granoflow-agent-workflow/references/git-checkpoint-workflow.md",
     });
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "requirement-intake-and-traceability",
+      path: "skills/granoflow-agent-workflow/references/requirement-intake-and-traceability.md",
+    });
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "parallel-task-execution",
+      path: "skills/granoflow-agent-workflow/references/parallel-task-execution.md",
+    });
     await expect(
       resources.readReference("granoflow-agent-workflow", "unattended-interaction-contract"),
     ).resolves.toMatchObject({
       content: expect.stringContaining("interaction_budget: 0"),
+    });
+    await expect(
+      resources.readReference("granoflow-agent-workflow", "requirement-intake-and-traceability"),
+    ).resolves.toMatchObject({
+      content: expect.stringContaining("The inputs are evidence, not forms"),
+    });
+    await expect(
+      resources.readReference("granoflow-agent-workflow", "parallel-task-execution"),
+    ).resolves.toMatchObject({
+      content: expect.stringContaining("Only `parallel_safe` pairs may share a batch"),
     });
   });
 

@@ -89,7 +89,7 @@ describe("tools-task-lifecycle", () => {
     });
   });
 
-  it("starts current execution through status doing without sending startedAt", async () => {
+  it("preserves status doing for human focus without sending startedAt", async () => {
     const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_update_structured")?.({

@@ -42,6 +42,17 @@ updated_at: <local timestamp>
 
 <Observable conditions that prove the combined result works and rule out false success.>
 
+## Requirement Coverage
+
+Read the shared
+'granoflow-agent-workflow/requirement-intake-and-traceability' contract. List
+only the Project Work requirement ids this milestone owns or verifies; never
+copy the complete product ledger.
+
+| Requirement ID | Project Work source | Milestone contribution | Accountable Task | Acceptance IDs | Result  |
+| -------------- | ------------------- | ---------------------- | ---------------- | -------------- | ------- |
+| R-001          | <stable reference>  | <bounded outcome>      | <task id>        | <ids>          | pending |
+
 ## Scope And Non-goals
 
 <Fixed boundary, explicitly excluded outcomes, and what belongs in a later milestone.>
@@ -67,6 +78,13 @@ updated_at: <local timestamp>
 ## Dependency And Handoff Map
 
 <For every material edge: upstream output, downstream input, authoritative surface, verification, and invalidation rule.>
+
+## Parallel Execution
+
+<Read `granoflow-agent-workflow/parallel-task-execution`. Record the assessed
+Task Work/repository revisions, pairwise conflict decisions, parallel-safe
+batches, serialized edges, exact reasons, and host capacity limits. Unknown
+material write surfaces must serialize. Do not use `doing` as an AI lease.>
 
 ## Delegation And Authorization Boundary
 

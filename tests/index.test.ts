@@ -13,6 +13,18 @@ const packageJson = JSON.parse(await readFile("package.json", "utf8")) as {
   bin: Record<string, string>;
 };
 
+async function readAgentReference(client: Client, referenceId: string) {
+  const result = await client.callTool({
+    name: "granoflow_bundled_skill_reference",
+    arguments: { skillId: "granoflow-agent-workflow", referenceId },
+  });
+  const text = result.content.find((item) => item.type === "text");
+  return JSON.parse(text?.type === "text" ? text.text : "null") as {
+    ok: boolean;
+    data: { content: string; path: string };
+  };
+}
+
 describe("granoflow MCP server executable", () => {
   it("keeps one unambiguous npm-exec bin", () => {
     expect(packageJson.bin["granoflow-mcp-server"]).toBe("dist/index.js");
@@ -109,6 +121,24 @@ describe("granoflow MCP server executable", () => {
           bytes: Buffer.byteLength(packaged),
           content: packaged,
           sha256: createHash("sha256").update(packaged).digest("hex"),
+        },
+      });
+
+      const intakePayload = await readAgentReference(client, "requirement-intake-and-traceability");
+      expect(intakePayload).toMatchObject({
+        ok: true,
+        data: {
+          path: "skills/granoflow-agent-workflow/references/requirement-intake-and-traceability.md",
+          content: expect.stringContaining("The inputs are evidence, not forms"),
+        },
+      });
+
+      const parallelPayload = await readAgentReference(client, "parallel-task-execution");
+      expect(parallelPayload).toMatchObject({
+        ok: true,
+        data: {
+          path: "skills/granoflow-agent-workflow/references/parallel-task-execution.md",
+          content: expect.stringContaining("Only `parallel_safe` pairs may share a batch"),
         },
       });
 

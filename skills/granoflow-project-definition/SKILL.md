@@ -19,11 +19,15 @@ packaging, and execution tools.
 1. Read the public
    `granoflow-agent-workflow/project-work-document-template` reference for the
    canonical YAML shape.
-2. Read `references/project-definition-interaction.md` before interviewing or
+2. Read the public
+   `granoflow-agent-workflow/requirement-intake-and-traceability` reference
+   before extracting product documents, user stories, notes, chat, screenshots,
+   or mixed-format source material.
+3. Read `references/project-definition-interaction.md` before interviewing or
    recommending values.
-3. Read `references/project-artifact-workflows.md` when UI prototypes, data
+4. Read `references/project-artifact-workflows.md` when UI prototypes, data
    models, workflows, or cross-artifact consistency are discussed.
-4. Call `granoflow_agent_preferences_get(projectId)` when preferences already
+5. Call `granoflow_agent_preferences_get(projectId)` when preferences already
    exist. During initialization, recommend and write the `agent_preferences`
    project-rule section so later workflows can reuse explanation, execution,
    and Git choices without asking again. Preferences never weaken readiness,
@@ -73,6 +77,9 @@ fonts, colors, layout systems, or prototype engines one item at a time.
 2. If no Project Work exists, start from the canonical YAML template. Preserve
    unknowns as null/empty plus provenance; never invent values to make the
    document look complete.
+   Register and read every supplied source before mapping it. Preserve
+   unexpected requirements, label inference, and report product-document/user-
+   story omissions or conflicts instead of choosing silently.
 3. Choose the entry mode from the user's request. A vague request defaults to
    `guided_from_vague_request`; an explicit section/field request defaults to
    `guided_step_by_step`.

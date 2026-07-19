@@ -81,10 +81,11 @@ Examples:
 
 Ordinary capture never writes `createdAt`, `updatedAt`, `startedAt`, `endedAt`,
 or `deletedAt`. Discussion is not execution. After Analysis/Plan readiness and
-separate execution authorization, start current work by updating the task to
-`status=doing`; the App records `startedAt` at that transition. Use
-`granoflow_task_history_mutate` only when correcting genuine historical facts,
-not as a retry path for current-task capture.
+separate execution authorization, AI work follows
+`parallel-task-execution.md`: keep the task `pending` and write its actual
+execution start through `granoflow_task_history_mutate`. Human manual focus may
+use `status=doing` and the App-recorded start. The timestamp mutation surface is
+not a retry path for current-task capture.
 
 Do not ask the user to choose a project or milestone in the default quick path.
 Do not create, restore, reopen, or rename project structure during capture.

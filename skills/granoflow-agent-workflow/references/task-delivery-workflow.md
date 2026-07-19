@@ -9,10 +9,11 @@ required before completion for work that entered Execution and is not a Task
 Review, including `planning_status=not_required` work.
 
 Time reconciliation is part of completion evidence: `startedAt` is the actual
-transition into Execution, normally App-recorded when the task moved to
-`doing`, while `endedAt` is the confirmed completion point. The earlier task
-discussion, capture, Analysis, or Planning time is not execution time and must
-not be substituted. If a historical correction is genuinely required, use the
+entry into Execution. AI work captures and writes it while remaining `pending`;
+human manual focus normally receives it from the App's `doing` transition.
+`endedAt` is the confirmed completion point. The earlier task discussion,
+capture, Analysis, or Planning time is not execution time and must not be
+substituted. If a timestamp correction is genuinely required, use the
 dedicated historical mutation surface with evidence and readback.
 
 1. Re-read the task, nodes, description, attachments, active Work Document, and current evidence. For legacy work, read the verified Analysis and Plan instead. Stop with `task_analysis_plan_attachment_required` when the required document attachment is absent.

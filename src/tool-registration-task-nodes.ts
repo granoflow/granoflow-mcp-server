@@ -128,7 +128,7 @@ function registerGranoflowTaskFinishTool(
   } = context;
   registerTool(
     "granoflow_task_finish",
-    "Finish a node-less compatibility task after its required Delivery gate and verify status=done. Derive endedAt from the confirmed completion time. startedAt must represent when execution actually began, normally already App-recorded by the status=doing transition; never substitute the earlier task discussion or creation time. If an evidence-based correction is required at completion, this tool sends it only through the supported complete action. Do not use for node-backed tasks. taskReview/reviewCardDrafts remain legacy explicit-inline compatibility only; deferred Review is the default.",
+    "Finish a node-less compatibility task after its required Delivery gate and verify status=done. For AI execution, keep the task pending until this completion action and supply the captured actual startedAt plus confirmed endedAt; never claim status=doing or substitute discussion/creation time. Human manual focus may already have an App-recorded start from doing. Do not use for node-backed tasks. taskReview/reviewCardDrafts remain legacy explicit-inline compatibility only; deferred Review is the default.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       projectId: z
@@ -149,7 +149,7 @@ function registerGranoflowTaskFinishTool(
         .string()
         .optional()
         .describe(
-          "Actual execution start time, only for evidence-based correction through the complete action. Do not use task discussion or creation time.",
+          "Actual execution start time. AI execution captures this while the task stays pending and supplies it at completion. Do not use task discussion or creation time.",
         ),
       taskReview: z
         .string()

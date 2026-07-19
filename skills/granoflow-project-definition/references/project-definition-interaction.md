@@ -1,5 +1,12 @@
 # Project Definition Interaction
 
+Read the shared
+'granoflow-agent-workflow/requirement-intake-and-traceability' contract before
+extracting user source material. A product document and user stories are the
+recommended smallest pair for an individual developer, but their formatting is
+never an admission gate. Preserve requirements found under unexpected headings
+and ask only for decision-changing gaps.
+
 ## Recommendation Contract
 
 For each unresolved field, prefer evidence in this order:

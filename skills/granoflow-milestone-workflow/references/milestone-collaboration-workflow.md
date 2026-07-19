@@ -1,5 +1,10 @@
 # Milestone Collaboration Workflow
 
+For requirement-driven milestones, read the shared
+'granoflow-agent-workflow/requirement-intake-and-traceability' contract first.
+The portfolio covers stable requirement ids and acceptance ids, not merely the
+sections that happened to appear in a user's documents.
+
 This workflow coordinates one confirmed milestone across an evolving set of
 child tasks. It owns the portfolio, dependencies, handoffs, integration proof,
 and milestone acceptance. It does not replace child Task Work.
@@ -81,6 +86,14 @@ prevents safe decomposition. Do not create speculative tasks merely to make the
 table look complete.
 
 ## 4. Portfolio Execution
+
+Before dispatch, read `granoflow-agent-workflow/parallel-task-execution` and
+build the pairwise conflict matrix from current Task Work and live repository or
+runtime facts. Dispatch every member of a fully `parallel_safe` batch at once
+when the host supports multiple workers. Serialize ordered dependencies,
+overlapping writes, shared side effects, and unknown material surfaces. Recheck
+revisions before writes and replan only the affected batch when new overlap is
+discovered; other independent work continues.
 
 ### Persistent execution preflight
 

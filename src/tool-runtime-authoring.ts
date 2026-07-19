@@ -111,8 +111,8 @@ export function ordinaryTaskWriteFailure(
         unsupportedFields,
         currentTaskFlow:
           operation === "create"
-            ? "Create the task as pending without historical fields. After Analysis/Plan readiness and execution authorization, update status to doing; the App records startedAt."
-            : "For a current task, use status actions such as status=doing; the App owns startedAt/endedAt side effects.",
+            ? "Create the task as pending without historical fields. AI execution stays pending and records actual time through granoflow_task_history_mutate; doing is reserved for human focus."
+            : "For AI execution, keep pending and use granoflow_task_history_mutate for evidence-based timestamps; use status=doing only for human focus.",
         historicalCorrectionTool: "granoflow_task_history_mutate",
       },
       error: {
@@ -129,7 +129,7 @@ export function ordinaryTaskWriteFailure(
         requestedStatus: record.status,
         requiredStatus: "pending",
         nextAction:
-          "Create the task as pending. When execution actually begins after Analysis/Plan readiness and authorization, update it to status=doing; the App records startedAt.",
+          "Create the task as pending. AI execution remains pending until its verified completion owner changes it to done; record actual start time through granoflow_task_history_mutate. Human focus may use status=doing.",
       },
       error: { message: "Ordinary current-task creation must start in pending state." },
     });

@@ -229,10 +229,10 @@ necessary qualifier`. Do not use document types, filenames, or abstract
    through supported App media/attachment paths. Read the destination back.
 8. Create the current task as `pending` and omit `createdAt`, `updatedAt`,
    `startedAt`, `endedAt`, and `deletedAt`. Ordinary task creation is not a
-   historical-write surface. Only after Analysis/Plan readiness and separate
-   execution authorization, update the task to `status=doing`; the App records
-   `startedAt` at that real execution transition. Use
-   `granoflow_task_history_mutate` only for genuine historical correction.
+   timestamp-write surface. After Analysis/Plan readiness and separate
+   execution authorization, AI execution remains `pending` and records its
+   actual `startedAt` through `granoflow_task_history_mutate`; human manual
+   focus may transition to `doing` and use the App-recorded start.
 9. The user's explicit task-creation request confirms this write. Skip dry-run,
    planning, nodes, cards, history retrieval, and duplicate search by default.
 10. Read back by the task id returned from creation. Patch dropped supported
@@ -467,12 +467,12 @@ routes before completing work that entered Execution.
   Work Document attachment, or the complete legacy Task Analysis + Task Plan
   attachment pair. Missing documents fail closed with
   `task_analysis_plan_attachment_required`.
-- At completion, use the confirmed finish point as `endedAt`. `startedAt` must
-  represent the real transition into Execution, normally App-recorded when the
-  task moved to `doing`; never substitute the earlier discussion or creation
-  time. If correction is genuinely required, use only a supported completion
-  action or the dedicated historical mutation surface, with evidence and
-  readback.
+- At completion, use the confirmed finish point as `endedAt`. For AI-owned work,
+  read `references/parallel-task-execution.md`: keep the task `pending` during
+  execution, preserve the captured start instant through the dedicated
+  timestamp mutation surface, and complete only through NodeService or the
+  node-less finish action. Human manual work may use `doing` and its
+  App-recorded start. Never substitute discussion or creation time.
 - Default completion does not create a deep Task Review or a new card
   checkpoint. It reads the Delivery Card Checkpoint summary; explicitly
   deferred card work does not block task completion.
@@ -821,6 +821,10 @@ Success criteria:
 
 ## References
 
+- 'references/requirement-intake-and-traceability.md': Read before turning
+  imperfect product notes, product documents, user stories, chat exports, or
+  mixed-format source material into Project, Milestone, or Task Work.
+
 - Bundled `granoflow_task_orchestrator_skill`: Read first when task lifecycle
   intent or the correct stopping point must be inferred from context.
 - `references/execution-modes-and-acceptance-reports.md`: Read when the user
@@ -829,6 +833,9 @@ Success criteria:
 - `references/unattended-interaction-contract.md`: Single owner for the
   zero-interruption budget, same-run versus durable authorization, real blocker
   classes, and one-batch waiting behavior in unattended work.
+- `references/parallel-task-execution.md`: Read for every multi-task AI run. It
+  owns conflict inventory, pairwise safe batches, concurrent dispatch, the
+  AI `pending -> done` lifecycle, and execution timestamp readback.
 - `references/waiting-for-user-input.md`: Read when work is blocked on a
   user-only action and the agent must create reminders.
 - Bundled `granoflow_delegated_authorization_skill`: Read when the user requests

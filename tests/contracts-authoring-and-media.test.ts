@@ -35,9 +35,12 @@ describe("contracts-authoring-and-media", () => {
       /analysis_grill_status=passed[\s\S]*readiness_grill_status=passed[\s\S]*uploaded/i,
     );
     expect(workflow).toMatch(
-      /before the first authorized execution action[\s\S]*status=doing[\s\S]*App records/i,
+      /before AI-owned execution[\s\S]*keep the current task `pending`[\s\S]*startedAt/i,
     );
-    expect(workflow).toMatch(/Analysis, Planning[\s\S]*must leave the task `pending`/i);
+    expect(workflow).toMatch(/Never claim[\s\S]*`doing` focus slot/i);
+    expect(workflow).toMatch(
+      /Analysis,[\s\S]*Planning,[\s\S]*must not write an execution start time/i,
+    );
     expect(routing).toMatch(/MCP-bundled[\s\S]*mandatory phase gates/i);
     expect(routing).toMatch(/grill-finalizer[\s\S]*does not replace/i);
     for (const forbiddenHeading of [

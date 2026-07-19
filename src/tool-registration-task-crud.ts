@@ -132,7 +132,7 @@ function registerGranoflowTaskHistoryMutateTool(
   } = context;
   registerTool(
     "granoflow_task_history_mutate",
-    "Create, update, or soft-delete historical Granoflow task facts through the dedicated AI-agent API. Every create mutation requires shared AI/automation authoringEvidence for an action/outcome title, plain language, a real analogy, and a concrete example. Use dryRun first; when dryRun=false, the running app must advertise historical_task_mutations_v1.",
+    "Write evidence-based task timestamps and historical Granoflow facts through the dedicated AI-agent API. AI execution may update startedAt while the task remains pending so it never claims the human doing focus slot; node-managed completion may correct startedAt/endedAt after status=done. Every create mutation requires shared AI/automation authoringEvidence for an action/outcome title, plain language, a real analogy, and a concrete example. Use dryRun first; when dryRun=false, the running app must advertise historical_task_mutations_v1.",
     {
       source: z
         .record(z.string(), z.unknown())
@@ -205,7 +205,7 @@ function registerGranoflowTaskCreateTool(
   } = context;
   registerTool(
     "granoflow_task_create",
-    "Create a current Granoflow task from a JSON payload in pending state. Do not include createdAt, updatedAt, startedAt, endedAt, or deletedAt. After Analysis/Plan readiness and execution authorization, update status to doing; the App records startedAt. Use granoflow_task_history_mutate only for genuine historical correction. AI and automation callers must include input.authoringEvidence proving an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. Tags not in the local catalog are skipped automatically. Optional completionSource attaches AI/人工 source tags for completed-work capture.",
+    "Create a current Granoflow task from a JSON payload in pending state. Do not include createdAt, updatedAt, startedAt, endedAt, or deletedAt. AI execution keeps the task pending until its completion owner changes it to done and records its actual start through granoflow_task_history_mutate; status=doing is reserved for human focus. AI and automation callers must include input.authoringEvidence proving an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. Tags not in the local catalog are skipped automatically. Optional completionSource attaches AI/人工 source tags for completed-work capture.",
     {
       input: jsonInputSchema,
       dryRun: z
@@ -257,7 +257,7 @@ function registerGranoflowTaskCreateStructuredTool(
   } = context;
   registerTool(
     "granoflow_task_create_structured",
-    "Create a current Granoflow task in pending state with common structured fields. Ordinary creation never accepts startedAt or other historical physical fields. After Analysis/Plan readiness and execution authorization, update status to doing; the App records startedAt. Use granoflow_task_history_mutate only for genuine historical correction. AI and automation callers must provide authoringEvidence for an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. For a milestone-bound task, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Tags not in the local catalog are skipped automatically. Defaults to dry-run.",
+    "Create a current Granoflow task in pending state with common structured fields. Ordinary creation never accepts startedAt or other historical physical fields. AI execution stays pending until verified completion, records its actual start through granoflow_task_history_mutate, and never claims the human doing focus slot. AI and automation callers must provide authoringEvidence for an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. For a milestone-bound task, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Tags not in the local catalog are skipped automatically. Defaults to dry-run.",
     {
       title: z.string().min(1),
       description: z.string().optional(),
@@ -331,7 +331,7 @@ function registerGranoflowTaskUpdateTool(
   const { jsonInputSchema, apiToolForTaskWrite, isObject, ordinaryTaskWriteFailure } = context;
   registerTool(
     "granoflow_task_update",
-    "Update a current Granoflow task through the Local HTTP API. Do not include historical physical fields. To begin actual execution, set status=doing after Analysis/Plan readiness and authorization; the App records startedAt. Use granoflow_task_history_mutate only for genuine historical correction. Tags not in the local catalog are skipped automatically.",
+    "Update a current Granoflow task through the Local HTTP API. Do not include historical physical fields. AI execution must not set status=doing: keep pending, record actual startedAt through granoflow_task_history_mutate, and complete through NodeService or granoflow_task_finish. Human manual focus may set doing. Tags not in the local catalog are skipped automatically.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       input: jsonInputSchema,
@@ -365,7 +365,7 @@ function registerGranoflowTaskUpdateStructuredTool(
   const { compactRecord, resourceStatusSchema, apiTool } = context;
   registerTool(
     "granoflow_task_update_structured",
-    "Update a current Granoflow task with common structured fields. To begin actual execution, set status=doing only after Analysis/Plan readiness and execution authorization; the App records startedAt automatically, so do not use a historical timestamp write. When moving it into a milestone, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Defaults to dry-run.",
+    "Update a current Granoflow task with common structured fields. AI execution never sets status=doing: it remains pending until verified completion and writes actual execution time through granoflow_task_history_mutate. status=doing is for human manual focus and keeps the App-recorded start behavior. When moving it into a milestone, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Defaults to dry-run.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       title: z.string().min(1).optional(),

@@ -28,6 +28,8 @@ decision: proceed | needs_input | user_action | split | redefine | defer | aband
 planning_status: not_assessed | not_required | draft | awaiting_confirmation | confirmed
 readiness_grill_status: not_run | not_applicable | passed | revisions_required | blocked
 execution_authorization: not_requested | awaiting_confirmation | direct_confirmed | delegated_confirmed | denied
+execution_actor: ai | human | shared | not_assessed
+execution_status_projection: pending_until_completion | human_focus_doing | not_assessed
 skill_routing: not_triggered | completed | declined | fallback | failed
 card_checkpoint: not_triggered | completed | partial | deferred | conflict | verification_failed
 created_at: <local timestamp>
@@ -163,6 +165,21 @@ as inference/unknown. A path or document name is provenance, not proof of what
 the document contains. Never turn an inference into a confirmed fact merely to
 complete the template.
 
+When the task implements or verifies user requirements, read
+'requirement-intake-and-traceability.md' and add:
+
+```markdown
+## Requirement Traceability
+
+| Requirement ID | Source reference | Task-local interpretation | Disposition | Acceptance / Evidence |
+| -------------- | ---------------- | ------------------------- | ----------- | --------------------- |
+| R-001          | <stable source>  | <what this task owns>     | adopted     | <ids/evidence>        |
+```
+
+Reference the Project Work canonical requirement ids. Do not copy the complete
+project ledger into Task Work. Preserve extra requirements, keep inference
+labeled, and stop before silently resolving a decision-changing source conflict.
+
 Do not add empty optional headings or repeated `none` sections. Add an optional
 section only when its trigger in `task-work-document-workflow.md` fires. When
 triggered, use these stable headings:
@@ -181,10 +198,12 @@ triggered, use these stable headings:
 - `Skill Execution Strategy`
 - `Execution Nodes`
 - `Dependencies And Handoffs`
+- `Write Surfaces And Parallel Safety`
 - `Verification Plan`
 - `Rollback / Stop Conditions`
 - `Knowledge / Card Checkpoint`
 - `Granoflow References`
+- `Requirement Traceability`
 - `Visual Narrative Mode`
 
 Grill headings are forbidden in the rendered Task Work Document. Do not add
@@ -223,6 +242,13 @@ references after every full rewrite; never preserve it by copying old prose.
 
 Planning sections appear only after confirmed Analysis,
 `analysis_grill_status: passed`, and explicit permission to enter Planning.
+When this task may run beside another task, add `Write Surfaces And Parallel
+Safety` with bounded read inputs, exact or responsibly bounded write surfaces,
+shared mutable state, external effects, dependencies, and unknowns. This is the
+task-local evidence consumed by `parallel-task-execution.md`; it does not decide
+portfolio compatibility by itself. AI execution uses `execution_actor: ai` and
+`execution_status_projection: pending_until_completion`. Human manual focus
+uses `human_focus_doing`.
 When `planning_status=confirmed`, include an `Execution Plan` that a cold reader
 can follow without the original thread. Each ordinary plan step records:
 

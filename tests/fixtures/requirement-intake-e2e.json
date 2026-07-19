@@ -1,0 +1,108 @@
+{
+  "sources": [
+    {
+      "id": "SRC-PRODUCT",
+      "kind": "product_document",
+      "filename": "01-product.md",
+      "statements": [
+        {
+          "locator": "成功标准/补充说明",
+          "text": "阅读器必须可以完全离线使用，界面要像纸质书一样安静。"
+        }
+      ]
+    },
+    {
+      "id": "SRC-STORIES",
+      "kind": "user_stories",
+      "filename": "02-user-stories.md",
+      "statements": [
+        {
+          "locator": "US-RESTORE",
+          "text": "换一台设备后，我希望继续上次的阅读进度。"
+        }
+      ]
+    }
+  ],
+  "projectWork": {
+    "requirements": [
+      {
+        "id": "R-OFFLINE",
+        "statement": "核心阅读在无网络时仍可使用",
+        "source_refs": ["SRC-PRODUCT"],
+        "source_locators": ["成功标准/补充说明"],
+        "epistemic_status": "user_stated",
+        "kind": "operational",
+        "disposition": "adopted",
+        "owner_layer": "project",
+        "acceptance_ids": ["A-OFFLINE"]
+      },
+      {
+        "id": "R-QUIET-DESIGN",
+        "statement": "阅读界面保持纸质书般安静，控制元素不持续遮挡正文",
+        "source_refs": ["SRC-PRODUCT"],
+        "source_locators": ["成功标准/补充说明"],
+        "epistemic_status": "user_stated",
+        "kind": "design",
+        "disposition": "adopted",
+        "owner_layer": "project",
+        "acceptance_ids": ["A-QUIET-DESIGN"]
+      },
+      {
+        "id": "R-CROSS-DEVICE",
+        "statement": "换设备后可以恢复阅读进度",
+        "source_refs": ["SRC-STORIES"],
+        "source_locators": ["US-RESTORE"],
+        "epistemic_status": "user_stated",
+        "kind": "user_journey",
+        "disposition": "adopted",
+        "owner_layer": "project",
+        "acceptance_ids": ["A-CROSS-DEVICE"]
+      },
+      {
+        "id": "R-MIGRATION",
+        "statement": "现有阅读进度如何迁移到新恢复机制",
+        "source_refs": ["SRC-STORIES"],
+        "source_locators": ["US-RESTORE"],
+        "epistemic_status": "unknown",
+        "kind": "data",
+        "disposition": "needs_clarification",
+        "owner_layer": "unassigned",
+        "acceptance_ids": []
+      }
+    ],
+    "gaps": {
+      "decision_changing": ["R-MIGRATION"],
+      "safe_assumptions": [],
+      "deferred_unknowns": []
+    },
+    "questions": [
+      {
+        "requirement_id": "R-MIGRATION",
+        "question": "已有用户的阅读进度必须自动迁移，还是第一版只保证新导入的数据？"
+      }
+    ]
+  },
+  "milestoneWork": {
+    "requirement_ids": ["R-OFFLINE", "R-QUIET-DESIGN", "R-CROSS-DEVICE"],
+    "acceptance_ids": ["A-OFFLINE", "A-QUIET-DESIGN", "A-CROSS-DEVICE"],
+    "blocked_requirement_ids": ["R-MIGRATION"]
+  },
+  "taskWork": [
+    {
+      "task_id": "TASK-OFFLINE",
+      "requirement_ids": ["R-OFFLINE"],
+      "acceptance_ids": ["A-OFFLINE"]
+    },
+    {
+      "task_id": "TASK-READING-UI",
+      "requirement_ids": ["R-QUIET-DESIGN"],
+      "acceptance_ids": ["A-QUIET-DESIGN"]
+    },
+    {
+      "task_id": "TASK-RESTORE",
+      "requirement_ids": ["R-CROSS-DEVICE"],
+      "acceptance_ids": ["A-CROSS-DEVICE"]
+    }
+  ],
+  "forbiddenOutputs": ["08-development-plan.md"]
+}

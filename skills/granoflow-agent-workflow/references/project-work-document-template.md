@@ -148,6 +148,45 @@ requirement:
   assumptions: []
   unknowns: []
 
+requirement_intake:
+  # User inputs are evidence, not forms. Exact filenames/headings are optional.
+  contract_reference: granoflow-agent-workflow/requirement-intake-and-traceability
+  recommended_minimum_user_inputs:
+    - product_document
+    - user_stories
+  separately_required_user_inputs: []
+  team_development_plan_required: false
+  source_documents:
+    - id: null
+      kind: product_document | user_stories | chat | note | screenshot | other
+      title_or_filename: null
+      source_type: user_provided | inspected
+      revision_or_sha256: null
+      read_status: unread | partial | complete
+      provenance: null
+  requirements:
+    - id: R-001
+      statement: null
+      source_refs: []
+      source_locators: []
+      epistemic_status: user_stated | inspected_fact | inferred | recommended | unknown
+      kind: outcome | user_journey | behavior | design | data | privacy | security | compatibility | performance | accessibility | operational | verification | constraint | non_goal
+      disposition: adopted | needs_clarification | conflicting | deferred | out_of_scope | duplicate | inferred
+      owner_layer: project | milestone | task | unassigned
+      owner_refs: []
+      acceptance_ids: []
+      conflicts_with: []
+      rationale: null
+  gaps:
+    decision_changing: []
+    safe_assumptions: []
+    deferred_unknowns: []
+  extra_content_preserved: []
+  conflict_summary: []
+  all_material_sources_read: false
+  all_material_statements_dispositioned: false
+  every_adopted_requirement_has_one_primary_owner: false
+
 scope:
   included: []
   excluded: []
@@ -583,6 +622,15 @@ acceptance_coverage:
     integration_check: null
     authoritative_surface: null
     manual_acceptance_required: false
+    result: pending
+
+requirement_coverage:
+  - requirement_id: R-001
+    primary_owner_layer: project | milestone | task | unassigned
+    accountable_milestones: []
+    accountable_tasks: []
+    acceptance_ids: []
+    evidence_refs: []
     result: pending
 
 change_control:

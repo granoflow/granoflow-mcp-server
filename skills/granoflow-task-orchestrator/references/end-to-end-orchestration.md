@@ -35,7 +35,10 @@ unless a direct instruction or valid delegated grant says so.
 
 ### `run`
 
-Resolve or create bounded tasks, then for each task:
+Resolve or create bounded tasks. For a multi-task run, read
+`granoflow-agent-workflow/parallel-task-execution`, form evidence-backed safe
+batches, and dispatch each whole safe batch concurrently when the host supports
+it. Then for each task:
 
 1. create the right-depth task record and recover historical timing through the
    dedicated mutation surface when needed;
@@ -43,11 +46,12 @@ Resolve or create bounded tasks, then for each task:
 3. build and confirm P, batch all decision-changing questions once, and run the
    readiness Grill;
 4. validate direct or delegated authorization against current facts;
-5. execute only allowed local work and verify each deliverable;
+5. capture AI execution start time without changing `pending` to `doing`,
+   execute only allowed local work, and verify each deliverable;
 6. upload and content/hash-read back D;
 7. finish the final required node and let NodeService complete the parent;
-8. re-read task status and continue to another task only when the user requested
-   a multi-task run.
+8. re-read task status and timestamps; continue with the next dependency batch
+   only when the user requested a multi-task run.
 
 An end-to-end request does not pause merely because A or P was reached. It pauses
 only for a real unresolved direction, unsafe target ambiguity, failed readiness,
