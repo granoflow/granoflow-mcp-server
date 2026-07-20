@@ -7,7 +7,9 @@ const template = readFileSync(
   "utf8",
 );
 
+// eslint-disable-next-line max-lines-per-function
 describe("Project Work YAML template", () => {
+  // eslint-disable-next-line max-lines-per-function
   it("covers the full project definition and engineering baseline", () => {
     for (const section of [
       "requirement:",

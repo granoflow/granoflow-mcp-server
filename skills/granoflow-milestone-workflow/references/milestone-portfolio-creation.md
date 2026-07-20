@@ -34,10 +34,10 @@ the First Ship milestone first so users can see a vertical slice sooner.
 
 ## Empty Versus Existing
 
-| State | Action |
-| ----- | ------ |
+| State             | Action                                                             |
+| ----------------- | ------------------------------------------------------------------ |
 | No App milestones | Plan entire set; write Project Work; create every milestone entity |
-| Milestones exist | Amend only for coverage/sequencing gaps; do not recreate |
+| Milestones exist  | Amend only for coverage/sequencing gaps; do not recreate           |
 
 ## Create Protocol
 

@@ -8,10 +8,7 @@ const workflow = readFileSync(
 );
 const agentSkill = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
 const orchestrator = readFileSync("skills/granoflow-task-orchestrator/SKILL.md", "utf8");
-const coordination = readFileSync(
-  "skills/granoflow-milestone-coordination/SKILL.md",
-  "utf8",
-);
+const coordination = readFileSync("skills/granoflow-milestone-coordination/SKILL.md", "utf8");
 const collaboration = readFileSync(
   "skills/granoflow-milestone-coordination/references/milestone-collaboration-workflow.md",
   "utf8",

@@ -2,10 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-const skill = readFileSync(
-  "skills/granoflow-integration-test-campaign/SKILL.md",
-  "utf8",
-);
+const skill = readFileSync("skills/granoflow-integration-test-campaign/SKILL.md", "utf8");
 const contract = readFileSync(
   "skills/granoflow-integration-test-campaign/references/integration-test-campaign-contract.md",
   "utf8",

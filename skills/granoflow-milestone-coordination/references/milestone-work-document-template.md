@@ -15,16 +15,16 @@ controller Task reference in the active milestone description.
 
 Do not pretend every section is complete at charter confirmation. Fill by phase:
 
-| Phase key | When it must be complete | Typical sections |
-| --------- | ------------------------ | ---------------- |
-| `charter_required` | Before `charter_status: confirmed` | Reader Summary, Outcome, Acceptance, Requirement Coverage (owned ids), Scope/Non-goals, Current Truth (milestone-level only), Workstreams (coarse), Milestone Risks (cross-task), Integration Verification **skeleton**, one end-to-end example, Next Orchestration Action |
-| `decompose_required` | Before `decomposition_status: passed` | Decomposition Rules, Task Portfolio, Dependency And Handoff Map; Integration Verification rows named to accountable tasks |
-| `execute_preflight_required` | Before non-dry-run child execution or persistent workers | Parallel Execution, Delegation And Authorization Boundary, Persistent Execution Preflight, External Capability Matrix |
+| Phase key                    | When it must be complete                                 | Typical sections                                                                                                                                                                                                                                                           |
+| ---------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `charter_required`           | Before `charter_status: confirmed`                       | Reader Summary, Outcome, Acceptance, Requirement Coverage (owned ids), Scope/Non-goals, Current Truth (milestone-level only), Workstreams (coarse), Milestone Risks (cross-task), Integration Verification **skeleton**, one end-to-end example, Next Orchestration Action |
+| `decompose_required`         | Before `decomposition_status: passed`                    | Decomposition Rules, Task Portfolio, Dependency And Handoff Map; Integration Verification rows named to accountable tasks                                                                                                                                                  |
+| `execute_preflight_required` | Before non-dry-run child execution or persistent workers | Parallel Execution, Delegation And Authorization Boundary, Persistent Execution Preflight, External Capability Matrix                                                                                                                                                      |
 
 **Fill ownership for `execute_preflight_required`:**
 
 - Child Task Work Analysis owns task-local write surfaces, dependencies, risks, and
-  authorization *needs*.
+  authorization _needs_.
 - The milestone **coordinator** (controller Task / this Skill) aggregates those
   Analysis outputs into Milestone Work after Analysis material is available and
   before execution dispatch. Do not require every child Analysis to be confirmed
@@ -54,7 +54,9 @@ execution_state: not_started | active | waiting | integration_review | stopped |
 integration_readiness_status: not_run | passed | revisions_required | blocked
 acceptance_status: not_run | partial | passed | failed | blocked
 execution_authorization: not_requested | awaiting_confirmation | direct_confirmed | delegated_confirmed | denied
+
 # Tracks which template phases are satisfied for the current work_version.
+
 required_fields_phase: charter_required | decompose_required | execute_preflight_required
 created_at: <local timestamp>
 updated_at: <local timestamp>
@@ -104,9 +106,9 @@ copy the complete product ledger.
 
 ## Integration Verification
 
-| Acceptance ID | Accountable Task  | Required Evidence | Integration Check | Result  |
-| ------------- | ----------------- | ----------------- | ----------------- | ------- |
-| A1            | <task/controller or TBD at charter> | <evidence> | <combined check> | pending |
+| Acceptance ID | Accountable Task                    | Required Evidence | Integration Check | Result  |
+| ------------- | ----------------------------------- | ----------------- | ----------------- | ------- |
+| A1            | <task/controller or TBD at charter> | <evidence>        | <combined check>  | pending |
 
 ## Next Orchestration Action
 

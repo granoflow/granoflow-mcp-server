@@ -34,10 +34,7 @@ const copyBoundary = readFileSync(
   "skills/granoflow-agent-workflow/references/user-visible-copy-boundary.md",
   "utf8",
 );
-const orchestrator = readFileSync(
-  "skills/granoflow-task-orchestrator/SKILL.md",
-  "utf8",
-);
+const orchestrator = readFileSync("skills/granoflow-task-orchestrator/SKILL.md", "utf8");
 
 describe("task integration test policy contracts", () => {
   it("requires unit sufficiency first, max two tests, and no agent execution", () => {

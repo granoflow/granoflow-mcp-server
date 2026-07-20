@@ -34,10 +34,7 @@ describe("contracts-budget-and-modes", () => {
     const delivery = reference("task-delivery-profile-software-development.md");
     const deliveryWorkflow = reference("task-delivery-workflow.md");
     const modes = reference("execution-modes-and-acceptance-reports.md");
-    const orchestrator = readFileSync(
-      "skills/granoflow-task-orchestrator/SKILL.md",
-      "utf8",
-    );
+    const orchestrator = readFileSync("skills/granoflow-task-orchestrator/SKILL.md", "utf8");
     const agentSkill = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
 
     expect(budget).toContain("## Hard Gate (fail closed)");

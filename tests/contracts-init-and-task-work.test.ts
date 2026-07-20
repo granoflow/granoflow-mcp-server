@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 const reference = (name: string) =>
   readFileSync(`skills/granoflow-agent-workflow/references/${name}`, "utf8");
 
+// eslint-disable-next-line max-lines-per-function
 describe("contracts-init-and-task-work", () => {
+  // eslint-disable-next-line max-lines-per-function
   it("initializes Granoflow with one beginner-facing all-recommended Skill offer", () => {
     const onboarding = readFileSync("skills/granoflow-first-run-import/SKILL.md", "utf8");
     const catalog = readFileSync(
@@ -14,16 +16,11 @@ describe("contracts-init-and-task-work", () => {
 
     expect(onboarding).toContain("Initialize Granoflow");
     expect(onboarding).toContain("初始化 Granoflow");
-    const projectDefinition = readFileSync(
-      "skills/granoflow-project-definition/SKILL.md",
-      "utf8",
-    );
+    const projectDefinition = readFileSync("skills/granoflow-project-definition/SKILL.md", "utf8");
     expect(projectDefinition).toContain("Initialize this project");
     expect(projectDefinition).toMatch(/Not this Skill:[\s\S]*Initialize Granoflow/i);
     expect(projectDefinition).toContain("granoflow-first-run-import");
-    expect(projectDefinition).toMatch(
-      /Never route project definition through first-run import/i,
-    );
+    expect(projectDefinition).toMatch(/Never route project definition through first-run import/i);
     expect(onboarding).toContain("recommended-external-skills.md");
     expect(onboarding).toContain("approved_all");
     expect(onboarding).toContain("capability_pack_not_ready");
@@ -99,9 +96,7 @@ describe("contracts-init-and-task-work", () => {
     expect(workflow).toContain("derivedFrom");
     expect(workflow).toContain("UI Change Prototype Mandate");
     expect(workflow).toContain("ui_prototype_required");
-    expect(workflow).toMatch(
-      /prototype_requirement[\s\S]*must[\s\S]*required/i,
-    );
+    expect(workflow).toMatch(/prototype_requirement[\s\S]*must[\s\S]*required/i);
     expect(workflow).toMatch(/Do \*\*not\*\* use `not_required`/i);
     expect(template).toContain("UI change => required");
     expect(template).toContain("derived_from_package_sha256");

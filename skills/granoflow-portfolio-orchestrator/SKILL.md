@@ -25,12 +25,12 @@ and/or `granoflow-task-orchestrator`.
 
 ## Delegates To
 
-| Step | Skill |
-| ---- | ----- |
-| Prerequisites + create milestones | `granoflow-milestone-workflow` |
-| Skeleton + create_one tasks | `granoflow-task-authoring` |
-| Later charter/execute/integrate | `granoflow-milestone-coordination` |
-| Later single-task lifecycle | `granoflow-task-orchestrator` / agent-workflow |
+| Step                              | Skill                                          |
+| --------------------------------- | ---------------------------------------------- |
+| Prerequisites + create milestones | `granoflow-milestone-workflow`                 |
+| Skeleton + create_one tasks       | `granoflow-task-authoring`                     |
+| Later charter/execute/integrate   | `granoflow-milestone-coordination`             |
+| Later single-task lifecycle       | `granoflow-task-orchestrator` / agent-workflow |
 
 ## Workflow
 
