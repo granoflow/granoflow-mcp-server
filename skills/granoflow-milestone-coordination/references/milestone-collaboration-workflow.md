@@ -1,20 +1,27 @@
 # Milestone Collaboration Workflow
 
-For requirement-driven milestones, read the shared
+Owned by `granoflow-milestone-coordination`. For requirement-driven milestones,
+read the shared
 'granoflow-agent-workflow/requirement-intake-and-traceability' contract first.
 The portfolio covers stable requirement ids and acceptance ids, not merely the
 sections that happened to appear in a user's documents.
 
-This workflow coordinates one confirmed milestone across an evolving set of
-child tasks. It owns the portfolio, dependencies, handoffs, integration proof,
-and milestone acceptance. It does not replace child Task Work.
+Milestone entity creation belongs to `granoflow-milestone-workflow`. Child task
+title/description creation belongs to `granoflow-task-authoring`. Full
+create-all pipelines belong to `granoflow-portfolio-orchestrator`.
+
+This workflow coordinates one **active** confirmed milestone across an evolving
+set of child tasks. It owns dependencies, handoffs, integration proof, and
+milestone acceptance. It does not replace child Task Work and does not
+batch-create milestones or author task prose.
 
 ## Phase Model
 
 ```text
-Resolve milestone and controller
+Resolve active milestone and controller
   -> draft and confirm charter
   -> decompose and run decomposition check
+  -> if required tasks missing as entities, hand off to task-authoring
   -> execute through child Task Work
   -> reconcile and replan from live evidence
   -> prove integration readiness
@@ -26,9 +33,9 @@ an invalid earlier state silently.
 
 ## 1. Resolve And Establish Ownership
 
-Resolve exactly one project and one active milestone. Read the milestone, project
-context, completion summary, linked tasks, controller candidate, Task Work and
-Delivery references, and relevant context pack.
+Resolve exactly one project and one **active** milestone. Read the milestone,
+project context, completion summary, linked tasks, controller candidate, Task
+Work and Delivery references, and relevant context pack.
 
 Use an existing controller Task when its responsibility is milestone
 orchestration and closeout. Otherwise preview a new controller Task bound to the
@@ -42,26 +49,35 @@ task creation, authorization, or active status until App/API readback succeeds.
 
 ## 2. Charter Confirmation
 
-Draft these stable fields before decomposing:
+Draft only `charter_required` fields before decomposing (see
+`milestone-work-document-template.md` Phased Required Fields):
 
 - one milestone Outcome;
 - user-visible or system-visible acceptance conditions with stable IDs;
 - Scope and necessary non-goals;
-- authoritative current truth and constraints;
-- required workstreams or capability areas;
+- milestone-level current truth and constraints (not deep task Analysis);
+- coarse workstreams or capability areas;
 - material milestone-level risks;
-- default delegation and stop boundary.
+- Integration Verification skeleton;
+- at least one end-to-end example of combined false success;
+- next orchestration action.
 
-Ask only questions that can change those fields. Show the current understanding,
-recommendation, alternatives, impact, and requested decision together. Explicit
-confirmation sets `charter_status: confirmed`.
+Leave `decompose_required` and `execute_preflight_required` as
+`pending_decomposition` / `pending_task_analysis`. Do not invent a complete
+Parallel Execution or External Capability matrix at charter time.
+
+Ask only questions that can change charter fields. Show the current
+understanding, recommendation, alternatives, impact, and requested decision
+together. Explicit confirmation sets `charter_status: confirmed` and
+`required_fields_phase: charter_required`.
 
 Do not treat permission to discuss or decompose as execution authorization.
 
 ## 3. Decomposition Check
 
-Build the smallest sufficient portfolio. Each child task must have one distinct
-responsibility and contribute evidence to at least one milestone acceptance ID.
+Complete `decompose_required` fields. Build the smallest sufficient portfolio.
+Each child task must have one distinct responsibility and contribute evidence to
+at least one milestone acceptance ID.
 
 The decomposition passes only when all checks below pass:
 
@@ -83,22 +99,47 @@ The decomposition passes only when all checks below pass:
 Set `decomposition_status: revisions_required` when the portfolio is plausible
 but incomplete. Set `blocked` when a missing decision or unavailable prerequisite
 prevents safe decomposition. Do not create speculative tasks merely to make the
-table look complete.
+table look complete. When required portfolio rows lack App task entities, hand
+off to `granoflow-task-authoring` (or `granoflow-portfolio-orchestrator`) instead
+of authoring full task prose inside this Skill. When the check passes, set
+`decomposition_status: passed` and `required_fields_phase: decompose_required`.
 
 ## 4. Portfolio Execution
 
-Before dispatch, read `granoflow-agent-workflow/parallel-task-execution` and
-build the pairwise conflict matrix from current Task Work and live repository or
-runtime facts. Dispatch every member of a fully `parallel_safe` batch at once
-when the host supports multiple workers. Serialize ordered dependencies,
-overlapping writes, shared side effects, and unknown material surfaces. Recheck
-revisions before writes and replan only the affected batch when new overlap is
-discovered; other independent work continues.
+UI-changing child tasks must satisfy the Agent Workflow UI Change Prototype
+Mandate before readiness or dispatch: `prototype_requirement: required`,
+confirmed `ui_prototype`, and `derivedFrom` the project Design Baseline when
+present. Missing prototypes return `ui_prototype_required` and stay out of the
+executable batch.
+
+### Execute preflight after child Analysis
+
+Before non-dry-run dispatch, the milestone coordinator completes
+`execute_preflight_required` in Milestone Work:
+
+1. Let each ready child run Task Work Analysis (and Planning as needed) so
+   write surfaces, dependencies, and authorization needs are explicit in Task
+   Work—not in duplicated milestone prose.
+2. Aggregate those Analysis outputs plus live repository/runtime facts into
+   Parallel Execution, Delegation And Authorization Boundary, Persistent
+   Execution Preflight, and External Capability Matrix.
+3. Refresh the same Milestone Work sections on reconcile when a child Analysis
+   revises material write surfaces. Do not wait for every child Analysis in the
+   whole portfolio to finish before filling preflight for the first ready batch.
+4. Never treat a charter-time placeholder matrix as a real conflict assessment.
+
+Then read `granoflow-agent-workflow/parallel-task-execution` and dispatch every
+member of a fully `parallel_safe` batch at once when the host supports multiple
+workers. Serialize ordered dependencies, overlapping writes, shared side
+effects, and unknown material surfaces. Recheck revisions before writes and
+replan only the affected batch when new overlap is discovered; other independent
+work continues. Set `required_fields_phase: execute_preflight_required` only when
+preflight sections are complete for the work about to run.
 
 ### Persistent execution preflight
 
 For work expected to continue beyond one Agent turn, establish all of these
-before starting workers:
+before starting workers (still coordinator-owned in Milestone Work / manifest):
 
 - the host reports full runtime access and the milestone requires it;
 - one confirmed authorization manifest preauthorizes in-scope internal phase

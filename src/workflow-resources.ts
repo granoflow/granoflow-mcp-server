@@ -14,8 +14,12 @@ export const BUNDLED_SKILL_IDS = [
   "granoflow-delegated-authorization",
   "granoflow-task-orchestrator",
   "granoflow-milestone-workflow",
+  "granoflow-milestone-coordination",
+  "granoflow-task-authoring",
+  "granoflow-portfolio-orchestrator",
   "granoflow-persistent-milestone-runner",
   "granoflow-project-definition",
+  "granoflow-integration-test-campaign",
 ] as const;
 
 export type BundledSkillId = (typeof BUNDLED_SKILL_IDS)[number];

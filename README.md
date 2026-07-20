@@ -145,6 +145,12 @@ Agents can use the bundled
 to initialize the connection, offer all recommended AI capability collections,
 and optionally import data from Cursor, Codex, Hermes, or other agents.
 
+To define or initialize a **software project** (Project Work, Design Baseline
+with tokens, and App Shell)—not MCP connection setup—use the bundled
+[Granoflow Project Definition skill](skills/granoflow-project-definition/SKILL.md).
+Ask `Initialize this project` / `Define this project` / `初始化这个项目` /
+`定义这个项目`. This is distinct from `Initialize Granoflow`.
+
 For one context-aware task entrypoint, use the bundled
 [Granoflow Task Orchestrator](skills/granoflow-task-orchestrator/SKILL.md). Plain
 language or `gf` selects quick capture, context enrichment, Analysis, Planning,
@@ -153,12 +159,19 @@ safe local execution, or completion audit. Optional shortcuts are `gf记`/`gf+`,
 uses `A`, `P`, and `D` for Analysis, Plan, and Delivery while attachments keep
 their canonical metadata and filenames.
 
-For outcomes that span multiple tasks, use the bundled
-[Granoflow Milestone Workflow](skills/granoflow-milestone-workflow/SKILL.md).
-It keeps one stable milestone charter, lets the child-task portfolio evolve,
-coordinates dependencies and handoffs, and requires cross-task integration
-evidence before milestone acceptance. Each child task still owns its own Task
-Work lifecycle.
+After Project Definition, use
+[Granoflow Portfolio Orchestrator](skills/granoflow-portfolio-orchestrator/SKILL.md)
+to create all milestones then quality-author each milestone's tasks
+(description batch size 1). Component Skills:
+[Milestone Workflow](skills/granoflow-milestone-workflow/SKILL.md) (create
+milestones),
+[Task Authoring](skills/granoflow-task-authoring/SKILL.md) (create tasks), and
+[Milestone Coordination](skills/granoflow-milestone-coordination/SKILL.md)
+(charter / integrate / close). Single-task lifecycle remains
+[Task Orchestrator](skills/granoflow-task-orchestrator/SKILL.md) / Agent
+Workflow. For unattended suite runs until green, use
+[Integration Test Campaign](skills/granoflow-integration-test-campaign/SKILL.md)
+(one milestone per round; not the task-local write-only integration policy).
 
 ## Workflow Examples
 
@@ -171,6 +184,24 @@ Initialize Granoflow
 Granoflow will check the connection, show only the names and plain-language
 functions of recommended AI capabilities, and offer to install all of them. You
 can then ask it to import data from Cursor, Codex, Hermes, or other agents.
+
+To define a software project after MCP is ready, ask (not the same as
+`Initialize Granoflow`):
+
+```text
+Initialize this project
+```
+
+or:
+
+```text
+定义这个项目
+```
+
+Project Definition fills Project Work from your sources, locks stack capability
+and skill routing, delivers a Design Baseline with Design Tokens and
+landscape/portrait App Shell under contract fidelity, then hands off to
+milestone/task skills.
 
 Then ask:
 
@@ -532,6 +563,9 @@ Initial tools:
 - `granoflow_delegated_authorization_skill`
 - `granoflow_task_orchestrator_skill`
 - `granoflow_milestone_workflow_skill`
+- `granoflow_milestone_coordination_skill`
+- `granoflow_task_authoring_skill`
+- `granoflow_portfolio_orchestrator_skill`
 - `granoflow_gfmcp_prepare`
 - `granoflow_gfmcp_safe_sync`
 - `granoflow_gfmcp_candidates`
@@ -637,6 +671,12 @@ ids are:
 - `granoflow-delegated-authorization`
 - `granoflow-task-orchestrator`
 - `granoflow-milestone-workflow`
+- `granoflow-milestone-coordination`
+- `granoflow-task-authoring`
+- `granoflow-portfolio-orchestrator`
+- `granoflow-persistent-milestone-runner`
+- `granoflow-project-definition`
+- `granoflow-integration-test-campaign`
 
 The reference tool is package-local and read-only. It accepts no caller path,
 does not call the Granoflow Local HTTP API, and does not require an API token.

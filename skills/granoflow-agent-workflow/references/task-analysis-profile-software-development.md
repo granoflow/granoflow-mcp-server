@@ -20,7 +20,16 @@ owner of numeric defaults, initialization, forecast, and reconciliation rules.
 - UI judgment and evidence;
 - API, compatibility, migration, authorization, and release impact;
 - lint, format, type/static analysis, tests, build, and runtime smoke gates;
-- a pre-execution `Structural Change Forecast` for every software Plan;
+- a pre-execution `Structural Change Forecast` for every software Plan (and for
+  light `not_required` software edits), with Hard Gate statuses from
+  `software-structural-budget.md` (`present_in_plan` → `notice_emitted` →
+  `reconciled`);
+- Task Integration Test Policy: if copy-only / 文字验证, **no** automated
+  tests (`copy_change_tests_forbidden`); else judge whether **unit tests
+  suffice**; default to no new integration tests; only when insufficient, add
+  at most **2** task-local integration tests and **do not execute** them
+  (manual run later)—see `task-work-document-workflow.md` and
+  `user-visible-copy-boundary.md`;
 - the real user-visible surface that must be rechecked;
 - rollback and stop conditions.
 

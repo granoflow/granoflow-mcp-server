@@ -25,6 +25,7 @@ import { registerReviewAndContextTools } from "./tool-registration-review-contex
 import { registerTaskMemoryAndTagsTools } from "./tool-registration-task-memory.js";
 import { registerTaskCrudTools } from "./tool-registration-task-crud.js";
 import { registerAttachmentTools } from "./tool-registration-attachments.js";
+import { registerPrototypeTools } from "./tool-registration-prototypes.js";
 import { registerTaskNodeTools } from "./tool-registration-task-nodes.js";
 import { registerProjectMilestoneTools } from "./tool-registration-project-milestone.js";
 import { registerUtilityTools } from "./tool-registration-utility.js";
@@ -39,8 +40,12 @@ import {
   DELEGATED_AUTHORIZATION_SKILL_URL,
   TASK_ORCHESTRATOR_SKILL_URL,
   MILESTONE_WORKFLOW_SKILL_URL,
+  MILESTONE_COORDINATION_SKILL_URL,
+  TASK_AUTHORING_SKILL_URL,
+  PORTFOLIO_ORCHESTRATOR_SKILL_URL,
   PERSISTENT_MILESTONE_RUNNER_SKILL_URL,
   PROJECT_DEFINITION_SKILL_URL,
+  INTEGRATION_TEST_CAMPAIGN_SKILL_URL,
   compactRecord,
   validateManagedBlock,
   textResult,
@@ -53,12 +58,17 @@ import {
   readDelegatedAuthorizationSkill,
   readTaskOrchestratorSkill,
   readMilestoneWorkflowSkill,
+  readMilestoneCoordinationSkill,
+  readTaskAuthoringSkill,
+  readPortfolioOrchestratorSkill,
   readPersistentMilestoneRunnerSkill,
   readProjectDefinitionSkill,
+  readIntegrationTestCampaignSkill,
   isWithin,
   validatedWorkflowMarkdownPath,
   validatedLogicalAttachmentPath,
   validatedProjectDesignBaselinePath,
+  validatedTaskPrototypePath,
   logicalAttachmentResource,
   logicalAttachmentPath,
   supportsTaskNodeWorkflow,
@@ -115,8 +125,12 @@ export {
   DELEGATED_AUTHORIZATION_SKILL_URL,
   TASK_ORCHESTRATOR_SKILL_URL,
   MILESTONE_WORKFLOW_SKILL_URL,
+  MILESTONE_COORDINATION_SKILL_URL,
+  TASK_AUTHORING_SKILL_URL,
+  PORTFOLIO_ORCHESTRATOR_SKILL_URL,
   PERSISTENT_MILESTONE_RUNNER_SKILL_URL,
   PROJECT_DEFINITION_SKILL_URL,
+  INTEGRATION_TEST_CAMPAIGN_SKILL_URL,
   compactRecord,
   validateManagedBlock,
   textResult,
@@ -129,12 +143,17 @@ export {
   readDelegatedAuthorizationSkill,
   readTaskOrchestratorSkill,
   readMilestoneWorkflowSkill,
+  readMilestoneCoordinationSkill,
+  readTaskAuthoringSkill,
+  readPortfolioOrchestratorSkill,
   readPersistentMilestoneRunnerSkill,
   readProjectDefinitionSkill,
+  readIntegrationTestCampaignSkill,
   isWithin,
   validatedWorkflowMarkdownPath,
   validatedLogicalAttachmentPath,
   validatedProjectDesignBaselinePath,
+  validatedTaskPrototypePath,
   logicalAttachmentResource,
   logicalAttachmentPath,
   supportsTaskNodeWorkflow,
@@ -346,6 +365,7 @@ export type ToolRegistrationContext = {
   taskNodeApiTool: typeof taskNodeApiTool;
   validatedLogicalAttachmentPath: typeof validatedLogicalAttachmentPath;
   validatedProjectDesignBaselinePath: typeof validatedProjectDesignBaselinePath;
+  validatedTaskPrototypePath: typeof validatedTaskPrototypePath;
   validatedWorkflowMarkdownPath: typeof validatedWorkflowMarkdownPath;
   validateManagedBlock: typeof validateManagedBlock;
   logicalAttachmentResource: typeof logicalAttachmentResource;
@@ -424,6 +444,7 @@ export function createToolRegistrationContext(): ToolRegistrationContext {
     taskNodeApiTool,
     validatedLogicalAttachmentPath,
     validatedProjectDesignBaselinePath,
+    validatedTaskPrototypePath,
     validatedWorkflowMarkdownPath,
     validateManagedBlock,
     logicalAttachmentResource,
@@ -484,8 +505,12 @@ export function registerGranoflowTools(server: ToolServer) {
     readDelegatedAuthorizationSkill,
     readTaskOrchestratorSkill,
     readMilestoneWorkflowSkill,
+    readMilestoneCoordinationSkill,
+    readTaskAuthoringSkill,
+    readPortfolioOrchestratorSkill,
     readPersistentMilestoneRunnerSkill,
     readProjectDefinitionSkill,
+    readIntegrationTestCampaignSkill,
     bundledSkillResources,
     apiTool,
     getSetupStatus,
@@ -536,6 +561,7 @@ export function registerGranoflowTools(server: ToolServer) {
     resourceIdSchema,
     approvedAuthoringSchema,
   );
+  registerPrototypeTools(registerTool, registerCapabilityTool, registrationContext);
   registerTaskNodeTools(
     registerTool,
     registerCapabilityTool,

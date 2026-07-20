@@ -23,8 +23,47 @@ describe("contracts-budget-and-modes", () => {
     for (const consumer of [software, workflow, template, modes, delivery]) {
       expect(consumer).toContain("software-structural-budget.md");
     }
-    expect(workflow).toMatch(/unattended mode[\s\S]*continues/i);
+    expect(workflow).toMatch(/unattended[\s\S]*still shows the notice/i);
     expect(delivery).toContain("actual final file and function/method sizes");
+  });
+
+  it("fail-closes software edits without forecast notice and reconciliation", () => {
+    const budget = reference("software-structural-budget.md");
+    const workflow = reference("task-work-document-workflow.md");
+    const template = reference("task-work-document-template.md");
+    const delivery = reference("task-delivery-profile-software-development.md");
+    const deliveryWorkflow = reference("task-delivery-workflow.md");
+    const modes = reference("execution-modes-and-acceptance-reports.md");
+    const orchestrator = readFileSync(
+      "skills/granoflow-task-orchestrator/SKILL.md",
+      "utf8",
+    );
+    const agentSkill = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
+
+    expect(budget).toContain("## Hard Gate (fail closed)");
+    for (const code of [
+      "structural_forecast_missing",
+      "structural_forecast_not_shown",
+      "structural_forecast_unreconciled",
+      "acceptance_report_missing",
+    ]) {
+      expect(budget).toContain(code);
+    }
+    expect(delivery).toContain("structural_forecast_not_shown");
+    expect(delivery).toContain("structural_forecast_unreconciled");
+    expect(delivery).toContain("acceptance_report_missing");
+    expect(template).toContain("structural_forecast_status:");
+    expect(template).toContain("structural_forecast_notice_emitted_at:");
+    expect(template).toContain("present_in_plan | notice_emitted | reconciled");
+    expect(workflow).toMatch(/Refuse the first code\/test\/build edit/i);
+    expect(workflow).toContain("structural_forecast_not_shown");
+    expect(deliveryWorkflow).toContain("structural_forecast_unreconciled");
+    expect(deliveryWorkflow).toContain("acceptance_report_missing");
+    expect(modes).toContain("structural_forecast_not_shown");
+    expect(modes).toContain("acceptance_report_missing");
+    expect(orchestrator).toContain("structural_forecast_missing");
+    expect(orchestrator).toContain("structural_forecast_not_shown");
+    expect(agentSkill).toContain("Hard Gate");
   });
 
   it("enforces one semantic minimum-change budget from authoring through acceptance", () => {
@@ -42,7 +81,7 @@ describe("contracts-budget-and-modes", () => {
       expect(normalized).toContain("protected surfaces");
     }
     expect(authoring).toMatch(/smallest complete semantic change/i);
-    expect(authoring).toMatch(/prototype\nonly the authorized delta/i);
+    expect(authoring).toMatch(/prototype\s+\*\*only\*\*\s+the authorized delta/i);
     expect(authoring).toMatch(/whole-page redesign/i);
     expect(software).toMatch(/drive-by refactor/i);
     expect(workflow).toMatch(/map to a required change through Outcome or Evidence/i);

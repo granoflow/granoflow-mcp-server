@@ -17,11 +17,15 @@ invariant to the whole run. A same-run direct instruction and a durable
 delegated envelope have different persistence, but both use the same blocker
 classification and waiting behavior.
 
-For software work, every mode shows the current `Structural Change Forecast`
-immediately before the first edit. This is an execution notice, not a
-confirmation request. Unattended mode continues after the notice and must not
-create an artificial confirmation node. A newly discovered touchpoint is
-announced before editing and follows the existing scope-drift boundary.
+For software work, every mode enforces the Hard Gate in
+`software-structural-budget.md`: show the current `Structural Change Forecast`
+immediately before the first edit, stamp
+`structural_forecast_status: notice_emitted`, then edit. This is an execution
+notice, not a confirmation request. Unattended mode continues after the notice
+and must not create an artificial confirmation node—but skipping the notice or
+stamp fails closed as `structural_forecast_not_shown`. A newly discovered
+touchpoint is announced before editing and follows the existing scope-drift
+boundary.
 
 Use `layered_handoff` only after the user explicitly requests it. Every worker
 declares one or more capability lanes and acts only when the first unfinished
@@ -31,9 +35,14 @@ eligible node matches the explicit contract version:
   `[integration]`, `[user]`, and `[action]`.
 - `[analysis]`: problem definition and evidence.
 - `[plan]`: architecture and executable plan.
-- `[dev]`: implementation and preparation of ordinary/integration tests.
-- `[test]`: ordinary unit, type, lint, build, and deterministic test execution.
-- `[integration]`: actual integration, screenshot, and runtime evidence capture.
+- `[dev]`: implementation, unit tests, and—only when unit tests are
+  insufficient for this task—authoring at most 2 new integration tests
+  (do not run those integration tests; see Task Integration Test Policy).
+- `[test]`: ordinary unit, type, lint, build, and other deterministic
+  non-integration test execution.
+- `[integration]`: milestone/cross-task runtime or screenshot evidence when
+  separately planned; **not** a license for the Agent to execute the task's
+  newly added integration tests (those remain manual).
 - `[user]`: real user acceptance; never automatically skipped.
 - `[action]`: external or privileged action; never impersonated or claimed.
 
@@ -63,7 +72,8 @@ cross-device consistency mechanism.
 
 Every implementation produces a self-contained acceptance HTML in the
 `acceptance_report` logical slot, whether or not integration/screenshot testing
-is needed. It summarizes:
+is needed. Missing report after code changes fails closed as
+`acceptance_report_missing`. It summarizes:
 
 - code changes;
 - database/schema changes or an explicit no-change statement;
@@ -74,14 +84,18 @@ is needed. It summarizes:
 - the planned-versus-actual structural budget from
   `software-structural-budget.md`, including final sizes, limit results,
   responsibility splits, and verified gate commands;
-- automated test/static-gate evidence;
-- integration status and script static-check evidence;
+- automated test/static-gate evidence (unit/lint/type/build as run by the Agent);
+- integration status per Task Integration Test Policy: `not_required` when unit
+  tests suffice; or `awaiting_manual_execution` with paths, recommended
+  `local_machine`, and user-selected `integration_test_device` when 1–2 tests
+  were added; never Agent-claimed integration runtime success;
 - screenshot status and only the key screenshots when present.
 
-When integration or screenshots are unnecessary, record `not_required`, a
-non-empty reason, and alternative evidence. When scripts are prepared but not
-run in the current task, record `planned_not_run`; never label static inspection
-as runtime success.
+When integration tests are unnecessary, record `not_required` with the unit-
+sufficiency reason. When up to two integration tests were added for this task,
+record `awaiting_manual_execution` (human will run them)—not Agent
+`planned_not_run` as a substitute for the manual-only rule. Never label static
+inspection of an integration script as runtime success.
 
 The App owns upload validation, encrypted storage, current replacement, SHA-256
 readback and preview. Acceptance binds the exact current SHA. A replacement is
@@ -90,6 +104,7 @@ connections and external navigation. A user may request changes; the resulting
 task binds the report attachment id and SHA so later workers know which evidence
 was reviewed.
 
-Actual integration or screenshot script execution belongs to a new `[test]`
-task. Generating, uploading, previewing or accepting the HTML does not run those
-scripts.
+Task-local integration tests added under the Task Integration Test Policy are
+**not** executed by the Agent; humans run them. Other screenshot/runtime
+evidence still follows its own Plan. Generating, uploading, previewing, or
+accepting the HTML does not run integration scripts.

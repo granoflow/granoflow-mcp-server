@@ -9,6 +9,7 @@ describe("contracts-unattended-and-orchestration", () => {
     const paths = [
       "skills/granoflow-task-orchestrator/SKILL.md",
       "skills/granoflow-milestone-workflow/SKILL.md",
+      "skills/granoflow-milestone-coordination/SKILL.md",
       "skills/granoflow-project-definition/SKILL.md",
       "skills/granoflow-persistent-milestone-runner/SKILL.md",
     ];
@@ -45,23 +46,35 @@ describe("contracts-unattended-and-orchestration", () => {
     for (const blockerClass of [
       "direction_change",
       "scope_drift",
-      "forbidden_action",
-      "missing_user_only_input",
+      "external_impossible",
       "subjective_acceptance",
     ]) {
       expect(interaction).toContain(blockerClass);
     }
+    expect(interaction).toContain("Explicit Unattended Declaration");
+    expect(interaction).toContain("Solvable work is authorized");
+    expect(interaction).toContain("deferred_external_work");
+    expect(interaction).toContain("Unattended Residual Report");
+    expect(interaction).toContain("defer_item");
+    expect(interaction).toContain("complete_with_residuals");
     expect(normalizedInteraction).toMatch(
-      /complete all independent safe work.*one batched question/i,
+      /Never block the queue/i,
     );
     expect(normalizedInteraction).toMatch(
       /same active run.*does not require an envelope round trip/i,
     );
     expect(normalizedInteraction).toMatch(/later host turn.*confirmed envelope/i);
     expect(normalizedInteraction).toMatch(
-      /Review Note\/Card authoring is also excluded from unattended authorization/i,
+      /Note\/Card[\s\S]*residual rather than blocking engineering/i,
     );
-    expect(normalizedInteraction).toMatch(/exact latest preview.*subjective_acceptance/i);
+    expect(interaction).toContain("auto_accept_recommendation");
+    expect(interaction).toMatch(/Project Definition[\s\S]*adopt recommendations immediately/i);
+    const projectDefinition = readFileSync(
+      "skills/granoflow-project-definition/SKILL.md",
+      "utf8",
+    );
+    expect(projectDefinition).toContain("unattended-interaction-contract");
+    expect(projectDefinition).toContain("auto_accept_recommendation");
     expect(taskWork).toMatch(
       /qualifying current\s+unattended instruction is explicit authorization/i,
     );
