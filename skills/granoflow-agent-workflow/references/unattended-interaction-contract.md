@@ -52,6 +52,7 @@ choice, permission, information, or approval. Status notices, evidence reports,
 a Structural Change Forecast, an explicit `project_context_resolution`
 decision notice, defer notices, and the final Residual Report do not consume
 the budget—they must still be emitted so the user can see progress and gaps.
+Do not consume the budget for non-confirming notices and residual reporting.
 
 Do not repair one observed phrase such as a particular Analysis prompt. Apply
 the invariant to the whole run. When the unattended scope remains clear,
@@ -112,7 +113,8 @@ Park in `deferred_external_work` and continue other work:
   perform (missing token, offline store, policy wall);
 - Note/Card creation/link/modify that still needs human study-judgment over the
   latest preview—prepare dry-run at the end, then list as residual rather than
-  blocking engineering tasks mid-run;
+  blocking engineering tasks mid-run.
+  Review Note/Card authoring is also excluded from unattended authorization.
 - any action whose success cannot be evidenced without an external human step.
 
 Do not use “forbidden_action” as a mid-run freeze of the whole portfolio when
@@ -129,6 +131,8 @@ inside the declared unattended scope. This includes:
 - repairing lint, format, type, build, and unit-test failures until the
   required gate is green (task-local integration tests remain manual-only
   outside an integration-test **campaign**);
+  do **not** run task-local integration tests in unattended flows; humans run
+  them.
 - starting or checking an allowed local development service or App;
 - revising Analysis or Plan wording after a Grill when the revision stays
   inside declared Outcome/Scope;
@@ -157,6 +161,9 @@ externally impossible but other ready work exists:
 - `external_impossible`: proven external/human-only dependency;
 - `subjective_acceptance`: Note/Card or true taste/legal gate parked for the
   residual report;
+
+`blocker_class: subjective_acceptance`
+
 - `direction_change` / `scope_drift`: only when the item itself cannot be
   safely auto-resolved—even then, prefer adopting the recorded recommendation
   for solvable siblings; park only the contested item when possible.
@@ -169,6 +176,7 @@ When no solvable ready work remains, set
 
 ```markdown
 ## Unattended Residual Report
+
 - Scope: <declared unattended scope>
 - Completed: <count / summary refs>
 - Deferred / not executed:

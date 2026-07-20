@@ -234,7 +234,7 @@ Hard rules (non-copy software tasks):
 6. **Device is user-chosen.** When any integration test is added (or
    `integration_test_requirement: required`), the Agent must recommend
    **the user's local machine** (`integration_test_device_recommendation:
-   local_machine`) and ask the user to confirm or pick another target
+local_machine`) and ask the user to confirm or pick another target
    (simulator/emulator, physical device, remote farm, etc.). Record the
    chosen value in `integration_test_device` (`local_machine` |
    `simulator_or_emulator` | `physical_device` | `remote_farm` |
@@ -256,10 +256,10 @@ When a task changes any of the following, it **must** update the matching
 **project** attachment in the same task, refresh artifact registry SHA/readback,
 and keep code consistent with that attachment:
 
-| Change | Project attachment |
-| ------ | ------------------ |
-| Business DB / table schema | `data_model` (`data-model.md` or registered name) |
-| JSON / structured file shape or semantics | `json_contracts` (default `data-contracts.yaml`) |
+| Change                                         | Project attachment                                     |
+| ---------------------------------------------- | ------------------------------------------------------ |
+| Business DB / table schema                     | `data_model` (`data-model.md` or registered name)      |
+| JSON / structured file shape or semantics      | `json_contracts` (default `data-contracts.yaml`)       |
 | Shared constant names, values/types, or owners | `constants_catalog` (default `constants-catalog.yaml`) |
 
 Fail closed with `data_artifact_stale` when code ships without the attachment

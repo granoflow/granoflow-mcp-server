@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { createHash } from "node:crypto";
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";

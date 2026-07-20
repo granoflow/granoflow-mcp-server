@@ -18,30 +18,49 @@ supersedes: null | <prior task_work attachment in the same slot>
 profiles: [] | [learning] | [software_development] | [...future profiles]
 domain: <optional domain such as visual_narrative>
 task_mode: <optional domain mode such as comic | animation>
+
 # UI change => required (never not_required). See task-work-document-workflow
+
 # "UI Change Prototype Mandate". conditional only while Detection unresolved.
+
 prototype_requirement: required | not_required | conditional
 prototype_condition_result: required | not_required | unresolved | not_applicable
 prototype_input_status: not_applicable | awaiting_reference | awaiting_visual_confirmation | ready | stale | blocked
+
 # When required: include derivedFrom baseline prototype_id/version_id/package_sha256.
+
 prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":"<id>","prototype_id":"<id>","version_id":"<id>","version_ordinal":1,"package_attachment_id":"<id>","package_sha256":"<64 lowercase hex>","visually_confirmed":true,"derived_from_prototype_id":"<baseline id|null>","derived_from_version_id":"<id|null>","derived_from_package_sha256":"<64 hex|null>","intended_use":"<purpose>"}]
+
 # Software edits: hard gate from software-structural-budget.md. Non-software
+
 # tasks use not_applicable. Editing code while present_in_plan/missing fails
+
 # closed as structural_forecast_not_shown.
+
 structural_forecast_status: not_applicable | missing | present_in_plan | notice_emitted | reconciled
 structural_forecast_notice_emitted_at: null | <ISO-8601 timestamp after user-visible notice>
+
 # Task Integration Test Policy (manual run). Judge unit tests first; add at
+
 # most 2 integration tests only when insufficient; Agent must not execute them.
+
 # Device: recommend local_machine; user confirms or chooses another target.
+
 # Project context Hard Gate: project_snapshot.yaml + project_rules.yaml.
+
 # See project-context-attachments.md. Edits while missing/conflict_pending fail
+
 # closed.
+
 project_context_check_status: not_applicable | missing | checked_no_conflict | conflict_pending | conflict_resolved
 project_context_conflict: none | present
 project_context_resolution: not_applicable | revise_code | revise_context_yaml | user_confirmed_revise_code | user_confirmed_revise_context_yaml
 project_context_decision_emitted: false | true
+
 # copy_change_only: true => no unit/integration/other automated tests
+
 # (copy_change_tests_forbidden). See user-visible-copy-boundary.md.
+
 copy_change_only: false | true
 unit_test_sufficiency: not_applicable | unassessed | sufficient | insufficient
 integration_test_requirement: not_applicable | not_required | required
@@ -414,8 +433,8 @@ edit code, also require a complete `Structural Change Forecast` and
 project-context check against `project_snapshot.yaml` /
 `project_rules.yaml` (Hard Gate in `project-context-attachments.md`); execution
 later fails as `project_context_check_missing` if that check never ran. For
-tasks that will change DB schema,
-JSON contracts, or shared constants, the Plan must name the project attachment
+tasks that will change DB schema, JSON contracts, or shared constants, the Plan
+must name the project attachment
 file(s) to update; Delivery later fails as `data_artifact_stale` if those
 attachments were not updated and read back. A finding that changes Outcome,
 Evidence, Scope, Risk, or Decision reopens Analysis and its Grill. A material

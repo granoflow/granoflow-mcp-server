@@ -10,10 +10,7 @@ describe("requirement intake and traceability contracts", () => {
   const taskWork = agentReference("task-work-document-template.md");
   const taskWorkflow = agentReference("task-work-document-workflow.md");
   const projectSkill = readFileSync("skills/granoflow-project-definition/SKILL.md", "utf8");
-  const milestoneSkill = readFileSync(
-    "skills/granoflow-milestone-coordination/SKILL.md",
-    "utf8",
-  );
+  const milestoneSkill = readFileSync("skills/granoflow-milestone-coordination/SKILL.md", "utf8");
   const milestoneTemplate = readFileSync(
     "skills/granoflow-milestone-coordination/references/milestone-work-document-template.md",
     "utf8",

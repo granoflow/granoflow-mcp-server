@@ -27,10 +27,7 @@ const unattended = readFileSync(
   "utf8",
 );
 const agentSkill = readFileSync("skills/granoflow-agent-workflow/SKILL.md", "utf8");
-const orchestrator = readFileSync(
-  "skills/granoflow-task-orchestrator/SKILL.md",
-  "utf8",
-);
+const orchestrator = readFileSync("skills/granoflow-task-orchestrator/SKILL.md", "utf8");
 
 describe("project context hard gate contracts", () => {
   it("requires pre-edit snapshot/rules check with interactive confirm or unattended decision notice", () => {
@@ -48,9 +45,7 @@ describe("project context hard gate contracts", () => {
     expect(context).toContain("revise_code");
     expect(context).toContain("revise_context_yaml");
     expect(context).toMatch(/\*\*Interactive:\*\*[\s\S]*user confirmation/i);
-    expect(context).toMatch(
-      /\*\*Unattended:\*\*[\s\S]*explicit notice naming the\s+decision/i,
-    );
+    expect(context).toMatch(/\*\*Unattended:\*\*[\s\S]*explicit notice naming the\s+decision/i);
 
     expect(template).toContain("project_context_check_status:");
     expect(template).toContain("project_context_resolution:");

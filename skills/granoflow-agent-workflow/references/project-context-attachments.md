@@ -27,12 +27,12 @@ Any task that will edit code, tests, build files, engineering contracts, or
 these YAML attachments **must** complete this gate. Soft “should read context”
 reminders are not enough.
 
-| Phase | Required | Fail closed |
-| ----- | -------- | ----------- |
-| Before first implementation edit (and before writing snapshot/rules) | Ensure both attachments exist (or record capability gap); read bounded relevant sections; compare planned change to snapshot status quo and rules boundaries | `project_context_check_missing` |
-| When a conflict is detected (interactive) | Show conflict report; wait for explicit user confirmation of the chosen side | `project_context_conflict_unconfirmed` |
-| When a conflict is detected (unattended) | AI decides `revise_code` or `revise_context_yaml`, **explicitly emit** that decision as a user-visible notice (not a question), then proceed only on that path | `project_context_decision_not_emitted` |
-| Delivery / completion | Record check result, conflicts (if any), and the confirmed or emitted decision | `project_context_check_unreconciled` |
+| Phase                                                                | Required                                                                                                                                                       | Fail closed                            |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| Before first implementation edit (and before writing snapshot/rules) | Ensure both attachments exist (or record capability gap); read bounded relevant sections; compare planned change to snapshot status quo and rules boundaries   | `project_context_check_missing`        |
+| When a conflict is detected (interactive)                            | Show conflict report; wait for explicit user confirmation of the chosen side                                                                                   | `project_context_conflict_unconfirmed` |
+| When a conflict is detected (unattended)                             | AI decides `revise_code` or `revise_context_yaml`, **explicitly emit** that decision as a user-visible notice (not a question), then proceed only on that path | `project_context_decision_not_emitted` |
+| Delivery / completion                                                | Record check result, conflicts (if any), and the confirmed or emitted decision                                                                                 | `project_context_check_unreconciled`   |
 
 ### Machine fields (Task Work)
 

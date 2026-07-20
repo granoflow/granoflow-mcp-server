@@ -57,9 +57,7 @@ describe("contracts-unattended-and-orchestration", () => {
     expect(interaction).toContain("Unattended Residual Report");
     expect(interaction).toContain("defer_item");
     expect(interaction).toContain("complete_with_residuals");
-    expect(normalizedInteraction).toMatch(
-      /Never block the queue/i,
-    );
+    expect(normalizedInteraction).toMatch(/Never block the queue/i);
     expect(normalizedInteraction).toMatch(
       /same active run.*does not require an envelope round trip/i,
     );
@@ -69,10 +67,7 @@ describe("contracts-unattended-and-orchestration", () => {
     );
     expect(interaction).toContain("auto_accept_recommendation");
     expect(interaction).toMatch(/Project Definition[\s\S]*adopt recommendations immediately/i);
-    const projectDefinition = readFileSync(
-      "skills/granoflow-project-definition/SKILL.md",
-      "utf8",
-    );
+    const projectDefinition = readFileSync("skills/granoflow-project-definition/SKILL.md", "utf8");
     expect(projectDefinition).toContain("unattended-interaction-contract");
     expect(projectDefinition).toContain("auto_accept_recommendation");
     expect(taskWork).toMatch(

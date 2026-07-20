@@ -69,4 +69,3 @@ describe("data attachment sync mandate contracts", () => {
     );
   });
 });
-

@@ -84,12 +84,12 @@ and moving code without reducing responsibility are threshold bypasses.
 Any software task that will edit code, tests, build files, or engineering
 workflow contracts **must** complete this gate. Soft reminders are not enough.
 
-| Phase | Required state | Fail closed |
-| ----- | -------------- | ----------- |
-| Before `readiness_grill_status: passed` | Task Work contains a complete `Structural Change Forecast` section; set `structural_forecast_status: present_in_plan` | `structural_forecast_missing` |
-| Immediately before the **first** code/test/build edit | Show that forecast to the user as a non-confirming notice in the same turn, then set `structural_forecast_status: notice_emitted` and `structural_forecast_notice_emitted_at` | `structural_forecast_not_shown` |
-| Before Delivery / acceptance closure | Reconcile planned vs actual forecast; set `structural_forecast_status: reconciled` | `structural_forecast_unreconciled` |
-| Software Delivery with code change | Upload `acceptance_report` HTML with structural + minimum-change reconciliation | `acceptance_report_missing` |
+| Phase                                                 | Required state                                                                                                                                                                | Fail closed                        |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Before `readiness_grill_status: passed`               | Task Work contains a complete `Structural Change Forecast` section; set `structural_forecast_status: present_in_plan`                                                         | `structural_forecast_missing`      |
+| Immediately before the **first** code/test/build edit | Show that forecast to the user as a non-confirming notice in the same turn, then set `structural_forecast_status: notice_emitted` and `structural_forecast_notice_emitted_at` | `structural_forecast_not_shown`    |
+| Before Delivery / acceptance closure                  | Reconcile planned vs actual forecast; set `structural_forecast_status: reconciled`                                                                                            | `structural_forecast_unreconciled` |
+| Software Delivery with code change                    | Upload `acceptance_report` HTML with structural + minimum-change reconciliation                                                                                               | `acceptance_report_missing`        |
 
 Rules:
 

@@ -15,15 +15,15 @@ clicks. Loop until the suite is green or a real external blocker is recorded.
 
 ## Not This Skill
 
-| Concern | Owner |
-| ------- | ----- |
-| Task-local: judge unit sufficiency, add ≤2 tests, **do not run** | `granoflow-agent-workflow` Task Integration Test Policy |
-| Copy-only / 文字验证: **no** automated tests | `user-visible-copy-boundary.md` |
-| Single-task Analysis/Plan/run | `granoflow-task-orchestrator` + `granoflow-agent-workflow` |
-| Create product milestones/tasks portfolio | `granoflow-portfolio-orchestrator` |
+| Concern                                                          | Owner                                                      |
+| ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| Task-local: judge unit sufficiency, add ≤2 tests, **do not run** | `granoflow-agent-workflow` Task Integration Test Policy    |
+| Copy-only / 文字验证: **no** automated tests                     | `user-visible-copy-boundary.md`                            |
+| Single-task Analysis/Plan/run                                    | `granoflow-task-orchestrator` + `granoflow-agent-workflow` |
+| Create product milestones/tasks portfolio                        | `granoflow-portfolio-orchestrator`                         |
 
 Do not use this Skill to invent copy-string tests or to run tests inside an
-ordinary feature task that only *authored* manual-run integration cases.
+ordinary feature task that only _authored_ manual-run integration cases.
 
 ## Activation
 
@@ -91,13 +91,13 @@ campaign state after every successful step.
 
 ## Delegates To
 
-| Step | Skill / contract |
-| ---- | ---------------- |
-| Round milestone create | `granoflow-milestone-workflow` |
-| Bug task create | `granoflow-task-authoring` |
-| Bug Analysis / fix / Delivery | `granoflow-task-orchestrator` + `granoflow-agent-workflow` |
-| Long-running worker (optional) | `granoflow-persistent-milestone-runner` |
-| Unattended grants | `granoflow-delegated-authorization` / unattended-interaction-contract |
+| Step                           | Skill / contract                                                      |
+| ------------------------------ | --------------------------------------------------------------------- |
+| Round milestone create         | `granoflow-milestone-workflow`                                        |
+| Bug task create                | `granoflow-task-authoring`                                            |
+| Bug Analysis / fix / Delivery  | `granoflow-task-orchestrator` + `granoflow-agent-workflow`            |
+| Long-running worker (optional) | `granoflow-persistent-milestone-runner`                               |
+| Unattended grants              | `granoflow-delegated-authorization` / unattended-interaction-contract |
 
 ## Success Criteria
 

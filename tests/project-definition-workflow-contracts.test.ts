@@ -10,10 +10,7 @@ const artifacts = readFileSync(
   "skills/granoflow-project-definition/references/project-artifact-workflows.md",
   "utf8",
 );
-const openaiYaml = readFileSync(
-  "skills/granoflow-project-definition/agents/openai.yaml",
-  "utf8",
-);
+const openaiYaml = readFileSync("skills/granoflow-project-definition/agents/openai.yaml", "utf8");
 
 describe("project definition bundled workflow", () => {
   it("supports both interaction modes through one project_work slot", () => {
@@ -132,9 +129,7 @@ describe("project definition bundled workflow", () => {
     expect(skill).toContain("constants_catalog");
     expect(skill).toContain("data-contracts.yaml");
     expect(skill).toContain("constants-catalog.yaml");
-    expect(skill).toMatch(
-      /Done And Handoff[\s\S]*`data_persistence` is set/i,
-    );
+    expect(skill).toMatch(/Done And Handoff[\s\S]*`data_persistence` is set/i);
     expect(artifacts).toContain("Data Persistence And Structured Contracts");
     expect(artifacts).toContain("data_artifact_stale");
     expect(artifacts).toMatch(/本项目无业务数据库，无需设计表结构/);
@@ -153,12 +148,8 @@ describe("project definition bundled workflow", () => {
     expect(skill).toMatch(
       /Done And Handoff[\s\S]*capability-critical third-party libraries are selected/i,
     );
-    expect(skill).toMatch(
-      /stack capability → capability-critical libraries →/i,
-    );
-    expect(interaction).toContain(
-      "Capability-Critical Dependency Recommendation Batch",
-    );
+    expect(skill).toMatch(/stack capability → capability-critical libraries →/i);
+    expect(interaction).toContain("Capability-Critical Dependency Recommendation Batch");
     expect(interaction).toMatch(/immediately after[\s\S]*engineering\.stack/i);
     expect(interaction).toContain("capability_dependency_unselected");
     expect(artifacts).toContain("Capability-Critical Dependencies");
