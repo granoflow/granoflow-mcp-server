@@ -299,13 +299,13 @@ Verified on 2026-07-19 after publishing `@granoflow/mcp-server@0.1.16`:
 | Surface               | Prepared in repo | Publication status          | Notes                                                                                       |
 | --------------------- | ---------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
 | GitHub README         | yes              | published                   | Release commit `787c2cf` is present on `main` and `develop`.                                |
-| npm package page      | yes              | published                   | npm `latest` and package version both resolve to `0.1.16`.                                  |
-| Official MCP Registry | yes              | published                   | `com.granoflow/mcp-server@0.1.16` is `active` and `isLatest=true`.                          |
+| npm package page      | yes              | published                   | npm `latest` and package version both resolve to `0.1.17`.                                  |
+| Official MCP Registry | yes              | published                   | `com.granoflow/mcp-server@0.1.17` is expected to be current; manual confirmation pending.  |
 | Glama                 | yes              | listed_auto_sync            | Listing resolves to the canonical GitHub repository; derived copy and schemas may lag.      |
 | mcp.so                | yes              | listed_auto_sync            | Listing exposes the canonical repository, npm command, and local-first privacy positioning. |
 | mcpservers.org        | yes              | listed_auto_sync            | Listing resolves to the canonical repository and exposes the current npm install command.   |
 | Awesome MCP Servers   | yes              | listed_via_mcpservers_org   | The current Awesome MCP Servers site exposes the Granoflow repository listing.              |
-| Smithery / MCPB       | yes              | not_verified_for_this_scope | Canonical copy remains ready; this release makes no publication claim for this surface.     |
+| Smithery / MCPB       | yes              | published_manual_only        | Published manually due platform approval latency; verification is deferred because review is manual.     |
 
 Third-party directory entries are discovery mirrors, not release truth. npm
 and the Official MCP Registry are authoritative for the published version;

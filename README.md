@@ -131,6 +131,8 @@ For a user-facing setup walkthrough, see
 
 For maintainers, see
 [Granoflow MCP Release Checklist](docs/release-checklist.md).
+For one-command release with develop/main回流、推送与npm发布并返回开发分支，请使用
+`npm run release:platforms`。
 
 Agents can also reuse the bundled
 [Granoflow Agent Workflow skill](skills/granoflow-agent-workflow/SKILL.md) for
