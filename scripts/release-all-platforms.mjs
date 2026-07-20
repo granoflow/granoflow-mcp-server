@@ -11,11 +11,15 @@ const __dirname = dirname(__filename);
 const cwd = resolve(__dirname, "..");
 
 function run(command, { inherit = false } = {}) {
-  return execSync("bash", ["-lc", command], {
+  const output = execSync(`bash -lc ${JSON.stringify(command)}`, {
     cwd,
     stdio: inherit ? "inherit" : ["ignore", "pipe", "pipe"],
     encoding: "utf8",
-  }).trim();
+  });
+  if (output === undefined || output === null) {
+    return "";
+  }
+  return output.toString().trim();
 }
 
 function runCapture(command) {
