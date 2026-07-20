@@ -44,12 +44,28 @@ export const MILESTONE_WORKFLOW_SKILL_URL = new URL(
   "../skills/granoflow-milestone-workflow/SKILL.md",
   import.meta.url,
 );
+export const MILESTONE_COORDINATION_SKILL_URL = new URL(
+  "../skills/granoflow-milestone-coordination/SKILL.md",
+  import.meta.url,
+);
+export const TASK_AUTHORING_SKILL_URL = new URL(
+  "../skills/granoflow-task-authoring/SKILL.md",
+  import.meta.url,
+);
+export const PORTFOLIO_ORCHESTRATOR_SKILL_URL = new URL(
+  "../skills/granoflow-portfolio-orchestrator/SKILL.md",
+  import.meta.url,
+);
 export const PERSISTENT_MILESTONE_RUNNER_SKILL_URL = new URL(
   "../skills/granoflow-persistent-milestone-runner/SKILL.md",
   import.meta.url,
 );
 export const PROJECT_DEFINITION_SKILL_URL = new URL(
   "../skills/granoflow-project-definition/SKILL.md",
+  import.meta.url,
+);
+export const INTEGRATION_TEST_CAMPAIGN_SKILL_URL = new URL(
+  "../skills/granoflow-integration-test-campaign/SKILL.md",
   import.meta.url,
 );
 
@@ -125,12 +141,28 @@ export function readMilestoneWorkflowSkill(): string {
   return readFileSync(MILESTONE_WORKFLOW_SKILL_URL, "utf8");
 }
 
+export function readMilestoneCoordinationSkill(): string {
+  return readFileSync(MILESTONE_COORDINATION_SKILL_URL, "utf8");
+}
+
+export function readTaskAuthoringSkill(): string {
+  return readFileSync(TASK_AUTHORING_SKILL_URL, "utf8");
+}
+
+export function readPortfolioOrchestratorSkill(): string {
+  return readFileSync(PORTFOLIO_ORCHESTRATOR_SKILL_URL, "utf8");
+}
+
 export function readPersistentMilestoneRunnerSkill(): string {
   return readFileSync(PERSISTENT_MILESTONE_RUNNER_SKILL_URL, "utf8");
 }
 
 export function readProjectDefinitionSkill(): string {
   return readFileSync(PROJECT_DEFINITION_SKILL_URL, "utf8");
+}
+
+export function readIntegrationTestCampaignSkill(): string {
+  return readFileSync(INTEGRATION_TEST_CAMPAIGN_SKILL_URL, "utf8");
 }
 
 export function isWithin(root: string, target: string): boolean {
@@ -198,6 +230,30 @@ export function validatedProjectDesignBaselinePath(filePath: string): string {
   }
   if (stat.size > 32 * 1024 * 1024) {
     throw new Error("Project design baseline package must not exceed 32 MiB.");
+  }
+  return absolute;
+}
+
+export function validatedTaskPrototypePath(filePath: string): string {
+  if (!isAbsolute(filePath)) {
+    throw new Error("Task prototype path must be absolute.");
+  }
+  const absolute = realpathSync(filePath);
+  const roots = [realpathSync(process.cwd()), realpathSync(tmpdir())];
+  if (
+    extname(absolute).toLowerCase() !== ".granoprototype" ||
+    !roots.some((root) => isWithin(root, absolute))
+  ) {
+    throw new Error(
+      "Task prototype must be a .granoprototype file under the current workspace or system temp directory.",
+    );
+  }
+  const stat = statSync(absolute);
+  if (!stat.isFile()) {
+    throw new Error("Task prototype path must reference a regular file.");
+  }
+  if (stat.size > 32 * 1024 * 1024) {
+    throw new Error("Task prototype package must not exceed 32 MiB.");
   }
   return absolute;
 }

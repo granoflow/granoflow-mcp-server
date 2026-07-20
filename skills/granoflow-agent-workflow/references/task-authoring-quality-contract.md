@@ -82,18 +82,30 @@ and unrelated cleanup are outside a local task unless separately justified and
 authorized. If execution discovers one of those needs, stop before performing
 it and either obtain scope confirmation or create a separate follow-up task.
 
+When the task is **copy-only** / 文字验证, do not add unit, integration, or
+other automated tests—use visual/copy review only
+(`copy_change_tests_forbidden`). See `user-visible-copy-boundary.md`.
+
 When the task changes user-facing copy, list every changed string with:
 
 - the old complete text;
 - the new complete text; and
 - why the wording changed.
 
-When the task changes UI, treat the current UI as the baseline and prototype
-only the authorized delta. Unlisted layout, hierarchy, copy, interaction, and
-visual treatment are protected surfaces. Create and show an HTML prototype,
-upload it to the task's `ui_prototype` logical slot, and read it back before
-claiming the UI change is accepted. A whole-page redesign is valid only when
-the task explicitly authorizes that whole-page surface.
+When the task changes UI, treat the project Design Baseline (when present) and
+the current UI as authority, and prototype **only** the authorized delta.
+Unlisted layout, hierarchy, copy, interaction, and visual treatment are
+protected surfaces.
+
+**Mandatory prototype:** any UI change requires a high-fidelity HTML prototype.
+Set Task Work `prototype_requirement: required`. Create and show the prototype,
+declare `derivedFrom` the confirmed Design Baseline package when the project has
+one, accept against contract fidelity (契约级一致), upload to the task's
+`ui_prototype` logical slot with visual confirmation, and read it back **before
+Analysis confirmation when possible, and always before execution Readiness /
+claiming the UI change is accepted**. Do not mark `not_required` for a UI
+change. A whole-page redesign is valid only when the task explicitly authorizes
+that whole-page surface.
 
 When the task changes database tables or fields, keep one Markdown data-model
 artifact for that task in the `data_model` logical slot. The same file must
@@ -108,8 +120,45 @@ Use at most one such Markdown file per task. If discussion or implementation
 changes the design, replace or revise that same logical artifact; do not upload
 parallel `v2`, `v3`, or alternative data-model files.
 
-If a task has no copy, UI, or database change, say so explicitly in Task Work
-and Delivery instead of fabricating an artifact.
+**Also update the project data attachments named in Project Work**
+(`data_model_attachment`, `json_contracts_attachment`,
+`constants_catalog_attachment`):
+
+- DB / schema change → update the project `data_model` attachment
+  (`data-model.md` or the registered name) and registry SHA.
+- JSON / structured file shape or semantics change → update the project
+  `json_contracts` attachment (YAML shapes; default `data-contracts.yaml`).
+- Shared constant name, value, type, or ownership change → update the project
+  `constants_catalog` attachment (default `constants-catalog.yaml`).
+
+Code and these attachments must stay consistent. Shipping code without the
+matching attachment update fails closed as `data_artifact_stale`. Do not embed
+full JSON shapes or constant catalogs into Project Work body YAML.
+
+During Task **Analysis**, if the current project table schema, JSON contract, or
+constant catalog is unreasonable for the Outcome, raise the issue and propose a
+revision before Analysis confirmation—do not wait for Delivery to discover that
+the model cannot work.
+
+During Task **Analysis**, if a capability-critical library in Project Work
+`dependencies.approved` is unreasonable for the Outcome (or a required
+capability library was never selected), raise it and update
+`dependencies.approved` before confirming Analysis—do not silently pick a
+different EPUB/crypto/… package only in code.
+
+For software tasks, Plan/Delivery must record unit-test sufficiency. Prefer no
+new integration tests; if unit tests cannot cover the Outcome boundary, add at
+most two task-local integration tests and leave them for **manual** execution—
+the Agent must not run them. Recommend the user's **local machine** as the
+integration device; the user confirms or chooses another target.
+
+Before software edits, check `project_snapshot.yaml` and `project_rules.yaml`
+for conflicts with the planned change. Interactive conflicts need user
+confirmation; unattended conflicts need an explicit emitted decision
+(`revise_code` or `revise_context_yaml`).
+
+If a task has no copy, UI, database, JSON-contract, or shared-constant change,
+say so explicitly in Task Work and Delivery instead of fabricating an artifact.
 
 ## Pre-Write Checklist
 

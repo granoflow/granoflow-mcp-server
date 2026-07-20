@@ -1,0 +1,4 @@
+interface:
+  display_name: Granoflow Integration Test Campaign
+  short_description: Unattended integration-test rounds—full suite, cluster bugs into tasks, fix, re-run until green. Not task-local write-only tests.
+  default_prompt: Run an integration test campaign unattended—one milestone per round, execute the full suite first, cluster failures into one bug task each, analyze and finish those tasks, then open the next round until all tests pass.

@@ -10,9 +10,12 @@ describe("requirement intake and traceability contracts", () => {
   const taskWork = agentReference("task-work-document-template.md");
   const taskWorkflow = agentReference("task-work-document-workflow.md");
   const projectSkill = readFileSync("skills/granoflow-project-definition/SKILL.md", "utf8");
-  const milestoneSkill = readFileSync("skills/granoflow-milestone-workflow/SKILL.md", "utf8");
+  const milestoneSkill = readFileSync(
+    "skills/granoflow-milestone-coordination/SKILL.md",
+    "utf8",
+  );
   const milestoneTemplate = readFileSync(
-    "skills/granoflow-milestone-workflow/references/milestone-work-document-template.md",
+    "skills/granoflow-milestone-coordination/references/milestone-work-document-template.md",
     "utf8",
   );
 
@@ -23,6 +26,8 @@ describe("requirement intake and traceability contracts", () => {
     expect(intake).toContain("Content outside the expected headings is not noise");
     expect(intake).toContain("Development Plan is not a default user input");
     expect(intake).toContain("never silently merge, prioritize, or discard");
+    expect(intake).toContain("granoflow-project-definition");
+    expect(intake).toMatch(/not the[\s\S]*Initialize Granoflow/i);
   });
 
   it("classifies every statement, gap, inference, and conflict", () => {

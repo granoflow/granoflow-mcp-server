@@ -60,9 +60,21 @@ describe("Project Work YAML template", () => {
       "prototype_id:",
       "version_id:",
       "package_sha256:",
+      "token_sources: []",
+      "stack_capability_profile:",
+      "allowed: []",
+      "high_cost: []",
+      "forbidden: []",
+      "acceptance_fidelity: contract_fidelity",
+      "implementation_notes: []",
+      "phase: [baseline, shell]",
+      "auto_accept_recommendation",
+      "landscape/portrait App Shell",
     ]) {
       expect(template).toContain(designLock);
     }
+    expect(template).toMatch(/Lock stack_capability_profile before authoring Design Baseline/i);
+    expect(template).toMatch(/Never resolve "latest"/i);
   });
 
   it("stores project-specific Agent and Git preferences without granting external actions", () => {
@@ -152,5 +164,47 @@ describe("Project Work YAML template", () => {
     expect(template).toContain("before a commit that");
     expect(template).toContain("Never restore code to satisfy a stale Project Work rule");
     expect(template).toContain("A mismatch must be reported as a document");
+  });
+
+  it("documents holistic milestone portfolio planning under milestone_strategy", () => {
+    expect(template).toMatch(/plan ALL milestones in[\s#\n]*one pass/);
+    expect(template).toContain("amend only for real coverage gaps");
+    expect(template).toContain("Design Baseline + App Shell");
+    expect(template).toContain("Entities for later milestones may still be created while inactive");
+    expect(template).toContain("active_milestone_limit: 1");
+  });
+
+  it("declares data persistence and project-owned data attachments", () => {
+    for (const contract of [
+      "data_persistence:",
+      "no_database_declaration:",
+      "data_model_attachment:",
+      "json_contracts_attachment:",
+      "constants_catalog_attachment:",
+      "code_must_match_data_attachments: true",
+      "logical_slot: json_contracts",
+      "logical_slot: constants_catalog",
+      "data_artifact_stale",
+      "data-contracts.yaml",
+      "constants-catalog.yaml",
+    ]) {
+      expect(template).toContain(contract);
+    }
+    expect(template).toMatch(/本项目无业务数据库，无需设计表结构/);
+    expect(template).toMatch(/Do NOT embed[\s\S]*full field schemas/i);
+  });
+
+  it("requires capability-critical dependency selection fields", () => {
+    for (const contract of [
+      "capability-critical third-party library",
+      "capability_critical: true",
+      "alternatives_considered: []",
+      "selection_rationale: null",
+      "no_capability_dependency_declaration: null",
+      "capability_dependency_unselected",
+    ]) {
+      expect(template).toContain(contract);
+    }
+    expect(template).toMatch(/Framework choice alone[\s\S]*not enough/i);
   });
 });

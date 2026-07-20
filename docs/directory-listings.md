@@ -75,6 +75,64 @@ Directory summary:
 First-run setup: after installing Granoflow MCP, ask your agent "Initialize Granoflow". Granoflow checks the connection, offers all recommended AI capability collections, and can then import data from Cursor, Codex, Hermes, or other agents.
 ```
 
+### Define / Initialize This Project
+
+After Granoflow MCP is connected, ask your agent to define a software project
+(distinct from `Initialize Granoflow`):
+
+```text
+Initialize this project
+```
+
+or:
+
+```text
+定义这个项目
+```
+
+Project Definition completes Project Work from product sources, locks stack
+capability and skill routing, delivers Design Baseline with Design Tokens and
+landscape/portrait App Shell, then hands off to
+`granoflow-portfolio-orchestrator` (create all milestones, then quality-author
+tasks one-by-one).
+
+Directory summary:
+
+```text
+Project definition: after Granoflow MCP is ready, ask "Initialize this project" or "定义这个项目" (not "Initialize Granoflow"). Granoflow fills Project Work, locks design routing and stack capability, delivers Design Baseline with tokens and App Shell, then hands off to portfolio orchestration for milestones and tasks.
+```
+
+### Plan Project Milestones And Tasks
+
+After Project Definition Done, ask your agent to create the full milestone
+portfolio and author tasks (not the same as coordinating execution):
+
+```text
+Create all milestones and tasks for this project
+```
+
+Directory summary:
+
+```text
+Portfolio orchestration: after Project Definition, ask to create all milestones and tasks. Granoflow batch-creates milestones, then quality-authors each task one-by-one (skeleton coverage first), until Portfolio Ready.
+```
+
+### Run Integration Test Campaign
+
+When you want unattended integration testing until green (not task-local
+write-only tests):
+
+```text
+Run integration test campaign
+开始集成测试战役
+```
+
+Directory summary:
+
+```text
+Integration test campaign: unattended rounds—one milestone per round, run the full suite first, cluster failures into bug tasks, fix them, then open the next round until all tests pass.
+```
+
 ### Process Due Tasks
 
 After installing Granoflow MCP, ask your agent:

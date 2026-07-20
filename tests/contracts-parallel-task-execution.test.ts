@@ -34,9 +34,9 @@ describe("parallel AI task execution contract", () => {
       "skills/granoflow-agent-workflow/SKILL.md",
       "skills/granoflow-agent-workflow/references/task-work-document-workflow.md",
       "skills/granoflow-agent-workflow/references/task-work-document-template.md",
-      "skills/granoflow-milestone-workflow/SKILL.md",
-      "skills/granoflow-milestone-workflow/references/milestone-collaboration-workflow.md",
-      "skills/granoflow-milestone-workflow/references/milestone-work-document-template.md",
+      "skills/granoflow-milestone-coordination/SKILL.md",
+      "skills/granoflow-milestone-coordination/references/milestone-collaboration-workflow.md",
+      "skills/granoflow-milestone-coordination/references/milestone-work-document-template.md",
       "skills/granoflow-task-orchestrator/references/end-to-end-orchestration.md",
     ]) {
       expect(read(path)).toContain("parallel-task-execution");

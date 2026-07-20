@@ -1,0 +1,4 @@
+interface:
+  display_name: "Granoflow Portfolio Orchestrator"
+  short_description: "After Project Definition, create all milestones then quality-author each milestone's tasks one-by-one. Hands off for Analysis/execution."
+  default_prompt: "Use the bundled Granoflow Portfolio Orchestrator: verify Project Work and frontend Design Baseline/App Shell, batch-create milestones, then for each milestone run task skeleton coverage and create_one loops until Portfolio Ready."

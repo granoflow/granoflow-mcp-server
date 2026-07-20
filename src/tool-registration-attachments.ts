@@ -126,94 +126,6 @@ function registerGranoflowLogicalAttachmentReadTool(
   );
 }
 
-function registerGranoflowProjectDesignBaselineImportTool(
-  registerTool: ToolRegistrar,
-  registerCapabilityTool: CapabilityRegistrar,
-  context: ToolRegistrationContext,
-  _schemas: RegistrationSchemas,
-): void {
-  const {
-    basename,
-    createHash,
-    readFileSync,
-    validatedProjectDesignBaselinePath,
-    jsonTextResult,
-    apiTool,
-  } = context;
-  registerTool(
-    "granoflow_project_design_baseline_import",
-    "Import one validated high-fidelity prototype package as the App-owned project design baseline. The App owns package validation, immutable versions, project linking, deduplication, and exact SHA-256 readback.",
-    {
-      projectId: z.string().min(1),
-      filePath: z.string().min(1).describe("Absolute path to a local .zip package."),
-      prototypeId: z
-        .string()
-        .min(1)
-        .optional()
-        .describe("Existing App-owned prototype id when adding a new baseline version."),
-      idempotencyKey: z.string().min(1),
-      dryRun: z.boolean().default(true),
-    },
-    async ({ projectId, filePath, prototypeId, idempotencyKey, dryRun }) => {
-      let file: string;
-      try {
-        file = validatedProjectDesignBaselinePath(String(filePath));
-      } catch (error) {
-        return jsonTextResult({
-          ok: false,
-          code: "unsafe_project_design_baseline_path",
-          error: { message: error instanceof Error ? error.message : String(error) },
-        });
-      }
-      const bytes = readFileSync(file);
-      const packageSha256 = createHash("sha256").update(bytes).digest("hex");
-      return apiTool({
-        method: "POST",
-        path: "/v1/ai-agent/project-design-baseline/import",
-        body: {
-          projectId: String(projectId),
-          displayName: basename(file),
-          packageBase64: bytes.toString("base64"),
-          expectedPackageSha256: packageSha256,
-          idempotencyKey: String(idempotencyKey),
-          ...(prototypeId ? { prototypeId: String(prototypeId) } : {}),
-        },
-        dryRun: dryRun !== false,
-      });
-    },
-  );
-}
-
-function registerGranoflowProjectDesignBaselineReadTool(
-  registerTool: ToolRegistrar,
-  registerCapabilityTool: CapabilityRegistrar,
-  context: ToolRegistrationContext,
-  _schemas: RegistrationSchemas,
-): void {
-  const { apiTool } = context;
-  registerTool(
-    "granoflow_project_design_baseline_read",
-    "Read back one exact App-owned project design baseline reference. Never guesses the latest version.",
-    {
-      projectId: z.string().min(1),
-      prototypeId: z.string().min(1),
-      versionId: z.string().min(1),
-      expectedPackageSha256: z.string().regex(/^[a-f0-9]{64}$/),
-    },
-    async ({ projectId, prototypeId, versionId, expectedPackageSha256 }) =>
-      apiTool({
-        method: "POST",
-        path: "/v1/ai-agent/project-design-baseline/read",
-        body: {
-          projectId: String(projectId),
-          prototypeId: String(prototypeId),
-          versionId: String(versionId),
-          expectedPackageSha256: String(expectedPackageSha256),
-        },
-      }),
-  );
-}
-
 function registerGranoflowProjectWorkEvaluateTool(
   registerTool: ToolRegistrar,
   registerCapabilityTool: CapabilityRegistrar,
@@ -377,18 +289,6 @@ export function registerAttachmentTools(
     schemas,
   );
   registerGranoflowLogicalAttachmentReadTool(
-    registerTool,
-    registerCapabilityTool,
-    context,
-    schemas,
-  );
-  registerGranoflowProjectDesignBaselineImportTool(
-    registerTool,
-    registerCapabilityTool,
-    context,
-    schemas,
-  );
-  registerGranoflowProjectDesignBaselineReadTool(
     registerTool,
     registerCapabilityTool,
     context,

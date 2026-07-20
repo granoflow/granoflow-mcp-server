@@ -14,6 +14,16 @@ describe("contracts-init-and-task-work", () => {
 
     expect(onboarding).toContain("Initialize Granoflow");
     expect(onboarding).toContain("初始化 Granoflow");
+    const projectDefinition = readFileSync(
+      "skills/granoflow-project-definition/SKILL.md",
+      "utf8",
+    );
+    expect(projectDefinition).toContain("Initialize this project");
+    expect(projectDefinition).toMatch(/Not this Skill:[\s\S]*Initialize Granoflow/i);
+    expect(projectDefinition).toContain("granoflow-first-run-import");
+    expect(projectDefinition).toMatch(
+      /Never route project definition through first-run import/i,
+    );
     expect(onboarding).toContain("recommended-external-skills.md");
     expect(onboarding).toContain("approved_all");
     expect(onboarding).toContain("capability_pack_not_ready");
@@ -45,6 +55,8 @@ describe("contracts-init-and-task-work", () => {
     expect(externalRouting).toMatch(/installation breadth only[\s\S]*Runtime routing/i);
     expect(externalRouting).toContain("capability_pack_drift");
     expect(externalRouting).toMatch(/model_allowed[\s\S]*silently/i);
+    expect(externalRouting).toContain("baseline | shell | later_ui");
+    expect(externalRouting).toMatch(/never open a style-Skill menu/i);
 
     const prompt = catalog.match(/## User Prompt\n([\s\S]*?)\n## /)?.[1] ?? "";
     expect(prompt).not.toBe("");
@@ -82,6 +94,18 @@ describe("contracts-init-and-task-work", () => {
     expect(workflow).toContain("executionAdmission.allowed");
     expect(workflow).toContain("assetMode=file");
     expect(workflow).toMatch(/no\s+greater than 600 seconds/);
+    expect(workflow).toContain("contract fidelity");
+    expect(workflow).toContain("granoflow_project_design_baseline_read");
+    expect(workflow).toContain("derivedFrom");
+    expect(workflow).toContain("UI Change Prototype Mandate");
+    expect(workflow).toContain("ui_prototype_required");
+    expect(workflow).toMatch(
+      /prototype_requirement[\s\S]*must[\s\S]*required/i,
+    );
+    expect(workflow).toMatch(/Do \*\*not\*\* use `not_required`/i);
+    expect(template).toContain("UI change => required");
+    expect(template).toContain("derived_from_package_sha256");
+    expect(template).toContain("ui_prototype_required");
     expect(template).not.toContain("execution_status:");
     expect(template).toContain("pre-execution governance document");
     expect(template).toContain("five-\ndimension prose contract");
@@ -116,7 +140,8 @@ describe("contracts-init-and-task-work", () => {
     const routeFiles = [
       "skills/granoflow-agent-workflow/references/discussed-requirement-task-capture.md",
       "skills/granoflow-task-orchestrator/SKILL.md",
-      "skills/granoflow-milestone-workflow/references/milestone-collaboration-workflow.md",
+      "skills/granoflow-milestone-coordination/references/milestone-collaboration-workflow.md",
+      "skills/granoflow-task-authoring/SKILL.md",
       "skills/granoflow-project-definition/SKILL.md",
       "skills/granoflow-first-run-import/references/task-and-card-import.md",
       "skills/granoflow-delegated-authorization/references/host-routing-and-waiting.md",
@@ -129,6 +154,9 @@ describe("contracts-init-and-task-work", () => {
     expect(contract).toContain("task_authoring_quality_failed");
     expect(contract).toContain("old complete text");
     expect(contract).toContain("HTML prototype");
+    expect(contract).toContain("Mandatory prototype");
+    expect(contract).toMatch(/prototype_requirement: required/i);
+    expect(contract).toMatch(/Do not mark `not_required` for a UI/i);
     expect(contract).toContain("two-dimensional Markdown table");
     expect(contract).toContain("bold formatting on every changed field");
     expect(contract).toContain("Mermaid flowchart");

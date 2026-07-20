@@ -1,0 +1,4 @@
+interface:
+  display_name: "Granoflow Task Authoring"
+  short_description: "Create tasks with skeleton batches and one-at-a-time quality-checked descriptions. Not Analysis or execution."
+  default_prompt: "Use the bundled Granoflow Task Authoring skill: build a short skeleton table for coverage, then create_one task at a time with task-authoring-quality-contract before App create and readback."

@@ -1,4 +1,4 @@
 interface:
   display_name: "Granoflow Milestone Workflow"
-  short_description: "Coordinate one milestone across evolving child tasks and integration acceptance"
-  default_prompt: "Use the bundled Granoflow Milestone Workflow skill to define one milestone contract, decompose it into child tasks, coordinate bounded execution, replan from live evidence, and prove milestone-level integration before closure."
+  short_description: "Plan and create milestones singly or in batch after Project Work (and frontend Design Baseline + App Shell). Does not author tasks or run coordination."
+  default_prompt: "Use the bundled Granoflow Milestone Workflow skill to verify prerequisites, then create one milestone or the full milestone portfolio with App readback. Stop after milestone entities exist; hand off task authoring or portfolio orchestration next."

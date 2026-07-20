@@ -31,6 +31,13 @@ describe("tools-workflow-docs", () => {
     expect(reference).toContain("proposal or conflict report");
     expect(reference).toContain("fail closed");
     expect(reference).toContain("project_context_attachments_unchanged");
+    expect(reference).toContain("Hard Gate: Pre-Change Conflict Check");
+    expect(reference).toContain("project_context_check_missing");
+    expect(reference).toContain("project_context_conflict_unconfirmed");
+    expect(reference).toContain("project_context_decision_not_emitted");
+    expect(reference).toContain("revise_code");
+    expect(reference).toContain("revise_context_yaml");
+    expect(reference).toMatch(/explicitly emit/i);
   });
 
   it("documents project-scoped adaptive explanation style", () => {

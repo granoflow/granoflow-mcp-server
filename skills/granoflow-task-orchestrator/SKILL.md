@@ -109,9 +109,9 @@ Compose the existing task owners through the requested stopping point.
 Actions:
 
 - capture stops after create and id readback; enrich stops after a context-rich task readback.
-- analyze runs Analysis plus bundled Grill and stops at the confirmed or decision-blocked Analysis state.
-- plan consumes a finalized Analysis, creates Plan and nodes, runs Readiness Grill, and stops execution-ready.
-- run composes create or resolve, Analysis, Grill, Plan, Readiness Grill, safe execution, verification, Delivery, node completion, and done-state readback.
+- analyze runs Analysis plus bundled Grill and stops at the confirmed or decision-blocked Analysis state. UI-changing tasks must set `prototype_requirement: required` and should obtain a confirmed `ui_prototype` before Analysis confirmation when possible.
+- plan consumes a finalized Analysis, creates Plan and nodes, runs Readiness Grill, and stops execution-ready. UI-changing tasks cannot pass Readiness without a visually confirmed `ui_prototype` (`derivedFrom` Design Baseline when present). Software tasks that will edit code cannot pass Readiness without a complete `Structural Change Forecast` (`structural_forecast_status: present_in_plan`); otherwise `structural_forecast_missing`.
+- run composes create or resolve, Analysis, Grill, Plan, Readiness Grill, safe execution, verification, Delivery, node completion, and done-state readback. Never execute a UI-changing task while `ui_prototype_required` applies. Before the first software edit: run project-context Hard Gate (`project_snapshot.yaml` / `project_rules.yaml`); on conflict, interactive users confirm, unattended runs emit `revise_code` or `revise_context_yaml` explicitly; then show the structural forecast notice and stamp `notice_emitted`. Refuse edits with `project_context_check_missing`, `project_context_decision_not_emitted`, or `structural_forecast_not_shown`. Delivery/close requires `reconciled` plus `acceptance_report` or fail closed. For software: copy-only / 文字验证 tasks take **no** automated tests (`copy_change_tests_forbidden`). Otherwise judge unit-test sufficiency; add at most 2 integration tests only when insufficient; **do not execute** those integration tests (`integration_test_executed_by_agent` if the Agent runs them); recommend the user's **local machine** for the device and let the user confirm or choose (`integration_test_device_unselected` if still unselected when tests were added).
 - finish_audit verifies already-produced evidence, writes Delivery, and closes only through the correct completion owner.
   Success criteria:
 - Each phase has exactly one owner and the requested stopping point is respected.
@@ -133,7 +133,10 @@ Actions:
 
 - Bind the user-origin command, exact target tasks, repositories, allowed local actions, exclusions, and expiry to a named local-run authorization profile.
 - After Analysis and Readiness grills pass with no unresolved decisions or scope drift, bind the generated Plan hash and continue the already-approved phases.
-- Revalidate current App facts before every phase and enter visible waiting on denial.
+- Revalidate current App facts before every phase. Under an explicit unattended
+  declaration, execute solvable work; defer externally impossible items without
+  blocking peers; end with an Unattended Residual Report
+  (`unattended-interaction-contract.md`).
   Success criteria:
 - A clear end-to-end local-run command can complete unattended within its scope.
 - External, destructive, secret-bearing, and expanded actions still fail closed.

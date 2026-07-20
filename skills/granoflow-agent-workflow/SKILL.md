@@ -397,11 +397,14 @@ allows partial attachment but fail-closes automatic project actions until the
 document is complete, confirmed, current, and supported by an App-owned
 attachment capability.
 
-When the user wants to interactively create or refine that Project Work
-document, call the bundled `granoflow_project_definition_skill`. It owns the
-step-by-step and vague-request interview modes plus prototype, data-model, and
-workflow artifact routing. This Agent Workflow continues to own task lifecycle,
-waiting, Delivery, completion, and context boundaries.
+When the user wants to initialize or define a project (for example
+`Initialize this project` / `定义这个项目`—not `Initialize Granoflow`), call the
+bundled `granoflow_project_definition_skill`. It owns three steps: Project Work
+intake, Design Baseline with Design Tokens, and landscape/portrait App Shell,
+plus data-model and workflow artifact routing. Confirmed baseline is the
+authority for later UI work under contract fidelity (契约级一致). This Agent
+Workflow continues to own task lifecycle, waiting, Delivery, completion, and
+context boundaries.
 
 High-level contract:
 
@@ -421,10 +424,13 @@ High-level contract:
 6. Use `granoflow_milestone_context_archive` to preview archive closure before
    any write. The preview must include both final milestone state and parent
    project description update.
-7. If YAML content conflicts with project facts, project descriptions, long-term
-   rules, or public wording, return a proposal/conflict report instead of
-   silently overwriting the rules or wording. Low-risk factual snapshot deltas
-   may be reconciled automatically.
+7. Enforce `project-context-attachments.md` Hard Gate before software edits:
+   compare the planned change to `project_snapshot.yaml` (status quo) and
+   `project_rules.yaml` (boundaries). Interactive conflicts require user
+   confirmation. Unattended conflicts require an AI choice of `revise_code` or
+   `revise_context_yaml` with an **explicit emitted decision notice**. Never
+   silently overwrite rules/wording or skip the check
+   (`project_context_check_missing` / `project_context_decision_not_emitted`).
 8. If MCP is unavailable, do not block unrelated user work. Report that context
    upkeep was skipped or blocked.
 9. Treat Project Work as living context. At task completion, milestone review,
@@ -573,6 +579,10 @@ triggers accepted inside the skill, not public README or directory copy.
 Read `references/task-work-document-workflow.md`, its template, and
 `references/knowledge-distillation-workflow.md` before applying this branch.
 Read legacy Analysis/Plan references only when resolving historical attachments.
+Any task that changes UI must follow the UI Change Prototype Mandate: high-
+fidelity `ui_prototype` required (`prototype_requirement: required`),
+`derivedFrom` the project Design Baseline when present, contract fidelity, and
+no Readiness/execution until the prototype is visually confirmed and read back.
 
 High-level contract:
 
@@ -624,10 +634,21 @@ High-level contract:
    `post_completion_revision` slot; later edits never create another slot.
 9. Wait for a separate instruction such as `实施这个任务文档` before execution,
    even when `planning_status=not_required`.
-10. On every full rewrite and before Delivery, audit structured Task Work
+10. For software tasks that edit code: enforce
+    `project-context-attachments.md` Hard Gate (snapshot + rules conflict
+    check) and `software-structural-budget.md` Hard Gate—Readiness needs
+    `structural_forecast_status: present_in_plan`; before the first edit show
+    the forecast and stamp `notice_emitted`; Delivery needs `reconciled` and
+    `acceptance_report`. Fail closed with `project_context_*`,
+    `structural_forecast_missing`, `structural_forecast_not_shown`,
+    `structural_forecast_unreconciled`, or `acceptance_report_missing` instead
+    of skipping. Also apply Task Integration Test Policy: judge unit-test
+    sufficiency; add at most 2 integration tests only when insufficient; never
+    execute those tests (manual run).
+11. On every full rewrite and before Delivery, audit structured Task Work
     references. Keep only adopted sources still used by the current document;
     preserve applied/validated/contradicted Knowledge Usage history.
-11. Preserve existing authorization, waiting, node, Delivery, evidence, and
+12. Preserve existing authorization, waiting, node, Delivery, evidence, and
     readback boundaries.
 
 Success criteria:

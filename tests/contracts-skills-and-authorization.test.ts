@@ -28,13 +28,16 @@ describe("contracts-skills-and-authorization", () => {
 
     expect(routing).toContain("invocation_mode: model_allowed | user_only | unknown");
     expect(routing).toContain("phase: analysis | planning | execution | delivery | review");
+    expect(routing).toContain("necessity: required_capability | preferred_method | explicit_only");
+    expect(routing).toContain("missing_behavior: wait | native_fallback | skip_nonblocking");
+    expect(routing).toContain("authorization_effect: none");
     expect(routing).toContain("disable-model-invocation: true");
     expect(routing).toContain("declined");
     expect(routing).toContain("install_offered");
     expect(routing).toContain("pending_user_decision");
     expect(routing).toContain("model_fallback");
     expect(routing).toContain("capability_pack_drift");
-    expect(routing).toMatch(/Do not reopen item-by-item installation choices/i);
+    expect(routing).toMatch(/Do not reopen\s+item-by-item installation choices/i);
     expect(routing).toMatch(/model_allowed[\s\S]*silently/i);
     expect(routing).toMatch(/rediscover[\s\S]*reload/i);
     expect(routing).toMatch(/grill-me[\s\S]*user_only/i);
@@ -43,6 +46,9 @@ describe("contracts-skills-and-authorization", () => {
     expect(routing).toMatch(/Do not guess\s+an installation command/);
     expect(routing).toContain("Project and Granoflow rules take precedence");
     expect(routing).toMatch(/does not\s+authorize implementation/);
+    expect(routing).toMatch(/preferred_method[\s\S]*does not[\s\S]*waiting/i);
+    expect(routing).toMatch(/explicit_only[\s\S]*never auto-discovered/i);
+    expect(routing).toMatch(/全仓 commit push[\s\S]*instruction[\s\S]*authorization/i);
     expect(routing).not.toContain("Do not pause that fallback");
   });
 
@@ -74,7 +80,7 @@ describe("contracts-skills-and-authorization", () => {
     expect(combined).toMatch(/tag[\s\S]*(?:not|never)[\s\S]*authorization/i);
   });
 
-  it("offers relevant Grill helpers once and waits before honest fallback", () => {
+  it("waits only for required helpers and keeps optional helpers nonblocking", () => {
     const routing = reference("external-skill-routing.md");
     const workflow = reference("task-work-document-workflow.md");
     const template = reference("task-work-document-template.md");
@@ -85,8 +91,9 @@ describe("contracts-skills-and-authorization", () => {
     expect(template).toContain("install_offered");
     expect(template).toContain("pending_user_decision");
     expect(workflow).toMatch(/model_allowed[\s\S]*grill-finalizer/);
-    expect(workflow).toMatch(/pending_user_decision[\s\S]*(?:wait|waiting)/i);
-    expect(workflow).toMatch(/declined[\s\S]*model_fallback/);
+    expect(workflow).toMatch(/required_capability[\s\S]*pending_user_decision[\s\S]*waiting/i);
+    expect(workflow).toMatch(/preferred_method[\s\S]*native_fallback[\s\S]*continue/i);
+    expect(workflow).toMatch(/preferred_method[\s\S]*native_fallback[\s\S]*continue/i);
     expect(active).toContain("disable-model-invocation: true");
     expect(active).toMatch(/user[_ -]only/i);
     expect(active).toMatch(/not (?:install|invoke)[\s\S]*(?:entire|whole) (?:family|series)/i);
@@ -96,7 +103,7 @@ describe("contracts-skills-and-authorization", () => {
     );
     expect(active).not.toContain("immediately use bundled Grill");
     expect(active).not.toContain("falls back immediately");
-    expect(active).not.toContain("complete bundled Grill");
+    expect(active).not.toContain("immediately use bundled Grill");
   });
 
   it("records capability decisions only when Task Work triggers Skill routing", () => {

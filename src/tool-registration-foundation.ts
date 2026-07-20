@@ -17,8 +17,12 @@ type FoundationDependencies = {
   readDelegatedAuthorizationSkill: SkillReader;
   readTaskOrchestratorSkill: SkillReader;
   readMilestoneWorkflowSkill: SkillReader;
+  readMilestoneCoordinationSkill: SkillReader;
+  readTaskAuthoringSkill: SkillReader;
+  readPortfolioOrchestratorSkill: SkillReader;
   readPersistentMilestoneRunnerSkill: SkillReader;
   readProjectDefinitionSkill: SkillReader;
+  readIntegrationTestCampaignSkill: SkillReader;
   bundledSkillResources: BundledSkillResources;
   apiTool: (options: ApiRequestOptions) => Promise<ToolResult>;
   getSetupStatus: () => Promise<unknown>;
@@ -140,10 +144,31 @@ export function registerAuthorizationAndProjectSkillTools(
   );
   read(
     "granoflow_milestone_workflow_skill",
-    "Read the bundled Granoflow Milestone Workflow skill. Use it when one delegated outcome spans multiple child tasks and needs a stable milestone charter, evolving task portfolio, dependency and handoff coordination, bounded authorization, replanning, cross-task integration evidence, and milestone-level acceptance before closure. Child implementation remains owned by Task Work.",
+    "Read the bundled Granoflow Milestone Workflow skill. Requires complete confirmed Project Work; frontend projects also require confirmed Design Baseline with App Shell. Creates milestones singly or in batch (full portfolio when empty; amend when gaps). Does not author tasks or run charter/execution—hand off to task-authoring, portfolio-orchestrator, or milestone-coordination.",
     "skills/granoflow-milestone-workflow/SKILL.md",
     deps.readMilestoneWorkflowSkill,
     "granoflow-milestone-workflow",
+  );
+  read(
+    "granoflow_milestone_coordination_skill",
+    "Read the bundled Granoflow Milestone Coordination skill. Charter, coordinate, integrate, and close one active milestone after milestone and task entities exist. Does not batch-create milestones or author task titles/descriptions.",
+    "skills/granoflow-milestone-coordination/SKILL.md",
+    deps.readMilestoneCoordinationSkill,
+    "granoflow-milestone-coordination",
+  );
+  read(
+    "granoflow_task_authoring_skill",
+    "Read the bundled Granoflow Task Authoring skill. Create tasks via skeleton batches and create_one loops (full description batch size 1) with task-authoring-quality-contract. Does not run Analysis, Plan, or execution.",
+    "skills/granoflow-task-authoring/SKILL.md",
+    deps.readTaskAuthoringSkill,
+    "granoflow-task-authoring",
+  );
+  read(
+    "granoflow_portfolio_orchestrator_skill",
+    "Read the bundled Granoflow Portfolio Orchestrator skill. After Project Definition, create all milestones then quality-author each milestone's tasks until Portfolio Ready. Orchestrates milestone-workflow and task-authoring; does not execute child work.",
+    "skills/granoflow-portfolio-orchestrator/SKILL.md",
+    deps.readPortfolioOrchestratorSkill,
+    "granoflow-portfolio-orchestrator",
   );
   read(
     "granoflow_persistent_milestone_runner_skill",
@@ -154,10 +179,17 @@ export function registerAuthorizationAndProjectSkillTools(
   );
   read(
     "granoflow_project_definition_skill",
-    "Read the bundled Granoflow Project Definition skill. Use it to build or refine one Project Work YAML step by step or from a vague request, then gate manual and automatic project actions through App-owned readiness and artifact readback.",
+    "Read the bundled Granoflow Project Definition skill. Activate with phrases such as Initialize this project, Define this project, 初始化这个项目, or 定义这个项目—not Initialize Granoflow. Runs three steps: Project Work intake (stack capability + skill routing), Design Baseline with Design Tokens, and landscape/portrait App Shell under contract fidelity; then hands off to portfolio-orchestrator.",
     "skills/granoflow-project-definition/SKILL.md",
     deps.readProjectDefinitionSkill,
     "granoflow-project-definition",
+  );
+  read(
+    "granoflow_integration_test_campaign_skill",
+    "Read the bundled Granoflow Integration Test Campaign skill. Call when the user wants an unattended integration-test campaign: one milestone per round, run the full suite first, cluster failures into one bug task each, analyze and finish those tasks, then open the next round until all tests pass. Not for task-local write-only integration tests or copy-only work.",
+    "skills/granoflow-integration-test-campaign/SKILL.md",
+    deps.readIntegrationTestCampaignSkill,
+    "granoflow-integration-test-campaign",
   );
 }
 

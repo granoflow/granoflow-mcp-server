@@ -63,19 +63,25 @@ describe("resources-manifests", () => {
     ]);
   });
 
-  it("discovers milestone workflow contract references", async () => {
+  it("discovers milestone workflow create and coordination references", async () => {
     const resources = createBundledSkillResources(new URL("../", import.meta.url));
-    const manifest = await resources.listReferences("granoflow-milestone-workflow");
-
-    expect(manifest.map((item) => item.referenceId)).toEqual([
+    const createManifest = await resources.listReferences("granoflow-milestone-workflow");
+    expect(createManifest.map((item) => item.referenceId)).toEqual([
+      "milestone-portfolio-creation",
+    ]);
+    const coordManifest = await resources.listReferences("granoflow-milestone-coordination");
+    expect(coordManifest.map((item) => item.referenceId)).toEqual([
       "milestone-collaboration-workflow",
       "milestone-work-document-template",
     ]);
     await expect(
-      resources.readReference("granoflow-milestone-workflow", "milestone-work-document-template"),
+      resources.readReference(
+        "granoflow-milestone-coordination",
+        "milestone-work-document-template",
+      ),
     ).resolves.toMatchObject({
-      skillId: "granoflow-milestone-workflow",
-      path: "skills/granoflow-milestone-workflow/references/milestone-work-document-template.md",
+      skillId: "granoflow-milestone-coordination",
+      path: "skills/granoflow-milestone-coordination/references/milestone-work-document-template.md",
     });
   });
 

@@ -160,6 +160,161 @@ Prototype-only scenario controls and reviewer explanations outside the
 simulated product UI; internal filtering, confidence, quantity, architecture,
 test, and acceptance language must not become product copy.
 
+### UI Change Prototype Mandate
+
+Any task that changes UI—layout, navigation/shell, visual treatment, interaction
+chrome, or user-visible screens—**must** produce a high-fidelity HTML prototype
+for that authorized delta before Analysis may be confirmed and before
+execution Readiness may pass.
+
+Detection (any one is enough):
+
+- `UI / Manual Acceptance` section is triggered;
+- Scope / Outcome / Evidence names UI screens, components, or visual change;
+- the task description or title states a UI/frontend change;
+- Project Work marks the project as including frontend and the task touches a
+  user-facing surface.
+
+Hard rules:
+
+1. Set `prototype_requirement: required`. Do **not** use `not_required` or keep
+   `conditional` unresolved after Analysis when a UI change is present.
+2. Read the confirmed project Design Baseline
+   (`granoflow_project_design_baseline_read` with exact ids/SHA). Accept against
+   contract fidelity (契约级一致). Declare `derivedFrom` that exact package.
+3. Author the HTML prototype, preview it, obtain visual confirmation for that
+   exact package hash, upload to the task `ui_prototype` slot with
+   `visualConfirmed=true`, and read back SHA/manifest evidence.
+4. Prefer completing the prototype **before Analysis confirmation** so the user
+   can see the change before implementation. At latest, the confirmed
+   `ui_prototype` must exist before `readiness_grill_status: passed` and before
+   any non-dry-run execution.
+5. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
+   `ui_prototype_required` / block Readiness. Do not implement UI first and
+   "backfill" a prototype after code.
+
+### Task Integration Test Policy (manual run)
+
+For software tasks that change code, record an explicit unit-test sufficiency
+judgment before adding any integration test. This policy is **task-local**
+(only cover this task's Outcome) and defaults to **not** adding integration
+tests. To **run** a full suite unattended until green, use
+`granoflow-integration-test-campaign` instead—do not mix that campaign into an
+ordinary feature task.
+
+**Copy-only exception (hard):** If Scope is copy-only / 文字验证 (see
+`user-visible-copy-boundary.md`), set `copy_change_only: true` and skip this
+entire policy—**no** unit, integration, or other automated tests. Violations
+fail closed as `copy_change_tests_forbidden`.
+
+Hard rules (non-copy software tasks):
+
+1. **Judge unit tests first.** Set `unit_test_sufficiency` to `sufficient` or
+   `insufficient` with a one-sentence reason (what boundary unit tests can or
+   cannot prove for this Outcome). Leaving it `unassessed` on a code-changing
+   task fails closed as `unit_test_sufficiency_unassessed`.
+2. **Prefer unit tests.** When `sufficient`, set
+   `integration_test_requirement: not_required` and do **not** add integration
+   tests. Adding them anyway fails closed as
+   `integration_test_added_without_insufficiency`.
+3. **Add only when unit tests are insufficient.** Then set
+   `integration_test_requirement: required` and add integration tests that cover
+   only this task's gap.
+4. **Cap at two.** At most **2** new integration tests (cases or focused test
+   files/entrypoints counted as the Plan defines, max 2) per task. If more
+   gaps exist, pick the two highest-importance ones and list the rest as
+   residuals / follow-ups. Exceeding two fails closed as
+   `integration_test_cap_exceeded`.
+5. **Do not execute.** After adding, leave
+   `integration_test_execution: not_run_manual_only`. The Agent must not run
+   the new integration tests (no `flutter test integration_test`, Playwright
+   e2e, device farms, etc. for those cases). Humans run them later. Agent-run
+   fails closed as `integration_test_executed_by_agent`. Unit/lint/type/build
+   gates still run as usual.
+6. **Device is user-chosen.** When any integration test is added (or
+   `integration_test_requirement: required`), the Agent must recommend
+   **the user's local machine** (`integration_test_device_recommendation:
+   local_machine`) and ask the user to confirm or pick another target
+   (simulator/emulator, physical device, remote farm, etc.). Record the
+   chosen value in `integration_test_device` (`local_machine` |
+   `simulator_or_emulator` | `physical_device` | `remote_farm` |
+   `other:<label>`). Do not invent a device, silently assume CI, or run on
+   a host-chosen target. Leaving device `unselected` while tests were added
+   fails closed as `integration_test_device_unselected`.
+7. Delivery and acceptance must show the sufficiency judgment, count (0–2),
+   paths of any added tests, selected device, and
+   `awaiting_manual_execution`—never claim integration runtime success from
+   unrun tests.
+
+### Data Attachment Sync Mandate
+
+Read Project Work `engineering.data_and_migrations` for
+`data_model_attachment`, `json_contracts_attachment`, and
+`constants_catalog_attachment` (exact file names).
+
+When a task changes any of the following, it **must** update the matching
+**project** attachment in the same task, refresh artifact registry SHA/readback,
+and keep code consistent with that attachment:
+
+| Change | Project attachment |
+| ------ | ------------------ |
+| Business DB / table schema | `data_model` (`data-model.md` or registered name) |
+| JSON / structured file shape or semantics | `json_contracts` (default `data-contracts.yaml`) |
+| Shared constant names, values/types, or owners | `constants_catalog` (default `constants-catalog.yaml`) |
+
+Fail closed with `data_artifact_stale` when code ships without the attachment
+update, or when attachment content no longer matches the implemented surface.
+Do not embed full schemas, JSON shapes, or constant catalogs into Project Work
+body YAML. If Project Work declared `data_persistence: none`, a task must not
+introduce a business database without reopening Project Work and replacing
+`no_database_declaration`.
+
+#### Analysis-time schema challenge (required)
+
+Project Definition Step 1 only locks **data shape** (persistence mode +
+attachment registry). Field-level table design, JSON shapes, and constant
+catalogs are expected to be challenged as tasks learn more.
+
+During **Analysis** (before `analysis_status=confirmed`), when the task
+touches or depends on DB / JSON contracts / shared constants:
+
+1. Read the current project data attachment(s) named in Project Work.
+2. If the registered schema, JSON shape, or constant set is **unreasonable**
+   for the confirmed Outcome—wrong grain, missing relations, unsafe
+   nullability, unworkable migration path, contradictory invariants, or
+   constants that cannot support the work—**raise it explicitly** in Analysis
+   (Context / Unknowns, Alternatives / Decision, and/or Database / Migration).
+   Do not silently inherit a bad model into Plan or code.
+3. Recommend a concrete revision (tables/fields/invariants/JSON shape/constant
+   changes) and treat acceptance of that revision as part of Analysis
+   confirmation. The later Plan/Delivery **must** update the same project
+   attachment(s); shipping code against an unchallenged-but-known-bad schema
+   fails closed as `data_artifact_stale` once the attachment is corrected, or
+   as an Analysis Grill / Readiness finding if the issue was ignored.
+4. If the current attachment is adequate, say so briefly (no fabricated
+   redesign). If `data_persistence: none` and the task still needs a business
+   DB, reopen Project Work first—do not invent tables only inside the task.
+
+#### Analysis-time dependency challenge (required)
+
+Capability-critical libraries are selected in Project Definition Step 1
+(`engineering.dependencies.approved`). During **Analysis**, when the task
+depends on or would introduce a third-party library for a product capability:
+
+1. Read `dependencies.approved` (and admission rules) from Project Work.
+2. If the selected package is **unreasonable**—abandoned, missing required
+   platform support, license conflict, cannot meet Outcome performance/size,
+   or a clearly better maintained alternative exists for the same
+   capability—**raise it explicitly** and recommend a replacement or version
+   policy change. Do not silently swap libraries in code.
+3. Treat acceptance of the dependency revision as part of Analysis
+   confirmation; update Project Work `dependencies.approved` in the same
+   task before Delivery. Introducing a new capability-critical library that
+   was never selected fails closed as `capability_dependency_unselected`
+   until Project Work is updated.
+4. Non-critical helper packages may be proposed in Plan without reopening
+   Project Work, subject to `admission_rules`.
+
 Grill is an authoring gate, not a reader-facing section trigger. Never render
 `Grill Review`, `Analysis Grill`, `Execution Readiness Grill`, a reviewer
 ledger, raw findings, or provider/tool transcripts in Task Work. Apply every
@@ -208,7 +363,10 @@ user authorization sets `analysis_status=confirmed`; a qualifying current
 unattended instruction is explicit authorization, while Agent self-confirmation
 is not. Then run the mandatory MCP-bundled Analysis Grill. It checks source discipline, decision-changing
 unknowns, Outcome/Evidence/Scope/Risk/Decision consistency, concrete examples,
-false-success paths, and whether the Planning recommendation is justified. Set
+false-success paths, whether Planning recommendation is justified, and—when the
+task depends on DB / JSON / constants or capability-critical libraries—whether
+unreasonable project data attachments or dependency selections were challenged
+and a revision path was decided (not silently deferred into execution). Set
 `analysis_grill_status=passed` only when all material findings are resolved.
 Resolve findings by revising the relevant Analysis prose and acceptance
 contracts; do not append a Grill section or finding ledger. Material revisions
@@ -300,8 +458,11 @@ that change; do not use a passing test suite, implementation convenience, or
 adjacent cleanup as implicit authorization.
 
 For software work, read `software-structural-budget.md` and add its complete
-`Structural Change Forecast` before Plan confirmation. Keep uncertain symbols
-labeled `expected` instead of inventing facts.
+`Structural Change Forecast` before Plan confirmation (also required for light
+`planning_status: not_required` software edits). Set
+`structural_forecast_status: present_in_plan`. Readiness Grill fails closed as
+`structural_forecast_missing` when the section is absent or incomplete. Keep
+uncertain symbols labeled `expected` instead of inventing facts.
 
 ### Task Work Markdown Quality
 
@@ -423,20 +584,34 @@ flow. Runtime progress never creates or overwrites a Work Document.
 
 ## Prototype Execution Inputs
 
-During Analysis, decide whether implementation needs a prototype and record
-`prototype_requirement`, `prototype_condition_result`,
-`prototype_input_status`, and `prototype_inputs` in the stable header. A
-required input must identify the source task or project, prototype, exact
-version and ordinal, package attachment, package SHA-256, visual confirmation,
-and intended use. Never resolve it by filename, current, or latest at export
-time.
+Apply the **UI Change Prototype Mandate** above whenever the task changes UI.
+Record `prototype_requirement`, `prototype_condition_result`,
+`prototype_input_status`, and `prototype_inputs` in the stable header.
+
+- If the task changes UI: `prototype_requirement` **must** be `required`,
+  `prototype_condition_result` must be `required`, and
+  `prototype_input_status` must reach `ready` (exact confirmed package) before
+  Readiness passes.
+- `not_required` is allowed only when the task explicitly has **no** UI change
+  (stated in Task Work). `conditional` may exist only while Detection is still
+  unresolved during early draft Analysis; it cannot survive Analysis
+  confirmation when Detection is positive.
+- A required input must identify the source task or project, prototype, exact
+  version and ordinal, package attachment, package SHA-256, visual confirmation,
+  `derivedFrom` baseline ids/SHA when a project Design Baseline exists, and
+  intended use. Never resolve by filename, current, or latest at export time.
+- Record `【增强实现】` / `implementation_notes` where HTML is schematic and the
+  stack will use richer widgets.
 
 Before Readiness passes, call `granoflow_task_export` and treat the App-owned
 `executionAdmission.allowed` value as authoritative. Missing, ambiguous,
 deleted, stale, link-mismatched, unconfirmed, or hash-mismatched references
-block execution. When a package changes, add the new attachment, rewrite every
-affected exact reference and relevant prose, upload and hash-read back the new
-Task Work, then remove the old attachment. Do not model this as overwrite.
+block execution. For UI-changing tasks, also block when `ui_prototype` is
+missing, unconfirmed, or not derived from the confirmed Design Baseline
+(document-level gate: return `ui_prototype_required`). When a package changes,
+add the new attachment, rewrite every affected exact reference and relevant
+prose, upload and hash-read back the new Task Work, then remove the old
+attachment. Do not model this as overwrite.
 
 When admitted package bytes are needed, request `assetMode=file` with a TTL no
 greater than 600 seconds. Consume only the paths returned under
@@ -495,14 +670,15 @@ An available `model_allowed` `grill-finalizer` may add enhanced evidence before
 a bundled gate concludes, but it never replaces the bundled checklist or owns
 the phase result. If a materially relevant optional helper is missing, follow
 `external-skill-routing.md`; do not mark a bundled gate passed merely because
-installation is waiting, declined, or failed. `install_offered +
-pending_user_decision` remains waiting and does not become an implicit result.
-On `declined`, installation/discovery/reload failure, or invocation failure,
-record the specific result and `model_fallback`, then continue the mandatory
-bundled checklist without claiming external evidence. A `user_only` helper such
-as `grill-me` with `disable-model-invocation: true` may only be suggested for
-user invocation. Select only relevant gstack/provider reviewers; do not install
-or invoke the entire family.
+installation is waiting, declined, or failed. Only `required_capability` may use
+`install_offered + pending_user_decision`; that state remains waiting and does
+not become an implicit result. For `preferred_method` or `explicit_only`, do
+not offer installation during unattended execution: record the specific
+missing or failure result, use `native_fallback` or `skip_nonblocking`, and
+continue the mandatory bundled checklist without claiming external evidence. A
+`user_only` helper such as `grill-me` with `disable-model-invocation: true` is
+considered only after explicit user invocation. Select only relevant
+gstack/provider reviewers; do not install or invoke the entire family.
 
 Installation authorization does not authorize Analysis/Planning confirmation,
 implementation, commit, push, publishing, or another gated action. Suggesting
@@ -539,15 +715,44 @@ Planning, document upload, and waiting for approval do not count as execution
 and must not write an execution start time. Human manual execution retains the
 normal `pending -> doing` transition and App-recorded start time.
 
-For software execution, show that forecast immediately before the first edit as
-a non-confirming notice; unattended mode then continues. Reconcile every new
-touchpoint through the reference before editing it, and stop on scope drift.
-The notice is a required write-precondition, not merely delivery metadata:
-the forecast must include a responsibility seam for each planned split and
-must explicitly reject mechanical line splitting, random helper extraction,
-wrapper-only indirection, and moving code without reducing responsibility.
-If the forecast cannot explain the intended responsibility of a file or symbol,
-do not enter `[dev]`; revise the Plan first.
+For software execution, enforce **both** Hard Gates before the first edit:
+
+### A. Project context (`project-context-attachments.md`)
+
+1. Ensure `project_snapshot.yaml` and `project_rules.yaml`, read bounded
+   relevant sections, compare the planned change to status quo and boundaries.
+2. No conflict → `project_context_check_status: checked_no_conflict`.
+3. Conflict + **interactive** → conflict report and user confirmation
+   (`project_context_conflict_unconfirmed` until confirmed).
+4. Conflict + **unattended** → choose `revise_code` or `revise_context_yaml`,
+   **emit an explicit user-visible decision notice** (not a question), set
+   `project_context_decision_emitted: true`, then apply only that path
+   (`project_context_decision_not_emitted` if the notice was skipped).
+5. Refuse edits while status is `missing` or `conflict_pending`
+   (`project_context_check_missing`).
+
+### B. Structural forecast (`software-structural-budget.md`)
+
+1. Refuse the first code/test/build edit while
+   `structural_forecast_status` is not `notice_emitted` (or `reconciled`).
+   Return `structural_forecast_not_shown`—do not partially edit "just this one
+   file".
+2. In the same turn as the first edit authorization, show the Task Work
+   `Structural Change Forecast` as a non-confirming notice, then stamp
+   `structural_forecast_status: notice_emitted` and
+   `structural_forecast_notice_emitted_at` on the working Task Work copy (upload
+   / readback when the host requires document freshness before edits).
+3. Unattended / delegated / `gf做` still shows the notice and stamps the status;
+   it must not create an artificial confirmation node and must not skip the
+   stamp.
+4. Reconcile every new touchpoint through the reference before editing it, and
+   stop on scope drift.
+5. The forecast must include a responsibility seam for each planned split and
+   must explicitly reject mechanical line splitting, random helper extraction,
+   wrapper-only indirection, and moving code without reducing responsibility.
+   If the forecast cannot explain the intended responsibility of a file or
+   symbol, do not enter `[dev]`; revise the Plan first
+   (`structural_forecast_missing` until fixed).
 
 Legacy `实施这个 Plan` may resolve a legacy confirmed Plan or an unambiguous
 active Work Document. Ambiguous, draft, superseded, missing, invalid, or

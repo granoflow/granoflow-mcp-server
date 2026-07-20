@@ -9,6 +9,10 @@ acceptance evidence.
 The inputs are evidence, not forms. Never require the user to rewrite them into
 the headings or field order used by Granoflow.
 
+During Project Definition (`granoflow-project-definition`), intake feeds Step 1
+Project Work before Design Baseline or App Shell work begins. This is not the
+`Initialize Granoflow` first-run import flow.
+
 ## Input Expectations
 
 For an individual vibecoding developer, a product document and user stories are

@@ -290,21 +290,55 @@ engineering:
     exceptions: []
 
   dependencies:
+    # Step 1 (after stack): select every capability-critical third-party library
+    # before Project Work confirm. A capability-critical library is one without
+    # which a primary product path cannot ship (example: EPUB parse/render for
+    # an EPUB reader; crypto for an encrypted-book app). Framework choice alone
+    # (e.g. Flutter) is not enough—name the concrete packages.
+    # Non-critical helpers may be added later in tasks; do not leave critical
+    # capability libraries as "decide during implementation".
+    # Missing required selections => capability_dependency_unselected.
     approved:
       - name: null
+        # Stable capability id, e.g. epub_rendering | local_encryption | embedded_db
+        capability: null
+        # true for product-path-critical libraries selected in Project Definition
+        capability_critical: true
         purpose: null
+        # Packages considered and rejected (name + one-line reason)
+        alternatives_considered: []
+        selection_rationale: null
         version_policy: null
         license: null
         security_policy: null
         size_or_runtime_cost: null
         owner: null
+    # Explicit empty list only when the product truly has no third-party
+    # capability libraries beyond the stack itself—and state why in
+    # no_capability_dependency_declaration.
+    no_capability_dependency_declaration: null
     admission_rules: []
     prohibited_sources: []
     upgrade_policy: null
     deprecation_policy: null
 
   data_and_migrations:
+    # Set during Project Definition Step 1. none => no business DB / no table
+    # design; must set no_database_declaration (explicit prose). Do NOT embed
+    # full field schemas, JSON shapes, or constant catalogs in this YAML—
+    # those live in project attachments named below / in artifacts.*.
+    # data_persistence: none | local_files | embedded_db | server_db | mixed
+    data_persistence: null
+    no_database_declaration: null
+    # When data_persistence is none, use a clear statement such as:
+    # "本项目无业务数据库，无需设计表结构。" / "This project has no business
+    # database; no table schema design is required."
+    # Attachment file names (project-owned). null | not_applicable | <name>
+    data_model_attachment: null
+    json_contracts_attachment: null
+    constants_catalog_attachment: null
     authoritative_sources: []
+    # Index-only entity names/owners if useful—never full column dumps here.
     models: []
     storage_boundaries: []
     sync_and_conflict_policy: null
@@ -316,10 +350,34 @@ engineering:
     old_data_compatibility: null
     time_and_timezone_policy: null
     idempotency_policy: null
+    # Code that changes DB / JSON shapes / shared constants MUST update the
+    # matching project attachment in the same task before Delivery. Mismatch
+    # fails closed as data_artifact_stale.
+    code_must_match_data_attachments: true
 
   theme_and_design_system:
     owner: null
+    # Paths to companion Design Tokens (DTCG-oriented JSON or equivalent).
+    # Do not embed the full token graph in this YAML.
     token_sources: []
+    # Documented fields below (stack_capability_profile, acceptance_fidelity,
+    # implementation_notes) are preserved by unknown_fields:preserve when the
+    # App schema is older. Prefer writing them during Project Definition.
+    # stack_capability_profile example:
+    #   allowed: [material_navigation_rail, cupertino_sheet]
+    #   high_cost: [custom_shader_blur]
+    #   forbidden: [web_only_css_grid_as_primary_shell]
+    # Lock stack_capability_profile before authoring Design Baseline HTML.
+    stack_capability_profile:
+      allowed: []
+      high_cost: []
+      forbidden: []
+    # Acceptance bar for later prototypes/code vs confirmed Design Baseline.
+    # Must: Shell IA, tokens, main-path regions. Not pixel/motion 1:1.
+    acceptance_fidelity: contract_fidelity
+    # Schematic HTML that the target stack will improve with richer widgets.
+    # Each note should name the intended component and Must invariants.
+    implementation_notes: []
     color_policy: null
     typography_policy: null
     spacing_policy: null
@@ -332,7 +390,7 @@ engineering:
     page_local_override_policy: prohibited_by_default
     design_profile:
       # Stable project-level lock. The host proposes one coherent system; the
-      # user confirms the complete direction once instead of selecting Skills.
+      # user confirms Baseline+Shell once instead of selecting Skills.
       id: null
       version: 1
       # proposed | locked | reopened
@@ -361,9 +419,18 @@ engineering:
     skill_routing:
       profile_id: granoflow_product_design_v1
       profile_version: 1
+      # capabilities[].phase: baseline | shell | later_ui (plus task phases
+      # when reused). Lock in Project Definition Step 1; invoke by phase in
+      # Steps 2–3. Never present a style-Skill menu to the user.
+      # Example capability entry:
+      #   - skill: apple-design
+      #     phase: [baseline, shell]
+      #     invocation_mode: model_allowed
       capabilities: []
     prototype_template:
-      # App-owned exact reference. Never resolve "latest" in the host.
+      # App-owned Design Baseline exact reference. Never resolve "latest".
+      # Package must include Design Tokens refs + landscape/portrait App Shell.
+      # Authority for later milestone/task prototypes and code acceptance.
       prototype_id: null
       version_id: null
       package_sha256: null
@@ -373,7 +440,8 @@ engineering:
       entry: null
       link_entity_type: project
     visual_confirmation:
-      # One confirmation covers the coherent proposal and this exact package.
+      # One confirmation covers Baseline+Shell (and tokens) for this exact
+      # package hash. Unattended default: auto_accept_recommendation.
       status: pending
       proposal_sha256: null
       template_package_sha256: null
@@ -602,11 +670,20 @@ automation:
   completion_evidence: []
 
 milestone_strategy:
+  # Owned with granoflow-portfolio-orchestrator / granoflow-milestone-workflow
+  # after Project Definition Done. Empty App portfolio: plan ALL milestones in
+  # one pass, persist this section and acceptance_coverage, then create every
+  # milestone entity; task authoring is granoflow-task-authoring (create_one).
+  # Existing portfolio: amend only for real coverage gaps—do not rebuild.
+  # Frontend projects also require confirmed Design Baseline + App Shell before
+  # any milestone planning (hard gate).
   outcome_based_decomposition: true
   creation_rules: []
   split_merge_cancel_rules: []
   sequencing_rules: []
   parallelism_rules: []
+  # How many milestones may be active for charter/execution at once.
+  # Entities for later milestones may still be created while inactive.
   active_milestone_limit: 1
   first_milestone_candidate: null
   first_milestone_analysis_inputs: []
@@ -710,12 +787,13 @@ artifacts:
   # - entity_id: owning Granoflow entity
   # - logical_slot: project_work | milestone_work | task_work_execution |
   #     task_work_post_completion_revision | task_delivery | ui_prototype |
-  #     data_model | workflows
+  #     data_model | json_contracts | constants_catalog | workflows
   # - attachment_id: App-owned current attachment id
   # - content_sha256: App-owned current content hash
   # - status: partial | current | confirmed | stale | conflicting
   # - source_decision: user-confirmed decision or inspected source reference
   # - related_acceptance_ids: acceptance.conditions ids
+  # - file_name: must match data_and_migrations.*_attachment when applicable
   ui_prototype:
     suggestion_trigger: primary_screens_theme_menu_and_critical_states_are_clear
     preview_surface: host_sidebar_or_browser
@@ -731,9 +809,28 @@ artifacts:
   data_model:
     owner_entity_type: project
     logical_slot: data_model
+    # Default name; Project Work data_and_migrations.data_model_attachment
+    # must match when a business database exists. Omit attachment when
+    # data_persistence is none (use no_database_declaration instead).
     file_name: data-model.md
     markdown_two_dimensional_tables_required: true
     one_current_attachment: true
+    required_when_data_persistence_has_database: true
+  json_contracts:
+    owner_entity_type: project
+    logical_slot: json_contracts
+    # YAML (or Markdown embedding YAML) describing JSON / structured file shapes.
+    # Not embedded in Project Work body YAML.
+    file_name: data-contracts.yaml
+    one_current_attachment: true
+    required_when_project_defines_json_or_structured_files: true
+  constants_catalog:
+    owner_entity_type: project
+    logical_slot: constants_catalog
+    # YAML catalog of shared constant names, values or types, owners, purpose.
+    file_name: constants-catalog.yaml
+    one_current_attachment: true
+    required_when_project_defines_shared_constants: true
   workflows:
     logical_slot: workflows
     file_name: workflows.md
@@ -748,6 +845,10 @@ artifacts:
     workflow_acceptance_must_resolve_to_acceptance_conditions: true
     implementation_claims_must_not_exceed_confirmed_artifacts: true
     stale_conflicting_or_missing_artifacts_block_automation: true
+    # Code vs data attachments: DB / JSON shapes / shared constants must match
+    # the registered project attachments. Drift => data_artifact_stale.
+    code_must_match_registered_data_attachments: true
+    data_attachment_file_names_must_match_project_work_fields: true
 
 action_requirements:
   attach_partial_project_work:

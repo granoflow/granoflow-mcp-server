@@ -1,0 +1,4 @@
+interface:
+  display_name: "Granoflow Milestone Coordination"
+  short_description: "Charter, coordinate, integrate, and close one active milestone after entities exist. Does not create the portfolio or author tasks."
+  default_prompt: "Use the bundled Granoflow Milestone Coordination skill to charter the active milestone, keep coverage and handoffs current, aggregate execute preflight after child Analysis, prove integration, and close with App readback."
