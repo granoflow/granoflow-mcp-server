@@ -189,20 +189,32 @@ Hard rules:
    before inventing new chrome/controls. Skipping reuse without rationale →
    `widget_reuse_required`. After visual confirmation, extract new/changed
    reusable widgets into the same project `widgets` slot.
-5. Author the HTML prototype, then apply the **Prototype Preview Gate** from
-   `granoflow-project-definition/project-artifact-workflows`: emit a clickable
-   preview link; **interactive** waits for visual review before confirm/upload;
-   **unattended** (explicit only) shows the link as a notice, continues, and
-   includes every link in the run-closing Prototype Link Digest.
-6. Obtain visual confirmation for that exact package hash (interactive user
-   accept, or unattended auto-accept only when explicitly unattended), upload
-   to the task `ui_prototype` slot with `visualConfirmed=true`, and read back
-   SHA/manifest evidence.
-7. Prefer completing the prototype **before Analysis confirmation** so the user
+5. Apply **Task Prototype Craft Gate And Option Set** from
+   `granoflow-project-definition/project-artifact-workflows`:
+   - Craft Gate (intent / fidelity / craft / confirm surface) must pass before
+     `visualConfirmed=true` else `task_prototype_craft_incomplete`.
+   - **Interactive:** default **two** options (`delta_match` +
+     `ai_challenger`) with **≥2** whitelist contrast axes and challenger
+     rationale; add a **third** (`industry_peer_c`) only when three industry
+     peer patterns all fit and the host cannot honestly prefer one (else
+     `prototype_option_third_unjustified`). Fail closed
+     `prototype_option_contrast_insufficient` /
+     `prototype_option_near_duplicate`. Emit all option links in one batch;
+     one wait.
+   - **Unattended (explicit only):** **one** `delta_match` only.
+6. Author the HTML option(s), then apply the **Prototype Preview Gate**:
+   interactive waits on the option batch; unattended shows the single-link
+   notice, continues, and includes every link in the run-closing Prototype
+   Link Digest.
+7. Obtain visual confirmation for the **chosen** package hash (interactive
+   user accept, or unattended auto-accept only when explicitly unattended),
+   upload to the task `ui_prototype` slot with `visualConfirmed=true`, and
+   read back SHA/manifest evidence.
+8. Prefer completing the prototype **before Analysis confirmation** so the user
    can see the change before implementation. At latest, the confirmed
    `ui_prototype` must exist before `readiness_grill_status: passed` and before
    any non-dry-run execution.
-8. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
+9. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
    `ui_prototype_required` / block Readiness. Do not implement UI first and
    "backfill" a prototype after code. Missing interactive wait returns
    `prototype_preview_review_required`. Missing unattended closing digest when

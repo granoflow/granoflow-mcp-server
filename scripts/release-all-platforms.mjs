@@ -112,13 +112,19 @@ if (!isDryRun) {
 }
 
 function checkoutOrFail(branchName) {
-  const localExists = runCapture(`git show-ref --verify --quiet refs/heads/${branchName} && echo true || echo false`) === "true";
+  const localExists =
+    runCapture(
+      `git show-ref --verify --quiet refs/heads/${branchName} && echo true || echo false`,
+    ) === "true";
   if (localExists) {
     runEcho(`git checkout ${branchName}`);
     return;
   }
 
-  const remoteExists = runCapture(`git ls-remote --exit-code --heads ${remote} ${branchName} >/dev/null 2>&1 && echo true || echo false`) === "true";
+  const remoteExists =
+    runCapture(
+      `git ls-remote --exit-code --heads ${remote} ${branchName} >/dev/null 2>&1 && echo true || echo false`,
+    ) === "true";
   assert(`${branchName} 分支不存在`, () => remoteExists);
   runEcho(`git checkout -b ${branchName} ${remote}/${branchName}`);
 }
@@ -126,7 +132,9 @@ function checkoutOrFail(branchName) {
 checkoutOrFail(sourceBranch);
 
 if (!isDryRun) {
-  runEcho(`git merge --ff-only ${remote}/${sourceBranch} 2>/dev/null || git merge --ff-only ${sourceBranch}`);
+  runEcho(
+    `git merge --ff-only ${remote}/${sourceBranch} 2>/dev/null || git merge --ff-only ${sourceBranch}`,
+  );
 }
 
 checkoutOrFail(targetBranch);
@@ -163,8 +171,12 @@ if (!isDryRun) {
 runEcho(`git checkout ${originalBranch}`);
 
 console.log("其他平台发布（手动确认）:");
-console.log("1) 官方 MCP Registry: 检查 com.granoflow/mcp-server 是否已同步为当前版本与 latest 状态。");
-console.log("2) Glama / mcp.so / mcpservers.org / Awesome MCP Servers / Smithery-MCPB: 逐一核对仓库、安装命令和描述一致性。");
+console.log(
+  "1) 官方 MCP Registry: 检查 com.granoflow/mcp-server 是否已同步为当前版本与 latest 状态。",
+);
+console.log(
+  "2) Glama / mcp.so / mcpservers.org / Awesome MCP Servers / Smithery-MCPB: 逐一核对仓库、安装命令和描述一致性。",
+);
 console.log("3) 如平台信息变更，请提交更新并保留审核状态记录后再关闭发布。");
 
 const platformUrls = {

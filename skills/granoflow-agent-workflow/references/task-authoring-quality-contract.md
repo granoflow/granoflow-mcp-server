@@ -98,14 +98,20 @@ Unlisted layout, hierarchy, copy, interaction, and visual treatment are
 protected surfaces.
 
 **Mandatory prototype:** any UI change requires a high-fidelity HTML prototype.
-Set Task Work `prototype_requirement: required`. Create and show the prototype,
-declare `derivedFrom` the confirmed Design Baseline package when the project has
-one, accept against contract fidelity (契约级一致), upload to the task's
-`ui_prototype` logical slot with visual confirmation, and read it back **before
-Analysis confirmation when possible, and always before execution Readiness /
-claiming the UI change is accepted**. Do not mark `not_required` for a UI
-change. A whole-page redesign is valid only when the task explicitly authorizes
-that whole-page surface.
+Set Task Work `prototype_requirement: required`. Apply **Task Prototype Craft
+Gate And Option Set**: interactive default dual (`delta_match` +
+`ai_challenger`) with ≥2 contrast axes (conditional industry third only when
+documented); unattended single `delta_match`; Craft Gate before
+`visualConfirmed` (`task_prototype_craft_incomplete` otherwise). Declare
+`derivedFrom` the confirmed Design Baseline package when the project has one,
+accept against contract fidelity (契约级一致), **no** random visual seed, reuse
+`widgets.yaml` when the same role exists, upload the **chosen** option to the
+task's `ui_prototype` logical slot with visual confirmation, and read it back
+**before Analysis confirmation when possible, and always before execution
+Readiness / claiming the UI change is accepted**.
+Do not mark `not_required` for a UI change.
+A whole-page redesign is valid only when the task explicitly authorizes that
+whole-page surface.
 
 When the task changes database tables or fields, keep one Markdown data-model
 artifact for that task in the `data_model` logical slot. The same file must

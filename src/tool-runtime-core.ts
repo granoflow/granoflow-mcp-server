@@ -2,7 +2,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { extname, isAbsolute, relative, resolve } from "node:path";
+import { basename, extname, isAbsolute, relative, resolve } from "node:path";
 
 import {
   maybeCreateDailyReviewSuggestion,
@@ -344,9 +344,11 @@ export async function addTaskWorkflowAttachment(input: {
   dryRun: boolean;
 }) {
   const file = validatedWorkflowMarkdownPath(input.filePath);
-  const contentSha256 = createHash("sha256").update(readFileSync(file)).digest("hex");
+  const bytes = readFileSync(file);
+  const contentSha256 = createHash("sha256").update(bytes).digest("hex");
   const body = {
-    file,
+    contentBase64: bytes.toString("base64"),
+    fileName: basename(file),
     idempotencyKey: input.idempotencyKey,
     expectedTaskUpdatedAt: input.expectedTaskUpdatedAt,
     expectedContentSha256: contentSha256,

@@ -120,6 +120,7 @@ describe("project definition bundled workflow", () => {
     expect(skill).toContain("handoff card");
     expect(skill).toContain("product_spec_coverage.status");
     expect(skill).toContain("product_spec_coverage_incomplete");
+    expect(skill).toContain("hard-constraints.md");
     expect(skill).toContain("granoflow-portfolio-orchestrator");
     expect(skill).toContain("granoflow-milestone-workflow");
     expect(skill).toContain("granoflow-task-authoring");
@@ -154,6 +155,14 @@ describe("project definition bundled workflow", () => {
     expect(artifacts).toContain("widget_catalog_required");
     expect(artifacts).toContain("task_prototype_seed_forbidden");
     expect(artifacts).toContain("widget_reuse_required");
+    expect(artifacts).toContain("Task Prototype Craft Gate And Option Set");
+    expect(artifacts).toContain("task_prototype_craft_incomplete");
+    expect(artifacts).toContain("delta_match");
+    expect(artifacts).toContain("ai_challenger");
+    expect(artifacts).toContain("industry_peer_c");
+    expect(artifacts).toContain("prototype_option_contrast_insufficient");
+    expect(artifacts).toContain("prototype_option_near_duplicate");
+    expect(artifacts).toContain("prototype_option_third_unjustified");
     expect(artifacts).toContain("prototype_template.prototype_id");
     expect(artifacts).toMatch(/Unattended[\s\S]*spec_match[\s\S]*random seed/i);
     expect(artifacts).toMatch(/task changes UI[\s\S]*mandatory/i);

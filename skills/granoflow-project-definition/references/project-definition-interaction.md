@@ -1,5 +1,10 @@
 # Project Definition Interaction
 
+Read this before interviewing or recommending Project Work values. It owns Mode
+Gate, recommendation provenance, and Step 1 decision batches. Design Spec /
+Shell / widgets / task Craft Gate live in `project-artifact-workflows.md`;
+fail-closed checklist in `hard-constraints.md`.
+
 Read the shared
 `granoflow-agent-workflow/requirement-intake-and-traceability` contract before
 extracting user source material. A product document and user stories are the

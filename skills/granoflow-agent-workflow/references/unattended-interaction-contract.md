@@ -98,9 +98,17 @@ task `ui_prototype`):
    more options (`prototype_preview_review_required` /
    `design_spec_triad_required` / `shell_triad_required` /
    `shell_spec_mismatch` / seed-collision codes if skipped or rules violated).
-6. Task / milestone `ui_prototype` under any mode: inherit locked Spec + Shell;
-   **no** random visual seed (`task_prototype_seed_forbidden`); reuse
-   `widgets.yaml` when the same role exists (`widget_reuse_required`).
+6. Task / milestone `ui_prototype`: inherit locked Spec + Shell; **no** random
+   visual seed (`task_prototype_seed_forbidden`); reuse `widgets.yaml` when the
+   same role exists (`widget_reuse_required`); pass Craft Gate before confirm
+   (`task_prototype_craft_incomplete` if not).
+   - **Unattended:** **one** `delta_match` only (no dual/triple).
+   - **Interactive (default when not unattended):** default **two** options
+     (`delta_match` + `ai_challenger`) with ≥2 contrast axes; optional third
+     only for documented industry-peer deadlock
+     (`prototype_option_third_unjustified` /
+     `prototype_option_contrast_insufficient` /
+     `prototype_option_near_duplicate`).
 
 ## Current Run Versus Durable Delegation
 

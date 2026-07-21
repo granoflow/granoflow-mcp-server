@@ -1,5 +1,11 @@
 # Project Artifact Workflows
 
+Read this reference when authoring Design Spec, App Shell, Design Baseline,
+`widgets.yaml`, or task/milestone `ui_prototype`. It owns the **Prototype
+Preview Gate**, Spec/Shell Mode split, Widget Catalog, and **Task Prototype
+Craft Gate And Option Set**. Fail-closed checklist:
+`hard-constraints.md`.
+
 ## Prototype Preview Gate (every HTML prototype)
 
 Applies to **every** discrete HTML prototype the host authors in this workflow:
@@ -54,25 +60,31 @@ At **run close** (Project Definition Done, milestone/task batch complete, or
    Report when the user must still judge aesthetics offline.
 4. Omitting the digest fails closed as `prototype_link_digest_required`.
 
-### Option-set exception (interactive Design Spec / Shell triads only)
+### Option-set exception (interactive choice batches)
 
-When Project Definition is **interactive** and presents a **choice set of
-three** Design Spec or Shell prototypes:
+**Project Definition — Design Spec / Shell**
+
+When Project Definition is **interactive** and presents a Spec or Shell choice
+set:
 
 1. Design Spec triad: author all three with **three different random visual
    seeds** before asking (never reuse a seed inside the Spec triad).
 2. Shell triad: author all three **fitted to the selected Spec**; use distinct
    chrome-variant ids only—**no** independent palette seeds
    (`shell_spec_mismatch` if Spec is broken).
-3. Emit **all three** clickable links in one batch (plus a one-line contrast
-   note per option).
-4. **One wait** for select / revise / request-more—do not force a separate wait
-   after each of the three mid-set.
+3. Emit **all** clickable links in one batch (plus a one-line contrast note per
+   option).
+4. **One wait** for select / revise / request-more.
 5. After the user picks one, further single-screen refinements of that winner
    again follow the per-prototype rules above.
 
-Unattended mode **does not** use this triad exception (see Design Spec / Shell
-rounds below).
+**Task / milestone `ui_prototype` — interactive dual (default) / conditional
+third**
+
+See **Task Prototype Craft Gate And Option Set** below. Default batch size is
+**two**; a **third** option is allowed only under the industry-peer exception.
+Emit all option links in one batch; **one wait**. Unattended mode **does not**
+use Spec/Shell triads or task dual/triple batches.
 
 ## UI Prototype (Task / Milestone Slot)
 
@@ -92,16 +104,15 @@ soon as UI change is detected—not only when the user asks.
    locked Spec + Shell. Fail closed `task_prototype_seed_forbidden`.
 4. Load project `widgets.yaml`; reuse widgets with the same role before
    inventing new chrome/controls (`widget_reuse_required` if skipped).
-5. Use host authoring tools to create a self-contained `index.html` plus local
-   CSS/static assets. Do not claim that Granoflow MCP renders HTML.
-6. Apply the **Prototype Preview Gate**: give a clickable host-local preview
-   link; interactive waits for visual review; unattended records the link and
-   continues, then includes it in the closing digest.
-7. Visual confirmation (interactive user accept, or unattended auto-accept when
-   explicitly authorized) authorizes only packaging that exact source hash. It
-   is not implementation acceptance or execution authorization. After
-   confirmation, extract any new/changed reusable widgets into the same
-   project `widgets` slot.
+5. Author options under **Task Prototype Craft Gate And Option Set** (below).
+6. Apply the **Prototype Preview Gate** for the option batch (interactive: all
+   links + one wait; unattended: single option notice + ledger).
+7. Visual confirmation (interactive user accept of the chosen option, or
+   unattended auto-accept when explicitly authorized) authorizes only packaging
+   that exact source hash. It is not implementation acceptance or execution
+   authorization. Craft Gate must pass before `visualConfirmed=true`—else
+   `task_prototype_craft_incomplete`. After confirmation, extract any
+   new/changed reusable widgets into the same project `widgets` slot.
 8. Build a deterministic ZIP: root `index.html`, relative paths only, sorted
    entries, normalized timestamps, no symlinks, no path traversal, and all
    required static resources included. Use
@@ -113,6 +124,87 @@ soon as UI change is detected—not only when the user asks.
 10. Record `【增强实现】` / `implementation_notes` where the HTML is schematic
     and the target stack will use richer third-party widgets, listing Must
     invariants that remain unchanged.
+
+### Task Prototype Craft Gate And Option Set
+
+Applies to every UI-changing task/milestone prototype. **From Shell onward
+style is converged**; task options explore only the **authorized UI delta**,
+never a new visual system.
+
+#### Craft Gate (fail closed before `visualConfirmed=true`)
+
+Every option in the batch Must pass all of:
+
+1. **Intent:** state the authorized UI delta (what changes / what must not
+   change vs Baseline). Whole-page redesign only when Scope explicitly
+   authorizes it.
+2. **Fidelity:** `derivedFrom` exact Baseline; no random visual seed; reuse
+   `widgets.yaml` for the same role.
+3. **Craft:** real project/domain copy (no lorem ipsum, fake data walls, or
+   generic AI feature grids); cover Scope-required default / empty / error /
+   success states; schematic regions carry `【增强实现】` with Must invariants.
+4. **Confirm surface:** interactive shows craft checklist summary + option
+   links before wait; unattended records the same checklist into the run digest
+   for the single option.
+
+Fail closed `task_prototype_craft_incomplete` if any item is missing. Do not
+treat packaging or upload as craft completion.
+
+#### Interactive option set (default dual; conditional third)
+
+**Default (hard):** author exactly **two** complete options:
+
+| Label           | Role                                                                                     |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| `delta_match`   | Faithful to Task Work Outcome / Scope as written                                         |
+| `ai_challenger` | AI judges **better or at least as good** on stated contrast axes, with written rationale |
+
+Both options Must fully satisfy the Craft Gate (not a sketch + a finished
+pair). Emit both clickable links in one batch; **one wait** for select /
+revise / request-more.
+
+**Contrast axes (hard):** declare **at least two** axes from this whitelist and
+make the options diverge on those axes in a user-visible, defendable way:
+
+- `information_hierarchy`
+- `density`
+- `interaction_pattern`
+- `state_emphasis`
+- `progressive_disclosure`
+- `secondary_nav_within_delta` (task-local only; must not rewrite global Shell)
+
+**Not valid contrast:** new palette/typography/material seed; spacing/radius/
+shadow-only tweaks; restyling a locked widget for the same role; unauthorized
+Shell IA change.
+
+Fail closed:
+
+- `prototype_option_contrast_insufficient` — fewer than two whitelist axes, or
+  challenger lacks a defendable “better or equal” rationale;
+- `prototype_option_near_duplicate` — options are the same skeleton with only
+  cosmetic deltas.
+
+**Conditional third option:** add `industry_peer_c` **only when** all of the
+following hold (record under `prototype_option_set.third_option_rationale`):
+
+1. The industry has **three** peer interaction/IA patterns in active use for
+   this problem class;
+2. All three are suitable for **this** app given Baseline Musts and Outcome;
+3. The host **cannot honestly prefer** one of the three on evidence (not taste
+   laziness)—document the three industry references and why preference is
+   blocked.
+
+Otherwise stay at two. A gratuitous third option without that rationale fails
+closed as `prototype_option_third_unjustified`.
+
+**Request-more:** a new batch must again meet Craft Gate + contrast rules and
+must not near-duplicate the prior batch (`prototype_option_near_duplicate`).
+
+#### Unattended (explicit only)
+
+Author **one** option only: `delta_match`, full Craft Gate, no dual/triple
+exploration, no random seed. Link notice + ledger; closing digest includes the
+craft checklist summary.
 
 ## Project Design Baseline Package
 
@@ -267,6 +359,13 @@ or spring-feel parity.
 - Before inventing a new chrome/control/pattern, check `widgets.yaml` and
   reuse when the same role exists (`reuse_policy: must_reuse_when_same_role`).
   Skipping reuse without rationale → `widget_reuse_required`.
+- Pass **Task Prototype Craft Gate** before `visualConfirmed=true` else
+  `task_prototype_craft_incomplete`.
+- Interactive: default dual options (`delta_match` + `ai_challenger`) with ≥2
+  whitelist contrast axes; conditional third only for documented
+  industry-peer deadlock. Fail closed `prototype_option_contrast_insufficient`
+  / `prototype_option_near_duplicate` / `prototype_option_third_unjustified`.
+- Unattended: single `delta_match` only.
 - Material Shell/token/widget catalog changes require a new Baseline version
   and catalog update—not silent drift in a task prototype.
 

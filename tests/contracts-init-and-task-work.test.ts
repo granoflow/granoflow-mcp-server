@@ -101,6 +101,10 @@ describe("contracts-init-and-task-work", () => {
     expect(template).toContain("UI change => required");
     expect(template).toContain("derived_from_package_sha256");
     expect(template).toContain("ui_prototype_required");
+    expect(template).toContain("prototype_option_set:");
+    expect(template).toContain("interactive_dual");
+    expect(template).toContain("task_prototype_craft_incomplete");
+    expect(template).toContain("industry_peer_c");
     expect(template).not.toContain("execution_status:");
     expect(template).toContain("pre-execution governance document");
     expect(template).toContain("five-\ndimension prose contract");

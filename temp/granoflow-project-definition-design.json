@@ -1,0 +1,126 @@
+{
+  "schema": "shared.skill_authoring.design.v1",
+  "status": {
+    "preview_generated": true,
+    "confirmed": true,
+    "confirmed_at": "2026-07-21T05:28:00+00:00",
+    "note": "Confirmed in chat thread; polish must not drop these constraints. Do not run generative skill_polish.py overwrite on this mature skill—manual polish only."
+  },
+  "skill": {
+    "name": "granoflow-project-definition",
+    "display_name": "Granoflow Project Definition",
+    "summary": "Initialize or refine a Granoflow software project through three steps—Project Work, Design Baseline with tokens, and App Shell—lock stack-capable visuals under contract fidelity, and hand off to milestone/task skills. Activate with \"Initialize this project\" / \"Define this project\" / \"初始化这个项目\"; not \"Initialize Granoflow\".",
+    "purpose": "Guide Project Work, Design Spec/Shell Baseline, widgets catalog, and handoff while enforcing Mode Gate, Preview Gate, and fail-closed design contracts.",
+    "keywords": ["#initialize-this-project", "#project-definition", "#design-baseline"],
+    "triggers": [
+      "Initialize this project / Define this project / 初始化这个项目 / 定义这个项目",
+      "Lock Design Baseline, tokens, and App Shell for a Granoflow software project"
+    ],
+    "user_examples": ["Initialize this project", "根据这些产品文档初始化项目并锁定设计基线"]
+  },
+  "authoring": {
+    "preview_required": true,
+    "confirm_required": true,
+    "write_mode": "confirmed_only"
+  },
+  "constraints": [
+    {
+      "kind": "must",
+      "text": "executionMode defaults to interactive; never infer unattended from activation phrases alone.",
+      "source": "user thread"
+    },
+    {
+      "kind": "must",
+      "text": "Interactive: ask → recommend → wait. Never auto-accept Baseline+Shell in interactive mode.",
+      "source": "user thread"
+    },
+    {
+      "kind": "must",
+      "text": "Interactive Design Spec triad uses three different random seeds (spec_match + two challengers).",
+      "source": "user thread"
+    },
+    {
+      "kind": "must",
+      "text": "From Shell onward design style converges; Shell options must perfectly fit the selected Spec (no independent palette seed). shell_spec_mismatch on violation.",
+      "source": "user thread"
+    },
+    {
+      "kind": "must",
+      "text": "After Baseline confirm, write widgets.yaml (first mandatory extract); task prototypes reuse widgets and forbid random seeds.",
+      "source": "user thread"
+    },
+    {
+      "kind": "must",
+      "text": "Task interactive prototypes: default dual (delta_match + ai_challenger) with ≥2 contrast axes; conditional industry_peer_c third; Craft Gate before visualConfirmed. Unattended: single delta_match only.",
+      "source": "user thread"
+    },
+    {
+      "kind": "must",
+      "text": "Prototype Preview Gate stays explicit for every HTML prototype option batch.",
+      "source": "polish checklist"
+    },
+    {
+      "kind": "must",
+      "text": "product_spec_coverage.status ready before Done; Missing Shell fails Done.",
+      "source": "prior contracts"
+    }
+  ],
+  "workflow": [
+    {
+      "id": "1",
+      "title": "Project Work",
+      "goal": "Confirm Project Work with stack, libraries, data persistence, coverage, and skill_routing.",
+      "actions": [],
+      "success_criteria": [
+        "product_spec_coverage.status is ready",
+        "stack_capability_profile locked before HTML",
+        "Project Work App-confirmed"
+      ],
+      "checkpoints": ["Mode Gate notice emitted", "Interactive waits on decision batches"],
+      "artifacts": ["project_work"],
+      "rules": ["ask → recommend → wait unless explicit unattended"]
+    },
+    {
+      "id": "2",
+      "title": "Design Spec + Tokens",
+      "goal": "Author Design Spec under Mode split, then tokens.",
+      "actions": [],
+      "success_criteria": ["design_spec_selection recorded", "token_sources set"],
+      "checkpoints": ["Preview Gate on Spec options"],
+      "artifacts": ["design_spec_selection", "token_sources"],
+      "rules": ["interactive triad distinct seeds; unattended single random-seed spec_match"]
+    },
+    {
+      "id": "3",
+      "title": "App Shell + Baseline + widgets",
+      "goal": "Fit Shell to Spec, lock Baseline package, extract widgets.yaml.",
+      "actions": [],
+      "success_criteria": [
+        "Baseline SHA readback",
+        "landscape and portrait App Shell",
+        "widgets.yaml first extract"
+      ],
+      "checkpoints": ["Never auto-accept Baseline+Shell in interactive mode"],
+      "artifacts": ["prototype_template", "widgets.yaml"],
+      "rules": ["shell_spec_mismatch; widget_catalog_required"]
+    }
+  ],
+  "resources": {
+    "references": [
+      {
+        "path": "references/project-definition-interaction.md",
+        "when": "interviewing or recommending Project Work values"
+      },
+      {
+        "path": "references/project-artifact-workflows.md",
+        "when": "authoring Design Spec, Shell, widgets, or task prototypes"
+      },
+      {
+        "path": "references/hard-constraints.md",
+        "when": "verifying thread-confirmed fail-closed rules before Done or visualConfirmed"
+      }
+    ],
+    "scripts": [{ "path": "scripts/package_prototype.py" }],
+    "assets": []
+  }
+}

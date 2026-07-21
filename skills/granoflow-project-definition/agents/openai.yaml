@@ -1,4 +1,4 @@
 interface:
   display_name: Granoflow Project Definition
   short_description: Initialize or define a software project in three steps—Project Work, Design Baseline with tokens, and App Shell—then hand off to milestones/tasks. Not Initialize Granoflow.
-  default_prompt: "Initialize this project (or define this project): complete Project Work from sources, lock stack capability, select capability-critical third-party libraries, declare data persistence, lock skill routing, deliver Design Baseline with Design Tokens and landscape/portrait App Shell under contract fidelity, then hand off to milestone/task skills."
+  default_prompt: "Initialize this project (or define this project): complete Project Work from sources, lock stack capability, select capability-critical libraries, declare data persistence, lock skill routing, deliver Design Baseline with Design Tokens and landscape/portrait App Shell under contract fidelity, write widgets.yaml after Baseline confirm, then hand off to milestone/task skills."

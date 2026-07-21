@@ -27,6 +27,13 @@ describe("UI change prototype mandate contracts", () => {
     expect(workflow).toContain("task_prototype_seed_forbidden");
     expect(workflow).toContain("widgets.yaml");
     expect(workflow).toContain("widget_reuse_required");
+    expect(workflow).toContain("task_prototype_craft_incomplete");
+    expect(workflow).toContain("delta_match");
+    expect(workflow).toContain("ai_challenger");
+    expect(workflow).toContain("industry_peer_c");
+    expect(workflow).toContain("prototype_option_contrast_insufficient");
+    expect(workflow).toContain("prototype_option_near_duplicate");
+    expect(workflow).toContain("prototype_option_third_unjustified");
     expect(agentSkill).toContain("UI Change Prototype Mandate");
     expect(orchestrator).toContain("ui_prototype_required");
     expect(orchestrator).toMatch(/cannot pass Readiness without[\s\S]*ui_prototype/i);

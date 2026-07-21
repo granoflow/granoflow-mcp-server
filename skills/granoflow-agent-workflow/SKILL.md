@@ -581,8 +581,12 @@ Read `references/task-work-document-workflow.md`, its template, and
 Read legacy Analysis/Plan references only when resolving historical attachments.
 Any task that changes UI must follow the UI Change Prototype Mandate: high-
 fidelity `ui_prototype` required (`prototype_requirement: required`),
-`derivedFrom` the project Design Baseline when present, contract fidelity, and
-no Readiness/execution until the prototype is visually confirmed and read back.
+`derivedFrom` the project Design Baseline when present, contract fidelity, no
+random visual seed, widget reuse, and **Task Prototype Craft Gate And Option
+Set** (interactive: default dual options, conditional industry third;
+unattended: single `delta_match`) before `visualConfirmed` / Readiness. Details:
+`task-work-document-workflow.md` and
+`granoflow-project-definition/project-artifact-workflows`.
 
 High-level contract:
 
