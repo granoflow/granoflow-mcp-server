@@ -63,6 +63,14 @@ third-party widgets, HTML may convey intent only, but each such case must carry
 an `【增强实现】` / `implementation_notes` note naming the intended component and
 the Must invariants that remain unchanged.
 
+**Design-first (hard):** prototypes stay ahead of engineering as the user-demand
+surface. Before Preview Gate, check **product truth** (no unauthorized
+states/capabilities). High-risk platform-coupled screens still preview first,
+then take a short Tech Note in parallel; Readiness needs a feasibility
+conclusion (as drawn / degraded / revise design). Details:
+`references/project-artifact-workflows.md` § Design-first, product-truth, and
+high-risk feasibility.
+
 ## Required References
 
 1. Read `granoflow-agent-workflow/project-work-document-template` for the
@@ -76,11 +84,14 @@ the Must invariants that remain unchanged.
    sets.
 5. Read [hard-constraints.md](references/hard-constraints.md) before Done or
    any `visualConfirmed=true` to verify thread-confirmed fail-closed rules.
-6. Apply Mode Gate: default `executionMode: interactive` unless the user
+6. Read [product-spec-flow-decomposition.md](references/product-spec-flow-decomposition.md)
+   during Step 1 product-spec coverage (operation flowchart → serial gates vs
+   parallel ops → page-count conclusion + stress paths; not risk labels).
+7. Apply Mode Gate: default `executionMode: interactive` unless the user
    **explicitly** declares unattended. Read
    `granoflow-agent-workflow/unattended-interaction-contract` only when
    unattended.
-7. Call `granoflow_agent_preferences_get(projectId)` when preferences exist;
+8. Call `granoflow_agent_preferences_get(projectId)` when preferences exist;
    recommend `agent_preferences` during init (interactive: wait before write).
    Preferences never weaken readiness, quality, authorization, acceptance, or
    external-action gates.
@@ -122,7 +133,8 @@ Actions:
 
 1. Resolve one project; emit Mode Gate notice.
 2. Requirement intake + **Product Spec Completeness Hard Gate**
-   (`product_spec_coverage`; no confirm while status is not `ready`).
+   (`product_spec_coverage`; mandatory operation-flow / serial-gate page-count
+   conclusion + stress paths; no confirm while status is not `ready`).
 3. Fill Project Work from the canonical template; preserve unknowns; no fake
    completeness. Initialization blockers must not stay `deferred_unknown`.
 4. Lock `engineering.stack` and `stack_capability_profile` before any HTML baseline
@@ -166,13 +178,21 @@ Actions:
    `capability_pack_not_ready` (manual Project Work still allowed).
 2. Require `product_spec_coverage.status: ready`.
 3. Invoke `skill_routing` Skills with `phase: baseline` (include `impeccable`
-   when available for **random seeds**).
+   when available to **compose** palettes from drawn seeds).
 4. Design Spec Mode split:
-   - **Interactive:** triad—**three different random seeds**—`spec_match` + two
-     `ai_challenger_*`. Option-set Preview Gate; wait. Fail closed
-     `design_spec_triad_required` / `design_spec_seed_collision`.
-   - **Unattended (explicit only):** one `spec_match` + **random seed**. Link
-     notice + ledger.
+   - **Interactive:** triad from `draw_visual_lots.py --kind spec --count 3
+--record` (**true random**; never hand-invent seeds; no classroom salt)—
+     `spec_match` + two `ai_challenger_*`. Each option is a **Style Guide /
+     Design Tokens board** (Colors, Typescale, Spacing, Grid/Breakpoints,
+     Component states, Shadows&Radius)—**not** a gallery of every product
+     screen. Preview Gate: pick / **换新批** (`--dedupe ledger`) / **在某套上改**.
+     User-facing copy uses plain-language labels only—**no seed ids or internal
+     option enums**. Fail closed `design_spec_triad_required` /
+     `design_spec_seed_collision` / `design_spec_seed_not_drawn` /
+     `design_spec_wrong_artifact_type` / `design_spec_user_facing_jargon` /
+     `visual_lot_dedupe_required` / `visual_lot_exhausted`.
+   - **Unattended (explicit only):** one `spec_match` via true-random draw.
+     Link notice + ledger (plain-language title).
 5. Emit Design Tokens → `token_sources`; record `【增强实现】` /
    `implementation_notes` where schematic; record `design_spec_selection`.
 
@@ -180,26 +200,33 @@ Success criteria:
 
 - `design_spec_selection` recorded (option id if any, seed, provenance).
 - `token_sources` set for the chosen Spec.
+- Spec previews are Style Guides; journey screens deferred to Shell/Baseline.
 
 Checkpoints:
 
 - Preview Gate links shown before pick/confirm.
-- Spec triad seeds are distinct in interactive mode.
+- Spec lots drawn via script; triad seeds distinct in interactive mode.
 
 ### Step 3 — App Shell
 
-**From Shell onward, design style converges.** Shell Must perfectly fit the
-selected Spec. Then merge, import, confirm Baseline, extract widgets.
+**From Shell onward, design style converges.** Shell Must **embed the selected
+Design Spec** (tokens + type/spacing roles) and present **product-near**
+portrait/landscape chrome with at least one Spec-styled primary surface—aiming
+for final-product effect under contract fidelity, not grey wireframes. Then
+merge, import, confirm Baseline, extract widgets.
 
 Actions:
 
 1. Invoke Skills with `phase: shell`.
 2. Shell Mode split:
-   - **Interactive:** triad fitted to selected Spec—`shell_match` + two
-     chrome/structure challengers (distinct chrome-variant ids; **not**
-     independent palette seeds). Fail closed `shell_triad_required` /
-     `shell_seed_collision` / `shell_spec_mismatch`.
-   - **Unattended (explicit only):** one `shell_match` fitted to Spec. Link
+   - **Interactive:** triad from `draw_visual_lots.py --kind shell --count 3
+--record` (chrome deck); each loads selected Spec tokens—`shell_match` +
+     two chrome challengers (**not** independent palette seeds). Preview Gate:
+     pick / **换新批** (`--dedupe ledger`) / **在某套上改**. Fail closed
+     `shell_triad_required` / `shell_seed_collision` / `shell_spec_mismatch` /
+     `shell_spec_tokens_missing` / `shell_wireframe_only` /
+     `visual_lot_dedupe_required`.
+   - **Unattended (explicit only):** one `shell_match` embedding Spec. Link
      notice + ledger.
 3. Package chosen Spec+Shell; `granoflow_project_design_baseline_import` then
    `granoflow_project_design_baseline_read` with exact `prototypeId`,
@@ -216,13 +243,15 @@ Actions:
 Success criteria:
 
 - Baseline SHA readback; landscape and portrait App Shell present.
+- Shell options consumed selected Spec tokens and were product-near (not
+  wireframe-only).
 - `widgets.yaml` + `widgets_attachment` + registry SHA
   (`widget_catalog_required` if missing).
 - `design_spec_selection` and `shell_selection` recorded.
 
 Checkpoints:
 
-- Spec-fitted Shell only; Preview Gate honored.
+- Spec-embedded Shell only; Preview Gate honored.
 - Missing Shell fails Done.
 
 ### Done And Handoff
@@ -287,8 +316,11 @@ milestone/task tree, run task Analysis/Plan Grill, or implement product code.
    `skill_routing`, and `widgets.yaml`. Task/milestone prototypes Must
    `derivedFrom` the exact baseline package SHA, **must not** re-roll random
    visual seeds, reuse catalog widgets when the same role exists, pass **Task
-   Prototype Craft Gate And Option Set** (interactive 2–3 options; unattended
-   one `delta_match`), and accept against contract fidelity.
+   Prototype Craft Gate And Option Set** (interactive: default dual **page
+   expressions** `expr_a`/`expr_b` inside locked Design System, **side-by-side
+   Contrast Gallery**, mix-and-match per task/page, conditional industry third;
+   unattended one `expr_a`; never reopen Design Spec as task options), and
+   accept against contract fidelity.
 
 ## Rules
 
@@ -296,11 +328,12 @@ Hard constraints (non-exhaustive; full list in
 [hard-constraints.md](references/hard-constraints.md)):
 
 - Mode Gate + Preview Gate always apply.
-- Interactive Spec: three different random seeds; Shell: Spec-fitted only.
+- Interactive Spec: true-random lots via `draw_visual_lots.py`; Shell: Spec-fitted chrome deck only.
 - From Shell onward, design style converges (`shell_spec_mismatch`).
 - `widgets.yaml` after Baseline confirm; task reuse + no task random seed.
-- Task interactive: dual (+ conditional industry third) + Craft Gate; unattended
-  single `delta_match`.
+- Task interactive: dual page expressions (`expr_a`/`expr_b`) + Craft Gate +
+  **Contrast Gallery** (visible-diff captions); mix-and-match per task/page;
+  unattended single `expr_a`; never reopen Design Spec at task level.
 - Never auto-accept Baseline+Shell in interactive mode.
 
 ## Automation Boundary
@@ -319,9 +352,12 @@ tools and their own authorization gates.
 - Interactive runs ask each decision batch, include a recommendation, and wait
   for the user to decide before confirm / Baseline accept.
 - Thin product docs still require `product_spec_coverage.status: ready` before
-  Done; interactive fills by ask→recommend→wait; unattended fills by
-  recommend+adopt with honest provenance (`product_spec_coverage_incomplete`
-  otherwise).
+  Done, including an operation-flow / serial-gate page-count conclusion per
+  adopted journey and stress paths per acceptance. Interactive fills by
+  ask→recommend→wait; unattended may auto-adopt **non-decision-changing** fills
+  only and must still run the operation-flow pass — decision-changing thin-doc
+  gaps fail closed `thin_product_doc_gap_requires_user`
+  (`product_spec_coverage_incomplete` / nested codes otherwise).
 - A partial discussion can produce a useful, hash-read-back Project Work YAML.
 - Every recommendation is explicit; unattended (explicit only) adopts
   recommendations without re-asking, except real blockers.

@@ -64,6 +64,41 @@ class ProjectPrototypePackagerTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "root index.html"):
                 collect_files(source)
 
+    def test_lint_user_copy_flag_rejects_leaks(self) -> None:
+        import json
+        import subprocess
+
+        script = SCRIPTS / "package_prototype.py"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            (source / "index.html").write_text(
+                '<!doctype html><html><body><div class="phone">'
+                "<p>0 本的类型不显示</p></div></body></html>",
+                encoding="utf-8",
+            )
+            output = root / "out.granoprototype"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    str(source),
+                    str(output),
+                    "--lint-user-copy",
+                    "--dry-run",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            payload = json.loads(proc.stdout)
+            self.assertEqual(proc.returncode, 1)
+            self.assertFalse(payload["ok"])
+            self.assertEqual(
+                payload.get("failCode"), "user_visible_copy_boundary_violation"
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

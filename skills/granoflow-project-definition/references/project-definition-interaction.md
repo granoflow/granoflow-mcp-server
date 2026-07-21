@@ -120,19 +120,38 @@ The design-system branch is the deliberate exception to field-by-field
 questioning for fonts/Skills menus—not to Mode Gate or random seeds.
 
 - **Interactive:** Design Spec **Triad** then Shell **Triad**. Spec triad:
-  **three different random seeds**—one faithful match + two AI challengers.
-  Shell triad: all options **perfectly fit the selected Spec** (chrome /
-  structure variants only—no independent palette seed). Option-set Preview
-  Gate. User may pick / revise / request more. Never a menu of
-  Skills/fonts/palettes.
-- **Unattended (explicit only):** **one** Design Spec `spec_match` with a
-  **random seed**, then **one** Shell `shell_match` **fitted to that Spec**—no
-  triad, no challengers, no Spec-breaking Shell seed. Link notices + closing
-  digest; `auto_accept_recommendation` for the imported package only when
-  explicitly unattended.
+  three lots from `draw_visual_lots.py --kind spec` (**true random**; never
+  hand-invent seeds; no classroom salt)—one faithful match + two AI
+  challengers. Spec artifact = Style Guide / Tokens board (not full-page
+  journey galleries). Shell triad: lots from
+  `draw_visual_lots.py --kind shell` (chrome deck); all options **embed the
+  selected Spec tokens** and present product-near chrome + primary surfaces
+  (not grey wireframes); only chrome/structure may diverge—no independent
+  palette seed. Option-set Preview Gate. Never a menu of Skills/fonts/palettes.
+- **Preview Gate branches (interactive):**
+  1. **Pick one** → record selection.
+  2. **换新批 / request more** → re-draw with `--dedupe ledger` (machine-local
+     history, not same-run-only). Skipping dedupe → `visual_lot_dedupe_required`.
+  3. **在某套上改 / revise that option** → edit in place; do not re-draw Spec
+     seed or swap Shell chrome primary axis unless the user explicitly asks.
+- **User-facing presentation (hard):** Preview Gate messages, hub pages, and
+  choice tables Must use **plain-language labels** the product owner can
+  understand (e.g. “方案 A · 安静钴蓝阅读”). **Do not** show `seed-127`,
+  `spec_match`, `ai_challenger_a`, fail-closed code names, or other agent
+  bookkeeping in user-visible copy. Keep seeds / option ids only in Project
+  Work `design_spec_selection` / `shell_selection`, HTML `meta` / comments for
+  agents, and the lot ledger. Violation → `design_spec_user_facing_jargon`.
+- **Unattended (explicit only):** **one** Design Spec `spec_match` via
+  true-random draw, then **one** Shell `shell_match` that **embeds that
+  Spec**—no triad, no challengers, no Spec-breaking Shell seed. Link notices +
+  closing digest; `auto_accept_recommendation` for the imported package only
+  when explicitly unattended. Link notices still use plain-language titles.
 - Seed / chrome-variant collision inside an interactive triad fails closed
-  (`design_spec_seed_collision` / `shell_seed_collision`). Spec-breaking Shell
-  → `shell_spec_mismatch`.
+  (`design_spec_seed_collision` / `shell_seed_collision`). Hand-invented lots
+  → `design_spec_seed_not_drawn`. Spec-breaking Shell → `shell_spec_mismatch`.
+  Spec that is a screen gallery instead of a Style Guide →
+  `design_spec_wrong_artifact_type`. Shell that omits Spec tokens or is
+  wireframe-only → `shell_spec_tokens_missing` / `shell_wireframe_only`.
 - After Baseline confirm: extract widgets into project `widgets.yaml` (first
   mandatory catalog; `derived_from` = that confirmed Baseline prototype).
 
@@ -224,24 +243,35 @@ or locking those paths.
 
 Thin or uneven product docs still require a complete Project Work product
 contract before initialization Done. See
-`granoflow-agent-workflow/requirement-intake-and-traceability` and Project Work
-`product_spec_coverage`.
+`granoflow-agent-workflow/requirement-intake-and-traceability`, Project Work
+`product_spec_coverage`, and
+`granoflow-project-definition/product-spec-flow-decomposition`.
 
 During Step 1, after source intake and before Project Work confirm:
 
 1. Build `journey_coverage` and `screen_coverage` from docs; list every silence
    that blocks a primary journey, Baseline screen, critical state, or
    acceptance condition as a decision-changing gap.
-2. Interactive: ask → recommend → wait until every required row is adopted or
-   explicitly `out_of_scope` with rationale.
-3. Unattended (explicit only): recommend and auto-adopt missing required rows;
-   record `gap_fills` with `agent_recommendation_adopted`; never mark them
-   `user_stated`.
-4. Set `product_spec_coverage.status: ready` only when the checklist is all
-   true. Otherwise fail closed `product_spec_coverage_incomplete` and do not
-   confirm Project Work for automation.
-5. Step 2 Baseline screens Must map 1:1 (or documented many-to-one) onto
-   `screen_coverage` rows with `baseline_required: true`.
+2. For every **adopted** journey: **draw the operation flowchart**, mark
+   **serial gates** vs parallel ops + final confirm, then record conclusion
+   `split` / `keep_cohesive` / `needs_user_decision` and sync
+   `screen_ids` / `screen_coverage` when splitting. Attach a beginner-walkable
+   `stress_path` per linked acceptance. Do not use risk labels for page count.
+3. Interactive: ask → recommend → wait until every required row is adopted or
+   explicitly `out_of_scope` with rationale; wait on decision-changing thin-doc
+   gaps and on `needs_user_decision` decomposition conclusions.
+4. Unattended (explicit only): may recommend and auto-adopt
+   **non-decision-changing** missing rows with `agent_recommendation_adopted`;
+   must still run the decomposition pass and record a conclusion; must **not**
+   silent-auto-accept decision-changing thin-doc gaps → fail closed
+   `thin_product_doc_gap_requires_user`. Never invent journeys as `user_stated`.
+5. Set `product_spec_coverage.status: ready` only when the checklist is all
+   true (including decomposition + stress-path flags). Otherwise fail closed
+   `product_spec_coverage_incomplete` (or nested decomposition/stress codes)
+   and do not confirm Project Work for automation.
+6. Step 2 Baseline screens Must map 1:1 (or documented many-to-one) onto
+   `screen_coverage` rows with `baseline_required: true`, including screens
+   adopted via a `split` conclusion.
 
 ## Capability-Critical Dependency Recommendation Batch
 

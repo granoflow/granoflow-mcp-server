@@ -69,6 +69,8 @@ schema_contract:
     - "every acceptance_coverage.acceptance_id must resolve to acceptance.conditions"
     - "product_spec_coverage.status must be ready before complete_confirmed_current"
     - "every product_spec_coverage.journey_coverage adopted row needs requirement_ids and acceptance_ids"
+    - "every product_spec_coverage.journey_coverage adopted row needs decomposition pass + conclusion"
+    - "every product_spec_coverage.journey_coverage adopted acceptance needs stress_path"
     - "every product_spec_coverage.screen_coverage baseline_required adopted row needs requirement_ids and acceptance_ids"
     - "every accountable milestone must belong to this project"
     - "every automatic action requires a current authorization disposition"
@@ -208,14 +210,21 @@ product:
 
 # Hard gate for thin or uneven product docs. Initialization Done and
 # complete_confirmed_current automation require status=ready.
-# Fail closed: product_spec_coverage_incomplete.
+# Fail closed: product_spec_coverage_incomplete (plus nested fail codes below).
+# Flow shape: operation flowchart → serial gates vs parallel ops → page count.
+# Not risk labels. Detail: granoflow-project-definition/product-spec-flow-decomposition.
 product_spec_coverage:
   status: incomplete | ready
   fail_closed_code: product_spec_coverage_incomplete
   # How gaps from thin product docs were closed for initialization.
   fill_policy:
     interactive: ask_recommend_wait_for_every_missing_required_row
-    unattended_explicit_only: recommend_and_auto_adopt_with_provenance
+    # Unattended must still run decomposition; must not silent-complete thin
+    # decision-changing product gaps. Prefer residual / fail closed over fake ready.
+    unattended_explicit_only:
+      non_decision_changing_gaps: recommend_and_auto_adopt_with_provenance
+      decision_changing_gaps: fail_closed_thin_product_doc_gap_requires_user
+      flow_decomposition: always_run_pass_and_record_conclusion
     never_invent_as_user_stated: true
     deferred_unknown_forbidden_for_initialization_blockers: true
   # Every primary journey the product must support (from docs or gap-fill).
@@ -230,6 +239,34 @@ product_spec_coverage:
       screen_ids: []
       critical_state_ids: []
       disposition: adopted | needs_clarification | out_of_scope
+      # Mandatory once disposition=adopted. Operation-flow / serial-gate driven.
+      decomposition:
+        pass_completed: false
+        # Draw first: user ops, waits, decision points.
+        operation_flow:
+          summary: null
+          user_operations: []
+          # Groups of ops completable on one surface before a final confirm.
+          parallel_groups: []
+        # Mid-flow stops that force the next page; empty ⇒ one-page candidates.
+        serial_gates: []
+        # true when multiple ops need no mid-flow gate (only final confirm).
+        parallel_ops_ok: null
+        candidate_screens: []
+        # split | keep_cohesive | needs_user_decision
+        conclusion: null
+        concluded_screen_ids: []
+        # Required when conclusion=keep_cohesive
+        rejected_split_summary: null
+        # Required when conclusion=split
+        accepted_split_summary: null
+      # One stress_path per linked acceptance_id (beginner-walkable).
+      stress_paths:
+        - acceptance_id: null
+          entry: null
+          intermediate: []
+          success_exit: null
+          failure_exit: null
   # Every user-visible screen / critical state Baseline must show.
   screen_coverage:
     - screen_id: S-001
@@ -257,11 +294,15 @@ product_spec_coverage:
   checklist:
     all_primary_journeys_listed: false
     every_journey_has_requirement_and_acceptance: false
+    every_adopted_journey_decomposition_pass_completed: false
+    every_adopted_journey_has_decomposition_conclusion: false
+    every_adopted_acceptance_has_stress_path: false
     every_baseline_required_screen_listed: false
     every_screen_has_requirement_and_acceptance: false
     no_open_decision_changing_gaps: false
     no_conflicting_undisposed_requirements: false
     thin_doc_gap_fills_recorded: false
+    no_unattended_decision_changing_thin_gap_auto_accept: false
 
 acceptance:
   conditions:
@@ -456,10 +497,12 @@ engineering:
     shared_component_policy: null
     page_local_override_policy: prohibited_by_default
     design_profile:
-      # Stable project-level lock. Interactive: Design Spec triad (distinct
-      # random seeds) then Shell triad fitted to selected Spec (chrome variants
-      # only). Unattended: one random-seed spec_match + one Spec-fitted
-      # shell_match. From Shell onward style converges. Never a Skills menu.
+      # Stable project-level lock. Interactive: Design Spec triad of Style
+      # Guide / Design Tokens boards (distinct random seeds; not full journey
+      # screen galleries) then Shell triad fitted to selected Spec (chrome
+      # variants only). Unattended: one random-seed Style Guide spec_match +
+      # one Spec-fitted shell_match. Journey screens enter Baseline after
+      # Spec+Shell. From Shell onward style converges. Never a Skills menu.
       id: null
       version: 1
       # proposed | locked | reopened
@@ -1129,12 +1172,21 @@ completion:
    Definition Done and every `complete_confirmed_current` automation action
    require `product_spec_coverage.status: ready`. Thin or uneven product docs
    do not waive this. Missing journeys, Baseline-required screens, acceptance
-   links, or open decision-changing gaps fail closed as
-   `product_spec_coverage_incomplete`. Interactive mode must ask → recommend →
-   wait for every missing required row; unattended (explicit only) may
-   recommend and auto-adopt with `agent_recommendation_adopted` provenance—never
-   relabel invented content as `user_stated`. `deferred_unknown` is forbidden
-   for initialization blockers listed under `product_spec_coverage.checklist`.
+   links, open decision-changing gaps, missing **flow decomposition** pass /
+   conclusion, or incomplete **stress paths** fail closed as
+   `product_spec_coverage_incomplete` (see nested codes in
+   `product-spec-flow-decomposition`). Decomposition is **operation-flow
+   driven**: draw the user-operation flowchart, detect serial gates vs
+   parallel ops + final confirm, then conclude `split` / `keep_cohesive` /
+   `needs_user_decision` — do **not** use risk labels to force multi-screen.
+   Interactive: ask → recommend → wait for missing required rows and for
+   decision-changing thin-doc gaps. Unattended (explicit only): may auto-adopt
+   **non-decision-changing** fills with `agent_recommendation_adopted`; must
+   still run the decomposition pass; decision-changing thin-doc gaps fail
+   closed `thin_product_doc_gap_requires_user` — never silent-complete an
+   underspecified product. Never relabel invented content as `user_stated`.
+   `deferred_unknown` is forbidden for initialization blockers listed under
+   `product_spec_coverage.checklist`.
 8. Secret values never enter this document. Authorization and external
    capability rows record disposition and availability references only.
 

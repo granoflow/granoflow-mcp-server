@@ -31,26 +31,28 @@ prototype_input_status: not_applicable | awaiting_reference | awaiting_visual_co
 
 prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":"<id>","prototype_id":"<id>","version_id":"<id>","version_ordinal":1,"package_attachment_id":"<id>","package_sha256":"<64 lowercase hex>","visually_confirmed":true,"derived_from_prototype_id":"<baseline id|null>","derived_from_version_id":"<id|null>","derived_from_package_sha256":"<64 hex|null>","intended_use":"<purpose>"}]
 
-# Interactive: default dual (delta_match + ai_challenger); optional third only
-
-# for documented industry-peer deadlock. Unattended: single delta_match.
-
+# Interactive: default dual page expressions (expr_a + expr_b) inside locked
+# Design System; mix-and-match per task/page; optional third only for documented
+# industry-peer deadlock. Unattended: single expr_a.
+# Never reopen Design Spec (delta_match / ai_challenger / spec_match) as task
+# option ids after Baseline lock.
 # Craft Gate must pass before visualConfirmed. See project-artifact-workflows
-
 # "Task Prototype Craft Gate And Option Set".
 
 prototype_option_set:
 mode: interactive_dual | interactive_dual_plus_industry_third | unattended_single
-options: [] # [{ id: delta_match|ai_challenger|industry_peer_c, contrast_axes: [], rationale: null|string }]
+design_system_locked: null # confirmed Spec/Baseline option id (required when dual)
+options: [] # [{ id: expr_a|expr_b|industry_peer_c, contrast_axes: [], rationale: null|string }]
 contrast_axes: [] # ≥2 from whitelist when interactive dual/triple
 third_option_rationale: null # required when industry_peer_c present
-selected_option_id: null
+selected_option_id: null # per-task; milestones may mix picks across tasks
 craft_checklist:
 intent_recorded: false
 fidelity_ok: false
 real_domain_copy: false
 required_states_covered: false
 enhancement_notes_ok: false
+user_visible_copy_boundary_ok: false # must be true before visualConfirmed; see user-visible-copy-boundary.md
 craft_status: incomplete | ready # incomplete => task_prototype_craft_incomplete
 
 # Software edits: hard gate from software-structural-budget.md. Non-software

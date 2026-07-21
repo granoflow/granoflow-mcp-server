@@ -69,11 +69,31 @@ closure.
 During Project Definition, every decision carries a recommendation. **Only when
 the user explicitly declared unattended for that initialization** may the host
 adopt recommendations immediately and default Design Baseline + App Shell visual
-confirmation to `auto_accept_recommendation` after exact App import/readback.
-If unattended was not explicitly declared, Project Definition stays interactive:
+confirmation to `auto_accept_recommendation` after exact App import/readback—
+**except** the Product Spec Completeness / flow-decomposition rules below. If
+unattended was not explicitly declared, Project Definition stays interactive:
 ask → recommend → wait for the user to decide. Soft aesthetic preference is not
 a wait-for-user loop under explicit unattended; it never authorizes skipping
 interactive confirmation.
+
+### Product Spec under unattended (thin docs ≠ silent ready)
+
+When filling `product_spec_coverage` under explicit unattended:
+
+1. **Always** draw the operation flowchart, list serial gates vs parallel ops,
+   and record `split` / `keep_cohesive` (with required summaries) or park
+   `needs_user_decision` as residual /
+   `thin_product_doc_gap_requires_user` — never skip the pass. Do **not** use
+   risk labels to force multi-screen.
+2. Auto-adopt only **non-decision-changing** gap fills with
+   `agent_recommendation_adopted`. Decision-changing thin-doc gaps must **not**
+   be silent-auto-accepted → fail closed or residual
+   `thin_product_doc_gap_requires_user`.
+3. Never invent whole journeys as `user_stated`. Never mark
+   `product_spec_coverage.status: ready` while decomposition, stress paths, or
+   decision-changing thin gaps remain open.
+4. Unattended Baseline visual `auto_accept_recommendation` never waives these
+   gates.
 
 ### Prototype links under unattended
 
@@ -84,31 +104,52 @@ task `ui_prototype`):
    as a non-blocking notice and append it to `prototype_link_ledger`.
 2. Do not wait mid-run for visual taste confirmation.
 3. Project Definition Design Spec / Shell under unattended: author **one**
-   faithful `spec_match` with a **random seed**, then **one** `shell_match`
-   **fitted to that Spec** (no independent palette seed)—do **not** run
-   interactive triads or AI challengers. After Baseline confirm, write
-   `widgets.yaml` from that confirmed Baseline prototype.
+   faithful `spec_match` **Style Guide / Design Tokens board** (not a
+   journey-screen gallery) via `draw_visual_lots.py` **true-random** draw, then
+   **one** `shell_match` that **embeds that Spec’s tokens** and is product-near
+   (not wireframe-only; no independent palette seed)—do **not** run interactive
+   triads or AI challengers. Journey/critical screens beyond the Shell’s primary
+   surface belong in the Baseline package after Spec+Shell. After Baseline
+   confirm, write `widgets.yaml` from that confirmed Baseline prototype.
 4. At run close, emit a mandatory **Prototype Link Digest** that lists every
    ledger entry with clickable links so the user can audit all prototypes in
    one place. Omitting the digest fails closed as
    `prototype_link_digest_required`.
 5. Interactive mode (default when unattended was not declared) remains: Design
-   Spec triad (each option a **different random seed**) then Shell triad
-   (Spec-fitted chrome variants only), stop after each triad batch for pick /
-   more options (`prototype_preview_review_required` /
-   `design_spec_triad_required` / `shell_triad_required` /
-   `shell_spec_mismatch` / seed-collision codes if skipped or rules violated).
+   Spec triad of Style Guide boards (lots from `draw_visual_lots.py`;
+   wrong shape → `design_spec_wrong_artifact_type`) then Shell triad of
+   Spec-embedded product-near chrome variants (tokens missing / wireframe-only
+   → `shell_spec_tokens_missing` / `shell_wireframe_only`), stop after each
+   triad batch for pick / **换新批** (`--dedupe ledger`) / **在某套上改**
+   (`prototype_preview_review_required` / `design_spec_triad_required` /
+   `shell_triad_required` / `shell_spec_mismatch` / seed-collision /
+   `design_spec_seed_not_drawn` / `visual_lot_dedupe_required` /
+   `design_spec_user_facing_jargon` codes if skipped or rules violated).
+   User-facing Preview Gate copy stays plain language (no `seed-*` / internal
+   option enums).
 6. Task / milestone `ui_prototype`: inherit locked Spec + Shell; **no** random
    visual seed (`task_prototype_seed_forbidden`); reuse `widgets.yaml` when the
    same role exists (`widget_reuse_required`); pass Craft Gate before confirm
-   (`task_prototype_craft_incomplete` if not).
-   - **Unattended:** **one** `delta_match` only (no dual/triple).
-   - **Interactive (default when not unattended):** default **two** options
-     (`delta_match` + `ai_challenger`) with ≥2 contrast axes; optional third
-     only for documented industry-peer deadlock
-     (`prototype_option_third_unjustified` /
+   else `task_prototype_craft_incomplete` (including product truth →
+   `prototype_product_truth_violation` and user-visible copy boundary →
+   `user_visible_copy_boundary_unread` /
+   `user_visible_copy_boundary_violation`); keep design-first; high-risk UI needs
+   feasibility conclusion before Readiness
+   (`high_risk_feasibility_unresolved`).
+   - **Unattended:** **one** `expr_a` only (no dual/triple; no Design System
+     reopen).
+   - **Interactive (default when not unattended):** default **two page
+     expressions** (`expr_a` + `expr_b`) inside the locked Design System, with
+     ≥2 contrast axes; mix-and-match per task/page; **side-by-side Contrast
+     Gallery** with per-axis visible-diff captions; optional third only for
+     documented industry-peer deadlock; never re-offer Design Spec labels as
+     task options
+     (`prototype_option_design_system_reopened` /
+     `prototype_option_third_unjustified` /
      `prototype_option_contrast_insufficient` /
-     `prototype_option_near_duplicate`).
+     `prototype_option_near_duplicate` /
+     `prototype_option_contrast_gallery_required` /
+     `prototype_option_diff_unlabeled`).
 
 ## Current Run Versus Durable Delegation
 

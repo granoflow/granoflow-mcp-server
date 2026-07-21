@@ -583,9 +583,17 @@ Any task that changes UI must follow the UI Change Prototype Mandate: high-
 fidelity `ui_prototype` required (`prototype_requirement: required`),
 `derivedFrom` the project Design Baseline when present, contract fidelity, no
 random visual seed, widget reuse, and **Task Prototype Craft Gate And Option
-Set** (interactive: default dual options, conditional industry third;
-unattended: single `delta_match`) before `visualConfirmed` / Readiness. Details:
-`task-work-document-workflow.md` and
+Set** (interactive: default dual **page expressions** `expr_a`/`expr_b` inside
+the locked Design System, with **side-by-side Contrast Gallery** and per-axis
+visible-diff captions, mix-and-match per task/page, conditional industry third;
+unattended: single `expr_a`; never reopen Design Spec as task options) before
+`visualConfirmed` / Readiness. Before in-frame copy, load
+`user-visible-copy-boundary` via `granoflow_bundled_skill_reference`, keep
+design rationale outside the phone frame, run
+`scripts/lint_prototype_user_copy.py`, and set
+`craft_checklist.user_visible_copy_boundary_ok: true` only when lint passes.
+Details: `task-work-document-workflow.md`,
+`user-visible-copy-boundary.md`, and
 `granoflow-project-definition/project-artifact-workflows`.
 
 High-level contract:

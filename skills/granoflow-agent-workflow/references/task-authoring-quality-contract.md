@@ -99,16 +99,33 @@ protected surfaces.
 
 **Mandatory prototype:** any UI change requires a high-fidelity HTML prototype.
 Set Task Work `prototype_requirement: required`. Apply **Task Prototype Craft
-Gate And Option Set**: interactive default dual (`delta_match` +
-`ai_challenger`) with ≥2 contrast axes (conditional industry third only when
-documented); unattended single `delta_match`; Craft Gate before
-`visualConfirmed` (`task_prototype_craft_incomplete` otherwise). Declare
-`derivedFrom` the confirmed Design Baseline package when the project has one,
-accept against contract fidelity (契约级一致), **no** random visual seed, reuse
+Gate And Option Set**: interactive default dual **page expressions** (`expr_a`
++ `expr_b`) inside the locked Design System, with ≥2 contrast axes and a
+**side-by-side Contrast Gallery** with per-axis visible-diff captions
+(mix-and-match per task/page; never reopen Design Spec as task options;
+conditional industry third only when documented); unattended single `expr_a`;
+Craft Gate before `visualConfirmed` (`task_prototype_craft_incomplete`
+otherwise), including **product truth** (`prototype_product_truth_violation`)
+and **user-visible copy boundary**
+(`user_visible_copy_boundary_unread` /
+`user_visible_copy_boundary_violation`; require
+`craft_checklist.user_visible_copy_boundary_ok` after
+`lint_prototype_user_copy.py`).
+Keep **design-first**:
+previews express demand; if undeliverable, revise design—do not fake
+capability. High-risk platform-coupled UI needs a Tech Note conclusion before
+Readiness (`high_risk_feasibility_unresolved`). Declare `derivedFrom` the
+confirmed Design Baseline package when the project has one, accept against
+contract fidelity (契约级一致), **no** random visual seed, reuse
 `widgets.yaml` when the same role exists, upload the **chosen** option to the
 task's `ui_prototype` logical slot with visual confirmation, and read it back
 **before Analysis confirmation when possible, and always before execution
 Readiness / claiming the UI change is accepted**.
+Fail closed on Design System reopen
+(`prototype_option_design_system_reopened`), prose-only near-duplicates
+(`prototype_option_near_duplicate`), missing gallery
+(`prototype_option_contrast_gallery_required`), or unlabeled diffs
+(`prototype_option_diff_unlabeled`).
 Do not mark `not_required` for a UI change.
 A whole-page redesign is valid only when the task explicitly authorizes that
 whole-page surface.

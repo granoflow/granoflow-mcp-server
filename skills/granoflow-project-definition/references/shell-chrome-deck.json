@@ -1,0 +1,77 @@
+{
+  "schema": "granoflow.shell_chrome_deck",
+  "cards": [
+    {
+      "id": "chrome_bottom_tabs_standard",
+      "family": "destination_bar",
+      "axes": ["position:bottom", "density:icons_labels"],
+      "plain_label_hint": "标准底栏双目的地"
+    },
+    {
+      "id": "chrome_top_segmented",
+      "family": "destination_bar",
+      "axes": ["position:top", "density:labels"],
+      "plain_label_hint": "顶部分段切换"
+    },
+    {
+      "id": "chrome_floating_capsule",
+      "family": "floating",
+      "axes": ["position:floating", "density:icons_labels"],
+      "plain_label_hint": "悬浮胶囊导航"
+    },
+    {
+      "id": "chrome_side_rail_icons",
+      "family": "rail",
+      "axes": ["position:side", "density:icons"],
+      "plain_label_hint": "侧轨图标导航"
+    },
+    {
+      "id": "chrome_side_rail_labels",
+      "family": "rail",
+      "axes": ["position:side", "density:icons_labels"],
+      "plain_label_hint": "侧轨图标加标签"
+    },
+    {
+      "id": "chrome_search_first_overflow",
+      "family": "search_first",
+      "axes": ["search:primary", "settings:overflow"],
+      "plain_label_hint": "搜索优先·设置进溢出"
+    },
+    {
+      "id": "chrome_landscape_split_master_detail",
+      "family": "adaptive_split",
+      "axes": ["landscape:split", "portrait:collapse"],
+      "plain_label_hint": "宽屏双栏·窄屏单栏"
+    },
+    {
+      "id": "chrome_gesture_reveal_minimal",
+      "family": "immersive",
+      "axes": ["chrome:hidden_default", "reveal:gesture_or_tap"],
+      "plain_label_hint": "极简沉浸·手势唤出导航"
+    },
+    {
+      "id": "chrome_continue_reading_hero",
+      "family": "content_priority",
+      "axes": ["surface:continue_hero", "nav:secondary"],
+      "plain_label_hint": "继续阅读主卡·导航次级"
+    },
+    {
+      "id": "chrome_top_brand_bottom_destinations",
+      "family": "layered",
+      "axes": ["position:top_brand", "position:bottom_dest"],
+      "plain_label_hint": "顶栏品牌·底栏目的地"
+    },
+    {
+      "id": "chrome_drawer_primary",
+      "family": "drawer",
+      "axes": ["nav:drawer", "portrait:hamburger"],
+      "plain_label_hint": "抽屉主导航"
+    },
+    {
+      "id": "chrome_bottom_plus_fab_import",
+      "family": "destination_bar",
+      "axes": ["position:bottom", "affordance:fab_import"],
+      "plain_label_hint": "底栏加导入悬浮钮"
+    }
+  ]
+}

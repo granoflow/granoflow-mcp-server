@@ -153,12 +153,18 @@ cleanly.
 
 Do not render an optional heading merely to say it is unused.
 
-When `UI / Manual Acceptance` is triggered, read
-[`user-visible-copy-boundary.md`](user-visible-copy-boundary.md). Every visual
-Prototype must pass its copy admission test before visual confirmation. Keep
+When `UI / Manual Acceptance` is triggered, **Must** load
+[`user-visible-copy-boundary.md`](user-visible-copy-boundary.md) via
+`granoflow_bundled_skill_reference` (skillId `granoflow-agent-workflow`,
+referenceId `user-visible-copy-boundary`) before authoring in-frame copy.
+Skipping the load fails closed `user_visible_copy_boundary_unread`. Every
+visual Prototype must pass its copy admission test **and**
+`scripts/lint_prototype_user_copy.py` (`ok: true`) before visual confirmation;
+set `craft_checklist.user_visible_copy_boundary_ok: true` only then. Keep
 Prototype-only scenario controls and reviewer explanations outside the
-simulated product UI; internal filtering, confidence, quantity, architecture,
-test, and acceptance language must not become product copy.
+simulated product UI; internal filtering, design rationale, confidence,
+quantity, architecture, test, and acceptance language must not become product
+copy (`user_visible_copy_boundary_violation`).
 
 ### UI Change Prototype Mandate
 
@@ -191,21 +197,33 @@ Hard rules:
    reusable widgets into the same project `widgets` slot.
 5. Apply **Task Prototype Craft Gate And Option Set** from
    `granoflow-project-definition/project-artifact-workflows`:
-   - Craft Gate (intent / fidelity / craft / confirm surface) must pass before
-     `visualConfirmed=true` else `task_prototype_craft_incomplete`.
-   - **Interactive:** default **two** options (`delta_match` +
-     `ai_challenger`) with **≥2** whitelist contrast axes and challenger
-     rationale; add a **third** (`industry_peer_c`) only when three industry
-     peer patterns all fit and the host cannot honestly prefer one (else
-     `prototype_option_third_unjustified`). Fail closed
+   - Craft Gate (intent / fidelity / craft / **user-visible copy boundary** /
+     confirm surface) must pass before `visualConfirmed=true` else
+     `task_prototype_craft_incomplete` /
+     `user_visible_copy_boundary_unread` /
+     `user_visible_copy_boundary_violation`.
+   - **Interactive:** default **two page expressions** (`expr_a` + `expr_b`)
+     that share the locked Design System (`design_system_locked`), with **≥2**
+     whitelist contrast axes and page-local theses; **mix-and-match** per
+     task/page. Add a **third** (`industry_peer_c`) only when three industry
+     peer patterns all fit inside the locked Design System and the host cannot
+     honestly prefer one (else `prototype_option_third_unjustified`). Do **not**
+     re-offer Design Spec choice (`delta_match` / `ai_challenger` /
+     `spec_match` as task option ids) →
+     `prototype_option_design_system_reopened`. Options Must diverge in the
+     **frames** (not prose-only). Emit a **side-by-side Contrast Gallery**
+     with per-axis visible-diff captions (prefer
+     `granoflow-project-definition/scripts/build_option_contrast_gallery.py`);
+     separate option links alone are insufficient. Fail closed
      `prototype_option_contrast_insufficient` /
-     `prototype_option_near_duplicate`. Emit all option links in one batch;
-     one wait.
-   - **Unattended (explicit only):** **one** `delta_match` only.
+     `prototype_option_near_duplicate` /
+     `prototype_option_contrast_gallery_required` /
+     `prototype_option_diff_unlabeled`. One wait (per-page picks allowed).
+   - **Unattended (explicit only):** **one** `expr_a` only.
 6. Author the HTML option(s), then apply the **Prototype Preview Gate**:
-   interactive waits on the option batch; unattended shows the single-link
-   notice, continues, and includes every link in the run-closing Prototype
-   Link Digest.
+   interactive waits on the Contrast Gallery (option batch); unattended shows
+   the single-link notice, continues, and includes every link in the
+   run-closing Prototype Link Digest.
 7. Obtain visual confirmation for the **chosen** package hash (interactive
    user accept, or unattended auto-accept only when explicitly unattended),
    upload to the task `ui_prototype` slot with `visualConfirmed=true`, and
@@ -219,6 +237,17 @@ Hard rules:
    "backfill" a prototype after code. Missing interactive wait returns
    `prototype_preview_review_required`. Missing unattended closing digest when
    prototypes were authored returns `prototype_link_digest_required`.
+10. Keep **design-first** (see
+    `granoflow-project-definition/project-artifact-workflows` § Design-first,
+    product-truth, and high-risk feasibility). Previews must pass **product
+    truth** (`prototype_product_truth_violation` if they invent unauthorized
+    states/capabilities). For **high-risk** platform-coupled UI, start a short
+    Tech Note as soon as the preview batch exists; before
+    `readiness_grill_status: passed`, record a feasibility conclusion
+    (as drawn / degraded with `【增强实现】` / revise design). Missing
+    conclusion → `high_risk_feasibility_unresolved`. If revise-design is
+    required, do not pass Readiness—return to product/prototype change rather
+    than faking the UI in code.
 
 ### Task Integration Test Policy (manual run)
 
@@ -458,7 +487,11 @@ The Readiness Grill must determine whether the Plan is sufficient to finish the
 work and whether its prerequisites are actually available: authorization,
 accounts and login state, credentials, keys, secret availability, required data
 and source materials, upstream outputs, tools and environment, verification,
-rollback, stop, and handoff conditions. Record only whether a credential or
+rollback, stop, and handoff conditions. For UI-changing tasks, also verify
+product-truth on the confirmed `ui_prototype` and, when the surface is
+high-risk (platform-coupled / easy to overpromise), a written feasibility
+conclusion from the Tech Note (`high_risk_feasibility_unresolved` if missing;
+revise-design conclusions block `passed`). Record only whether a credential or
 secret is available and authorized; never copy its value into Task Work, logs,
 or chat. Missing or unverified readiness sets `blocked` or
 `revisions_required`, not `passed`.
