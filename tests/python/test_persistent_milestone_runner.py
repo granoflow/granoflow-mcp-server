@@ -5,7 +5,13 @@ import json
 import sys
 import tempfile
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+try:
+    from datetime import UTC
+except ImportError:  # Python 3.9 compatibility
+    from datetime import timezone
+
+    UTC = timezone.utc
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -66,7 +72,7 @@ class FakeApi:
 
 
 def authorization(milestone_id: str) -> dict[str, Any]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return {
         "schema": "granoflow_milestone_authorization_v1",
         "status": "confirmed",
