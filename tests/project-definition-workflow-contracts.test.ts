@@ -12,6 +12,7 @@ const artifacts = readFileSync(
 );
 const openaiYaml = readFileSync("skills/granoflow-project-definition/agents/openai.yaml", "utf8");
 
+// eslint-disable-next-line max-lines-per-function -- contract surface assertions
 describe("project definition bundled workflow", () => {
   it("supports both interaction modes through one project_work slot", () => {
     expect(skill).toContain("guided_step_by_step");
@@ -61,21 +62,38 @@ describe("project definition bundled workflow", () => {
     expect(artifacts).toContain("【增强实现】");
   });
 
-  it("requires recommendation provenance; unattended adopts recommendations", () => {
+  it("requires recommendation provenance; interactive waits; unattended adopts", () => {
+    expect(interaction).toContain("Mode Gate");
+    expect(interaction).toContain("executionMode: interactive");
+    expect(interaction).toMatch(/Never infer unattended/i);
+    expect(interaction).toMatch(/Ask[\s\S]*Recommend[\s\S]*Wait/i);
     expect(interaction).toContain("recommended_value");
     expect(interaction).toContain("source:");
     expect(interaction).toContain("batch_accept_eligible");
     expect(interaction).toContain("never silently batch");
-    expect(interaction).toMatch(/Unattended mode:[\s\S]*adopt `recommended_value` immediately/i);
+    expect(interaction).toMatch(
+      /Unattended \(explicit only\):[\s\S]*adopt `recommended_value` immediately/i,
+    );
     expect(interaction).toContain("auto_accept_recommendation");
+    expect(interaction).toMatch(
+      /Must not[\s\S]*auto_accept_recommendation[\s\S]*ask → recommend → wait/i,
+    );
+    expect(artifacts).toMatch(/Never[\s\S]*auto-accept[\s\S]*interactive mode/i);
     expect(skill).toContain("auto_accept_recommendation");
-    expect(skill).toMatch(/unattended[\s\S]*adopt recommendations immediately/i);
+    expect(skill).toMatch(/ask → recommend → wait/i);
+    expect(skill).toMatch(/unattended \(explicit only\)[\s\S]*adopt recommendations immediately/i);
+    expect(skill).toMatch(/Never[\s\S]*auto-accept Baseline\+Shell[\s\S]*interactive/i);
   });
 
-  it("selects software structural limits at init without another confirmation", () => {
+  it("recommends structural budget at init and waits in interactive mode", () => {
     expect(interaction).toContain("granoflow-agent-workflow/software-structural-budget");
-    expect(interaction).toMatch(/choose them automatically/i);
-    expect(interaction).toMatch(/do not ask for confirmation/i);
+    expect(interaction).toMatch(/recommended[\s\S]*structural-budget decision/i);
+    expect(interaction).toMatch(
+      /Interactive:[\s\S]*wait for accept \/ customize before persisting/i,
+    );
+    expect(interaction).toMatch(
+      /Unattended \(explicit only\):[\s\S]*adopt the recommendation automatically/i,
+    );
     expect(interaction).toContain("recorded_pending_enforcement");
     expect(interaction).toMatch(/not the `Initialize Granoflow` first-run flow/i);
   });
@@ -90,7 +108,7 @@ describe("project definition bundled workflow", () => {
     expect(skill).toContain("skill_routing");
     expect(skill).toContain("prototype_template");
     expect(interaction).toContain("Automatic Design Proposal Contract");
-    expect(interaction).toMatch(/Never turn the proposal into a menu of[\s\S]*Skills/i);
+    expect(interaction).toMatch(/Never turn the[\s\S]*proposal into a menu of[\s\S]*Skills/i);
     expect(interaction).toContain("phase");
     expect(interaction).toContain("baseline");
     expect(interaction).toContain("shell");
@@ -100,6 +118,8 @@ describe("project definition bundled workflow", () => {
   it("ends with Done checklist and milestone/task handoff", () => {
     expect(skill).toContain("Done And Handoff");
     expect(skill).toContain("handoff card");
+    expect(skill).toContain("product_spec_coverage.status");
+    expect(skill).toContain("product_spec_coverage_incomplete");
     expect(skill).toContain("granoflow-portfolio-orchestrator");
     expect(skill).toContain("granoflow-milestone-workflow");
     expect(skill).toContain("granoflow-task-authoring");
@@ -107,6 +127,7 @@ describe("project definition bundled workflow", () => {
     expect(skill).toContain("granoflow-task-orchestrator");
     expect(skill).toMatch(/full\s+milestone\/task tree/i);
     expect(skill).toMatch(/does\s+\*\*not\*\*/i);
+    expect(interaction).toContain("Product Spec Completeness Hard Gate");
   });
 
   it("keeps prototype, data model, and workflow artifacts in fixed slots", () => {
@@ -118,6 +139,23 @@ describe("project definition bundled workflow", () => {
     expect(artifacts).toContain("Artifact Registry");
     expect(artifacts).toContain("package_prototype.py");
     expect(artifacts).toContain("visualConfirmed=true");
+    expect(artifacts).toContain("Prototype Preview Gate");
+    expect(artifacts).toContain("prototype_preview_review_required");
+    expect(artifacts).toContain("Prototype Link Digest");
+    expect(artifacts).toContain("prototype_link_digest_required");
+    expect(artifacts).toContain("Design Spec then Shell");
+    expect(artifacts).toContain("three different random seeds");
+    expect(artifacts).toContain("design_spec_seed_collision");
+    expect(artifacts).toContain("shell_seed_collision");
+    expect(artifacts).toContain("shell_spec_mismatch");
+    expect(artifacts).toContain("From Shell onward, design style converges");
+    expect(artifacts).toContain("Widget Catalog");
+    expect(artifacts).toContain("widgets.yaml");
+    expect(artifacts).toContain("widget_catalog_required");
+    expect(artifacts).toContain("task_prototype_seed_forbidden");
+    expect(artifacts).toContain("widget_reuse_required");
+    expect(artifacts).toContain("prototype_template.prototype_id");
+    expect(artifacts).toMatch(/Unattended[\s\S]*spec_match[\s\S]*random seed/i);
     expect(artifacts).toMatch(/task changes UI[\s\S]*mandatory/i);
     expect(artifacts).toMatch(/Missing `derivedFrom`[\s\S]*fails closed/i);
   });

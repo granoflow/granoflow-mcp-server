@@ -622,7 +622,10 @@ High-level contract:
 7. External `grill-finalizer` or specialist reviewers are optional enhancement
    evidence only. They never replace either bundled Grill gate; route a missing
    optional helper through the external routing owner without weakening the
-   phase state.
+   phase state. When `grill-finalizer` writes a temporary candidate, the
+   post-finalizer `grill-me` pipeline is **required** before promotion
+   (interactive: one question + recommend + wait; unattended explicit only:
+   one question + recommend + auto-adopt).
 8. Only after the applicable bundled Grill gates pass and the latest clean
    rewrite is validated, upload that rewritten document and require App-owned
    content/hash readback before switching the current Task Work slot's active

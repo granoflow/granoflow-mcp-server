@@ -182,16 +182,31 @@ Hard rules:
 2. Read the confirmed project Design Baseline
    (`granoflow_project_design_baseline_read` with exact ids/SHA). Accept against
    contract fidelity (契约级一致). Declare `derivedFrom` that exact package.
-3. Author the HTML prototype, preview it, obtain visual confirmation for that
-   exact package hash, upload to the task `ui_prototype` slot with
-   `visualConfirmed=true`, and read back SHA/manifest evidence.
-4. Prefer completing the prototype **before Analysis confirmation** so the user
+3. **Do not** apply a new random visual seed (no Spec re-exploration / palette
+   re-roll). Task prototypes inherit the locked Spec + Shell. Fail closed
+   `task_prototype_seed_forbidden`.
+4. Load project `widgets.yaml` (App readback). Reuse widgets with the same role
+   before inventing new chrome/controls. Skipping reuse without rationale →
+   `widget_reuse_required`. After visual confirmation, extract new/changed
+   reusable widgets into the same project `widgets` slot.
+5. Author the HTML prototype, then apply the **Prototype Preview Gate** from
+   `granoflow-project-definition/project-artifact-workflows`: emit a clickable
+   preview link; **interactive** waits for visual review before confirm/upload;
+   **unattended** (explicit only) shows the link as a notice, continues, and
+   includes every link in the run-closing Prototype Link Digest.
+6. Obtain visual confirmation for that exact package hash (interactive user
+   accept, or unattended auto-accept only when explicitly unattended), upload
+   to the task `ui_prototype` slot with `visualConfirmed=true`, and read back
+   SHA/manifest evidence.
+7. Prefer completing the prototype **before Analysis confirmation** so the user
    can see the change before implementation. At latest, the confirmed
    `ui_prototype` must exist before `readiness_grill_status: passed` and before
    any non-dry-run execution.
-5. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
+8. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
    `ui_prototype_required` / block Readiness. Do not implement UI first and
-   "backfill" a prototype after code.
+   "backfill" a prototype after code. Missing interactive wait returns
+   `prototype_preview_review_required`. Missing unattended closing digest when
+   prototypes were authored returns `prototype_link_digest_required`.
 
 ### Task Integration Test Policy (manual run)
 
@@ -668,17 +683,24 @@ superseded attachment; local deletion does not authorize App deletion.
 
 An available `model_allowed` `grill-finalizer` may add enhanced evidence before
 a bundled gate concludes, but it never replaces the bundled checklist or owns
-the phase result. If a materially relevant optional helper is missing, follow
-`external-skill-routing.md`; do not mark a bundled gate passed merely because
-installation is waiting, declined, or failed. Only `required_capability` may use
-`install_offered + pending_user_decision`; that state remains waiting and does
-not become an implicit result. For `preferred_method` or `explicit_only`, do
-not offer installation during unattended execution: record the specific
-missing or failure result, use `native_fallback` or `skip_nonblocking`, and
-continue the mandatory bundled checklist without claiming external evidence. A
-`user_only` helper such as `grill-me` with `disable-model-invocation: true` is
-considered only after explicit user invocation. Select only relevant
-gstack/provider reviewers; do not install or invoke the entire family.
+the phase result. If that path writes a temporary candidate, the host **must**
+run the post-finalizer `grill-me` pipeline (`pipeline_required` in
+`external-skill-routing.md`): interactive one-question + recommend + wait, or
+explicit-unattended one-question + recommend + auto-adopt, before promotion.
+Fail closed with `post_finalizer_grill_me_required` if the temp write exists and
+grill-me did not complete. If a materially relevant optional helper is missing,
+follow `external-skill-routing.md`; do not mark a bundled gate passed merely
+because installation is waiting, declined, or failed. Only `required_capability`
+may use `install_offered + pending_user_decision`; that state remains waiting
+and does not become an implicit result. For `preferred_method` or
+`explicit_only`, do not offer installation during unattended execution: record
+the specific missing or failure result, use `native_fallback` or
+`skip_nonblocking`, and continue the mandatory bundled checklist without
+claiming external evidence. Standalone `grill-me` outside the post-finalizer
+pipeline may remain user-initiated; after a temp-writing finalizer it is
+mandatory (invoke when permitted, otherwise inline grilling contract). Select
+only relevant gstack/provider reviewers; do not install or invoke the entire
+family.
 
 Installation authorization does not authorize Analysis/Planning confirmation,
 implementation, commit, push, publishing, or another gated action. Suggesting

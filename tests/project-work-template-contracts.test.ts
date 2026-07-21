@@ -17,6 +17,7 @@ describe("Project Work YAML template", () => {
       "project_lifecycle:",
       "scope:",
       "product:",
+      "product_spec_coverage:",
       "agent_preferences:",
       "acceptance:",
       "repositories:",
@@ -34,6 +35,11 @@ describe("Project Work YAML template", () => {
     ]) {
       expect(template).toContain(section);
     }
+    expect(template).toContain("product_spec_coverage_incomplete");
+    expect(template).toContain("journey_coverage:");
+    expect(template).toContain("screen_coverage:");
+    expect(template).toContain("gap_fills:");
+    expect(template).toContain("deferred_unknown_forbidden_for_initialization_blockers");
 
     for (const engineeringContract of [
       "architecture:",
@@ -75,6 +81,16 @@ describe("Project Work YAML template", () => {
     ]) {
       expect(template).toContain(designLock);
     }
+    expect(template).toContain("design_spec_selection:");
+    expect(template).toContain("shell_selection:");
+    expect(template).toContain("interactive_triad");
+    expect(template).toContain("unattended_single");
+    expect(template).toContain("unattended_spec_match_random_seed");
+    expect(template).toContain("unattended_shell_match_fitted_to_spec");
+    expect(template).toContain("widgets_attachment:");
+    expect(template).toContain("widgets.yaml");
+    expect(template).toContain("logical_slot: widgets");
+    expect(template).toContain("widget_catalog_required");
     expect(template).toMatch(/Lock stack_capability_profile before authoring Design Baseline/i);
     expect(template).toMatch(/Never resolve "latest"/i);
   });

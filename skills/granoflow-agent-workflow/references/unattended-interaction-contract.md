@@ -66,10 +66,41 @@ continue when solvable under the declaration. If archive capability is missing,
 **defer** that archival item and continue other work—do not PATCH status to fake
 closure.
 
-During Project Definition, every decision carries a recommendation; unattended
-runs adopt recommendations immediately. Design Baseline + App Shell visual
-confirmation defaults to `auto_accept_recommendation` after exact App
-import/readback. Soft aesthetic preference is not a wait-for-user loop.
+During Project Definition, every decision carries a recommendation. **Only when
+the user explicitly declared unattended for that initialization** may the host
+adopt recommendations immediately and default Design Baseline + App Shell visual
+confirmation to `auto_accept_recommendation` after exact App import/readback.
+If unattended was not explicitly declared, Project Definition stays interactive:
+ask → recommend → wait for the user to decide. Soft aesthetic preference is not
+a wait-for-user loop under explicit unattended; it never authorizes skipping
+interactive confirmation.
+
+### Prototype links under unattended
+
+Whenever HTML prototypes are authored (Design Baseline screens/Shell units or
+task `ui_prototype`):
+
+1. After **each** prototype becomes previewable, emit a clickable preview link
+   as a non-blocking notice and append it to `prototype_link_ledger`.
+2. Do not wait mid-run for visual taste confirmation.
+3. Project Definition Design Spec / Shell under unattended: author **one**
+   faithful `spec_match` with a **random seed**, then **one** `shell_match`
+   **fitted to that Spec** (no independent palette seed)—do **not** run
+   interactive triads or AI challengers. After Baseline confirm, write
+   `widgets.yaml` from that confirmed Baseline prototype.
+4. At run close, emit a mandatory **Prototype Link Digest** that lists every
+   ledger entry with clickable links so the user can audit all prototypes in
+   one place. Omitting the digest fails closed as
+   `prototype_link_digest_required`.
+5. Interactive mode (default when unattended was not declared) remains: Design
+   Spec triad (each option a **different random seed**) then Shell triad
+   (Spec-fitted chrome variants only), stop after each triad batch for pick /
+   more options (`prototype_preview_review_required` /
+   `design_spec_triad_required` / `shell_triad_required` /
+   `shell_spec_mismatch` / seed-collision codes if skipped or rules violated).
+6. Task / milestone `ui_prototype` under any mode: inherit locked Spec + Shell;
+   **no** random visual seed (`task_prototype_seed_forbidden`); reuse
+   `widgets.yaml` when the same role exists (`widget_reuse_required`).
 
 ## Current Run Versus Durable Delegation
 
@@ -179,6 +210,8 @@ When no solvable ready work remains, set
 
 - Scope: <declared unattended scope>
 - Completed: <count / summary refs>
+- Prototype Link Digest: <clickable links for every HTML prototype authored;
+  required when any prototype was produced>
 - Deferred / not executed:
   1. <title> — <blocker_class> — <why external> — <resume_condition>
   2. ...

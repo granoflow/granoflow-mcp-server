@@ -51,10 +51,28 @@ describe("requirement intake and traceability contracts", () => {
       "extra_content_preserved:",
       "conflict_summary:",
       "requirement_coverage:",
+      "product_spec_coverage:",
+      "journey_coverage:",
+      "screen_coverage:",
+      "gap_fills:",
+      "product_spec_coverage_incomplete",
       "every_adopted_requirement_has_one_primary_owner:",
     ]) {
       expect(projectWork).toContain(field);
     }
+  });
+
+  it("hard-gates thin product docs before initialization Done", () => {
+    expect(intake).toContain("Product Spec Completeness Hard Gate");
+    expect(intake).toContain("product_spec_coverage_incomplete");
+    expect(intake).toMatch(/deferred_unknown[\s\S]*forbidden/i);
+    expect(intake).toMatch(/Never relabel invented content as `user_stated`/i);
+    expect(intake).toMatch(/Interactive: ask → recommend → wait/i);
+    expect(projectSkill).toContain("product_spec_coverage.status");
+    expect(projectSkill).toContain("product_spec_coverage_incomplete");
+    expect(projectWork).toMatch(
+      /product_spec_coverage\.status must be ready before complete_confirmed_current/i,
+    );
   });
 
   it("routes stable requirement ids through milestone and task work", () => {

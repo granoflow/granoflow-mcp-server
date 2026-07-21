@@ -40,7 +40,12 @@ describe("contracts-skills-and-authorization", () => {
     expect(routing).toMatch(/Do not reopen\s+item-by-item installation choices/i);
     expect(routing).toMatch(/model_allowed[\s\S]*silently/i);
     expect(routing).toMatch(/rediscover[\s\S]*reload/i);
-    expect(routing).toMatch(/grill-me[\s\S]*user_only/i);
+    expect(routing).toContain("pipeline_required");
+    expect(routing).toContain("post_finalizer_grill_me_required");
+    expect(routing).toMatch(/grill-finalizer[\s\S]*temporary candidate[\s\S]*grill-me/i);
+    expect(routing).toMatch(
+      /interactive[\s\S]*one question[\s\S]*wait[\s\S]*Unattended[\s\S]*auto-adopt/i,
+    );
     expect(routing).toMatch(/only[\s\S]*relevant[\s\S]*(?:provider|reviewer)/i);
     expect(routing).toMatch(/suggesting installation[\s\S]*does not authorize/i);
     expect(routing).toMatch(/Do not guess\s+an installation command/);
@@ -91,11 +96,12 @@ describe("contracts-skills-and-authorization", () => {
     expect(template).toContain("install_offered");
     expect(template).toContain("pending_user_decision");
     expect(workflow).toMatch(/model_allowed[\s\S]*grill-finalizer/);
+    expect(workflow).toContain("post_finalizer_grill_me_required");
+    expect(workflow).toMatch(/grill-me[\s\S]*pipeline/i);
     expect(workflow).toMatch(/required_capability[\s\S]*pending_user_decision[\s\S]*waiting/i);
     expect(workflow).toMatch(/preferred_method[\s\S]*native_fallback[\s\S]*continue/i);
     expect(workflow).toMatch(/preferred_method[\s\S]*native_fallback[\s\S]*continue/i);
-    expect(active).toContain("disable-model-invocation: true");
-    expect(active).toMatch(/user[_ -]only/i);
+    expect(active).toMatch(/post-finalizer[\s\S]*grill-me[\s\S]*pipeline/i);
     expect(active).toMatch(/not (?:install|invoke)[\s\S]*(?:entire|whole) (?:family|series)/i);
     expect(active).toMatch(/installation authorization[\s\S]*does not authorize/i);
     expect(active).toMatch(

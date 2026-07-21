@@ -451,15 +451,18 @@ node lets Granoflow's existing NodeService complete the parent task.
 When installed, the host Agent may use `grill-finalizer` and let its Provider
 Registry select relevant reviewers for a local working draft. Granoflow MCP does
 not detect, install, or invoke that Skill. For a missing relevant finalizer or
-helper, the host offers one verified installation choice and waits for the user;
-`grill-me` is user-only, and only task-relevant gstack/provider reviewers are
-selected rather than an entire family. Refusal or installation, rediscovery,
-reload, or invocation failure is recorded before bundled Grill continues as an
-honest model fallback, without claiming evidence from a reviewer that did not
-run. Other external Skills follow the bundled `external-skill-routing` reference:
-the Work Document records capability decisions and Planning retains only
-execution-relevant choices. External methods remain subordinate to project rules and
-Granoflow authorization.
+helper, the host offers one verified installation choice and waits for the user.
+After a temp-writing `grill-finalizer` pass, the host **must** run the
+`grill-me` one-question pipeline before promotion (interactive: wait per
+question; explicit unattended: one question + recommend + auto-adopt). Standalone
+`grill-me` outside that pipeline may stay user-initiated. Only task-relevant
+gstack/provider reviewers are selected rather than an entire family. Refusal or
+installation, rediscovery, reload, or invocation failure is recorded before
+bundled Grill continues as an honest model fallback, without claiming evidence
+from a reviewer that did not run. Other external Skills follow the bundled
+`external-skill-routing` reference: the Work Document records capability
+decisions and Planning retains only execution-relevant choices. External methods
+remain subordinate to project rules and Granoflow authorization.
 
 ## Agent Delivery And Completion Workflow
 

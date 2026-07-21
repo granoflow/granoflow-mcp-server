@@ -55,6 +55,10 @@ describe("contracts-unattended-and-orchestration", () => {
     expect(interaction).toContain("Solvable work is authorized");
     expect(interaction).toContain("deferred_external_work");
     expect(interaction).toContain("Unattended Residual Report");
+    expect(interaction).toContain("Prototype Link Digest");
+    expect(interaction).toContain("prototype_link_digest_required");
+    expect(interaction).toContain("prototype_link_ledger");
+    expect(interaction).toMatch(/After \*\*each\*\* prototype[\s\S]*clickable preview link/i);
     expect(interaction).toContain("defer_item");
     expect(interaction).toContain("complete_with_residuals");
     expect(normalizedInteraction).toMatch(/Never block the queue/i);
@@ -66,10 +70,16 @@ describe("contracts-unattended-and-orchestration", () => {
       /Note\/Card[\s\S]*residual rather than blocking engineering/i,
     );
     expect(interaction).toContain("auto_accept_recommendation");
-    expect(interaction).toMatch(/Project Definition[\s\S]*adopt recommendations immediately/i);
+    expect(interaction).toMatch(
+      /Only when[\s\S]*explicitly declared unattended[\s\S]*adopt recommendations immediately/i,
+    );
+    expect(interaction).toMatch(
+      /If unattended was not explicitly declared[\s\S]*ask → recommend → wait/i,
+    );
     const projectDefinition = readFileSync("skills/granoflow-project-definition/SKILL.md", "utf8");
     expect(projectDefinition).toContain("unattended-interaction-contract");
     expect(projectDefinition).toContain("auto_accept_recommendation");
+    expect(projectDefinition).toMatch(/ask → recommend → wait/i);
     expect(taskWork).toMatch(
       /qualifying current\s+unattended instruction is explicit authorization/i,
     );
