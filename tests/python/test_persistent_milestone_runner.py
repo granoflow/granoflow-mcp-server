@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-UTC = datetime.UTC if hasattr(datetime, "UTC") else timezone.utc  # noqa: UP017
+UTC = timezone.utc  # noqa: UP017
 
 SCRIPTS = Path(__file__).parents[2] / "skills" / "granoflow-persistent-milestone-runner" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
