@@ -5,7 +5,7 @@ import json
 import sys
 import tempfile
 import unittest
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -66,7 +66,7 @@ class FakeApi:
 
 
 def authorization(milestone_id: str) -> dict[str, Any]:
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     return {
         "schema": "granoflow_milestone_authorization_v1",
         "status": "confirmed",
