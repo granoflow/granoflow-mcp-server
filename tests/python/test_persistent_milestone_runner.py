@@ -5,16 +5,12 @@ import json
 import sys
 import tempfile
 import unittest
-from datetime import datetime, timedelta
-try:
-    from datetime import UTC
-except ImportError:  # Python 3.9 compatibility
-    from datetime import timezone
-
-    UTC = timezone.utc
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
+
+UTC = datetime.UTC if hasattr(datetime, "UTC") else timezone.utc  # noqa: UP017
 
 SCRIPTS = Path(__file__).parents[2] / "skills" / "granoflow-persistent-milestone-runner" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
