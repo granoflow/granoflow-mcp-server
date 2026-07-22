@@ -1,6 +1,6 @@
 ---
 name: granoflow-agent-workflow
-description: Use when working with Granoflow tasks, finishing tasks, waiting for user input, daily reviews, mood or efficiency review notes, task reviews, review cards, long-term work memory, historical decisions, similar past work, Granoflow MCP local connection setup, or user dissatisfaction with Granoflow/MCP/generated agent output.
+description: Use when working with Granoflow tasks, finishing tasks, waiting for user input, daily reviews, mood or efficiency review notes, task reviews, review cards, long-term work memory, historical decisions, similar past work, project lifecycle progress boards / next-step recommendations, milestone Plan acceptance packs (locale copy, schema, diagrams, tests), long-task durable run plans and host-agnostic collaborative planning surfaces, plain-language glosses for workflow jargon (e.g. start implementation), Granoflow MCP local connection setup, or user dissatisfaction with Granoflow/MCP/generated agent output.
 ---
 
 # Granoflow Agent Workflow
@@ -24,11 +24,110 @@ turning durable lessons into review cards. Granoflow MCP connects MCP-capable AI
 agents to a local task, review, and long-term work memory layer; it is not a code
 analyzer, CI fixer, or repository automation framework.
 
+## Keyword
+
+- `#granoflow-agent-workflow`
+- `#task-work`
+- `#task-delivery`
+- `#grill`
+
 For every project workflow, read `references/project-interaction-style.md` and
 resolve the project's explanation style with
 `granoflow_project_interaction_style`. Missing settings mean newcomer-friendly
 detail. The AI recommends and chooses normal paths; explanations describe the
 reason and likely consequence without turning specialist work into a quiz.
+
+When user-facing text would show opaque workflow tokens (e.g.
+`execution_authorization`, `run`, Plan Gate), also load
+`references/workflow-jargon-plain-language.md` via
+`granoflow_bundled_skill_reference`: explain in plain language and tell the
+user what to say or do next (e.g. 「你可以说『开始实施』来真正开始开发」).
+Fail closed `workflow_jargon_unexplained` if bare tokens are left unexplained.
+
+### Project Lifecycle Progress Board (hard)
+
+For **project-bound** software work, the host **Must** follow the canonical
+pipeline and end every such turn with a progress board + next-step
+recommendation. Load
+`references/project-lifecycle-progress-board.md` via
+`granoflow_bundled_skill_reference` and render with
+`scripts/render_project_lifecycle_board.py`.
+
+Pipeline order (do not skip):
+
+1. Project init (Project Definition Done)
+2. Milestones + task portfolio created
+3. Per-milestone Analysis
+4. Per-milestone Plan / Design Gate + milestone Plan acceptance pack
+5. Implement (code + unit tests + author integration tests; do not run the suite here)
+6. App compile + integration campaign (service_path suite; Acceptance Outcomes
+   close domain_io only; AI auto-drive until green)
+7. E2E campaign (UI human_path; close remaining Acceptance Outcomes; screenshots
+   under temp/ when capable; show to user)
+8. Project complete
+
+**Interactive:** same path; existing phase confirm gates remain; board is
+required but “confirm the board” is not a gate—confirm the **next stage
+action** when needed. Inside stages 6–7 (`integration_campaign` /
+`e2e_campaign`), campaign loops are **agent auto-drive** (display-only board;
+no ordinary continue/fix questions).
+
+**Unattended:** same path; board is **display-only** (no board acknowledgement
+question); continue solvable work per
+`references/unattended-interaction-contract.md`.
+
+Fail closed `project_lifecycle_board_missing` if a project-bound turn omits the
+board.
+
+### App icon + prototype fidelity gates
+
+- Mobile/desktop App Project Definition: load
+  `references/app-icon-source-gate.md` and persist `product.app_icon`
+  (`app_icon_source_*` fail-closed codes).
+- UI Analysis / prototype lock: load `references/prototype-doc-coverage.md` so
+  every task-owned UI surface has high-fidelity HTML (`prototype_html_coverage`),
+  `widgets.yaml` roles are reused (`prototype_widget_reuse`), and Task Work +
+  Project Work fully cover the finalized prototype (no missing/conflict); Plan
+  re-checks prototype-as-SoT conflicts with user agree before gate `passed`.
+- UI implement before unit tests: load
+  `references/prototype-implementation-fidelity.md` Phase A
+  (`code_review_guess` only — not screenshot/vision; three questions; explicit
+  declaration + diffs). E2E Phase B inventories every finalized task-level
+  prototype under the hard AI loop (keep forbidden until user final) and shows
+  live screenshots + prototype links (no task omissions).
+
+### Code signing strategy (hard)
+
+When a task or campaign needs app signing (entitlements, `CODE_SIGN_*`,
+keystore, provisioning, or a signing/entitlement build failure), load
+`references/code-signing-strategy.md`: probe the local host, auto-select a
+scheme (default goal `local_dev_run` → prefer free/local / ad-hoc), **declare**
+`code_signing_strategy`, and **do not ask the user to confirm**. Paid store /
+notarized paths only when Project Work `default_signing_goal` is already
+`distribute_*`.
+
+### Long-task run continuity (hard)
+
+For **long** or **unattended implement** work (milestone-wide 「开始实施」,
+multi-task Execution, campaign runs), load
+`references/long-task-run-continuity.md` via
+`granoflow_bundled_skill_reference` before editing.
+
+Two layers—do not conflate, and do **not** require a vendor product name:
+
+1. **Durable run plan** (required): on-disk `temp/run-plan-<scope>-v<n>.md`
+   with stages, next step, evidence. Template:
+   `references/durable-run-plan-template.md`.
+2. **Collaborative planning surface** (optional): whatever planning UI/mode
+   the **current host** exposes. Detect
+   `availability: available | unavailable | unknown`; activate when available;
+   if unavailable, continue with Layer 1 only. Local labels (e.g. some IDEs’
+   “Plan mode”) may appear only as optional notes—never as hard tokens.
+
+Fail closed `long_task_continuity_unread`, `long_run_plan_missing`, or
+`long_run_plan_stale` as defined in that reference. Unattended must not ask
+solely to enable a host planning UI
+(`collaborative_planning_surface_confirm_in_unattended`).
 
 Prefer `granoflow_agent_preferences_get` for the current combined contract. It
 resolves project YAML over MCP-local defaults and safe defaults, so interaction,
@@ -583,16 +682,34 @@ Any task that changes UI must follow the UI Change Prototype Mandate: high-
 fidelity `ui_prototype` required (`prototype_requirement: required`),
 `derivedFrom` the project Design Baseline when present, contract fidelity, no
 random visual seed, widget reuse, and **Task Prototype Craft Gate And Option
-Set** (interactive: default dual **page expressions** `expr_a`/`expr_b` inside
-the locked Design System, with **side-by-side Contrast Gallery** and per-axis
-visible-diff captions, mix-and-match per task/page, conditional industry third;
-unattended: single `expr_a`; never reopen Design Spec as task options) before
-`visualConfirmed` / Readiness. Before in-frame copy, load
-`user-visible-copy-boundary` via `granoflow_bundled_skill_reference`, keep
-design rationale outside the phone frame, run
-`scripts/lint_prototype_user_copy.py`, and set
+Set** (interactive: **mainstream-reference-first** candidates ≥5, brainstorm
+backfill only when mainstream `<5`, then dual **page expressions**
+`expr_a`/`expr_b` with **functional parity** inside the locked Design System,
+with **side-by-side Contrast Gallery**, candidate digest, and per-axis
+visible-diff captions, mix-and-match per task/page, conditional industry
+third; unattended: same protocol then single `expr_a`; never reopen Design
+Spec as task options; never split features or product states across A/B)
+before `visualConfirmed` / Readiness. Before dual authoring, load
+`prototype-expression-brainstorm` via `granoflow_bundled_skill_reference`,
+run `scripts/lint_prototype_expression_brainstorm.py`, and set
+`craft_checklist.expression_brainstorm_ok: true` only after the record +
+parity check. Before post-Baseline HTML, load `prototype-baseline-fit` via
+`granoflow_bundled_skill_reference`, embed locked Spec tokens
+(`data-baseline-tokens="locked"`), match Shell chrome language / widgets,
+run `scripts/lint_prototype_baseline_fit.py`, and set
+`craft_checklist.baseline_fit_ok: true` only when lint passes. When sibling
+screens in the same chrome family are already `visualConfirmed`, also load
+`prototype-confirmed-chrome-lock`, record `chrome_lock.authorities`, reuse
+that confirmed control vocabulary (do not invent a parallel dialect), run
+`scripts/lint_prototype_confirmed_chrome_lock.py --authority …`, and set
+`craft_checklist.confirmed_chrome_lock_ok: true` only when lint passes.
+Before in-frame copy, load `user-visible-copy-boundary` via
+`granoflow_bundled_skill_reference`, keep design rationale outside the phone
+frame, run `scripts/lint_prototype_user_copy.py`, and set
 `craft_checklist.user_visible_copy_boundary_ok: true` only when lint passes.
 Details: `task-work-document-workflow.md`,
+`prototype-baseline-fit.md`, `prototype-confirmed-chrome-lock.md`,
+`prototype-expression-brainstorm.md`,
 `user-visible-copy-boundary.md`, and
 `granoflow-project-definition/project-artifact-workflows`.
 
@@ -651,15 +768,31 @@ High-level contract:
    even when `planning_status=not_required`.
 10. For software tasks that edit code: enforce
     `project-context-attachments.md` Hard Gate (snapshot + rules conflict
-    check) and `software-structural-budget.md` Hard Gate—Readiness needs
+    check), `plan-design-gate.md` Hard Gate (Readiness needs
+    `plan_design_gate_status: passed`; fail closed with
+    `plan_design_gate_missing` / `plan_design_gate_incomplete` /
+    `plan_test_cases_missing` / `plan_copy_*`), and
+    `software-structural-budget.md` Hard Gate—Readiness needs
     `structural_forecast_status: present_in_plan`; before the first edit show
     the forecast and stamp `notice_emitted`; Delivery needs `reconciled` and
     `acceptance_report`. Fail closed with `project_context_*`,
-    `structural_forecast_missing`, `structural_forecast_not_shown`,
-    `structural_forecast_unreconciled`, or `acceptance_report_missing` instead
-    of skipping. Also apply Task Integration Test Policy: judge unit-test
-    sufficiency; add at most 2 integration tests only when insufficient; never
-    execute those tests (manual run).
+    `plan_design_gate_*`, `structural_forecast_missing`,
+    `structural_forecast_not_shown`, `structural_forecast_unreconciled`, or
+    `acceptance_report_missing` instead of skipping. Also apply Task
+    Integration Test Policy: judge unit-test sufficiency; add at most 2
+    integration tests only when insufficient; do not execute those tests
+    inside the feature task (stage-6 campaign runs later; recommend
+    requires/produces). When a milestone finishes Plan drafting, emit and
+    (interactive) accept one `milestone-plan-acceptance-pack` Markdown
+    aggregating locale-bound copy, data structures, flowcharts, UML, and
+    test cases that exist—load
+    `references/milestone-plan-acceptance-pack.md` via
+    `granoflow_bundled_skill_reference`; fail closed
+    `milestone_plan_acceptance_pack_*` if omitted. During
+    **milestone implement / Execution / Delivery**, keep the accepted pack as
+    the primary milestone alignment reference (Task Work remains per-task
+    authority); fail closed `milestone_plan_acceptance_pack_not_used` /
+    `_drift` / `_delivery_unreconciled` if implement or Delivery ignores it.
 11. On every full rewrite and before Delivery, audit structured Task Work
     references. Keep only adopted sources still used by the current document;
     preserve applied/validated/contradicted Knowledge Usage history.
@@ -697,7 +830,14 @@ Success criteria:
   archived from the active set.
 - User-facing explanations use plain language, examples, or analogies when
   helpful.
-- No execution or writeback happens before explicit confirmation.
+- No execution (and no speculative App write) happens before the user accepts
+  the content. Once they accept a material discussion change, **must** run
+  Change Impact Fan-out + App authoritative slot writeback + readback before
+  Plan / Readiness / Execution (`discussion-writeback-contract` +
+  `change-impact-fanout` + `prototype-product-truth-writeback` when prototypes
+  change; fail closed `discussion_writeback_pending` /
+  `temp_only_artifact_forbidden` / `stale_reference_after_discussion` /
+  `change_impact_*` / `prototype_product_doc_writeback_required`).
 - Retrieval uses app-owned Granoflow context/memory surfaces, not MCP-side
   embedding or database access.
 - Non-AI-completable tasks get confirmed user-action nodes or a documented
@@ -866,9 +1006,17 @@ Success criteria:
 - `references/execution-modes-and-acceptance-reports.md`: Read when the user
   names unattended or layered-handoff mode, asks which mode is active, asks how
   modes differ, or when implementation acceptance evidence is being assembled.
+- `references/project-lifecycle-progress-board.md`: Mandatory project pipeline
+  progress board + next-step recommendation (interactive confirm gates vs
+  unattended display-only). Render with
+  `scripts/render_project_lifecycle_board.py`.
 - `references/unattended-interaction-contract.md`: Single owner for the
   zero-interruption budget, same-run versus durable authorization, real blocker
   classes, and one-batch waiting behavior in unattended work.
+- `references/long-task-run-continuity.md` and
+  `references/durable-run-plan-template.md`: Host-agnostic long-run continuity—
+  required durable run plan plus optional collaborative planning surface
+  (never hard-codes a vendor “Plan mode” name).
 - `references/parallel-task-execution.md`: Read for every multi-task AI run. It
   owns conflict inventory, pairwise safe batches, concurrent dispatch, the
   AI `pending -> done` lifecycle, and execution timestamp readback.
@@ -882,7 +1030,29 @@ Success criteria:
 - `references/daily-pending-task-triage.md`: Read when the user asks to review
   all unfinished tasks, classify blockers, write per-task Work Documents,
   execute safe tasks, and preserve user-only decisions as task nodes.
-- `references/task-work-document-workflow.md` and
+- `references/discussion-writeback-contract.md`: Read whenever the user accepts
+  a mid-discussion adjustment (prototypes, page splits, product coverage, Plan
+  fields). Owns App-slot writeback so Plan/Execution never rely on chat/`temp`.
+- `references/change-impact-fanout.md`: Read in the same batch as writeback.
+  Owns cross-entity impact scan + disposition ledger (tasks, milestones,
+  project docs, notes/cards, experience) so sibling artifacts are not left
+  stale. Fail closed `change_impact_*`; lint with
+  `scripts/lint_change_impact_fanout.py`.
+- `references/prototype-product-truth-writeback.md`: Read whenever a discussion
+  batch updates any `ui_prototype`. Owns `decision_class` and forces
+  product-truth corrections into product docs + Task Work locked contracts
+  (and user-story disposition). Fail closed
+  `prototype_product_doc_writeback_required` / related codes; lint encodes
+  the gate in `lint_change_impact_fanout.py`.
+- `references/prototype-doc-coverage.md`: Read when a prototype is finalized,
+  rematched, or the user asks to change it. Owns HTML surface coverage
+  (`prototype_html_coverage_*`), widget reuse (`widget_reuse_required`),
+  Task Work + Project Work coverage ledger (no missing/conflict), and Plan-time
+  prototype-as-SoT conflict gate (`prototype_plan_truth_*`). Lint with
+  `scripts/lint_prototype_doc_coverage.py`.
+- `references/prototype-implementation-fidelity.md`: Phase A code-vs-prototype
+  compare (`code_review_guess`, three questions, no screenshots) before unit
+  tests; Phase B owned with E2E campaign.- `references/task-work-document-workflow.md` and
   `references/task-work-document-template.md`: Only new-task owner and adaptive
   pre-execution template.
 - `references/visual-narrative-task-work.md`: Domain extension for comic-first

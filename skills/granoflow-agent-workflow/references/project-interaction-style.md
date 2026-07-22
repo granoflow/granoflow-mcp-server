@@ -86,3 +86,16 @@ workflow must not silently fall back to technical jargon merely because it is
 running unattended or because an error occurred. The display style may be
 professional and concise, but the saved Granoflow copy is always beginner
 friendly and detailed.
+
+## Workflow tokens in user-facing chat — hard
+
+When a turn mentions opaque workflow tokens (especially
+`execution_authorization`, `run`, Plan Gate, 验收册, Readiness), follow
+`workflow-jargon-plain-language.md`:
+
+1. Lead with everyday language.
+2. Optionally keep the token once in parentheses.
+3. Tell the user **what to say or do next** (suggested reply phrase).
+
+Example: do not end with bare `execution_authorization / run`. Prefer:
+“真正的开发还没开始。你可以说「开始实施」来授权并开工。”

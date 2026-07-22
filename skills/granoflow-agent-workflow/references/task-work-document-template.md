@@ -31,17 +31,32 @@ prototype_input_status: not_applicable | awaiting_reference | awaiting_visual_co
 
 prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":"<id>","prototype_id":"<id>","version_id":"<id>","version_ordinal":1,"package_attachment_id":"<id>","package_sha256":"<64 lowercase hex>","visually_confirmed":true,"derived_from_prototype_id":"<baseline id|null>","derived_from_version_id":"<id|null>","derived_from_package_sha256":"<64 hex|null>","intended_use":"<purpose>"}]
 
-# Interactive: default dual page expressions (expr_a + expr_b) inside locked
-# Design System; mix-and-match per task/page; optional third only for documented
-# industry-peer deadlock. Unattended: single expr_a.
+# Interactive: mainstream-reference-first candidate pool (≥5; brainstorm
+
+# backfill only when mainstream < 5), then promote dual page expressions
+
+# (expr_a + expr_b) with functional parity inside locked Design System;
+
+# mix-and-match per task/page; optional third only for documented
+
+# industry-peer deadlock. Unattended: same protocol then single expr_a.
+
 # Never reopen Design Spec (delta_match / ai_challenger / spec_match) as task
+
 # option ids after Baseline lock.
+
 # Craft Gate must pass before visualConfirmed. See project-artifact-workflows
-# "Task Prototype Craft Gate And Option Set".
+
+# "Task Prototype Craft Gate And Option Set" and
+
+# prototype-expression-brainstorm.md. Lint:
+
+# scripts/lint_prototype_expression_brainstorm.py
 
 prototype_option_set:
 mode: interactive_dual | interactive_dual_plus_industry_third | unattended_single
 design_system_locked: null # confirmed Spec/Baseline option id (required when dual)
+expression_brainstorm: null # { status, layer, source_strategy: mainstream_first, scope_mode: same_category|capability_match, scope_mode_rationale, mainstream_references[], brainstorm_backfill[], brainstorm_backfill_reason, candidate_count, promote_count, candidates[], selected, selection_rationale, parity_check, loaded_reference_sha256 }
 options: [] # [{ id: expr_a|expr_b|industry_peer_c, contrast_axes: [], rationale: null|string }]
 contrast_axes: [] # ≥2 from whitelist when interactive dual/triple
 third_option_rationale: null # required when industry_peer_c present
@@ -53,7 +68,27 @@ real_domain_copy: false
 required_states_covered: false
 enhancement_notes_ok: false
 user_visible_copy_boundary_ok: false # must be true before visualConfirmed; see user-visible-copy-boundary.md
+expression_brainstorm_ok: false # must be true before dual visualConfirmed; lint_prototype_expression_brainstorm.py + prototype-expression-brainstorm.md
+baseline_fit_ok: false # must be true before visualConfirmed; see prototype-baseline-fit.md
+confirmed_chrome_lock_ok: false # true|not_applicable; see prototype-confirmed-chrome-lock.md when siblings are visualConfirmed
 craft_status: incomplete | ready # incomplete => task_prototype_craft_incomplete
+
+# When chrome_lock.status=applicable, list confirmed sibling package SHAs.
+
+chrome_lock: null # { status: applicable|not_applicable, family_id, authorities: [], vocabulary: [] }
+
+# After any user-accepted discussion change: write App slots + readback.
+
+# See discussion-writeback-contract + change-impact-fanout +
+
+# prototype-product-truth-writeback (when ui_prototype changes).
+
+# pending/failed/open blocks Plan/Readiness/Execution.
+
+discussion_writeback: [] # [{ at, decision_summary, slots_updated, prototype_id, version_id, package_sha256, content_sha256, superseded, change_impact_status, status: written_and_read_back|pending|failed }]
+change_impact: [] # [{ at, decision_summary, decision_class, product_truth_writeback_loaded, contract_loaded, scan_terms, scopes_checked, candidates, status: open|closed|failed }]; lint with lint_change_impact_fanout.py
+change_impact_ok: false # must be true before closing a material discussion batch; see change-impact-fanout.md
+locked_product_contracts: [] # [{ id, must, source_doc, source_section }]; required when decision_class=product_truth_changing
 
 # Software edits: hard gate from software-structural-budget.md. Non-software
 
@@ -64,9 +99,11 @@ craft_status: incomplete | ready # incomplete => task_prototype_craft_incomplete
 structural_forecast_status: not_applicable | missing | present_in_plan | notice_emitted | reconciled
 structural_forecast_notice_emitted_at: null | <ISO-8601 timestamp after user-visible notice>
 
-# Task Integration Test Policy (manual run). Judge unit tests first; add at
+# Task Integration Test Policy (campaign runs at stage 6). Judge unit tests
 
-# most 2 integration tests only when insufficient; Agent must not execute them.
+# first; add at most 2 integration tests only when insufficient; do not execute
+
+# them inside the feature task. When adding IT, recommend requires/produces.
 
 # Device: recommend local_machine; user confirms or chooses another target.
 
@@ -86,16 +123,90 @@ project_context_decision_emitted: false | true
 # (copy_change_tests_forbidden). See user-visible-copy-boundary.md.
 
 copy_change_only: false | true
+
+# Prototype → Document Coverage (Analysis / rematch). See prototype-doc-coverage.md.
+
+# Lint: scripts/lint_prototype_doc_coverage.py --kind coverage
+
+prototype_doc_coverage: null | { schema, contract_loaded, prototype_id, version_id, status: not_applicable|pending|complete, rows: [] }
+
+# HTML prototype surface inventory (every task-owned UI surface). Lint: --kind html_coverage
+
+prototype_html_coverage: null | { schema, contract_loaded, prototype_id, version_id, status: not_applicable|pending|complete, surfaces: [] }
+
+# Widget reuse vs project widgets.yaml. Lint: --kind widget_reuse [--widgets path]
+
+prototype_widget_reuse: null | { schema, contract_loaded, catalog_sha256, status: not_applicable|pending|complete, declarations: [] }
+
+# Plan-time prototype vs Task Work truth. Lint: --kind plan_truth
+
+prototype_plan_truth: null | { schema, contract_loaded, prototype_is_source_of_truth: true, status: not_applicable|aligned|conflict, conflicts: [], user_notified, user_resolution, task_work_updated, project_work_updated }
+
+# Prototype Implementation Fidelity (UI tasks). Phase A BEFORE unit tests.
+
+# method must be code_review_guess (code vs prototype; never screenshot/vision).
+
+# questions required when matched or diverged. See prototype-implementation-fidelity.md.
+
+# Lint: scripts/lint_prototype_implementation_fidelity.py
+
+prototype_impl_compare: null | { status: not_applicable|matched|diverged, method: code_review_guess, declaration_emitted: true|false, questions: {ux_better, visual_better, tech_stack_blocked}, decision: keep_implementation|revise_to_prototype|not_applicable, decision_rationale: string, diffs: [] }
+
 unit_test_sufficiency: not_applicable | unassessed | sufficient | insufficient
 integration_test_requirement: not_applicable | not_required | required
 integration_tests_added_count: 0 | 1 | 2
-integration_test_execution: not_applicable | not_run_manual_only | executed_forbidden
+integration_test_execution: not_applicable | not_run_manual_only | awaiting_campaign_execution | executed_forbidden
 integration_test_device_recommendation: not_applicable | local_machine
 integration_test_device: not_applicable | unselected | local_machine | simulator_or_emulator | physical_device | remote_farm | other
+
+# Project Work engineering.quality_gates.integration_test_special_requirements
+
+# (see integration-test-special-requirements.md). Required when adding IT.
+
+integration_test_special_requirements_checked: not_applicable | unchecked | checked_none | applied | ignored_forbidden
+integration_test_special_requirements_applied: [] # ITR-* ids applied in authored tests
+
+# When editing entitlements / CODE_SIGN_* / keystore / provisioning, declare
+
+# code_signing_strategy (see code-signing-strategy.md). Never ask the user to
+
+# confirm. Lint: scripts/lint_code_signing_strategy.py --require-strategy
+
+# code_signing_strategy: null | { schema, goal, platform, selected, evidence, alternatives_rejected, user_confirmation: not_required, declared_at }
+
+# Recommended orchestration hints for stage-6 campaign (not a runtime claim):
+
+# integration_tests_orchestration_hints:
+
+# - path: <file>
+
+# requires: []
+
+# produces: []
+
+# mutates: []
+
+# destroys: []
+
 analysis_status: draft | awaiting_confirmation | confirmed
 analysis_grill_status: not_run | passed | revisions_required | blocked
 decision: proceed | needs_input | user_action | split | redefine | defer | abandon | completion_audit
 planning_status: not_assessed | not_required | draft | awaiting_confirmation | confirmed
+
+# Software code edits: Hard Gate from plan-design-gate.md. Non-software or
+
+# Analysis-only with no code edit → not_applicable.
+
+plan_design_gate_status: not_applicable | pending | passed
+plan_design_diagrams: []
+data_disposition: not_applicable | unchanged | extend | breaking
+
+# When Plan invents/changes user-visible copy (see milestone-plan-acceptance-pack):
+
+# plan_copy_locale: zh-Hans
+
+# plan_copy_locale_source: user_explicit | conversation_language
+
 readiness_grill_status: not_run | not_applicable | passed | revisions_required | blocked
 execution_authorization: not_requested | awaiting_confirmation | direct_confirmed | delegated_confirmed | denied
 execution_actor: ai | human | shared | not_assessed
@@ -345,15 +456,30 @@ and `Stop / Handoff` must stop before changing a protected surface. A file or
 line-count budget may support review, but it never replaces this semantic
 mapping.
 
+when software Planning is required—or `planning_status: not_required` but the
+task will still edit code—render the Plan Design Gate package from
+`plan-design-gate.md` inside `Recommended Approach` (and related optional
+sections): **Markdown verification test cases** traced to Analysis; operation
+flowchart; explicit `data_disposition` with basis; task-local external libraries
+and concrete capabilities; UI↔data binding when the task has UI. Set
+`plan_design_gate_status: pending` while drafting; set `passed` only when the
+Gate is complete and confirmed under the interaction contract. Readiness must
+not pass while the status is `pending` or the package is incomplete
+(`plan_design_gate_missing` / `plan_design_gate_incomplete` /
+`plan_test_cases_missing`). Do not leave Execution Plan Actions as hollow
+"implement Outcome" steps that omit references to that package.
+
 When software Planning is required—or `planning_status: not_required` but the
-task will still edit code—render `Structural Change Forecast` using
+task will still edit code—also render `Structural Change Forecast` using
 `software-structural-budget.md`. The forecast names expected files and symbols,
 current responsibilities and sizes when available, projected change, applicable
 limits and sources, split seams, protected surfaces, and why the proposal is the
-smallest complete iteration. Set `structural_forecast_status: present_in_plan`
-when the section is complete. Readiness must not pass while the status remains
-`missing`. Before the first edit, show the forecast as a non-confirming notice,
-then set `notice_emitted` + timestamp; Delivery requires `reconciled`.
+smallest complete iteration. Vague "related modules" wording without paths fails
+the Plan Design Gate even if a Forecast heading exists. Set
+`structural_forecast_status: present_in_plan` when the section is complete.
+Readiness must not pass while the status remains `missing`. Before the first
+edit, show the forecast as a non-confirming notice, then set `notice_emitted` +
+timestamp; Delivery requires `reconciled`.
 
 Adapt the `Action` to the performer. An AI-oriented step names files, APIs,
 commands, data boundaries, and observable output. A user-oriented step uses
@@ -420,6 +546,10 @@ Then run the Execution Readiness Grill, covering at least:
 - whether required data, source files, materials, people, and environment are
   available and current;
 - whether verification, rollback, stop, and handoff conditions are actionable;
+- for software edits: whether the Plan Design Gate is complete and
+  `plan_design_gate_status: passed`, including a Markdown verification test
+  case table traced to Analysis (else `plan_design_gate_missing` /
+  `plan_design_gate_incomplete` / `plan_test_cases_missing`);
 - for software edits: whether `Structural Change Forecast` is complete and
   `structural_forecast_status: present_in_plan` (else
   `structural_forecast_missing`); and

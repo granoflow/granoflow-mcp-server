@@ -4,6 +4,10 @@ Apply this contract whenever Task Work includes UI, a visual Prototype, or
 user-visible copy. It prevents an Agent from turning internal quality
 requirements, filtering policy, or design rationale into product text.
 
+**Plan-phase locale:** design and show only the selected product locale
+(user-explicit language, else the language of the user↔AI conversation).
+Other locales are Execution work. See `milestone-plan-acceptance-pack.md`.
+
 ## Mandatory Load (fail closed if skipped)
 
 Before authoring or revising any user-visible string in:
@@ -57,13 +61,13 @@ end user acting in the product.
 
 Examples that fail this gate (`user_visible_copy_boundary_violation`):
 
-| Leak class | Bad product copy (examples) |
-| ---------- | --------------------------- |
-| Filtering / scan policy | “0 本的类型不显示”; “仅按后缀统计”; “不在导入前计算 MD5” |
-| Reviewer pedagogy | “本批不会在确认页列出文件名”; “便于排查”; “两组分栏查看·不混在同一列表” |
-| Confidence / quality | “only reliable results”; “high-confidence candidate”; “passed filtering” |
-| Architecture / acceptance | “local database decision”; “up to three matches”; “验收 A6 通过” |
-| Design thesis in-frame | “hierarchy：续读置顶”; “expr_a vs expr_b 差异轴” |
+| Leak class                | Bad product copy (examples)                                              |
+| ------------------------- | ------------------------------------------------------------------------ |
+| Filtering / scan policy   | “0 本的类型不显示”; “仅按后缀统计”; “不在导入前计算 MD5”                 |
+| Reviewer pedagogy         | “本批不会在确认页列出文件名”; “便于排查”; “两组分栏查看·不混在同一列表”  |
+| Confidence / quality      | “only reliable results”; “high-confidence candidate”; “passed filtering” |
+| Architecture / acceptance | “local database decision”; “up to three matches”; “验收 A6 通过”         |
+| Design thesis in-frame    | “hierarchy：续读置顶”; “expr_a vs expr_b 差异轴”                         |
 
 Reliability and craft are proven by behavior and acceptance evidence, not by a
 UI claim.

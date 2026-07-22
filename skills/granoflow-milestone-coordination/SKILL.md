@@ -14,6 +14,12 @@ Do **not** use this Skill to create the project milestone portfolio or to
 author task titles/descriptions. Use `granoflow-milestone-workflow`,
 `granoflow-task-authoring`, and `granoflow-portfolio-orchestrator` for that.
 
+## Keyword
+
+- `#milestone-coordination`
+- `#milestone-charter`
+- `#milestone-close`
+
 ## When To Use
 
 - Milestone entities exist (from milestone-workflow or portfolio orchestrator).
@@ -47,12 +53,22 @@ one active target remains plausible, stop before writing.
 If no controller Task exists, preview one whose sole responsibility is
 orchestration, integration evidence, and closeout—not child implementation.
 
+Checkpoints:
+
+- Stop before writing when more than one active target remains plausible.
+- Controller Task owns orchestration and closeout—not child implementation.
+
 ### 2. Draft And Confirm The Charter
 
 Read `references/milestone-work-document-template.md`. Complete only
 `charter_required` sections. Do not invent a complete Parallel Execution or
 External Capability matrix at charter time. Explicit user confirmation is
 required before the charter becomes active.
+
+Checkpoints:
+
+- Do not invent Parallel Execution or External Capability matrices at charter time.
+- Explicit user confirmation required before the charter becomes active.
 
 ### 3. Decompose Coverage Against Acceptance
 
@@ -65,6 +81,11 @@ here. Prefer tasks that already exist from authoring.
 
 When requirement-driven, also read
 `granoflow-agent-workflow/requirement-intake-and-traceability`.
+
+Checkpoints:
+
+- Missing required child App entities → hand off to task authoring; do not silently invent tasks.
+- Prefer tasks that already exist from authoring.
 
 ### 4. Execute Through Child Task Work
 
@@ -82,22 +103,40 @@ When execution may outlive one Agent turn, use
 require complete `execute_preflight_required` and a confirmed authorization
 manifest.
 
+Checkpoints:
+
+- UI-changing children require confirmed `ui_prototype` before readiness or non-dry-run execution.
+- Before first non-dry run require complete `execute_preflight_required` and confirmed authorization manifest.
+
 ### 5. Reconcile And Replan
 
 Classify changes as `task_local`, `portfolio_change`, `charter_change`,
 `follow_up`, or `stop`. Update the living milestone summary through
 context-steward when needed. Never use Milestone Work as a second status DB.
 
+Checkpoints:
+
+- Never use Milestone Work as a second status DB.
+
 ### 6. Prove Integration Readiness
 
 Do not infer readiness from every child being `done`. Re-run acceptance coverage
 against Delivery/readback, verify handoffs, run required integration checks.
+
+Checkpoints:
+
+- Child `done` ≠ milestone done; integration evidence is independent.
 
 ### 7. Accept And Close
 
 Present Outcome, acceptance results, integration evidence, residuals, and
 follow-ups. Obtain explicit acceptance unless a precise authorization envelope
 permits closure. Preview archive/closure, write, and read back.
+
+Checkpoints:
+
+- Obtain explicit acceptance unless a precise authorization envelope permits closure.
+- Preview archive/closure, write, and read back on App/API.
 
 ## Periodic Review And Unattended Closure
 
@@ -115,6 +154,9 @@ evidence, follow-up destinations, and final readback.
 - Child done ≠ milestone done; integration evidence is independent.
 - Never persist secrets in Milestone Work, descriptions, logs, or chat.
 - Completion is an evidence predicate, not a worker exit or task count.
+- End every coordination turn with the Project Lifecycle Progress Board
+  (`granoflow-agent-workflow/project-lifecycle-progress-board`): interactive
+  keeps phase confirms; unattended is display-only.
 
 ## References
 
@@ -123,6 +165,8 @@ evidence, follow-up destinations, and final readback.
 - Read [milestone-collaboration-workflow.md](references/milestone-collaboration-workflow.md)
   before decomposition, execution coordination, replanning, integration, or
   closure.
+- Read `granoflow-agent-workflow/project-lifecycle-progress-board` before ending
+  a project-bound turn; render next-step recommendation.
 
 ## Success Criteria
 

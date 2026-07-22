@@ -77,21 +77,32 @@ high-risk feasibility.
    canonical YAML shape.
 2. Read `granoflow-agent-workflow/requirement-intake-and-traceability` before
    extracting mixed-format product sources.
-3. Read [project-definition-interaction.md](references/project-definition-interaction.md)
+3. Read `granoflow-agent-workflow/discussion-writeback-contract` whenever the
+   user accepts a mid-init adjustment (product coverage, Baseline/Shell, later
+   task prototypes): App-slot writeback before the next gate. In the same
+   batch, read `granoflow-agent-workflow/change-impact-fanout` and close the
+   impact ledger (sibling tasks/docs/notes/cards) before claiming the decision
+   done.
+4. Read [project-definition-interaction.md](references/project-definition-interaction.md)
    before interviewing or recommending values (Mode Gate, batches).
-4. Read [project-artifact-workflows.md](references/project-artifact-workflows.md)
+5. Read [project-artifact-workflows.md](references/project-artifact-workflows.md)
    for Design Spec/Shell, Preview Gate, widgets, and task Craft Gate / option
    sets.
-5. Read [hard-constraints.md](references/hard-constraints.md) before Done or
+6. Read [hard-constraints.md](references/hard-constraints.md) before Done or
    any `visualConfirmed=true` to verify thread-confirmed fail-closed rules.
-6. Read [product-spec-flow-decomposition.md](references/product-spec-flow-decomposition.md)
+7. Read [product-spec-flow-decomposition.md](references/product-spec-flow-decomposition.md)
    during Step 1 product-spec coverage (operation flowchart → serial gates vs
    parallel ops → page-count conclusion + stress paths; not risk labels).
-7. Apply Mode Gate: default `executionMode: interactive` unless the user
+8. Apply Mode Gate: default `executionMode: interactive` unless the user
    **explicitly** declares unattended. Read
    `granoflow-agent-workflow/unattended-interaction-contract` only when
    unattended.
-8. Call `granoflow_agent_preferences_get(projectId)` when preferences exist;
+   8b. When the product is a mobile or desktop App, load
+   `granoflow-agent-workflow/app-icon-source-gate` during Step 1, persist
+   `product.app_icon`, and lint with `lint_app_icon_source_gate.py` before
+   confirm / Done (`app_icon_source_*` fail-closed codes in
+   `hard-constraints.md`).
+9. Call `granoflow_agent_preferences_get(projectId)` when preferences exist;
    recommend `agent_preferences` during init (interactive: wait before write).
    Preferences never weaken readiness, quality, authorization, acceptance, or
    external-action gates.
@@ -137,6 +148,9 @@ Actions:
    conclusion + stress paths; no confirm while status is not `ready`).
 3. Fill Project Work from the canonical template; preserve unknowns; no fake
    completeness. Initialization blockers must not stay `deferred_unknown`.
+   When product docs name durable IT fixture/corpus rules, fill
+   `engineering.quality_gates.integration_test_special_requirements` (see
+   `integration-test-special-requirements`); otherwise leave `[]`.
 4. Lock `engineering.stack` and `stack_capability_profile` before any HTML baseline
    work. Interactive: wait; unattended: adopt.
 5. Complete **capability-critical third-party library selection** under
@@ -280,6 +294,11 @@ Initialization is Done only when all hold:
   alternatives considered, and rationale), or
   `no_capability_dependency_declaration` is explicit when none apply.
 
+Emit the Project Lifecycle Progress Board
+(`granoflow-agent-workflow/project-lifecycle-progress-board`) with
+`project_init=done` and next action = create milestone portfolio. Interactive
+mode keeps confirmation for the next gate; unattended is display-only.
+
 Emit a short **handoff card** naming `granoflow-portfolio-orchestrator` as the
 primary next owner. Component Skills: `granoflow-milestone-workflow`,
 `granoflow-task-authoring`, then `granoflow-milestone-coordination` /
@@ -289,10 +308,16 @@ milestone/task tree, run task Analysis/Plan Grill, or implement product code.
 ## Workflow
 
 1. Resolve the project and current `project_work` attachment.
+   Checkpoints:
+   - Route `Initialize Granoflow` to first-run import, not this Skill.
+   - One current `project_work` logical slot; no duplicate attachments.
 2. Apply the Mode Gate: default `interactive` unless the user explicitly
    declared unattended. Choose entry mode (`guided_step_by_step` vs
    `guided_from_vague_request`). Vague requests default to
    `guided_from_vague_request`.
+   Checkpoints:
+   - Unattended never inferred from activation phrases alone.
+   - Entry modes pace conversation; they are not authorization grants.
 3. Run Step 1 (intake → stack capability → capability-critical libraries →
    data persistence → design routing → Project Work confirm). Every
    communication states `recommended_value`, reason, and source. In
@@ -300,27 +325,47 @@ milestone/task tree, run task Analysis/Plan Grill, or implement product code.
    locking or confirming. In unattended (explicit only), adopt recommendations immediately
    except real blockers from `unattended-interaction-contract`
    (`direction_change`, `missing_user_only_input`, `forbidden_action`, etc.).
+   Checkpoints:
+   - No HTML baseline before stack capability lock.
+   - `product_spec_coverage.status: ready` before confirm.
 4. Check `granoflow_product_builder_v1`, then run Steps 2 and 3 (interactive:
    Design Spec triad with distinct random seeds, then Shell triad fitted to
    the selected Spec; unattended explicit only: one random-seed `spec_match` +
    one Spec-fitted `shell_match`, then `auto_accept_recommendation`). After
    Baseline confirm, write `widgets.yaml`.
+   Checkpoints:
+   - Spec/Shell lots via `draw_visual_lots.py`; Preview Gate before pick.
+   - Never auto-accept Baseline+Shell in interactive mode.
 5. When the user asks to create/modify a milestone or task manually, call
    `granoflow_project_work_evaluate` with that action. Missing paths return in
    one batch. Before creating a task, apply
    `granoflow-agent-workflow/task-authoring-quality-contract`.
+   Checkpoints:
+   - Missing evaluate paths returned in one batch, not piecemeal.
+   - Task authoring quality contract before any task create.
 6. Automatic create/execute/publish/deploy/complete actions require complete
    confirmed Project Work; `project_document_incomplete` returns to definition.
    Never bypass App admission.
+   Checkpoints:
+   - App admission gates never bypassed for automation.
+   - Incomplete Project Work → `project_document_incomplete`.
 7. After initialization Done, later visual work reads the confirmed baseline,
    `skill_routing`, and `widgets.yaml`. Task/milestone prototypes Must
    `derivedFrom` the exact baseline package SHA, **must not** re-roll random
    visual seeds, reuse catalog widgets when the same role exists, pass **Task
-   Prototype Craft Gate And Option Set** (interactive: default dual **page
-   expressions** `expr_a`/`expr_b` inside locked Design System, **side-by-side
-   Contrast Gallery**, mix-and-match per task/page, conditional industry third;
-   unattended one `expr_a`; never reopen Design Spec as task options), and
-   accept against contract fidelity.
+   Prototype Craft Gate And Option Set** (interactive: mainstream-reference-
+   first candidates ≥5, brainstorm backfill only when mainstream `<5`, then
+   dual **page expressions** `expr_a`/`expr_b` with functional parity inside
+   locked Design System **and confirmed sibling chrome vocabulary when
+   applicable**, **side-by-side Contrast Gallery** + Baseline-fit /
+   chrome-lock / candidate digests, mix-and-match per task/page, conditional
+   industry third; unattended same protocol then one `expr_a`; never reopen
+   Design Spec as task options; never feature-split A/B; never invent a
+   parallel chrome dialect after siblings are confirmed), and accept against
+   contract fidelity.
+   Checkpoints:
+   - Task prototypes `derivedFrom` exact baseline SHA; no task-level re-roll.
+   - Hand off to portfolio orchestrator; do not create full milestone tree here.
 
 ## Rules
 
@@ -328,12 +373,19 @@ Hard constraints (non-exhaustive; full list in
 [hard-constraints.md](references/hard-constraints.md)):
 
 - Mode Gate + Preview Gate always apply.
-- Interactive Spec: true-random lots via `draw_visual_lots.py`; Shell: Spec-fitted chrome deck only.
+- Interactive Spec/Shell: mainstream-first ≥5→**promote 3**, then true-random
+  lots via `draw_visual_lots.py` (Shell: Spec-fitted chrome deck only).
 - From Shell onward, design style converges (`shell_spec_mismatch`).
 - `widgets.yaml` after Baseline confirm; task reuse + no task random seed.
-- Task interactive: dual page expressions (`expr_a`/`expr_b`) + Craft Gate +
-  **Contrast Gallery** (visible-diff captions); mix-and-match per task/page;
-  unattended single `expr_a`; never reopen Design Spec at task level.
+- Task interactive: **strict Baseline fit** (locked Spec tokens + Shell chrome
+  language) + **confirmed chrome lock** when chrome-family siblings are already
+  `visualConfirmed` + mainstream-first candidates → dual page expressions
+  (`expr_a`/`expr_b`) with functional parity + Craft Gate + **Contrast
+  Gallery** (Baseline-fit + chrome-lock + candidate digests + visible-diff
+  captions); mix-and-match per task/page; unattended same protocol → single
+  `expr_a`; never reopen Design Spec at task level; never feature-split A/B;
+  never ship generic parallel phone frames; never invent a parallel chrome
+  dialect after siblings are confirmed.
 - Never auto-accept Baseline+Shell in interactive mode.
 
 ## Automation Boundary

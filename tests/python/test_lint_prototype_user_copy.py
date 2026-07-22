@@ -12,13 +12,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = (
-    ROOT
-    / "skills"
-    / "granoflow-agent-workflow"
-    / "scripts"
-    / "lint_prototype_user_copy.py"
-)
+SCRIPT = ROOT / "skills" / "granoflow-agent-workflow" / "scripts" / "lint_prototype_user_copy.py"
 
 
 def load_module():

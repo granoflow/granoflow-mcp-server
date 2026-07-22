@@ -11,6 +11,13 @@ It is the single bundled owner for writing a daily review. Other bundled skills
 must call `granoflow_daily_review_skill` and delegate here instead of composing
 or writing a daily review themselves.
 
+## Keyword
+
+- `#daily-review`
+- `#journal`
+- `#日回顾`
+- `#今日日记`
+
 ## Required Flow
 
 Read [Daily Review Contract](references/daily-review-contract.md) before work.
@@ -22,15 +29,35 @@ Follow these phases in order:
    context, and a draft of every field that could be written.
    Use the default display only when the user gives no format, length, or focus;
    it is not a required form.
+
+   Checkpoints:
+
+   - Build the daily task ledger before the diary draft.
+   - Distinguish recorded facts from clearly marked inferences and missing context.
+   - No write before the user sees the full draft display.
+
 2. **Conversation and confirmation**: let the user add, reject, rewrite, or
    approve individual task reviews and daily fields in natural language. A nudge,
    a past preference, or an inferred mood is never write authorization. When the
    user writes freely or supplies a structure, reorganize the draft around that
    expression rather than forcing it back into the default display.
+
+   Checkpoints:
+
+   - A nudge, past preference, or inferred mood is never write authorization.
+   - Reorganize around the user's expression when they supply structure; do not force the default display.
+
 3. **Write and readback**: write only explicitly confirmed fields using the
    App-advertised Local HTTP API surface. Delegate each approved missing Task
    Review to its existing owner, read it back, then write and read back the daily
    review. Do not treat a request success response as proof.
+
+   Checkpoints:
+
+   - Write only explicitly confirmed fields.
+   - Delegate each approved missing Task Review to its owner; read back before the daily write.
+   - HTTP request success is not proof; require App readback.
+
 4. **Final Note/Card session**: after diary readback and any separately approved
    Experience/Knowledge work, delegate all supported candidates to
    `granoflow-review-card-draft`. Display the complete App dry-run, let the user
@@ -38,6 +65,12 @@ Follow these phases in order:
    preview after every draft change, and write only the exact latest-preview
    operations the user confirms. In unattended mode, prepare this stage last
    and wait; never apply Note/Card writes from unattended authorization.
+
+   Checkpoints:
+
+   - Delegate all Note/Card work to `granoflow-review-card-draft`; refresh preview after every draft change.
+   - Apply only operations from the latest preview the user explicitly confirms.
+   - Unattended mode: prepare this stage last and wait; never apply Note/Card writes from unattended authorization.
 
 ## Ownership Boundaries
 
@@ -76,3 +109,7 @@ Follow these phases in order:
   readback; daily review completion never implies their acceptance.
 - Any Note/Card candidate is fully displayed at the end and remains zero-write
   until the user explicitly confirms operations from the latest preview.
+
+## References
+
+- Read [Daily Review Contract](references/daily-review-contract.md) before work.

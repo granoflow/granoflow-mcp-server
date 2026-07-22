@@ -173,7 +173,11 @@ milestones),
 [Task Orchestrator](skills/granoflow-task-orchestrator/SKILL.md) / Agent
 Workflow. For unattended suite runs until green, use
 [Integration Test Campaign](skills/granoflow-integration-test-campaign/SKILL.md)
-(one milestone per round; not the task-local write-only integration policy).
+(service_path / cross-module real I/O; one milestone per round; not
+task-local write-only IT), then
+[E2E Test Campaign](skills/granoflow-e2e-test-campaign/SKILL.md)
+(final stage: Project Work user-flow coverage, author missing UI journeys,
+auto-fix bugs, screenshots under `temp/` shown to the user).
 
 ## Workflow Examples
 
@@ -682,6 +686,7 @@ ids are:
 - `granoflow-persistent-milestone-runner`
 - `granoflow-project-definition`
 - `granoflow-integration-test-campaign`
+- `granoflow-e2e-test-campaign`
 
 The reference tool is package-local and read-only. It accepts no caller path,
 does not call the Granoflow Local HTTP API, and does not require an API token.

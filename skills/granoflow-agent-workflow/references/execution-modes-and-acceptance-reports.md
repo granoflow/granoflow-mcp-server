@@ -86,16 +86,18 @@ is needed. Missing report after code changes fails closed as
   responsibility splits, and verified gate commands;
 - automated test/static-gate evidence (unit/lint/type/build as run by the Agent);
 - integration status per Task Integration Test Policy: `not_required` when unit
-  tests suffice; or `awaiting_manual_execution` with paths, recommended
-  `local_machine`, and user-selected `integration_test_device` when 1–2 tests
-  were added; never Agent-claimed integration runtime success;
+  tests suffice; or `awaiting_campaign_execution` /
+  `awaiting_manual_execution` with paths, recommended `requires`/`produces`,
+  recommended `local_machine`, and user-selected `integration_test_device`
+  when 1–2 tests were added; never Agent-claimed integration runtime success
+  from the feature task;
 - screenshot status and only the key screenshots when present.
 
 When integration tests are unnecessary, record `not_required` with the unit-
 sufficiency reason. When up to two integration tests were added for this task,
-record `awaiting_manual_execution` (human will run them)—not Agent
-`planned_not_run` as a substitute for the manual-only rule. Never label static
-inspection of an integration script as runtime success.
+record `awaiting_campaign_execution` (stage-6 campaign auto-drives later)—not
+Agent `planned_not_run` as a substitute for the task-local do-not-run rule.
+Never label static inspection of an integration script as runtime success.
 
 The App owns upload validation, encrypted storage, current replacement, SHA-256
 readback and preview. Acceptance binds the exact current SHA. A replacement is
@@ -105,6 +107,9 @@ task binds the report attachment id and SHA so later workers know which evidence
 was reviewed.
 
 Task-local integration tests added under the Task Integration Test Policy are
-**not** executed by the Agent; humans run them. Other screenshot/runtime
+**not** executed inside the feature task; stage `integration_campaign` /
+`granoflow-integration-test-campaign` orchestrates and auto-drives them later.
+UI E2E screenshots belong to stage `e2e_campaign` /
+`granoflow-e2e-test-campaign` (paths under `temp/`). Other screenshot/runtime
 evidence still follows its own Plan. Generating, uploading, previewing, or
-accepting the HTML does not run integration scripts.
+accepting the HTML does not run integration or E2E campaign scripts.

@@ -119,8 +119,8 @@ Portfolio orchestration: after Project Definition, ask to create all milestones 
 
 ### Run Integration Test Campaign
 
-When you want unattended integration testing until green (not task-local
-write-only tests):
+When you want AI-driven integration testing until green (not task-local
+write-only tests). Works in interactive and unattended project modes:
 
 ```text
 Run integration test campaign
@@ -130,7 +130,7 @@ Run integration test campaign
 Directory summary:
 
 ```text
-Integration test campaign: unattended rounds—one milestone per round, run the full suite first, cluster failures into bug tasks, fix them, then open the next round until all tests pass.
+Integration test campaign: orchestrate a minimal human-path suite, AI auto-drives, triage code vs test failures, fix and re-test until green; optional vision; change report when edits land.
 ```
 
 ### Process Due Tasks

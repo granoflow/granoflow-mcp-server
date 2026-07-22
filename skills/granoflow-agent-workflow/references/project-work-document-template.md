@@ -207,6 +207,18 @@ product:
   accessibility_standard: null
   privacy_classification: null
   legal_or_store_constraints: []
+  # App Icon Source Gate (mobile/desktop App only).
+  # Load granoflow-agent-workflow/app-icon-source-gate.
+  # Lint: scripts/lint_app_icon_source_gate.py
+  # Fail closed: app_icon_source_gate_unread / app_icon_source_unresolved / ...
+  app_icon:
+    applicability: required | not_applicable
+    applicability_basis: null
+    document_scan_status: found | missing | not_scanned
+    source_choice: user_provided | ai_generated | downloaded_license_clear | unresolved | not_applicable
+    asset_path: null
+    license_note: null
+    user_decision_recorded: false
 
 # Hard gate for thin or uneven product docs. Initialization Done and
 # complete_confirmed_current automation require status=ready.
@@ -660,6 +672,54 @@ engineering:
     unit_tests: []
     module_tests: []
     integration_tests: []
+    # User/project special constraints for authoring + campaign IT.
+    # Empty list = no extra constraints beyond Task Integration Test Policy.
+    # Schema and enforcement: integration-test-special-requirements.md
+    # Unknown older App schemas: preserve_without_admission_effect until upgraded.
+    integration_test_special_requirements:
+      - id: null # e.g. ITR-001
+        kind: seed_corpus | fixture_paths | forbidden_substitute | run_constraint | other
+        statement: null
+        corpus_paths: [] # required when kind=seed_corpus
+        not_app_seed: false # true => corpus is NOT production/app seed
+        app_seed_paths: [] # production seed paths kept distinct
+        forbidden_substitutes: [] # e.g. randomly_generated_fake_epub_as_primary_corpus
+        applies_when: [] # multi_book_library_it | folder_import_it | bookshelf_with_real_books_it | campaign_suite | all_authored_it | other:<label>
+        product_doc_refs: []
+        source_refs: []
+        provenance: user_stated | recommended | inferred | null
+        enforcement: fail_closed | advisory
+    # Stage-6 campaign artifacts (paths or attachment ids):
+    # integration_suite_plan: null
+    # integration_campaign_change_report: null
+    # integration_campaign_closing_summary: null
+    # e2e_campaign_coverage_matrix: null
+    # e2e_campaign_suite_plan: null
+    # e2e_campaign_evidence_pack: null
+    # e2e_campaign_closing_summary: null
+    # e2e_tests: [] # optional explicit UI entrypoints; coverage still driven by journeys
+    #
+    # Code signing default for local build/run. Omit => local_dev_run.
+    # Agents probe the host and declare code_signing_strategy (never ask the
+    # user to confirm). Detail: code-signing-strategy.md
+    # default_signing_goal: local_dev_run # local_dev_run | device_debug | distribute_store | distribute_direct
+    #
+    # Final-stage ship readiness (E2E campaign). Default when omitted at campaign
+    # time: market_smoke. Detail: granoflow-e2e-test-campaign/e2e-host-capabilities
+    # and e2e-user-flow-coverage (journey × host assignment).
+    # ship_bar: market_smoke # market_smoke | form_factor_smoke | full_campaign
+    # verification_host_matrix:
+    #   schema: granoflow_verification_host_matrix_v1
+    #   derived_from: [] # e.g. [scope.supported_platforms]
+    #   concurrency: parallel_when_capable # sequential | parallel_when_capable
+    #   primary_form_factors: [] # phone_portrait | tablet_landscape | desktop_landscape | web | other:<id>
+    #   hosts:
+    #     - id: null
+    #       kind: desktop | simulator | emulator | physical_device | remote_farm | browser | other
+    #       platforms: []
+    #       status: unprobed | available | unavailable | deferred_external
+    #       residual_code: null
+    #   assignment_policy: journey_at_least_one_capable_host
     ui_tests: []
     end_to_end_tests: []
     migration_tests: []

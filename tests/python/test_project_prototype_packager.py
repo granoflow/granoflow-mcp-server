@@ -95,9 +95,7 @@ class ProjectPrototypePackagerTest(unittest.TestCase):
             payload = json.loads(proc.stdout)
             self.assertEqual(proc.returncode, 1)
             self.assertFalse(payload["ok"])
-            self.assertEqual(
-                payload.get("failCode"), "user_visible_copy_boundary_violation"
-            )
+            self.assertEqual(payload.get("failCode"), "user_visible_copy_boundary_violation")
 
 
 if __name__ == "__main__":

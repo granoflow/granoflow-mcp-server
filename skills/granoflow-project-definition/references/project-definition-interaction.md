@@ -114,6 +114,22 @@ confirmed **in interactive mode**. In unattended mode they still require an
 explicit recommendation record and may become blockers if no safe
 recommendation exists or the action is forbidden.
 
+### App Icon Source Gate (mobile / desktop App)
+
+When Step 1 evidence shows a **mobile or desktop App**, load
+`granoflow-agent-workflow/app-icon-source-gate` and include `product.app_icon`
+in a decision batch:
+
+1. Scan user-submitted documents for an application icon.
+2. If found → record `document_scan_status: found` and path/provenance.
+3. If missing → **interactive:** ask the three-way source choice
+   (`user_provided` / `ai_generated` / `downloaded_license_clear`) and wait;
+   **unattended:** do not invent a source—residual / fail closed
+   `app_icon_source_unresolved`.
+4. Lint with `lint_app_icon_source_gate.py` before Project Work confirm.
+
+Pure Web/CLI/library projects set `applicability: not_applicable` with basis.
+
 ### Design / Baseline Confirmation Exception
 
 The design-system branch is the deliberate exception to field-by-field
@@ -272,6 +288,19 @@ During Step 1, after source intake and before Project Work confirm:
 6. Step 2 Baseline screens Must map 1:1 (or documented many-to-one) onto
    `screen_coverage` rows with `baseline_required: true`, including screens
    adopted via a `split` conclusion.
+7. If product docs or the user state durable **integration-test fixture /
+   corpus** rules (fixed seed files, “not app seed”, forbidden substitutes),
+   record them under
+   `engineering.quality_gates.integration_test_special_requirements` per
+   `granoflow-agent-workflow/integration-test-special-requirements`. Empty
+   list is valid when no special IT constraints exist. Interactive: ask →
+   recommend → wait before inventing corpus paths.
+8. Default app signing goal: omit
+   `engineering.quality_gates.default_signing_goal` or set `local_dev_run`
+   unless the product already requires store / notarized distribution
+   (`distribute_store` / `distribute_direct`). Agents follow
+   `granoflow-agent-workflow/code-signing-strategy` later (probe host, declare
+   scheme, **never ask the user to confirm**).
 
 ## Capability-Critical Dependency Recommendation Batch
 

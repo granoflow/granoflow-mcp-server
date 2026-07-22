@@ -7,6 +7,12 @@ description: Persistently run one Granoflow milestone with provider-neutral work
 
 Use this skill when one confirmed milestone may need to continue for hours or days without treating one Agent process, one chat turn, or one summary as the lifetime of the work.
 
+## Keyword
+
+- `#persistent-milestone-runner`
+- `#milestone-runner`
+- `#unattended-milestone`
+
 ## Core Contract
 
 - Granoflow App/API owns milestone, task, node, attachment, and completion truth.
@@ -47,6 +53,13 @@ weaken task, test, Delivery, secret, destructive-action, or acceptance gates.
 Every non-dry run requires a confirmed `granoflow_milestone_authorization_v1` manifest. It records full-runtime-access readiness, internal phase preauthorization, every required external capability as `granted`, `excluded`, or `interaction_required`, credential references, expiry, and a reference-only secret policy. It never contains secret values.
 
 An updated manifest or a changed Granoflow task releases the applicable wait on the next cycle. The runner consumes authorization; it never writes or confirms its own grant.
+
+Checkpoints:
+
+- Resolve `granoflow_agent_preferences_get(projectId)` once before mode selection.
+- Preferences never create authorization or weaken acceptance gates.
+- Non-dry run without confirmed manifest → stop before worker launch.
+- Runner never writes or confirms its own authorization grant.
 
 ## Run
 
@@ -104,6 +117,14 @@ python3 skills/granoflow-persistent-milestone-runner/scripts/acceptance_report.p
 ```
 
 The worker command must accept the generated task packet as its final argument. It may optionally write the structured report described in [worker-report.md](references/worker-report.md). A missing report never weakens the App/API completion gate.
+
+Checkpoints:
+
+- Dry-run (`--dry-run --once`) previews milestone without executing a worker.
+- Worker exit or self-reported `complete` is progress evidence only—not acceptance.
+- Stagnation → `replan_required`, then visible interaction wait; independent tasks continue.
+- Acceptance requires App/API readback, accepted Task Delivery, and finished nodes.
+- Generate acceptance HTML even when integration/screenshot tests are `not_required`.
 
 ## Rules
 

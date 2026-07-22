@@ -1,4 +1,4 @@
-# Design Spec = Style Guide / Design Tokens（0.1.19）
+# Design Spec = Style Guide / Design Tokens（0.1.22）
 
 ## Summary
 

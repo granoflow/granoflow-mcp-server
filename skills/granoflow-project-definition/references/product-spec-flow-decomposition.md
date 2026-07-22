@@ -24,18 +24,18 @@ For **every** adopted primary journey in
    surface before a single final confirm are **parallel** (not serial).
 3. **Conclude page count** from the flowchart — never skip the pass:
 
-| Flowchart shape | `conclusion` |
-| --------------- | ------------ |
-| Exactly **one** user operation, and no mid-flow serial gate (same-page empty / loading / error states allowed) | `keep_cohesive` (one page) |
-| **Multiple** operations that can run **concurrently / same screen**, with only a **final confirm** | `keep_cohesive` (one page) |
+| Flowchart shape                                                                                                            | `conclusion`                                                 |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Exactly **one** user operation, and no mid-flow serial gate (same-page empty / loading / error states allowed)             | `keep_cohesive` (one page)                                   |
+| **Multiple** operations that can run **concurrently / same screen**, with only a **final confirm**                         | `keep_cohesive` (one page)                                   |
 | Operations that must run **step-by-step** (serial gates: confirm → wait → review, compare-then-commit, wizard steps, etc.) | `split` (multi-page; one primary job or wait phase per page) |
-| Flowchart incomplete or page-count judgment is decision-changing | `needs_user_decision` |
+| Flowchart incomplete or page-count judgment is decision-changing                                                           | `needs_user_decision`                                        |
 
-| `conclusion` | Meaning |
-| ------------ | ------- |
-| `split` | Adopt the multi-page screen set (write into `screen_ids` + `screen_coverage`) |
-| `keep_cohesive` | Keep one page (or the pre-pass cohesive set); document the rejected multi-page split |
-| `needs_user_decision` | Interactive waits; unattended fails closed |
+| `conclusion`          | Meaning                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| `split`               | Adopt the multi-page screen set (write into `screen_ids` + `screen_coverage`)        |
+| `keep_cohesive`       | Keep one page (or the pre-pass cohesive set); document the rejected multi-page split |
+| `needs_user_decision` | Interactive waits; unattended fails closed                                           |
 
 Fail closed:
 
@@ -87,9 +87,9 @@ Missing stress path → `journey_stress_path_incomplete` (also blocks
 
 Thin docs do **not** waive the operation-flow pass.
 
-| Mode | Behavior |
-| ---- | -------- |
-| Interactive | Show flowchart + serial-gate reading + recommendation; wait for accept / adjust / keep |
+| Mode                       | Behavior                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Interactive                | Show flowchart + serial-gate reading + recommendation; wait for accept / adjust / keep                                                                                                                                                                                                                                                                                                            |
 | Unattended (explicit only) | Must still draw the flow, list gates, and record conclusion. May adopt a **non-decision-changing** `split` or `keep_cohesive` with `agent_recommendation_adopted`. Must **not** invent whole journeys as `user_stated`. Decision-changing thin-doc gap fills → `needs_user_decision` / fail closed `thin_product_doc_gap_requires_user` — never silent auto-complete of an underspecified product |
 
 Unattended Baseline visual `auto_accept_recommendation` never skips this gate.

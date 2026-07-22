@@ -69,6 +69,10 @@ export const INTEGRATION_TEST_CAMPAIGN_SKILL_URL = new URL(
   "../skills/granoflow-integration-test-campaign/SKILL.md",
   import.meta.url,
 );
+export const E2E_TEST_CAMPAIGN_SKILL_URL = new URL(
+  "../skills/granoflow-e2e-test-campaign/SKILL.md",
+  import.meta.url,
+);
 
 export function compactRecord(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
@@ -164,6 +168,10 @@ export function readProjectDefinitionSkill(): string {
 
 export function readIntegrationTestCampaignSkill(): string {
   return readFileSync(INTEGRATION_TEST_CAMPAIGN_SKILL_URL, "utf8");
+}
+
+export function readE2eTestCampaignSkill(): string {
+  return readFileSync(E2E_TEST_CAMPAIGN_SKILL_URL, "utf8");
 }
 
 export function isWithin(root: string, target: string): boolean {

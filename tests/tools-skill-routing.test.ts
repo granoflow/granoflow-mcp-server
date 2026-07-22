@@ -75,12 +75,34 @@ describe("tools-skill-routing", () => {
     );
   });
 
-  it("exposes the unattended integration test campaign skill", async () => {
+  it("exposes the integration test campaign skill", async () => {
     const { handlers } = collectHandlers();
     assertSkillSurface(
       parseToolText(await handlers.get("granoflow_integration_test_campaign_skill")?.({})),
       "skills/granoflow-integration-test-campaign/SKILL.md",
-      ["integration-test-campaign-contract"],
+      [
+        "integration-campaign-closing-summary",
+        "integration-campaign-closing-summary-template",
+        "integration-suite-orchestration",
+        "integration-test-campaign-contract",
+      ],
+    );
+  });
+
+  it("exposes the e2e test campaign skill", async () => {
+    const { handlers } = collectHandlers();
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_e2e_test_campaign_skill")?.({})),
+      "skills/granoflow-e2e-test-campaign/SKILL.md",
+      [
+        "e2e-campaign-closing-summary",
+        "e2e-campaign-closing-summary-template",
+        "e2e-evidence-pack",
+        "e2e-host-capabilities",
+        "e2e-suite-orchestration",
+        "e2e-test-campaign-contract",
+        "e2e-user-flow-coverage",
+      ],
     );
   });
 });

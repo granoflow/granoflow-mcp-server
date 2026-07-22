@@ -202,7 +202,11 @@ block the next action—but do not waive the Product Spec Completeness Hard Gate
 ## Change And Delivery Reconciliation
 
 When a source changes, mark affected records stale, recompute conflicts and
-coverage, and reopen only the decisions whose meaning changed. At Delivery,
-report each adopted requirement as delivered, partially delivered, deferred,
-superseded, or blocked with actual evidence. A passing test does not prove that
-an untraced user requirement was implemented.
+coverage, and reopen only the decisions whose meaning changed. **Discussion
+accepts are sources:** write them back to App slots (Project / Milestone /
+Task Work, `ui_prototype`, etc.) per
+`discussion-writeback-contract` and `change-impact-fanout` before
+Plan/Readiness/Execution rely on them.
+At Delivery, report each adopted requirement as delivered, partially delivered,
+deferred, superseded, or blocked with actual evidence. A passing test does not
+prove that an untraced user requirement was implemented.

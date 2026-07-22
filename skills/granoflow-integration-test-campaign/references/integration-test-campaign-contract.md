@@ -1,99 +1,244 @@
 # Integration Test Campaign Contract
 
-Provider-neutral loop for unattended integration-test campaigns. Granoflow
-App/API remains source of truth for milestones, tasks, and completion.
+Provider-neutral loop for **standard integration-test** campaigns (cross-module
+real I/O, shared session). Granoflow App/API remains source of truth for
+milestones, tasks, and completion.
+
+UI clicks, screenshots, and vision are **out of scope**—see
+`granoflow-e2e-test-campaign` / stage `e2e_campaign`.
 
 ## Relationship To Task-Local Policy
 
 Ordinary feature tasks follow Task Integration Test Policy: prefer unit tests,
-add at most two integration cases when needed, **do not execute** them, device
-chosen by the user (recommend local machine).
+add at most two integration cases when needed, **do not execute** them inside
+the feature task, device chosen by the user (recommend local machine). When
+those cases are authored, **recommend** recording `requires` / `produces` (and
+optional `mutates` / `destroys`) so later orchestration can build a minimal path.
 
-This campaign contract is the opposite **execution** path: the user explicitly
-starts a campaign to **run** the suite, fix bugs, and re-run until green, with
-**no ordinary manual intervention**.
+This campaign contract is the **execution** path for stage
+`integration_campaign`: inventory and orchestrate the suite, run it under
+**agent auto-drive**, triage failures, fix product or test code, re-test until
+green, and emit a change report when anything was edited.
+
+## Mode-Invariant Auto-Drive
+
+Once the project is in `integration_campaign` (or the user starts this Skill),
+set:
+
+```text
+campaign_drive: agent_auto
+```
+
+This applies for both project `interaction_mode: interactive` and
+`unattended`. Do **not** ask ordinary questions such as whether to run the next
+case, whether to fix a failure, or whether to continue the suite. Progress
+Board remains required but **display-only** (no acknowledgement question) for
+the whole IT loop.
+
+Only **externally impossible** items (user-only secret, store approval, host
+cannot run the device action) are deferred into residuals; do not freeze the
+rest of the campaign.
 
 ## Campaign State (resumable)
 
 Persist after each successful step (project attachment, controller task, or
-managed summary—host chooses one durable place):
+managed summary—host chooses one durable place). Lint with
+`scripts/lint_integration_campaign_artifacts.py` when the artifact is written.
 
 ```yaml
+schema: granoflow_integration_campaign_state_v1
 campaign_id: <stable id>
 project_id: <id>
-execution_mode: unattended
+campaign_drive: agent_auto
+execution_mode: interactive | unattended # project mode; does not weaken auto-drive
+interaction_fidelity: service_path # only valid value for this skill
 integration_test_device_recommendation: local_machine
 integration_test_device: local_machine | simulator_or_emulator | physical_device | remote_farm | other
-suite_entrypoints: [] # commands or paths
+suite_entrypoints: [] # commands or paths before orchestration
+suite_plan_ref: null | <attachment id or path>
 authorization_ref: <envelope or grant id; never secret values>
+fix_schedule: null | inline | deferred_batch | hybrid
+fix_schedule_rationale: null | <one-line efficiency reason>
 current_round: 1
 current_round_milestone_id: null | <id>
 phase:
+  - awaiting_suite_orchestration
   - awaiting_suite_run
   - clustering_bugs
   - fixing_bugs
   - closing_round
   - complete
   - blocked
+failures: []
+# each failure: case_id, failure_class, summary
+# failure_class: product_code | test_harness | suite_orchestration | environment_external
+residuals: []
+# e.g. { code: integration_campaign_external_deferred, detail }
 round_history: []
 # each history row: round, milestone_id, suite_result, bug_task_ids, closed_at
+change_report_ref: null | <attachment id or path>
 ```
+
+Omit E2E UI evidence fields (E2E-only): `vision_acceptance`, `vision_result`,
+`vision_capability`, `vision_policy`, `screenshot_capability`,
+`screenshot_policy`, `screenshots`, `capture_surface`, `window_capability`.
+Presence fails closed as `integration_campaign_vision_not_allowed`.
 
 ## Round Machine
 
 ```text
 open milestone(round N)
-  -> run FULL suite
-  -> if green: campaign complete
-  -> else: cluster bugs -> create one task per bug
-  -> fix all bug tasks to done (unattended)
-  -> close round milestone
-  -> N = N+1 -> open milestone(round N) -> ...
+  -> orchestrate suite (inventory + Suite Plan; may rewrite tests)
+  -> run orchestrated suite under agent_auto + service_path
+  -> on failure: triage failure_class; choose fix_schedule (inline | deferred_batch | hybrid)
+  -> fix product_code and/or test_harness (and orchestration) as classified
+  -> re-test affected cases; do not claim green without evidence
+  -> if green and changes made: emit change report
+  -> if green: campaign complete (or close round with green evidence)
+  -> else: finish remaining fixes -> close round -> N = N+1 -> ...
 ```
 
-## Full Suite Rule
+Starting a suite run before `contract_loaded` + `orchestration_loaded` on the
+Suite Plan fails closed as `integration_campaign_suite_unorchestrated`.
 
-Before any fix task is created in a round, every suite entrypoint must have a
-run attempt recorded (pass/fail/crash). Stopping after the first failure to
-avoid running the rest fails closed as
-`integration_campaign_round_suite_incomplete` unless the process crashed; then
-record the crash and cluster from partial output.
+## Suite Orchestration
 
-## Bug Clustering Rule
+Read `integration-suite-orchestration.md`. Before the first run of a round:
 
-Group failing assertions/cases that share one root cause into **one** bug task.
-Evidence for clustering (logs, stack frames, same module/regression) must appear
-in the bug task Analysis. One-task-per-failure without justification fails
-closed as `integration_campaign_bug_clustering_required`.
+1. Inventory all authored **integration** tests (Project Work
+   `quality_gates.integration_tests`, task Delivery paths, repo IT trees—not
+   `e2e/`).
+2. Load Project Work `quality_gates.integration_test_special_requirements`
+   (`granoflow-agent-workflow/integration-test-special-requirements`). Apply
+   matching `fail_closed` rows in Suite Plan
+   `special_requirements_loaded` / `special_requirements_applied`. Missing load
+   → `integration_campaign_special_requirements_unloaded`; unapplied matching
+   rows → `integration_campaign_special_requirement_unapplied`; banned corpus
+   substitutes → `integration_campaign_seed_corpus_substituted`.
+3. Load `granoflow-agent-workflow/acceptance-outcome-contract`. Emit
+   `acceptance_outcomes_loaded: true` and an Acceptance Outcome matrix for
+   user-required real results. Integration may **close** only `domain_io` with
+   `real_side_effect`; `platform_secure_store` / `os_capability` /
+   `ui_human_path` / `session_recovery` must be `deferred_e2e` (or residual).
+   Set `user_path_claim: service_layers_only`. Overclaim →
+   `acceptance_outcome_layer_overclaim` /
+   `acceptance_outcome_user_path_overclaim`.
+4. Label `requires` / `produces` / `mutates` / `destroys` and entry style
+   (`service_path` default; rare `ui_probe` needs justification).
+5. Emit a Campaign Suite Plan with `test_layer: integration` and a
+   dependency-respecting `order`.
+6. **May rewrite or merge test code** so the plan can run without per-case
+   seed/rebuild thrash—while still honoring seed_corpus paths. Record test
+   edits in the eventual change report.
 
-## Unattended Fix Loop
+Default `interaction_fidelity: service_path`. UI `human_path` →
+`integration_campaign_fidelity_wrong_layer`.
 
-For each bug task, use the existing task lifecycle owners under the campaign
-grant:
+## Failure Triage
 
-1. Analysis + Analysis Grill (auto-adopt recommendations; no user_only batch
-   unless a real blocker).
-2. Plan + Readiness as required.
-3. Structural Change Forecast hard gate still applies for code edits.
-4. Unit/lint/type/build gates run as usual.
-5. Delivery + done readback before the next bug, or in parallel only when
-   `parallel-task-execution` allows and the campaign grant permits.
+Every recorded failure **Must** set `failure_class`:
 
-Do not ask the user to re-confirm Plan/execution between bugs in the same
-authorized campaign.
+| Class                  | Action                                           |
+| ---------------------- | ------------------------------------------------ |
+| `product_code`         | Fix product code; re-test                        |
+| `test_harness`         | Fix tests/fixtures; re-test                      |
+| `suite_orchestration`  | Fix Suite Plan / order / shared session; re-test |
+| `environment_external` | Defer residual; do not fake green                |
+
+When the failure message is **signing / entitlement / provisioning /
+keystore**, load `granoflow-agent-workflow/code-signing-strategy` first: probe
+the host, auto-select and declare `code_signing_strategy` (never ask the user),
+prefer free/local schemes for `local_dev_run`, then fix product or harness.
+Do not “fix” a local-run failure by forcing paid Developer subscription
+entitlements.
+
+## Fix Schedule (AI chooses efficiency)
+
+When failures appear, choose and record:
+
+```text
+fix_schedule: inline | deferred_batch | hybrid
+fix_schedule_rationale: <why this is faster/safer now>
+```
+
+| Schedule         | Meaning                                                             |
+| ---------------- | ------------------------------------------------------------------- |
+| `inline`         | Stop, fix, re-test the affected path, then continue remaining cases |
+| `deferred_batch` | Record failures, continue the suite, then cluster and fix           |
+| `hybrid`         | Inline for blockers; batch the rest                                 |
+
+Missing rationale when `fix_schedule` is set fails closed as
+`integration_campaign_fix_schedule_rationale_missing`.
+
+Bug tasks (when used) still cluster by distinct root cause
+(`integration_campaign_bug_clustering_required` if one-task-per-raw-failure
+without justification). Inline fixes may skip task creation when the fix is
+small and evidenced in campaign state; larger product fixes should still use
+quality tasks via `granoflow-task-authoring` / orchestrator.
+
+## Change Report (mandatory when edits exist)
+
+If the campaign changed product code and/or test code, emit
+`integration_campaign_change_report` (usually embedded inside the Closing
+Summary). Lint schema `granoflow_integration_campaign_change_report_v1`.
+
+Required when `status: changes_present`:
+
+- `product_changes` / `test_changes` (paths and symbols)
+- `product_behavior_delta` (observable difference, or `none` for tests-only)
+- `why` (ties to `failure_class` + root cause)
+- `failed_before` (case id + symptom)
+- `passed_after_evidence` (commands / round / log refs)
+
+Missing report when code changed fails closed as
+`integration_campaign_change_report_missing`. First-run green with no edits may
+use `status: no_code_changes`.
+
+## Closing Summary (mandatory; non-programmer first)
+
+Before `phase: complete`, emit
+`granoflow_integration_campaign_closing_summary_v1` per
+`integration-campaign-closing-summary.md` and the template. The user-facing
+`plain.*` fields and Chinese Markdown sections are required; durable audience is
+`beginner`. `plain.next_step` **Must** point at E2E (e.g. 「开始 E2E 战役」),
+not project closeout. Missing or jargon-only summaries fail closed as
+`integration_campaign_closing_summary_missing` /
+`_incomplete` / `_not_plain`. Residuals must be explained in
+`plain.leftovers` (`_residual_unexplained` otherwise).
 
 ## Device
 
-Recommend `local_machine` at campaign start. Unattended start adopts the
-recommendation when the grant does not override. Changing device mid-campaign
-requires a new grant (direction change), not a chat question mid-round.
+Recommend `local_machine` at campaign start. Auto-drive adopts the
+recommendation when no grant overrides. Changing device mid-campaign requires a
+new grant (direction change), not a chat question mid-round.
 
 ## Exit
 
-- **Success:** a round completes with zero failing entrypoints and evidence
-  attached; `phase: complete`.
-- **Deferred external:** device/secret/store walls → record
-  `integration_campaign_external_deferred`, continue other solvable bug tasks /
-  rounds when possible, and include the item in the final Unattended Residual
-  Report. Do not fake green and do not freeze the whole campaign on one
-  external item.
+- **Success:** orchestrated suite green with evidence; Closing Summary present
+  (plain-language); change report present if edits were made; `phase: complete`.
+  Next lifecycle stage is `e2e_campaign`.
+- **Deferred external:** record `integration_campaign_external_deferred`,
+  continue solvable work, list leftovers in Closing Summary + residual report
+  (also when the project mode is interactive—same residual shape).
+
+## Failure Codes
+
+- `integration_campaign_suite_unspecified`
+- `integration_campaign_device_unselected`
+- `integration_campaign_authorization_missing`
+- `integration_campaign_suite_unorchestrated`
+- `integration_campaign_order_dependency_violation`
+- `integration_campaign_fidelity_wrong_layer`
+- `integration_campaign_ui_probe_unjustified`
+- `integration_campaign_vision_not_allowed`
+- `integration_campaign_drive_not_agent_auto`
+- `integration_campaign_failure_class_required`
+- `integration_campaign_fix_schedule_rationale_missing`
+- `integration_campaign_bug_clustering_required`
+- `integration_campaign_round_suite_incomplete`
+- `integration_campaign_change_report_missing`
+- `integration_campaign_closing_summary_missing`
+- `integration_campaign_closing_summary_incomplete`
+- `integration_campaign_closing_summary_not_plain`
+- `integration_campaign_closing_summary_residual_unexplained`
+- `integration_campaign_external_deferred`

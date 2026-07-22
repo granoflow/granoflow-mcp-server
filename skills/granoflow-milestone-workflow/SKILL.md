@@ -16,6 +16,12 @@ For create-all-milestones then create-all-tasks, use
 For charter → coordinate → integrate → close, use
 `granoflow-milestone-coordination`.
 
+## Keyword
+
+- `#milestone-workflow`
+- `#milestone-create`
+- `#batch-create-milestones`
+
 ## When To Use
 
 - Create one milestone, or create the full planned milestone set.
@@ -74,16 +80,45 @@ Plan and create the milestone portfolio:
 ## Workflow
 
 1. Pass the hard gate.
+
+   Checkpoints:
+
+   - On failure return `project_milestone_prerequisites_incomplete` and hand back to `granoflow-project-definition`; do not create App milestones.
+
 2. Call `granoflow_agent_preferences_get(projectId)` once when project-bound.
    Preferences never weaken readiness, quality, authorization, or acceptance
    gates.
+
+   Checkpoints:
+
+   - Preferences never weaken readiness, quality, authorization, or acceptance gates.
+
 3. Choose `single_create` or `batch_create`.
+
+   Checkpoints:
+
+   - Empty portfolio → plan and create the full set; existing portfolio → amend only for real gaps.
+
 4. Read `references/milestone-portfolio-creation.md`.
+
+   Checkpoints:
+
+   - Read the reference before planning or creating milestones.
+
 5. Preview creations; on confirm, write through App/API and read back every
    created milestone id.
+
+   Checkpoints:
+
+   - Preserve preview, confirmation, write, and App/API readback for every milestone.
+
 6. Emit Done: milestone ids created/amended, sequencing, First Ship id if any,
    and handoff to `granoflow-task-authoring` or
    `granoflow-portfolio-orchestrator` (if tasks are still missing).
+
+   Checkpoints:
+
+   - Never create child tasks or Milestone Work charters in this Skill; hand off for task authoring.
 
 ## Hard Rules
 
