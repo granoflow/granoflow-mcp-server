@@ -9,13 +9,36 @@ This is the single owner for Granoflow card behavior. Other bundled skills must
 delegate here instead of restating card rules. The public MCP tool name remains
 `granoflow_review_card_draft_skill` for compatibility.
 
+## Keyword
+
+- `#review-card`
+- `#card-draft`
+- `#note-card`
+
 ## Required Flow
 
 1. Confirm the target task exists and is not deleted. Project and inbox tasks are both eligible when the running App advertises inbox authoring; every operation remains linked to a task.
+
+   Checkpoints:
+
+   - Stop if target task is missing or deleted; every operation remains linked to a task.
+
 2. Summarize the proposed card set's core knowledge in one short paragraph.
+
 3. Call `granoflow_review_card_similar` with that summary. Supply up to 12 discriminating keywords so the App can fall back when vector search is disabled, unavailable, or produces no useful candidates.
+
+   Checkpoints:
+
+   - Supply up to 12 discriminating keywords for similarity fallback.
+
 4. Classify raw matches as `same_knowledge`, `related`, `conflicting`, or irrelevant. Show only the AI-filtered useful candidates to the user. Search results never authorize a write.
+
+   Checkpoints:
+
+   - Search results never authorize a write; show only AI-filtered useful candidates.
+
 5. Recommend linking an existing card, updating and linking it, creating a new note/card set, or doing nothing. A related card does not automatically block a new card.
+
 6. Draft a two-part memory artifact using `references/card-quality-defaults.md`:
    one durable Note with a clear title and explanatory content, plus one or
    more concise front/back Cards derived from that Note. If the knowledge
@@ -24,14 +47,35 @@ delegate here instead of restating card rules. The public MCP tool name remains
    least one concrete example; abstract, boundary-sensitive, or easily
    misunderstood ideas must also use a plain-language analogy, contrast, or
    intuitive explanation.
+
+   Checkpoints:
+
+   - Professional terms require definition–analogy–example in the Note before preview.
+
 7. For each Card, choose basic front/back, true/false, or multiple-choice based
    on the Note. When a choice format is appropriate, populate the App-supported
    options field; do not hide options inside the answer text. Keep open-ended
    knowledge as basic front/back.
+
 8. Show a table containing operation, shape, front, options when present, back, note summary, source, and reason. For updates, show field-level before/after values, reason/evidence, and all cards/tasks affected by a shared note.
+
 9. Call `granoflow_review_card_authoring_preview`. It must report `writesPerformed: false`.
+
+   Checkpoints:
+
+   - Preview must report `writesPerformed: false` before any approval request.
+
 10. Obtain explicit approval for specific operation IDs and, when the user accepts only part of an update, pass the approved field names in `approvedFieldsByOperation`. Modification of an old card or shared note requires the same preview and approval as creation.
+
+    Checkpoints:
+
+    - Do not infer confirmation from search, classification, or prior general interest.
+
 11. Call `granoflow_review_card_authoring_apply` with the unchanged preview token/hash and only approved operation IDs. Require `practiceReady: true` for every returned card, then report the App-owned readback. API `front/back` text alone is not proof that a card can be studied.
+
+    Checkpoints:
+
+    - Never apply a stale or changed preview; require `practiceReady: true` readback for every returned card.
 
 Do not infer confirmation from search, classification, prior general interest, or task completion. If the user explicitly authorizes a defined batch maintenance operation in advance, that authorization may cover its previewed operations, but the agent must still use App preview before apply.
 
@@ -135,3 +179,10 @@ in the Note, and verify media persistence through the destination App.
 - Never show unfiltered raw search results to the user.
 - Never delete or hide a note field while any card front/back layout references it. First preview and apply replacement layouts for every affected card, verify `practiceReady`, and only then delete the field. If the App reports affected card IDs, show them with this ordering recommendation.
 - After creating or rewriting a batch, verify the real structured practice projection. For user-visible acceptance, open Card Practice and capture at least one front and answer screenshot; do not substitute a card-list/API screenshot.
+
+## Success Criteria
+
+- Every write path uses App preview (`writesPerformed: false`) before explicit approval.
+- Apply uses only approved operation IDs from the latest unchanged preview.
+- Every returned card reaches `practiceReady: true` on App readback.
+- Shared-note impact is visible during modification; unfiltered search results never shown to the user.

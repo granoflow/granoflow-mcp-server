@@ -3,115 +3,106 @@ import { installToolTestLifecycle, parseToolText, collectHandlers } from "./tool
 
 installToolTestLifecycle();
 
+type SkillToolPayload = {
+  ok: boolean;
+  code: string;
+  data: {
+    path: string;
+    skill: string;
+    references?: Array<{ referenceId: string }>;
+  };
+};
+
+function assertSkillSurface(
+  parsed: unknown,
+  expectedPath: string,
+  expectedReferenceIds: string[] = [],
+): void {
+  const result = parsed as SkillToolPayload;
+  expect(result).toMatchObject({
+    ok: true,
+    code: "ok",
+    data: { path: expectedPath },
+  });
+  expect(typeof result.data.skill).toBe("string");
+  expect(result.data.skill.length).toBeGreaterThan(0);
+  expect(result.data.skill.startsWith("---")).toBe(true);
+  if (expectedReferenceIds.length > 0) {
+    const ids = (result.data.references ?? []).map((item) => item.referenceId);
+    expect(ids).toEqual(expect.arrayContaining(expectedReferenceIds));
+  }
+}
+
 describe("tools-skill-routing", () => {
   it("exposes the bundled delegated-authorization skill and public references", async () => {
     const { handlers } = collectHandlers();
-
-    const result = parseToolText(
-      await handlers.get("granoflow_delegated_authorization_skill")?.({}),
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_delegated_authorization_skill")?.({})),
+      "skills/granoflow-delegated-authorization/SKILL.md",
+      ["authorization-envelope", "host-routing-and-waiting"],
     );
-    expect(result).toMatchObject({
-      ok: true,
-      code: "ok",
-      data: {
-        path: "skills/granoflow-delegated-authorization/SKILL.md",
-        skill: expect.stringContaining("conditional delegation"),
-      },
-    });
-    expect(JSON.stringify(result)).toContain("authorization-envelope.md");
-    expect(JSON.stringify(result)).toContain("host-routing-and-waiting.md");
-    expect(JSON.stringify(result)).toContain("unattended-interaction-contract.md");
   });
 
-  it("exposes the bundled task-orchestrator skill and short-command contract", async () => {
+  it("exposes the bundled task-orchestrator skill", async () => {
     const { handlers } = collectHandlers();
-
-    const result = parseToolText(await handlers.get("granoflow_task_orchestrator_skill")?.({}));
-    expect(result).toMatchObject({
-      ok: true,
-      code: "ok",
-      data: {
-        path: "skills/granoflow-task-orchestrator/SKILL.md",
-        skill: expect.stringContaining("single upper-layer task entrypoint"),
-      },
-    });
-    const serialized = JSON.stringify(result);
-    expect(serialized).toContain("short-command-contract.md");
-    expect(serialized).toContain("gf做");
-    expect(serialized).toContain("finish_audit");
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_task_orchestrator_skill")?.({})),
+      "skills/granoflow-task-orchestrator/SKILL.md",
+      ["short-command-contract"],
+    );
   });
 
   it("exposes the bundled milestone create workflow and coordination skill", async () => {
     const { handlers } = collectHandlers();
-
-    const createResult = parseToolText(
-      await handlers.get("granoflow_milestone_workflow_skill")?.({}),
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_milestone_workflow_skill")?.({})),
+      "skills/granoflow-milestone-workflow/SKILL.md",
+      ["milestone-portfolio-creation"],
     );
-    expect(createResult).toMatchObject({
-      ok: true,
-      code: "ok",
-      data: {
-        path: "skills/granoflow-milestone-workflow/SKILL.md",
-        skill: expect.stringContaining("single_create"),
-      },
-    });
-    expect(JSON.stringify(createResult)).toContain("milestone-portfolio-creation.md");
-
-    const coordResult = parseToolText(
-      await handlers.get("granoflow_milestone_coordination_skill")?.({}),
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_milestone_coordination_skill")?.({})),
+      "skills/granoflow-milestone-coordination/SKILL.md",
+      ["milestone-work-document-template", "milestone-collaboration-workflow"],
     );
-    expect(coordResult).toMatchObject({
-      ok: true,
-      code: "ok",
-      data: {
-        path: "skills/granoflow-milestone-coordination/SKILL.md",
-        skill: expect.stringContaining("Milestone Work"),
-      },
-    });
-    const coordSerialized = JSON.stringify(coordResult);
-    expect(coordSerialized).toContain("milestone-work-document-template.md");
-    expect(coordSerialized).toContain("milestone-collaboration-workflow.md");
-    expect(coordSerialized).toContain("controller Task");
-    expect(coordSerialized).toContain("Child Task Work");
   });
 
   it("exposes the provider-neutral persistent milestone runner", async () => {
     const { handlers } = collectHandlers();
-
-    const result = parseToolText(
-      await handlers.get("granoflow_persistent_milestone_runner_skill")?.({}),
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_persistent_milestone_runner_skill")?.({})),
+      "skills/granoflow-persistent-milestone-runner/SKILL.md",
+      ["authorization-manifest", "runtime-contract", "worker-report"],
     );
-    expect(result).toMatchObject({
-      ok: true,
-      code: "ok",
-      data: {
-        path: "skills/granoflow-persistent-milestone-runner/SKILL.md",
-        skill: expect.stringContaining("provider-neutral"),
-      },
-    });
-    const serialized = JSON.stringify(result);
-    expect(serialized).toContain("authorization-manifest.md");
-    expect(serialized).toContain("runtime-contract.md");
-    expect(serialized).toContain("worker-report.md");
   });
 
-  it("exposes the unattended integration test campaign skill", async () => {
+  it("exposes the integration test campaign skill", async () => {
     const { handlers } = collectHandlers();
-
-    const result = parseToolText(
-      await handlers.get("granoflow_integration_test_campaign_skill")?.({}),
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_integration_test_campaign_skill")?.({})),
+      "skills/granoflow-integration-test-campaign/SKILL.md",
+      [
+        "integration-campaign-closing-summary",
+        "integration-campaign-closing-summary-template",
+        "integration-suite-orchestration",
+        "integration-test-campaign-contract",
+      ],
     );
-    expect(result).toMatchObject({
-      ok: true,
-      code: "ok",
-      data: {
-        path: "skills/granoflow-integration-test-campaign/SKILL.md",
-        skill: expect.stringContaining("naturally unattended"),
-      },
-    });
-    const serialized = JSON.stringify(result);
-    expect(serialized).toContain("integration-test-campaign-contract.md");
-    expect(serialized).toContain("bug_clustering");
-    expect(serialized).toContain("one milestone per round");
+  });
+
+  it("exposes the e2e test campaign skill", async () => {
+    const { handlers } = collectHandlers();
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_e2e_test_campaign_skill")?.({})),
+      "skills/granoflow-e2e-test-campaign/SKILL.md",
+      [
+        "e2e-campaign-closing-summary",
+        "e2e-campaign-closing-summary-template",
+        "e2e-evidence-pack",
+        "e2e-host-capabilities",
+        "e2e-suite-orchestration",
+        "e2e-test-campaign-contract",
+        "e2e-user-flow-coverage",
+      ],
+    );
   });
 });

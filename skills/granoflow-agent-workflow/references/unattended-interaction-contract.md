@@ -66,10 +66,124 @@ continue when solvable under the declaration. If archive capability is missing,
 **defer** that archival item and continue other work—do not PATCH status to fake
 closure.
 
-During Project Definition, every decision carries a recommendation; unattended
-runs adopt recommendations immediately. Design Baseline + App Shell visual
-confirmation defaults to `auto_accept_recommendation` after exact App
-import/readback. Soft aesthetic preference is not a wait-for-user loop.
+During Project Definition, every decision carries a recommendation. **Only when
+the user explicitly declared unattended for that initialization** may the host
+adopt recommendations immediately and default Design Baseline + App Shell visual
+confirmation to `auto_accept_recommendation` after exact App import/readback—
+**except** the Product Spec Completeness / flow-decomposition rules below. If
+unattended was not explicitly declared, Project Definition stays interactive:
+ask → recommend → wait for the user to decide. Soft aesthetic preference is not
+a wait-for-user loop under explicit unattended; it never authorizes skipping
+interactive confirmation.
+
+### Discussion writeback under unattended
+
+Material discussion decisions (prototype rematch, page split, Plan/Scope edit,
+product-spec coverage) still require App-slot writeback + hash/id readback
+**and** a closed Change Impact Fan-out ledger in the same batch.
+`interaction_budget: 0` never excuses leaving truth only in chat or `temp/`,
+nor skipping sibling-task/doc/card dispositions →
+`discussion_writeback_pending` / `temp_only_artifact_forbidden` /
+`change_impact_*` / `prototype_product_doc_writeback_required`. See
+`discussion-writeback-contract`, `change-impact-fanout`, and
+`prototype-product-truth-writeback`.
+
+### Product Spec under unattended (thin docs ≠ silent ready)
+
+When filling `product_spec_coverage` under explicit unattended:
+
+1. **Always** draw the operation flowchart, list serial gates vs parallel ops,
+   and record `split` / `keep_cohesive` (with required summaries) or park
+   `needs_user_decision` as residual /
+   `thin_product_doc_gap_requires_user` — never skip the pass. Do **not** use
+   risk labels to force multi-screen.
+2. Auto-adopt only **non-decision-changing** gap fills with
+   `agent_recommendation_adopted`. Decision-changing thin-doc gaps must **not**
+   be silent-auto-accepted → fail closed or residual
+   `thin_product_doc_gap_requires_user`.
+3. Never invent whole journeys as `user_stated`. Never mark
+   `product_spec_coverage.status: ready` while decomposition, stress paths, or
+   decision-changing thin gaps remain open.
+4. Unattended Baseline visual `auto_accept_recommendation` never waives these
+   gates.
+
+### Prototype links under unattended
+
+Whenever HTML prototypes are authored (Design Baseline screens/Shell units or
+task `ui_prototype`):
+
+1. After **each** prototype becomes previewable, emit a clickable preview link
+   as a non-blocking notice and append it to `prototype_link_ledger`.
+2. Do not wait mid-run for visual taste confirmation.
+3. Project Definition Design Spec / Shell under unattended: author **one**
+   faithful `spec_match` **Style Guide / Design Tokens board** (not a
+   journey-screen gallery) via `draw_visual_lots.py` **true-random** draw, then
+   **one** `shell_match` that **embeds that Spec’s tokens** and is product-near
+   (not wireframe-only; no independent palette seed)—do **not** run interactive
+   triads or AI challengers. Journey/critical screens beyond the Shell’s primary
+   surface belong in the Baseline package after Spec+Shell. After Baseline
+   confirm, write `widgets.yaml` from that confirmed Baseline prototype.
+4. At run close, emit a mandatory **Prototype Link Digest** that lists every
+   ledger entry with clickable links so the user can audit all prototypes in
+   one place. Omitting the digest fails closed as
+   `prototype_link_digest_required`.
+5. Interactive mode (default when unattended was not declared) remains: Design
+   Spec triad of Style Guide boards (lots from `draw_visual_lots.py`;
+   wrong shape → `design_spec_wrong_artifact_type`) then Shell triad of
+   Spec-embedded product-near chrome variants (tokens missing / wireframe-only
+   → `shell_spec_tokens_missing` / `shell_wireframe_only`), stop after each
+   triad batch for pick / **换新批** (`--dedupe ledger`) / **在某套上改**
+   (`prototype_preview_review_required` / `design_spec_triad_required` /
+   `shell_triad_required` / `shell_spec_mismatch` / seed-collision /
+   `design_spec_seed_not_drawn` / `visual_lot_dedupe_required` /
+   `design_spec_user_facing_jargon` codes if skipped or rules violated).
+   User-facing Preview Gate copy stays plain language (no `seed-*` / internal
+   option enums).
+6. Task / milestone `ui_prototype`: inherit locked Spec + Shell; **no** random
+   visual seed (`task_prototype_seed_forbidden`); reuse `widgets.yaml` when the
+   same role exists (`widget_reuse_required`); pass Craft Gate before confirm
+   else `task_prototype_craft_incomplete` (including Baseline fit →
+   `prototype_baseline_fit_*` / `prototype_generic_phone_frame`, product truth →
+   `prototype_product_truth_violation` and user-visible copy boundary →
+   `user_visible_copy_boundary_unread` /
+   `user_visible_copy_boundary_violation`); keep design-first; high-risk UI needs
+   feasibility conclusion before Readiness
+   (`high_risk_feasibility_unresolved`).
+   - **Unattended:** mainstream-first candidate protocol then **one**
+     Baseline-fitted `expr_a` only (no dual/triple; no Design System reopen).
+     Load `prototype-baseline-fit` and `prototype-expression-brainstorm` when
+     authoring task page expressions; run
+     `lint_prototype_expression_brainstorm.py`.
+   - **Interactive (default when not unattended):** load
+     `prototype-baseline-fit` (and `prototype-confirmed-chrome-lock` when
+     chrome-family siblings are already confirmed), run
+     **mainstream-reference-first** candidates (≥5; brainstorm backfill only
+     when mainstream `<5`), then **two page expressions** (`expr_a` +
+     `expr_b`) with **functional parity** and **strict Spec/Shell fit** inside
+     the locked Design System **plus confirmed sibling chrome vocabulary**,
+     with ≥2 contrast axes; mix-and-match per task/page;
+     **side-by-side Contrast Gallery** with Baseline-fit + chrome-lock +
+     candidate digests
+     - per-axis visible-diff captions; optional third only for documented
+       industry-peer deadlock; never re-offer Design Spec labels as task
+       options; never feature-split, data-diverge, ship generic parallel
+       phones, or invent a parallel chrome dialect after siblings are
+       confirmed
+       (`prototype_option_design_system_reopened` /
+       `prototype_baseline_fit_*` /
+       `prototype_generic_phone_frame` /
+       `prototype_shell_chrome_mismatch` /
+       `prototype_confirmed_chrome_lock_*` /
+       `prototype_option_brainstorm_*` /
+       `prototype_option_mainstream_skip` /
+       `prototype_option_scope_mode_invalid` /
+       `prototype_option_function_split` /
+       `prototype_option_data_divergence` /
+       `prototype_option_third_unjustified` /
+       `prototype_option_contrast_insufficient` /
+       `prototype_option_near_duplicate` /
+       `prototype_option_contrast_gallery_required` /
+       `prototype_option_diff_unlabeled`).
 
 ## Current Run Versus Durable Delegation
 
@@ -99,7 +213,11 @@ Treat as authorized and execute when the environment can do it now:
   project-context hard gates;
 - local Git checkpoint/commit when the project/git preference and grant allow
   local history writes;
-- integration-test **campaign** suite runs on the campaign device;
+- integration-test and E2E **campaign** suite runs on the campaign device
+  (stages `integration_campaign` and `e2e_campaign` use
+  `campaign_drive: agent_auto` in interactive and unattended alike—orchestrate,
+  run, triage, fix, re-test without ordinary confirm questions; E2E also
+  captures/shows screenshots under `temp/` when the host can);
 - adopting recommendations and `revise_code` / `revise_context_yaml` decisions
   with emitted notices.
 
@@ -129,10 +247,13 @@ inside the declared unattended scope. This includes:
 - choosing implementation details, files, symbols, local tools, and test order
   from repository evidence and the confirmed scope;
 - repairing lint, format, type, build, and unit-test failures until the
-  required gate is green (task-local integration tests remain manual-only
-  outside an integration-test **campaign**);
-  do **not** run task-local integration tests in unattended flows; humans run
-  them.
+  required gate is green (task-local integration tests remain **not executed
+  inside the feature task**; stage `integration_campaign` /
+  `granoflow-integration-test-campaign` owns integration runs;
+  `e2e_campaign` / `granoflow-e2e-test-campaign` owns UI E2E + screenshots
+  under `agent_auto`);
+  do **not** run task-local integration or E2E suites inside ordinary
+  feature-task flows—defer execution to the matching campaign stage.
 - starting or checking an allowed local development service or App;
 - revising Analysis or Plan wording after a Grill when the revision stays
   inside declared Outcome/Scope;
@@ -143,6 +264,49 @@ inside the declared unattended scope. This includes:
 
 Silence is not required. Report material progress as notices, never as
 questions disguised as courtesy.
+
+### Project Lifecycle Progress Board (display-only)
+
+When the run is **project-bound**, every material turn (and the run end)
+**Must** emit the Project Lifecycle Progress Board from
+`project-lifecycle-progress-board.md` with:
+
+- `interaction_mode: unattended`
+- `board_confirmation: display_only`
+- `next_action.needs_user_confirmation: false`
+
+Do **not** ask the user to acknowledge or confirm the board. Unattended still
+walks the same pipeline stages as interactive mode; it only skips asking.
+Asking solely because the board was shown fails closed as
+`project_lifecycle_board_confirm_in_unattended`.
+
+### Milestone Plan Acceptance Pack (display-only)
+
+When closing a milestone Plan phase under unattended, emit the
+`milestone-plan-acceptance-pack` Markdown as a **display-only** notice. Do not
+ask the user to acknowledge the pack. Auto-adopt only under a valid unattended
+Planning grant; still fail closed on `plan_copy_*` /
+`milestone_plan_acceptance_pack_incomplete`. Asking solely for pack
+acknowledgement fails closed as
+`milestone_plan_acceptance_pack_confirm_in_unattended`.
+
+During unattended **implement**, still load the adopted pack and use it as the
+primary milestone alignment reference; skip only acknowledgement questions, not
+pack reconciliation at Delivery.
+
+### Long-task run continuity (required on implement)
+
+Before unattended **implement** / campaign work that is long (milestone-wide or
+multi-task), load `long-task-run-continuity.md` and create/update a **durable
+run plan** on disk. That file is the portable continuity surface.
+
+If the host exposes a **collaborative planning surface**
+(`availability: available`), activate it without asking. If it is unavailable
+or unknown, **do not block**—continue with the durable run plan alone.
+
+Asking the user solely to enable a host-local planning UI fails closed as
+`collaborative_planning_surface_confirm_in_unattended`. Missing or stale
+durable run plans fail as `long_run_plan_missing` / `long_run_plan_stale`.
 
 ## Defer Item (do not block peers)
 
@@ -179,6 +343,8 @@ When no solvable ready work remains, set
 
 - Scope: <declared unattended scope>
 - Completed: <count / summary refs>
+- Prototype Link Digest: <clickable links for every HTML prototype authored;
+  required when any prototype was produced>
 - Deferred / not executed:
   1. <title> — <blocker_class> — <why external> — <resume_condition>
   2. ...

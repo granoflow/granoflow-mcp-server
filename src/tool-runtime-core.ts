@@ -2,7 +2,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { extname, isAbsolute, relative, resolve } from "node:path";
+import { basename, extname, isAbsolute, relative, resolve } from "node:path";
 
 import {
   maybeCreateDailyReviewSuggestion,
@@ -67,6 +67,10 @@ export const PROJECT_DEFINITION_SKILL_URL = new URL(
 );
 export const INTEGRATION_TEST_CAMPAIGN_SKILL_URL = new URL(
   "../skills/granoflow-integration-test-campaign/SKILL.md",
+  import.meta.url,
+);
+export const E2E_TEST_CAMPAIGN_SKILL_URL = new URL(
+  "../skills/granoflow-e2e-test-campaign/SKILL.md",
   import.meta.url,
 );
 
@@ -164,6 +168,10 @@ export function readProjectDefinitionSkill(): string {
 
 export function readIntegrationTestCampaignSkill(): string {
   return readFileSync(INTEGRATION_TEST_CAMPAIGN_SKILL_URL, "utf8");
+}
+
+export function readE2eTestCampaignSkill(): string {
+  return readFileSync(E2E_TEST_CAMPAIGN_SKILL_URL, "utf8");
 }
 
 export function isWithin(root: string, target: string): boolean {
@@ -344,9 +352,11 @@ export async function addTaskWorkflowAttachment(input: {
   dryRun: boolean;
 }) {
   const file = validatedWorkflowMarkdownPath(input.filePath);
-  const contentSha256 = createHash("sha256").update(readFileSync(file)).digest("hex");
+  const bytes = readFileSync(file);
+  const contentSha256 = createHash("sha256").update(bytes).digest("hex");
   const body = {
-    file,
+    contentBase64: bytes.toString("base64"),
+    fileName: basename(file),
     idempotencyKey: input.idempotencyKey,
     expectedTaskUpdatedAt: input.expectedTaskUpdatedAt,
     expectedContentSha256: contentSha256,

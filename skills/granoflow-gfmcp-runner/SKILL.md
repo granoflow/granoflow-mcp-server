@@ -7,6 +7,12 @@ description: Poll and safely execute Granoflow tasks carrying the GFMCP tag thro
 
 Use this skill when installing, operating, or diagnosing the optional GFMCP automatic task worker. The worker polls Granoflow every five minutes, considers only pending tasks tagged `GFMCP`, and delegates one eligible task at a time to an authorized local agent.
 
+## Keyword
+
+- `#gfmcp-runner`
+- `#gfmcp`
+- `#gfmcp-worker`
+
 ## Safety Contract
 
 - The tag is an eligibility signal, not blanket authorization.
@@ -58,6 +64,14 @@ either an immediate recheck after `task_completed` or `waiting` until the next
 five-minute check. Only verified completion skips the wait; failures and empty
 queues cannot create a hot loop.
 
+Checkpoints:
+
+- Call `POST /v1/ai-agent/gfmcp/prepare` before polling.
+- Call `POST /v1/sync/gfmcp-safe-run` before reading candidates; uncertain authorization fails closed.
+- `--dry-run --once` must not write or execute agents.
+- `--status` must distinguish a live lock owner from stale PID/state data.
+- Graceful `--stop` finishes the current execution or wakes idle wait before exit.
+
 The runner uses `GRANOFLOW_API_BASE_URL` and `GRANOFLOW_API_TOKEN` through the local API contract. State, leases, retry fingerprints, and the process lock stay in a private local state directory. See [runtime contract](references/runtime-contract.md).
 
 Codex cron/heartbeat automation is an optional wake-up layer, not proof that a
@@ -76,6 +90,16 @@ The `GFMCP` tag still supplies eligibility only; it cannot activate
 receipt.
 
 After three identical unresolved outcomes, the worker writes a stable sanitized blocker section to the task and pauses that task until its task fingerprint changes. Other eligible tasks remain runnable.
+
+Checkpoints:
+
+- Re-read delegated authorization receipt before any phase that needs authorization; continue only on `decision=allowed`.
+- Task completion requires Granoflow API readback `status=done`; agent exit code is not proof.
+- After three identical unresolved outcomes, write a stable blocker and pause that task until fingerprint changes.
+
+## References
+
+- Read [runtime contract](references/runtime-contract.md) for phase machine, leases, retries, and local state layout.
 
 ## Success Criteria
 

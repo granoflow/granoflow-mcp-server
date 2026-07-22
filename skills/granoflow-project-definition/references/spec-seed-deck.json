@@ -1,0 +1,393 @@
+{
+  "schema": "granoflow.spec_seed_deck",
+  "source": "impeccable/palette.mjs seed ids (ids only; compose via impeccable when available)",
+  "seeds": [
+    {
+      "id": "seed-000"
+    },
+    {
+      "id": "seed-002"
+    },
+    {
+      "id": "seed-003"
+    },
+    {
+      "id": "seed-004"
+    },
+    {
+      "id": "seed-005"
+    },
+    {
+      "id": "seed-006"
+    },
+    {
+      "id": "seed-008"
+    },
+    {
+      "id": "seed-010"
+    },
+    {
+      "id": "seed-011"
+    },
+    {
+      "id": "seed-013"
+    },
+    {
+      "id": "seed-014"
+    },
+    {
+      "id": "seed-015"
+    },
+    {
+      "id": "seed-016"
+    },
+    {
+      "id": "seed-022"
+    },
+    {
+      "id": "seed-023"
+    },
+    {
+      "id": "seed-024"
+    },
+    {
+      "id": "seed-026"
+    },
+    {
+      "id": "seed-027"
+    },
+    {
+      "id": "seed-028"
+    },
+    {
+      "id": "seed-029"
+    },
+    {
+      "id": "seed-033"
+    },
+    {
+      "id": "seed-035"
+    },
+    {
+      "id": "seed-037"
+    },
+    {
+      "id": "seed-038"
+    },
+    {
+      "id": "seed-039"
+    },
+    {
+      "id": "seed-040"
+    },
+    {
+      "id": "seed-041"
+    },
+    {
+      "id": "seed-042"
+    },
+    {
+      "id": "seed-043"
+    },
+    {
+      "id": "seed-044"
+    },
+    {
+      "id": "seed-045"
+    },
+    {
+      "id": "seed-046"
+    },
+    {
+      "id": "seed-047"
+    },
+    {
+      "id": "seed-051"
+    },
+    {
+      "id": "seed-052"
+    },
+    {
+      "id": "seed-053"
+    },
+    {
+      "id": "seed-054"
+    },
+    {
+      "id": "seed-055"
+    },
+    {
+      "id": "seed-056"
+    },
+    {
+      "id": "seed-058"
+    },
+    {
+      "id": "seed-059"
+    },
+    {
+      "id": "seed-061"
+    },
+    {
+      "id": "seed-063"
+    },
+    {
+      "id": "seed-065"
+    },
+    {
+      "id": "seed-077"
+    },
+    {
+      "id": "seed-079"
+    },
+    {
+      "id": "seed-080"
+    },
+    {
+      "id": "seed-081"
+    },
+    {
+      "id": "seed-082"
+    },
+    {
+      "id": "seed-083"
+    },
+    {
+      "id": "seed-084"
+    },
+    {
+      "id": "seed-085"
+    },
+    {
+      "id": "seed-086"
+    },
+    {
+      "id": "seed-088"
+    },
+    {
+      "id": "seed-090"
+    },
+    {
+      "id": "seed-094"
+    },
+    {
+      "id": "seed-100"
+    },
+    {
+      "id": "seed-103"
+    },
+    {
+      "id": "seed-107"
+    },
+    {
+      "id": "seed-112"
+    },
+    {
+      "id": "seed-113"
+    },
+    {
+      "id": "seed-114"
+    },
+    {
+      "id": "seed-115"
+    },
+    {
+      "id": "seed-116"
+    },
+    {
+      "id": "seed-117"
+    },
+    {
+      "id": "seed-118"
+    },
+    {
+      "id": "seed-119"
+    },
+    {
+      "id": "seed-120"
+    },
+    {
+      "id": "seed-121"
+    },
+    {
+      "id": "seed-122"
+    },
+    {
+      "id": "seed-124"
+    },
+    {
+      "id": "seed-125"
+    },
+    {
+      "id": "seed-126"
+    },
+    {
+      "id": "seed-127"
+    },
+    {
+      "id": "seed-128"
+    },
+    {
+      "id": "seed-129"
+    },
+    {
+      "id": "seed-130"
+    },
+    {
+      "id": "seed-131"
+    },
+    {
+      "id": "seed-132"
+    },
+    {
+      "id": "seed-133"
+    },
+    {
+      "id": "seed-137"
+    },
+    {
+      "id": "seed-147"
+    },
+    {
+      "id": "seed-148"
+    },
+    {
+      "id": "seed-149"
+    },
+    {
+      "id": "seed-150"
+    },
+    {
+      "id": "seed-155"
+    },
+    {
+      "id": "seed-157"
+    },
+    {
+      "id": "seed-158"
+    },
+    {
+      "id": "seed-159"
+    },
+    {
+      "id": "seed-160"
+    },
+    {
+      "id": "seed-161"
+    },
+    {
+      "id": "seed-162"
+    },
+    {
+      "id": "seed-163"
+    },
+    {
+      "id": "seed-164"
+    },
+    {
+      "id": "seed-165"
+    },
+    {
+      "id": "seed-166"
+    },
+    {
+      "id": "seed-167"
+    },
+    {
+      "id": "seed-168"
+    },
+    {
+      "id": "seed-171"
+    },
+    {
+      "id": "seed-174"
+    },
+    {
+      "id": "seed-176"
+    },
+    {
+      "id": "seed-179"
+    },
+    {
+      "id": "seed-180"
+    },
+    {
+      "id": "seed-182"
+    },
+    {
+      "id": "seed-183"
+    },
+    {
+      "id": "seed-184"
+    },
+    {
+      "id": "seed-185"
+    },
+    {
+      "id": "seed-186"
+    },
+    {
+      "id": "seed-187"
+    },
+    {
+      "id": "seed-188"
+    },
+    {
+      "id": "seed-189"
+    },
+    {
+      "id": "seed-195"
+    },
+    {
+      "id": "seed-196"
+    },
+    {
+      "id": "seed-198"
+    },
+    {
+      "id": "seed-199"
+    },
+    {
+      "id": "seed-200"
+    },
+    {
+      "id": "seed-201"
+    },
+    {
+      "id": "seed-202"
+    },
+    {
+      "id": "seed-205"
+    },
+    {
+      "id": "seed-206"
+    },
+    {
+      "id": "seed-207"
+    },
+    {
+      "id": "seed-210"
+    },
+    {
+      "id": "seed-211"
+    },
+    {
+      "id": "seed-212"
+    },
+    {
+      "id": "seed-213"
+    },
+    {
+      "id": "seed-228"
+    },
+    {
+      "id": "seed-229"
+    },
+    {
+      "id": "seed-230"
+    },
+    {
+      "id": "seed-231"
+    }
+  ]
+}

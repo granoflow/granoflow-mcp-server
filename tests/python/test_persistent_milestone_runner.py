@@ -5,10 +5,12 @@ import json
 import sys
 import tempfile
 import unittest
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
+
+UTC = timezone.utc  # noqa: UP017
 
 SCRIPTS = Path(__file__).parents[2] / "skills" / "granoflow-persistent-milestone-runner" / "scripts"
 sys.path.insert(0, str(SCRIPTS))

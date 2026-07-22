@@ -1,0 +1,32 @@
+---
+description: Conventional Agent Skills testing — structure and scripts only; forbid markdown prose contract locks.
+alwaysApply: true
+---
+
+# Skill Testing
+
+Follow popular Agent Skills practice (Anthropic / agentskills.io style):
+
+## Allowed in CI
+
+- **Structure**: `SKILL.md` exists; YAML frontmatter has non-empty `name` and `description`; `name` matches the skill directory; `description` length ≤ 1024. Covered by `tests/skills-structure.test.ts`.
+- **Scripts**: unit/integration tests for real `skills/*/scripts` I/O and error codes under `tests/python/`.
+- **MCP surface**: skill tools assert `ok`, `data.path`, non-empty `skill` (optionally starts with `---`), and optional `references[].referenceId` presence — not body phrases.
+
+## Forbidden
+
+Do **not** add or restore tests that treat skill markdown as a snapshot:
+
+```ts
+// FORBIDDEN — prose / gate-copy contract locks
+const skill = readFileSync("skills/granoflow-…/SKILL.md", "utf8");
+expect(skill).toContain("some workflow sentence");
+expect(reference).toMatch(/hard.gate.phrase/i);
+expect(JSON.stringify(skillToolResult)).toContain("activation phrase");
+```
+
+That pattern does not prove agent behavior; it only freezes wording and creates false confidence.
+
+## Behavior correctness
+
+Use LLM evals (trigger + functional expectations) when validating that agents follow a skill. This repo does **not** require eval harness in CI today. Do not substitute evals with markdown `toContain` locks.

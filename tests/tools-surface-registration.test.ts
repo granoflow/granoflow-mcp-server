@@ -39,6 +39,7 @@ describe("tools-surface-registration", () => {
         "granoflow_persistent_milestone_runner_skill",
         "granoflow_project_definition_skill",
         "granoflow_integration_test_campaign_skill",
+        "granoflow_e2e_test_campaign_skill",
         "granoflow_gfmcp_prepare",
         "granoflow_gfmcp_safe_sync",
         "granoflow_gfmcp_candidates",

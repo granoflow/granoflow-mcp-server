@@ -1,0 +1,4 @@
+interface:
+  display_name: Granoflow E2E Test Campaign
+  short_description: Final stage after integration—cover Project Work user journeys with authored visible-window UI human_path tests, auto-fix bugs, capture live-window screenshots under temp/, always show them to the user.
+  default_prompt: Run the E2E campaign—build a Project Work coverage matrix, author missing UI journeys that drive a real visible window, auto-drive until green with live-window screenshots under temp/e2e-campaign/ shown in chat, and finish with a beginner closing summary.

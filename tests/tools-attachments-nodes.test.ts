@@ -1,4 +1,3 @@
-import { realpathSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
@@ -17,7 +16,8 @@ describe("tools-attachments-nodes", () => {
   it("forwards and verifies a generated Markdown attachment", async () => {
     const dir = await mkdtemp(join(tmpdir(), "granoflow-plan-"));
     const filePath = join(dir, "task-plan-v01.md");
-    await writeFile(filePath, "# Plan\n", "utf8");
+    const markdown = "# Plan\n";
+    await writeFile(filePath, markdown, "utf8");
     const requests: Array<{ url?: string; body: unknown }> = [];
     const port = await startServer(async (request, response) => {
       requests.push({
@@ -68,7 +68,8 @@ describe("tools-attachments-nodes", () => {
       {
         url: "/v1/tasks/task-1/attachments",
         body: {
-          file: realpathSync(filePath),
+          contentBase64: Buffer.from(markdown, "utf8").toString("base64"),
+          fileName: "task-plan-v01.md",
           idempotencyKey: "task-plan-v01",
           expectedTaskUpdatedAt: "2026-07-13T10:00:00.000Z",
           expectedContentSha256: "c3964bb3b70a957ec9b233c7dd3653f6ba17701ab00facf88ae1393dc6155577",

@@ -120,12 +120,55 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--dry-run", action="store_true", help="Validate and print manifest only")
     value.add_argument("--title", help="Prototype title stored in manifest.json")
     value.add_argument("--version", default="1.0.0", help="Immutable prototype version label")
+    value.add_argument(
+        "--lint-user-copy",
+        action="store_true",
+        help=(
+            "Fail closed if skills/granoflow-agent-workflow/scripts/"
+            "lint_prototype_user_copy.py reports copy-boundary leaks"
+        ),
+    )
     return value
+
+
+def _lint_user_copy(source: Path) -> dict[str, object]:
+    lint_script = (
+        Path(__file__).resolve().parents[1].parent
+        / "granoflow-agent-workflow"
+        / "scripts"
+        / "lint_prototype_user_copy.py"
+    )
+    if not lint_script.is_file():
+        raise ValueError(f"missing copy-boundary lint script: {lint_script}")
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("lint_prototype_user_copy", lint_script)
+    if spec is None or spec.loader is None:
+        raise ValueError("unable to load lint_prototype_user_copy")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    files = mod.expand_paths([source])
+    return mod.lint_many(files)
 
 
 def main() -> int:
     args = parser().parse_args()
     try:
+        if args.lint_user_copy:
+            lint = _lint_user_copy(args.source)
+            if not lint.get("ok"):
+                print(
+                    json.dumps(
+                        {
+                            "ok": False,
+                            "error": "user_visible_copy_boundary_violation",
+                            "failCode": "user_visible_copy_boundary_violation",
+                            "lint": lint,
+                        },
+                        ensure_ascii=False,
+                    )
+                )
+                return 1
         result = build_zip(
             args.source,
             args.output,

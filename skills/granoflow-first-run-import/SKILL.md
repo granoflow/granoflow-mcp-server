@@ -35,6 +35,12 @@ This skill does not read hidden chat histories, scrape browser history, access
 cloud accounts by itself, or write directly to Granoflow storage. It uses only
 user-provided or host-exposed sources and Granoflow Local HTTP API tools.
 
+## Keyword
+
+- `#first-run-import`
+- `#initialize-granoflow`
+- `#初始化-granoflow`
+
 ## Required Base Skill
 
 Before applying this workflow, read the bundled
@@ -86,6 +92,11 @@ Before source analysis:
 
 Fail closed when there is no safe task or project write surface.
 
+Checkpoints:
+
+- Do not create a fake preview from chat memory when Granoflow is unreachable.
+- Ensure `AI` and `人工` source tags exist before any import write.
+
 ## Phase 0.5: Recommended External Capabilities
 
 After the connection check and before import source discovery, read
@@ -111,6 +122,11 @@ If the user requested only `Initialize Granoflow` or `初始化 Granoflow`, repo
 connection and recommended-capability readiness, then stop. Continue to Phase 1
 only when the user also requested import or later asks to import data.
 
+Checkpoints:
+
+- Initialization-only requests stop after connection and capability readiness.
+- Ask exactly once for capability pack approval; partial failure records `capability_pack_not_ready`.
+
 ## Phase 1: Source Discovery
 
 Read `references/source-discovery.md`.
@@ -126,6 +142,11 @@ The source ledger must state:
 
 If the current host does not expose historical threads, say so and offer a
 file-based or current-workspace import path.
+
+Checkpoints:
+
+- Source ledger must cite sources without copying raw private history.
+- State unavailable sources and import budgets explicitly.
 
 ## Phase 2: Import Preview
 
@@ -143,14 +164,28 @@ dedupe, risk, and proposed-write ledgers.
 
 No Granoflow write may happen before the preview is shown and confirmed.
 
+Checkpoints:
+
+- No Granoflow write before preview is shown and confirmed.
+
 ## Phase 3: Project And Milestone Mapping
 
 Read `references/project-milestone-mapping.md`.
+
+When a proposed imported project is a **mobile or desktop App**, note that
+later Project Definition / Project Work confirm must apply
+`granoflow-agent-workflow/app-icon-source-gate` (`product.app_icon`). First-run
+import itself does not finalize icons.
 
 Map sources to projects using explicit repository, folder, workspace, or project
 signals before themes. Create monthly milestones only for months with retained
 task candidates. Reuse existing projects or milestones when tools can resolve
 them safely.
+
+Checkpoints:
+
+- Reuse existing projects or milestones when tools can resolve them safely.
+- Mobile/desktop App projects: note later `app-icon-source-gate` requirement; do not finalize icons here.
 
 ## Phase 4: Task And Card Import
 
@@ -166,6 +201,11 @@ or professional concepts worth spaced practice.
 Keep task and card writes in bounded batches. Use dry-run or preview tools when
 available. Stop on duplicate, unsupported capability, or provenance errors.
 
+Checkpoints:
+
+- Delegate all card candidates to `granoflow-review-card-draft`.
+- Stop on duplicate, unsupported capability, or provenance errors.
+
 ## Phase 5: Context Backfill
 
 Read `references/context-backfill.md`.
@@ -174,6 +214,10 @@ Backfill project and active milestone descriptions only after import readback.
 Use imported tasks, task reviews, cards, source ledger, decisions, risks,
 blockers, and next actions as evidence. Do not write raw thread dumps, secrets,
 tokens, private auth URLs, or long copied conversation text into descriptions.
+
+Checkpoints:
+
+- Backfill only after import readback; never write raw thread dumps or secrets into descriptions.
 
 ## Confirmation Gate
 
@@ -189,6 +233,10 @@ Ask for explicit confirmation before writes. The confirmation must name:
 
 If the user confirms only part of the preview, import only that part and keep
 the rest deferred.
+
+Checkpoints:
+
+- Partial confirmation imports only the approved subset; keep the rest deferred.
 
 ## Final Report
 
@@ -214,3 +262,19 @@ Report:
 - Do not treat manual directory publication as a blocker.
 - Do not bypass Granoflow Local HTTP API tools or app-owned import semantics.
 - Do not drop provenance or safety fields to make a write succeed.
+
+## References
+
+- Read `references/source-discovery.md` during Phase 1.
+- Read `references/import-planning.md` during Phase 2.
+- Read `references/project-milestone-mapping.md` during Phase 3.
+- Read `references/task-and-card-import.md` during Phase 4.
+- Read `references/context-backfill.md` during Phase 5.
+- Read `references/recommended-external-skills.md` during Phase 0.5.
+
+## Success Criteria
+
+- Granoflow connection verified before any import preview or write.
+- Local preview document exists and is confirmed before any Granoflow write.
+- Imported, skipped, failed, and deferred items are reported with readback evidence.
+- Context backfill runs only after import readback and excludes secrets or raw thread dumps.

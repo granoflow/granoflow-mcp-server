@@ -23,6 +23,7 @@ type FoundationDependencies = {
   readPersistentMilestoneRunnerSkill: SkillReader;
   readProjectDefinitionSkill: SkillReader;
   readIntegrationTestCampaignSkill: SkillReader;
+  readE2eTestCampaignSkill: SkillReader;
   bundledSkillResources: BundledSkillResources;
   apiTool: (options: ApiRequestOptions) => Promise<ToolResult>;
   getSetupStatus: () => Promise<unknown>;
@@ -74,7 +75,7 @@ export function registerWorkflowSkillTools(
 
   read(
     "granoflow_agent_workflow_skill",
-    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, says 'Analyze the first task', says 'Start the first task', says 'Create a task from this requirement', says 'Process today's tasks', asks in their own language to analyze/start one selected task, create a task from a discussed requirement, or process tasks for a date/range/all-task scope, needs approval or missing information recorded in a task, finishes tasks, asks for weekly or monthly reviews, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Use granoflow_daily_review_skill for an explicitly requested daily review or mood/efficiency note, and granoflow_first_run_import_skill for first-run import from Cursor, Codex, Hermes, or other agents. Do not call it for unrelated venting or unrelated disagreement.",
+    "Read the bundled Granoflow Agent Workflow skill. Call this when a user works with Granoflow tasks, says 'Analyze the first task', says 'Start the first task', says 'Create a task from this requirement', says 'Process today's tasks', asks in their own language to analyze/start one selected task, create a task from a discussed requirement, or process tasks for a date/range/all-task scope, needs approval or missing information recorded in a task, finishes tasks, asks for weekly or monthly reviews, task reviews, review cards, historical context, decisions, lessons, similar past work, or long-term work memory, needs a project lifecycle progress board / next-step recommendation, or politely/strongly signals that Granoflow/MCP/generated agent output is wrong or misaligned. Use granoflow_daily_review_skill for an explicitly requested daily review or mood/efficiency note, and granoflow_first_run_import_skill for first-run import from Cursor, Codex, Hermes, or other agents. Do not call it for unrelated venting or unrelated disagreement.",
     "skills/granoflow-agent-workflow/SKILL.md",
     deps.readAgentWorkflowSkill,
     "granoflow-agent-workflow",
@@ -186,10 +187,17 @@ export function registerAuthorizationAndProjectSkillTools(
   );
   read(
     "granoflow_integration_test_campaign_skill",
-    "Read the bundled Granoflow Integration Test Campaign skill. Call when the user wants an unattended integration-test campaign: one milestone per round, run the full suite first, cluster failures into one bug task each, analyze and finish those tasks, then open the next round until all tests pass. Not for task-local write-only integration tests or copy-only work.",
+    "Read the bundled Granoflow Integration Test Campaign skill. Call when the user wants a standard integration-test campaign (service_path / cross-module real I/O): orchestrate, auto-drive until green, plain-language closing summary. Not E2E UI/screenshots and not task-local write-only integration tests.",
     "skills/granoflow-integration-test-campaign/SKILL.md",
     deps.readIntegrationTestCampaignSkill,
     "granoflow-integration-test-campaign",
+  );
+  read(
+    "granoflow_e2e_test_campaign_skill",
+    "Read the bundled Granoflow E2E Test Campaign skill. Call after integration_campaign is green for the final test stage: build user-flow coverage from Project Work, author missing UI journeys, auto-fix bugs, capture screenshots under temp/ and always show them to the user. Not service_path-only integration campaigns.",
+    "skills/granoflow-e2e-test-campaign/SKILL.md",
+    deps.readE2eTestCampaignSkill,
+    "granoflow-e2e-test-campaign",
   );
 }
 

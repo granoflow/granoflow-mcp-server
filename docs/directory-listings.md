@@ -119,8 +119,8 @@ Portfolio orchestration: after Project Definition, ask to create all milestones 
 
 ### Run Integration Test Campaign
 
-When you want unattended integration testing until green (not task-local
-write-only tests):
+When you want AI-driven integration testing until green (not task-local
+write-only tests). Works in interactive and unattended project modes:
 
 ```text
 Run integration test campaign
@@ -130,7 +130,7 @@ Run integration test campaign
 Directory summary:
 
 ```text
-Integration test campaign: unattended rounds—one milestone per round, run the full suite first, cluster failures into bug tasks, fix them, then open the next round until all tests pass.
+Integration test campaign: orchestrate a minimal human-path suite, AI auto-drives, triage code vs test failures, fix and re-test until green; optional vision; change report when edits land.
 ```
 
 ### Process Due Tasks
@@ -296,16 +296,16 @@ Connect AI agents to Granoflow for local task workflows, task analysis, requirem
 
 Verified on 2026-07-19 after publishing `@granoflow/mcp-server@0.1.16`:
 
-| Surface               | Prepared in repo | Publication status          | Notes                                                                                       |
-| --------------------- | ---------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
-| GitHub README         | yes              | published                   | Release commit `787c2cf` is present on `main` and `develop`.                                |
-| npm package page      | yes              | published                   | npm `latest` and package version both resolve to `0.1.17`.                                  |
-| Official MCP Registry | yes              | published                   | `com.granoflow/mcp-server@0.1.17` is expected to be current; manual confirmation pending.  |
-| Glama                 | yes              | listed_auto_sync            | Listing resolves to the canonical GitHub repository; derived copy and schemas may lag.      |
-| mcp.so                | yes              | listed_auto_sync            | Listing exposes the canonical repository, npm command, and local-first privacy positioning. |
-| mcpservers.org        | yes              | listed_auto_sync            | Listing resolves to the canonical repository and exposes the current npm install command.   |
-| Awesome MCP Servers   | yes              | listed_via_mcpservers_org   | The current Awesome MCP Servers site exposes the Granoflow repository listing.              |
-| Smithery / MCPB       | yes              | published_manual_only        | Published manually due platform approval latency; verification is deferred because review is manual.     |
+| Surface               | Prepared in repo | Publication status        | Notes                                                                                                |
+| --------------------- | ---------------- | ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| GitHub README         | yes              | published                 | Release commit `787c2cf` is present on `main` and `develop`.                                         |
+| npm package page      | yes              | published                 | npm `latest` and package version both resolve to `0.1.17`.                                           |
+| Official MCP Registry | yes              | published                 | `com.granoflow/mcp-server@0.1.17` is expected to be current; manual confirmation pending.            |
+| Glama                 | yes              | listed_auto_sync          | Listing resolves to the canonical GitHub repository; derived copy and schemas may lag.               |
+| mcp.so                | yes              | listed_auto_sync          | Listing exposes the canonical repository, npm command, and local-first privacy positioning.          |
+| mcpservers.org        | yes              | listed_auto_sync          | Listing resolves to the canonical repository and exposes the current npm install command.            |
+| Awesome MCP Servers   | yes              | listed_via_mcpservers_org | The current Awesome MCP Servers site exposes the Granoflow repository listing.                       |
+| Smithery / MCPB       | yes              | published_manual_only     | Published manually due platform approval latency; verification is deferred because review is manual. |
 
 Third-party directory entries are discovery mirrors, not release truth. npm
 and the Official MCP Registry are authoritative for the published version;

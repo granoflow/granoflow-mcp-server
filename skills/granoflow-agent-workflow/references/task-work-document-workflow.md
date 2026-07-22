@@ -153,12 +153,18 @@ cleanly.
 
 Do not render an optional heading merely to say it is unused.
 
-When `UI / Manual Acceptance` is triggered, read
-[`user-visible-copy-boundary.md`](user-visible-copy-boundary.md). Every visual
-Prototype must pass its copy admission test before visual confirmation. Keep
+When `UI / Manual Acceptance` is triggered, **Must** load
+[`user-visible-copy-boundary.md`](user-visible-copy-boundary.md) via
+`granoflow_bundled_skill_reference` (skillId `granoflow-agent-workflow`,
+referenceId `user-visible-copy-boundary`) before authoring in-frame copy.
+Skipping the load fails closed `user_visible_copy_boundary_unread`. Every
+visual Prototype must pass its copy admission test **and**
+`scripts/lint_prototype_user_copy.py` (`ok: true`) before visual confirmation;
+set `craft_checklist.user_visible_copy_boundary_ok: true` only then. Keep
 Prototype-only scenario controls and reviewer explanations outside the
-simulated product UI; internal filtering, confidence, quantity, architecture,
-test, and acceptance language must not become product copy.
+simulated product UI; internal filtering, design rationale, confidence,
+quantity, architecture, test, and acceptance language must not become product
+copy (`user_visible_copy_boundary_violation`).
 
 ### UI Change Prototype Mandate
 
@@ -182,25 +188,110 @@ Hard rules:
 2. Read the confirmed project Design Baseline
    (`granoflow_project_design_baseline_read` with exact ids/SHA). Accept against
    contract fidelity (契约级一致). Declare `derivedFrom` that exact package.
-3. Author the HTML prototype, preview it, obtain visual confirmation for that
-   exact package hash, upload to the task `ui_prototype` slot with
-   `visualConfirmed=true`, and read back SHA/manifest evidence.
-4. Prefer completing the prototype **before Analysis confirmation** so the user
+3. **Do not** apply a new random visual seed (no Spec re-exploration / palette
+   re-roll). Task prototypes inherit the locked Spec + Shell. Fail closed
+   `task_prototype_seed_forbidden`.
+4. Load project `widgets.yaml` (App readback). Reuse widgets with the same role
+   before inventing new chrome/controls. Skipping reuse without rationale →
+   `widget_reuse_required`. After visual confirmation, extract new/changed
+   reusable widgets into the same project `widgets` slot.
+5. Apply **Task Prototype Craft Gate And Option Set** from
+   `granoflow-project-definition/project-artifact-workflows`:
+   - Craft Gate (intent / **Baseline fit** / **confirmed chrome lock** / craft /
+     **user-visible copy boundary** / confirm surface) must pass before
+     `visualConfirmed=true`
+     else `task_prototype_craft_incomplete` /
+     `prototype_baseline_fit_*` /
+     `prototype_generic_phone_frame` /
+     `prototype_confirmed_chrome_lock_*` /
+     `user_visible_copy_boundary_unread` /
+     `user_visible_copy_boundary_violation`. Load
+     `prototype-baseline-fit`; embed locked Spec tokens; match Shell chrome
+     language; run `lint_prototype_baseline_fit.py`; set `baseline_fit_ok`.
+     When chrome-family siblings are already `visualConfirmed`, load
+     `prototype-confirmed-chrome-lock`, record `chrome_lock.authorities`,
+     reuse confirmed control vocabulary, run
+     `lint_prototype_confirmed_chrome_lock.py --authority …`, and set
+     `confirmed_chrome_lock_ok`.
+   - **Interactive:** load `prototype-expression-brainstorm`, run
+     **mainstream-reference-first** candidates (`scope_mode`
+     `same_category`|`capability_match`; default `capability_match` when
+     unsure), brainstorm backfill **only** when mainstream `<5`, then promote
+     **two page expressions** (`expr_a` + `expr_b`) with **functional parity**
+     (same capabilities, same data fields, same required states;
+     presentation-only contrast) inside the locked Design System
+     (`design_system_locked`), with **≥2** whitelist contrast axes and
+     page-local theses; **mix-and-match** per task/page. Run
+     `lint_prototype_expression_brainstorm.py` and set
+     `expression_brainstorm_ok`. Add a **third** (`industry_peer_c`) only when
+     three industry peer patterns all fit inside the locked Design System and
+     the host cannot honestly prefer one (else
+     `prototype_option_third_unjustified`). Do **not** re-offer Design Spec
+     choice (`delta_match` / `ai_challenger` / `spec_match` as task option ids)
+     → `prototype_option_design_system_reopened`. Do **not** split features or
+     product states across A/B → `prototype_option_function_split` /
+     `prototype_option_data_divergence`. Options Must diverge in the **frames**
+     (not prose-only). Emit a **side-by-side Contrast Gallery** with candidate
+     digest + per-axis visible-diff captions (prefer
+     `granoflow-project-definition/scripts/build_option_contrast_gallery.py`);
+     separate option links alone are insufficient. Fail closed
+     `prototype_option_brainstorm_*` /
+     `prototype_option_mainstream_skip` /
+     `prototype_option_scope_mode_invalid` /
+     `prototype_option_contrast_insufficient` /
+     `prototype_option_near_duplicate` /
+     `prototype_option_contrast_gallery_required` /
+     `prototype_option_diff_unlabeled`. One wait (per-page picks allowed).
+   - **Unattended (explicit only):** same mainstream-first protocol then
+     **one** `expr_a` only.
+6. Author the HTML option(s), then apply the **Prototype Preview Gate**:
+   interactive waits on the Contrast Gallery (option batch); unattended shows
+   the single-link notice, continues, and includes every link in the
+   run-closing Prototype Link Digest.
+7. Obtain visual confirmation for the **chosen** package hash (interactive
+   user accept, or unattended auto-accept only when explicitly unattended),
+   upload to the task `ui_prototype` slot with `visualConfirmed=true`, and
+   read back SHA/manifest evidence. Apply
+   `discussion-writeback-contract` + `change-impact-fanout`: any **later**
+   accepted change (page split, craft fix, copy, Outcome/Scope, option rematch)
+   Must update App slots **and** close a Change Impact Fan-out ledger (sibling
+   tasks/milestones/docs/notes/cards) before the next gate — never leave truth
+   only in chat/`temp` → `discussion_writeback_pending` /
+   `temp_only_artifact_forbidden` / `change_impact_*`. Later rematches Must
+   import a new current package and rewrite Task Work refs in the same batch.
+8. Prefer completing the prototype **before Analysis confirmation** so the user
    can see the change before implementation. At latest, the confirmed
    `ui_prototype` must exist before `readiness_grill_status: passed` and before
    any non-dry-run execution.
-5. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
-   `ui_prototype_required` / block Readiness. Do not implement UI first and
-   "backfill" a prototype after code.
+9. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
+   `ui_prototype_required` / block Readiness. Stale Task Work refs after a
+   discussion change return `stale_reference_after_discussion`. Do not
+   implement UI first and "backfill" a prototype after code. Missing
+   interactive wait returns `prototype_preview_review_required`. Missing
+   unattended closing digest when prototypes were authored returns
+   `prototype_link_digest_required`.
+10. Keep **design-first** (see
+    `granoflow-project-definition/project-artifact-workflows` § Design-first,
+    product-truth, and high-risk feasibility). Previews must pass **product
+    truth** (`prototype_product_truth_violation` if they invent unauthorized
+    states/capabilities). For **high-risk** platform-coupled UI, start a short
+    Tech Note as soon as the preview batch exists; before
+    `readiness_grill_status: passed`, record a feasibility conclusion
+    (as drawn / degraded with `【增强实现】` / revise design). Missing
+    conclusion → `high_risk_feasibility_unresolved`. If revise-design is
+    required, do not pass Readiness—return to product/prototype change rather
+    than faking the UI in code.
 
-### Task Integration Test Policy (manual run)
+### Task Integration Test Policy (campaign runs later)
 
 For software tasks that change code, record an explicit unit-test sufficiency
 judgment before adding any integration test. This policy is **task-local**
 (only cover this task's Outcome) and defaults to **not** adding integration
-tests. To **run** a full suite unattended until green, use
-`granoflow-integration-test-campaign` instead—do not mix that campaign into an
-ordinary feature task.
+tests (prefer `service_path` / shared-session I/O metadata). To **run** the
+integration suite, use lifecycle stage `integration_campaign` /
+`granoflow-integration-test-campaign`. To **run** UI E2E (screenshots under
+`temp/`), use stage `e2e_campaign` / `granoflow-e2e-test-campaign` after
+integration is green. Do not mix either campaign into an ordinary feature task.
 
 **Copy-only exception (hard):** If Scope is copy-only / 文字验证 (see
 `user-visible-copy-boundary.md`), set `copy_change_only: true` and skip this
@@ -209,6 +300,35 @@ fail closed as `copy_change_tests_forbidden`.
 
 Hard rules (non-copy software tasks):
 
+0. **Prototype document coverage (Analysis / prototype lock).** When a
+   `ui_prototype` is finalized or rematched, load `prototype-doc-coverage` and:
+   - complete `prototype_html_coverage` so **every task-owned user-visible
+     surface** (page, dialog/modal, sheet, popover, toast when task-owned) has
+     a high-fidelity HTML prototype (`lint_prototype_doc_coverage.py --kind
+html_coverage`; no `prototype_html_coverage_gap`);
+   - complete `prototype_widget_reuse` against project `widgets.yaml` (same role
+     ⇒ Must reuse catalog widget; no near-duplicates;
+     `--kind widget_reuse --widgets …`);
+   - complete `prototype_doc_coverage` so every material prototype surface is
+     `covered` in Task Work and Project Work (no `missing`/`conflict`). Lint
+     with `scripts/lint_prototype_doc_coverage.py --kind coverage`.
+     0b. **Prototype implementation fidelity (before unit tests).** When the task has
+     a UI `ui_prototype` authority, load
+     `prototype-implementation-fidelity` and run Phase A
+     (`method: code_review_guess` only — **not** screenshot/vision) **before**
+     executing unit tests: compare implementation to the HTML prototype by code
+     reading, emit an explicit declaration, answer **all three** questions
+     (matched or diverged), decide `keep_implementation` /
+     `revise_to_prototype`, and persist `prototype_impl_compare` (+ `diffs` when
+     diverged). Fail closed as `prototype_impl_compare_unread`,
+     `prototype_impl_compare_undeclared`,
+     `prototype_impl_compare_three_questions_incomplete`,
+     `prototype_diff_ledger_incomplete`, `prototype_impl_compare_wrong_method`, or
+     `prototype_impl_compare_lint_failed`. Lint with
+     `scripts/lint_prototype_implementation_fidelity.py`. E2E Phase B (inventory
+     **every** finalized task-level prototype; AI loop forbids keep until user
+     final; screenshot + prototype link shown) is owned by
+     `granoflow-e2e-test-campaign` / `e2e-evidence-pack`.
 1. **Judge unit tests first.** Set `unit_test_sufficiency` to `sufficient` or
    `insufficient` with a one-sentence reason (what boundary unit tests can or
    cannot prove for this Outcome). Leaving it `unassessed` on a code-changing
@@ -225,13 +345,17 @@ Hard rules (non-copy software tasks):
    gaps exist, pick the two highest-importance ones and list the rest as
    residuals / follow-ups. Exceeding two fails closed as
    `integration_test_cap_exceeded`.
-5. **Do not execute.** After adding, leave
-   `integration_test_execution: not_run_manual_only`. The Agent must not run
-   the new integration tests (no `flutter test integration_test`, Playwright
-   e2e, device farms, etc. for those cases). Humans run them later. Agent-run
-   fails closed as `integration_test_executed_by_agent`. Unit/lint/type/build
-   gates still run as usual.
-6. **Device is user-chosen.** When any integration test is added (or
+5. **Do not execute in the feature task.** After adding, leave
+   `integration_test_execution: not_run_manual_only` (awaiting stage-6
+   campaign). The Agent must not run the new integration tests inside this
+   feature task (no `flutter test integration_test`, Playwright e2e, device
+   farms, etc. here). Agent-run inside the feature task fails closed as
+   `integration_test_executed_by_agent`. Unit/lint/type/build gates still run
+   as usual. Campaign stage later auto-drives the orchestrated suite.
+6. **Recommend orchestration metadata.** When adding IT, record suggested
+   `requires` / `produces` (optional `mutates` / `destroys`) per case so stage
+   6 can build a minimal path without rediscovering dependencies from scratch.
+7. **Device is user-chosen.** When any integration test is added (or
    `integration_test_requirement: required`), the Agent must recommend
    **the user's local machine** (`integration_test_device_recommendation:
 local_machine`) and ask the user to confirm or pick another target
@@ -241,10 +365,21 @@ local_machine`) and ask the user to confirm or pick another target
    `other:<label>`). Do not invent a device, silently assume CI, or run on
    a host-chosen target. Leaving device `unselected` while tests were added
    fails closed as `integration_test_device_unselected`.
-7. Delivery and acceptance must show the sufficiency judgment, count (0–2),
-   paths of any added tests, selected device, and
-   `awaiting_manual_execution`—never claim integration runtime success from
-   unrun tests.
+8. **Honor Project Work special requirements.** Before adding IT, load
+   `engineering.quality_gates.integration_test_special_requirements` (see
+   `integration-test-special-requirements.md`). Apply every matching
+   `fail_closed` row (corpus paths, forbidden substitutes, `not_app_seed`).
+   Set `integration_test_special_requirements_checked` to `checked_none` or
+   `applied`, and list applied ids. Skipping the check fails closed as
+   `integration_test_special_requirements_unchecked`. Ignoring a matching
+   `fail_closed` row fails as `integration_test_special_requirement_ignored`.
+   Using a `not_app_seed: true` corpus as create-library app seed fails as
+   `integration_test_special_requirement_as_app_seed`.
+9. Delivery and acceptance must show the sufficiency judgment, count (0–2),
+   paths of any added tests, recommended `requires`/`produces`, selected
+   device, special-requirement check/applied ids, and
+   `awaiting_campaign_execution` / `awaiting_manual_execution`—never claim
+   integration runtime success from unrun tests.
 
 ### Data Attachment Sync Mandate
 
@@ -428,10 +563,15 @@ not authorize execution. This is a notification, not a request for another
 approval. Then run the MCP-bundled Execution Readiness Grill before any upload.
 
 The Readiness Grill must determine whether the Plan is sufficient to finish the
-work and whether its prerequisites are actually available: authorization,
-accounts and login state, credentials, keys, secret availability, required data
-and source materials, upstream outputs, tools and environment, verification,
-rollback, stop, and handoff conditions. Record only whether a credential or
+work—including, for software code edits, a passed Plan Design Gate per
+`plan-design-gate.md`—and whether its prerequisites are actually available:
+authorization, accounts and login state, credentials, keys, secret availability,
+required data and source materials, upstream outputs, tools and environment,
+verification, rollback, stop, and handoff conditions. For UI-changing tasks, also
+verify product-truth on the confirmed `ui_prototype` and, when the surface is
+high-risk (platform-coupled / easy to overpromise), a written feasibility
+conclusion from the Tech Note (`high_risk_feasibility_unresolved` if missing;
+revise-design conclusions block `passed`). Record only whether a credential or
 secret is available and authorized; never copy its value into Task Work, logs,
 or chat. Missing or unverified readiness sets `blocked` or
 `revisions_required`, not `passed`.
@@ -456,6 +596,20 @@ surfaces. Discovery of a new UI region, module, public API, schema, dependency,
 or architectural change is scope drift until confirmed. Stop before performing
 that change; do not use a passing test suite, implementation convenience, or
 adjacent cleanup as implicit authorization.
+
+For software work that will edit code, tests, or build files, read
+`plan-design-gate.md` and complete its minimal sufficient Design Package before
+claiming the Plan is executable (also required for light
+`planning_status: not_required` software edits). Set
+`plan_design_gate_status: pending` while drafting; set `passed` only when the
+package is complete and confirmed under the interaction contract. Readiness
+Grill fails closed as `plan_design_gate_missing`,
+`plan_design_gate_incomplete`, or `plan_test_cases_missing` when the Gate is
+absent or hollow (missing/untraced verification test cases, generic
+"implement Outcome" steps, missing flowchart when control flow is non-trivial,
+missing explicit `data_disposition`, missing task-local libraries, missing
+UI↔data binding on UI tasks, or Forecast without concrete paths). Do not request
+execution authorization while a required Gate is not `passed`.
 
 For software work, read `software-structural-budget.md` and add its complete
 `Structural Change Forecast` before Plan confirmation (also required for light
@@ -618,6 +772,15 @@ greater than 600 seconds. Consume only the paths returned under
 `prototypeAssets`; the MCP layer does not read SQLite, decrypt packages, or
 reimplement admission.
 
+### Discussion Writeback (stable Plan / Execution refs)
+
+Any material adjustment accepted in discussion Must be written back to App
+slots **and** close a Change Impact Fan-out ledger before Plan confirm,
+Readiness `passed`, or Execution. Full contracts: `discussion-writeback-contract`
+and `change-impact-fanout`. Local `temp/` galleries are previews only.
+Fail closed: `discussion_writeback_pending`, `temp_only_artifact_forbidden`,
+`stale_reference_after_discussion`, `change_impact_*`.
+
 Before uploading a rewritten version and again before Delivery, rebuild its
 `Granoflow References` from the App-owned adopted set and run the dedicated
 reference-audit preview/apply flow. Removing an unused current reference must
@@ -668,17 +831,24 @@ superseded attachment; local deletion does not authorize App deletion.
 
 An available `model_allowed` `grill-finalizer` may add enhanced evidence before
 a bundled gate concludes, but it never replaces the bundled checklist or owns
-the phase result. If a materially relevant optional helper is missing, follow
-`external-skill-routing.md`; do not mark a bundled gate passed merely because
-installation is waiting, declined, or failed. Only `required_capability` may use
-`install_offered + pending_user_decision`; that state remains waiting and does
-not become an implicit result. For `preferred_method` or `explicit_only`, do
-not offer installation during unattended execution: record the specific
-missing or failure result, use `native_fallback` or `skip_nonblocking`, and
-continue the mandatory bundled checklist without claiming external evidence. A
-`user_only` helper such as `grill-me` with `disable-model-invocation: true` is
-considered only after explicit user invocation. Select only relevant
-gstack/provider reviewers; do not install or invoke the entire family.
+the phase result. If that path writes a temporary candidate, the host **must**
+run the post-finalizer `grill-me` pipeline (`pipeline_required` in
+`external-skill-routing.md`): interactive one-question + recommend + wait, or
+explicit-unattended one-question + recommend + auto-adopt, before promotion.
+Fail closed with `post_finalizer_grill_me_required` if the temp write exists and
+grill-me did not complete. If a materially relevant optional helper is missing,
+follow `external-skill-routing.md`; do not mark a bundled gate passed merely
+because installation is waiting, declined, or failed. Only `required_capability`
+may use `install_offered + pending_user_decision`; that state remains waiting
+and does not become an implicit result. For `preferred_method` or
+`explicit_only`, do not offer installation during unattended execution: record
+the specific missing or failure result, use `native_fallback` or
+`skip_nonblocking`, and continue the mandatory bundled checklist without
+claiming external evidence. Standalone `grill-me` outside the post-finalizer
+pipeline may remain user-initiated; after a temp-writing finalizer it is
+mandatory (invoke when permitted, otherwise inline grilling contract). Select
+only relevant gstack/provider reviewers; do not install or invoke the entire
+family.
 
 Installation authorization does not authorize Analysis/Planning confirmation,
 implementation, commit, push, publishing, or another gated action. Suggesting
@@ -715,7 +885,7 @@ Planning, document upload, and waiting for approval do not count as execution
 and must not write an execution start time. Human manual execution retains the
 normal `pending -> doing` transition and App-recorded start time.
 
-For software execution, enforce **both** Hard Gates before the first edit:
+For software execution, enforce **these** Hard Gates before the first edit:
 
 ### A. Project context (`project-context-attachments.md`)
 
@@ -731,7 +901,29 @@ For software execution, enforce **both** Hard Gates before the first edit:
 5. Refuse edits while status is `missing` or `conflict_pending`
    (`project_context_check_missing`).
 
-### B. Structural forecast (`software-structural-budget.md`)
+### B. Plan Design Gate (`plan-design-gate.md`)
+
+1. Refuse code/test/build edits while a required Gate is not
+   `plan_design_gate_status: passed`.
+2. Fail closed with `plan_design_gate_missing`,
+   `plan_design_gate_incomplete`, `plan_test_cases_missing`, or
+   `plan_copy_missing` / `plan_copy_locale_unresolved` when the Design
+   Package is absent, hollow, missing Analysis-traced verification cases, or
+   missing locale-bound user-visible copy when Scope requires it.
+3. Gate `passed` does not waive Structural Forecast notice (section C).
+4. When the milestone's Plan batch is ready to close, emit one
+   `milestone-plan-acceptance-pack` (template + contract) aggregating present
+   copy / schema / flowcharts / UML / test cases; interactive acceptance of
+   that pack is required before treating milestone Planning as closed.
+5. After the pack is accepted (or validly auto-adopted unattended), every
+   in-scope software Execution turn and Delivery **Must** load
+   `milestone-plan-acceptance-pack` and keep the accepted pack file as the
+   primary milestone alignment reference. Fail closed
+   `milestone_plan_acceptance_pack_not_used` if implement proceeds without it;
+   `milestone_plan_acceptance_pack_delivery_unreconciled` if Delivery omits
+   reconciliation of `present: true` pack sections.
+
+### C. Structural forecast (`software-structural-budget.md`)
 
 1. Refuse the first code/test/build edit while
    `structural_forecast_status` is not `notice_emitted` (or `reconciled`).

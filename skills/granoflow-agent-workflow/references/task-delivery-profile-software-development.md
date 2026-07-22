@@ -32,15 +32,54 @@ Append to the base Delivery when `profiles` contains `software_development`:
   `project_context_check_missing`, `project_context_conflict_unconfirmed`,
   `project_context_decision_not_emitted`, or
   `project_context_check_unreconciled` when violated;
+- Prototype document coverage: when a UI prototype was finalized/rematched,
+  Delivery / Analysis close must show `prototype_html_coverage.status: complete`
+  (no `prototype_html_coverage_gap`), `prototype_widget_reuse.status: complete`
+  (no `widget_reuse_required`), and `prototype_doc_coverage.status: complete`
+  with no gaps/conflicts (`prototype-doc-coverage.md`);
+- Prototype Implementation Fidelity: when the task had a UI `ui_prototype`,
+  Delivery must show Phase A `prototype_impl_compare` ran **before unit
+  tests** (`method: code_review_guess`, `declaration_emitted: true`, three
+  questions answered, closed `diffs` when diverged) per
+  `prototype-implementation-fidelity.md`. Fail as
+  `prototype_impl_compare_unread`, `prototype_impl_compare_undeclared`,
+  `prototype_impl_compare_three_questions_incomplete`,
+  `prototype_diff_ledger_incomplete`, `prototype_impl_compare_wrong_method`,
+  or `prototype_impl_compare_lint_failed`. E2E Phase B AI loop is reconciled at
+  stage `e2e_campaign` evidence—not skipped when diffs exist;
 - Task Integration Test Policy: if `copy_change_only: true`, require zero new
   automated tests and copy/visual review evidence only—fail as
   `copy_change_tests_forbidden` otherwise. Else record `unit_test_sufficiency`
   and reason; `integration_tests_added_count` (0–2) with paths; if count > 0
-  require `integration_test_execution: not_run_manual_only`, a user-selected
-  `integration_test_device` (recommendation default `local_machine`), and
-  acceptance status `awaiting_manual_execution`. Fail closed as
+  require `integration_test_execution: not_run_manual_only` or
+  `awaiting_campaign_execution`, a user-selected `integration_test_device`
+  (recommendation default `local_machine`), recommended
+  `requires`/`produces` orchestration hints per added case,
+  `integration_test_special_requirements_checked` /
+  `integration_test_special_requirements_applied` per
+  `integration-test-special-requirements.md`, and acceptance status
+  `awaiting_manual_execution` / `awaiting_campaign_execution`. Fail closed as
   `unit_test_sufficiency_unassessed`,
   `integration_test_added_without_insufficiency`,
-  `integration_test_cap_exceeded`, `integration_test_executed_by_agent`, or
-  `integration_test_device_unselected` when violated. Never treat unrun
-  integration tests as runtime Evidence.
+  `integration_test_cap_exceeded`, `integration_test_executed_by_agent`,
+  `integration_test_device_unselected`,
+  `integration_test_special_requirements_unchecked`,
+  `integration_test_special_requirement_ignored`, or
+  `integration_test_special_requirement_as_app_seed` when violated. Never treat
+  unrun integration tests as runtime Evidence;
+- milestone Plan acceptance pack (when the milestone emitted one): record the
+  pack path / version and reconcile `present: true` sections—test-case ticks
+  (same Case IDs), `copy_locale` copy inventory, schema/flow notes—per
+  `milestone-plan-acceptance-pack.md`. Fail as
+  `milestone_plan_acceptance_pack_not_used`,
+  `milestone_plan_acceptance_pack_drift`, or
+  `milestone_plan_acceptance_pack_delivery_unreconciled` when violated.
+- Code signing strategy (`code-signing-strategy.md`): when the task edited
+  entitlements, `CODE_SIGN_*` / Team / provisioning, keystore, Authenticode, or
+  fixed a signing/entitlement build failure, Delivery **Must** include a
+  lint-clean `code_signing_strategy` with `user_confirmation: not_required`
+  (probe host → auto-select; prefer free/local for `local_dev_run`). Fail as
+  `code_signing_strategy_missing`, `code_signing_strategy_incomplete`,
+  `code_signing_user_confirmation_forbidden`, or
+  `code_signing_goal_distribution_mismatch` when violated. Do **not** ask the
+  user to confirm the scheme.

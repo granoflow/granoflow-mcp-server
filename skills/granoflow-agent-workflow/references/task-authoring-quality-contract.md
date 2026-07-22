@@ -98,14 +98,53 @@ Unlisted layout, hierarchy, copy, interaction, and visual treatment are
 protected surfaces.
 
 **Mandatory prototype:** any UI change requires a high-fidelity HTML prototype.
-Set Task Work `prototype_requirement: required`. Create and show the prototype,
-declare `derivedFrom` the confirmed Design Baseline package when the project has
-one, accept against contract fidelity (契约级一致), upload to the task's
-`ui_prototype` logical slot with visual confirmation, and read it back **before
-Analysis confirmation when possible, and always before execution Readiness /
-claiming the UI change is accepted**. Do not mark `not_required` for a UI
-change. A whole-page redesign is valid only when the task explicitly authorizes
-that whole-page surface.
+Set Task Work `prototype_requirement: required`. Apply **Task Prototype Craft
+Gate And Option Set**: interactive **mainstream-reference-first** candidate
+pool (≥5; brainstorm backfill only when mainstream `<5`; AI chooses
+`same_category` vs `capability_match`, defaulting to capability when unsure)
+then dual **page expressions** (`expr_a` + `expr_b`) with **functional
+parity** (same capabilities + same data; see
+`prototype-expression-brainstorm.md`) inside the locked Design System, with ≥2
+contrast axes and a **side-by-side Contrast Gallery** with candidate digest +
+per-axis visible-diff captions (mix-and-match per task/page; never reopen
+Design Spec as task options; conditional industry third only when documented);
+unattended same protocol then single `expr_a`; Craft Gate before
+`visualConfirmed` (`task_prototype_craft_incomplete` otherwise), including
+**Baseline fit** (`prototype-baseline-fit.md`;
+`prototype_baseline_fit_*` / `prototype_generic_phone_frame` /
+`prototype_shell_chrome_mismatch`; require
+`craft_checklist.baseline_fit_ok` after `lint_prototype_baseline_fit.py`),
+**product truth** (`prototype_product_truth_violation`), **expression
+candidates** (`prototype_option_brainstorm_*` /
+`prototype_option_mainstream_skip` / `prototype_option_scope_mode_invalid` /
+`prototype_option_function_split` / `prototype_option_data_divergence`;
+require `craft_checklist.expression_brainstorm_ok` after
+`lint_prototype_expression_brainstorm.py`), and **user-visible copy boundary**
+(`user_visible_copy_boundary_unread` /
+`user_visible_copy_boundary_violation`; require
+`craft_checklist.user_visible_copy_boundary_ok` after
+`lint_prototype_user_copy.py`).
+Keep **design-first**:
+previews express demand; if undeliverable, revise design—do not fake
+capability. High-risk platform-coupled UI needs a Tech Note conclusion before
+Readiness (`high_risk_feasibility_unresolved`). Declare `derivedFrom` the
+confirmed Design Baseline package when the project has one, accept against
+contract fidelity (契约级一致), **no** random visual seed, reuse
+`widgets.yaml` when the same role exists, upload the **chosen** option to the
+task's `ui_prototype` logical slot with visual confirmation, and read it back.
+Later discussion changes Must re-import and rewrite Task Work refs per
+`discussion-writeback-contract` + `change-impact-fanout` (never leave the new
+truth only in chat/`temp`; close sibling impact ledger in the same batch)
+**before Analysis confirmation when possible, and always before execution
+Readiness / claiming the UI change is accepted**.
+Fail closed on Design System reopen
+(`prototype_option_design_system_reopened`), prose-only near-duplicates
+(`prototype_option_near_duplicate`), missing gallery
+(`prototype_option_contrast_gallery_required`), or unlabeled diffs
+(`prototype_option_diff_unlabeled`).
+Do not mark `not_required` for a UI change.
+A whole-page redesign is valid only when the task explicitly authorizes that
+whole-page surface.
 
 When the task changes database tables or fields, keep one Markdown data-model
 artifact for that task in the `data_model` logical slot. The same file must
@@ -160,6 +199,12 @@ confirmation; unattended conflicts need an explicit emitted decision
 If a task has no copy, UI, database, JSON-contract, or shared-constant change,
 say so explicitly in Task Work and Delivery instead of fabricating an artifact.
 
+For software Plans that will edit code, also satisfy `plan-design-gate.md`
+(Markdown verification test cases traced to Analysis; explicit
+`data_disposition` even when `unchanged`; task-local libraries only; no hollow
+Execution Plan). Schema change artifacts in this file remain required when
+disposition is `extend` or `breaking`.
+
 ## Pre-Write Checklist
 
 - The title still makes sense when shown alone.
@@ -172,5 +217,7 @@ say so explicitly in Task Work and Delivery instead of fabricating an artifact.
 - The minimum-change budget names required changes, allowed touchpoints, and
   protected surfaces; every supporting structural change maps to the confirmed
   Outcome or Evidence.
+- When software Planning edits code, the Plan Design Gate minimal set is
+  present or explicitly `not_applicable` with basis.
 - The selected project, milestone, import, or waiting workflow has not weakened
   this contract.

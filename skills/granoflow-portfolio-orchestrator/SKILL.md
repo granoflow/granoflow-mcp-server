@@ -13,6 +13,12 @@ model dump.
 This Skill **orchestrates** other bundled Skills. It does not replace their
 contracts.
 
+## Keyword
+
+- `#portfolio-orchestrator`
+- `#portfolio-ready`
+- `#first-ship-portfolio`
+
 ## When To Use
 
 - Project Definition is Done (or prerequisites already pass).
@@ -40,18 +46,60 @@ updated after every successful step.
 1. **Gate** — Same hard gate as milestone-workflow (complete Project Work;
    frontend → Design Baseline + App Shell). On failure →
    `granoflow-project-definition`.
+
+   Checkpoints:
+
+   - Stop and hand back to `granoflow-project-definition` when prerequisites fail.
+   - Frontend projects require Design Baseline + App Shell before any milestone work.
+
 2. **Milestones** — Invoke `granoflow-milestone-workflow` `batch_create` (or
    amend). Require App readback of all planned milestone ids.
+
+   Checkpoints:
+
+   - Require App readback of every planned milestone id before proceeding.
+   - Amend only for real coverage gaps; do not rebuild an existing portfolio.
+
 3. **Order** — Process milestones in sequencing order; prefer
    `role: first_ship` first when present.
+
+   Checkpoints:
+
+   - Prefer `role: first_ship` first when present; otherwise follow sequencing order.
+
 4. **Per milestone tasks** —
    - `granoflow-task-authoring` `batch_skeleton` + coverage check;
    - then `create_one` for each pending row (description batch size **1**);
    - quality contract on every create; fail only that row.
+
+   Checkpoints:
+
+   - Run skeleton coverage check before any `create_one` loop.
+   - Full description batch size is **1**; never merge multiple descriptions in one turn.
+   - Quality failure fails only that row; rewrite and retry the same row.
+
 5. **Portfolio Ready** — when every planned milestone exists and every
    milestone's skeleton rows are created with quality-passed descriptions.
+
+   Checkpoints:
+
+   - Do not declare Portfolio Ready until every planned milestone exists and every skeleton row is created with quality-passed descriptions.
+
 6. **Handoff** — name `granoflow-milestone-coordination` (active First Ship /
    active milestone) and `granoflow-task-orchestrator` for Analysis onward.
+
+   Checkpoints:
+
+   - Do not start child execution inside this Skill; hand off for Analysis onward.
+
+7. **Progress board** — end the turn with
+   `granoflow-agent-workflow/project-lifecycle-progress-board` showing stage
+   `milestones_created` status and next action = per-milestone Analysis.
+   Interactive: confirm only the real next gate. Unattended: display-only.
+
+   Checkpoints:
+
+   - End every project-bound turn with the progress board; interactive confirms only the real next gate; unattended is display-only.
 
 ## Hard Rules
 
@@ -69,3 +117,7 @@ updated after every successful step.
   controller-owned acceptances).
 - Every created task passed authoring quality.
 - State is **Portfolio Ready**, not "assistant summarized a plan".
+
+## References
+
+- Read `references/portfolio-orchestration-contract.md` before orchestration and after every successful step to keep resumable state updated.

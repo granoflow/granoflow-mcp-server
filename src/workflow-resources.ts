@@ -20,6 +20,7 @@ export const BUNDLED_SKILL_IDS = [
   "granoflow-persistent-milestone-runner",
   "granoflow-project-definition",
   "granoflow-integration-test-campaign",
+  "granoflow-e2e-test-campaign",
 ] as const;
 
 export type BundledSkillId = (typeof BUNDLED_SKILL_IDS)[number];

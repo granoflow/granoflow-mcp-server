@@ -27,6 +27,7 @@ function registerGranoflowLogicalAttachmentReplaceTool(
   _schemas: RegistrationSchemas,
 ): void {
   const {
+    basename,
     createHash,
     readFileSync,
     logicalAttachmentEntityTypeSchema,
@@ -73,7 +74,8 @@ function registerGranoflowLogicalAttachmentReplaceTool(
           error: { message: error instanceof Error ? error.message : String(error) },
         });
       }
-      const contentSha256 = createHash("sha256").update(readFileSync(file)).digest("hex");
+      const bytes = readFileSync(file);
+      const contentSha256 = createHash("sha256").update(bytes).digest("hex");
       return resourceCapabilityApiTool(
         logicalAttachmentResource(String(entityType)),
         ["attachment.conditional-add", "attachment.read-content-hash"],
@@ -81,7 +83,8 @@ function registerGranoflowLogicalAttachmentReplaceTool(
           method: "POST",
           path: logicalAttachmentPath(String(entityType), String(entityId)),
           body: {
-            file,
+            contentBase64: bytes.toString("base64"),
+            fileName: basename(file),
             logicalSlot: String(logicalSlot),
             expectedUpdatedAt: String(expectedUpdatedAt),
             expectedContentSha256: contentSha256,

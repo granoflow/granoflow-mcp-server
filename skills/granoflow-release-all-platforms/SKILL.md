@@ -3,51 +3,141 @@ name: granoflow-release-all-platforms
 description: Use when releasing Granoflow MCP to npm and validating cross-platform MCP directory surfaces.
 ---
 
-# Granoflow MCP 全平台发布技能
+# Granoflow Release All Platforms
 
-用于维护者的一次性发布流程，目标是：
+Maintainer one-shot release flow for `@granoflow/mcp-server`（Granoflow MCP 全平台发布）:
 
-1. 从 `develop` 合并到 `main`，
-2. 提交并推送 `main`，
-3. 回到 `develop`，
-4. 运行 npm 发布，
-5. 输出其他平台发布核对清单。
+1. merge `develop` → `main`,
+2. commit and push `main`,
+3. return to the source branch,
+4. run npm publish,
+5. surface cross-platform MCP directory verification steps.
 
-## 前置条件
+## Keyword
 
-- 当前分支建议为 `develop`，且工作区保持干净。
-- `.env` 已存在，且至少包含 `NPM_TOKEN`。
-- `package.json` 版本已按发布策略递增。
+- `#release-platforms`
+- `#npm-release`
+- `#mcp-directory-release`
 
-## 常用命令
+## When to use
+
+- Publishing a new `@granoflow/mcp-server` version to npm.
+- Running the standard `develop` → `main` merge-and-release pipeline.
+- Dry-run or partial release (`--dry-run`, `--skip-publish`, `--skip-push`, `--open-platforms`).
+- Maintainer needs the cross-platform MCP directory checklist after npm publish.
+
+## Prerequisites
+
+- Current branch should be `develop` with a clean worktree.
+- `.env` exists at repo root with at least `NPM_TOKEN`.
+- `package.json` version incremented per release policy.
+
+## Workflow
+
+Read `docs/release-checklist.md` before starting.
+
+### 1. Preflight and branch state
+
+Actions:
+
+- Confirm clean worktree, version bump, and `.env` contract.
+- Choose release mode (standard, dry-run, skip-publish, skip-push, open-platforms).
+
+Success criteria:
+
+- Release command matches intent; dry-run and skip modes do not accidentally publish or push.
+
+Checkpoints:
+
+- Stop if worktree is dirty or `NPM_TOKEN` is missing.
+- Stop if version was not incremented per release policy.
+
+### 2. Merge develop → main and push
+
+Actions:
+
+- Run `npm run release:platforms` (or a variant with flags below).
+
+Success criteria:
+
+- `main` contains the intended release commit; remote updated when push is enabled.
+
+Checkpoints:
+
+- `--skip-push` leaves the merge local only for verification.
+- Script returns to the source branch after merge per release policy.
+
+### 3. npm publish
+
+Actions:
+
+- Script runs `release:preflight` then publishes when publish is not skipped.
+
+Success criteria:
+
+- Package published to npm registry with the intended version (unless explicitly skipped).
+
+Checkpoints:
+
+- `--skip-publish` completes merge and push only.
+- Supply `NPM_OTP` in `.env` when 2FA requires it; leave empty and re-run for manual OTP entry.
+
+### 4. Cross-platform directory verification
+
+Actions:
+
+- Use `--open-platforms` to open major directory pages for manual verification.
+- Follow the checklist for Glama, mcp.so, mcpservers.org, official MCP Registry, Awesome MCP Servers / Smithery.
+
+Success criteria:
+
+- Maintainer has actionable entries for each platform that still requires manual submission.
+
+Checkpoints:
+
+- Unless platform-specific account scripts exist, all non-npm platforms remain manual UI submission.
+
+## Commands
 
 - `npm run release:platforms`
-  - 标准发布：合并 `develop -> main`，执行 `release:preflight`，发布 npm，推送 `main`，再回到原分支。
+  - Standard release: merge `develop` → `main`, run `release:preflight`, publish npm, push `main`, return to source branch.
 - `npm run release:platforms -- --dry-run`
-  - 只做流程预演，不触发推送和发布。
+  - Preflight only; no push or publish.
 - `npm run release:platforms -- --skip-publish`
-  - 只执行分支合并与推送，不做 npm publish。
+  - Merge and push only; no npm publish.
 - `npm run release:platforms -- --skip-push`
-  - 合并后不推送，便于本地核对。
+  - Merge without push; useful for local verification.
 - `npm run release:platforms -- --open-platforms`
-  - 预发布后打开主要平台页面以便手工核对。
+  - Open major platform pages after pre-publish for manual verification.
 
-## `.env` 规范
+## `.env` contract
 
-应在仓库根目录创建 `.env`，并只提交到本地工作区（不入库）：
+Create `.env` at repo root (local only — never commit):
 
 - `NPM_TOKEN`
 - `NPM_PACKAGE_NAME`
 - `RELEASE_SOURCE_BRANCH`
 - `RELEASE_TARGET_BRANCH`
 - `RELEASE_REMOTE`
-- `NPM_OTP`（如需每次手工填入时可留空后重放）
+- `NPM_OTP` (leave empty and re-run when manual OTP entry is needed)
 
-## 发布范围
+## Release scope
 
-该技能只实现：
+This skill implements:
 
-- npm 发布主线
-- 其余 MCP 平台发布入口提示与核对
+- npm publish mainline
+- Other MCP platform release entry hints and verification checklist
 
-除非有对应平台账号脚本，否则其余平台（如 Glama、mcp.so、mcpservers.org、官方 MCP Registry、Awesome MCP Servers / Smithery）仍需在各自界面手动提交与确认。
+Unless platform account scripts exist, Glama, mcp.so, mcpservers.org, official MCP Registry, and Awesome MCP Servers / Smithery require manual submission in their respective UIs.
+
+## Success Criteria
+
+- `develop` merged to `main` per release branch policy.
+- npm package published unless explicitly skipped.
+- Cross-platform checklist surfaced for manual follow-up.
+- Maintainer returned to the expected branch with an observable release outcome.
+
+## References
+
+- Read `docs/release-checklist.md` before any release — preflight, static gates, publish steps, and directory verification.
+- Script: `scripts/release-all-platforms.mjs` (invoked via `npm run release:platforms`).

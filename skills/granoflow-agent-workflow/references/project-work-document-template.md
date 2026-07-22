@@ -67,6 +67,11 @@ schema_contract:
     - "confirmed_document_version must equal document.document_version before automation"
     - "App-owned confirmed_content_sha256 metadata must match current App readback before automation"
     - "every acceptance_coverage.acceptance_id must resolve to acceptance.conditions"
+    - "product_spec_coverage.status must be ready before complete_confirmed_current"
+    - "every product_spec_coverage.journey_coverage adopted row needs requirement_ids and acceptance_ids"
+    - "every product_spec_coverage.journey_coverage adopted row needs decomposition pass + conclusion"
+    - "every product_spec_coverage.journey_coverage adopted acceptance needs stress_path"
+    - "every product_spec_coverage.screen_coverage baseline_required adopted row needs requirement_ids and acceptance_ids"
     - "every accountable milestone must belong to this project"
     - "every automatic action requires a current authorization disposition"
   compatibility:
@@ -202,6 +207,114 @@ product:
   accessibility_standard: null
   privacy_classification: null
   legal_or_store_constraints: []
+  # App Icon Source Gate (mobile/desktop App only).
+  # Load granoflow-agent-workflow/app-icon-source-gate.
+  # Lint: scripts/lint_app_icon_source_gate.py
+  # Fail closed: app_icon_source_gate_unread / app_icon_source_unresolved / ...
+  app_icon:
+    applicability: required | not_applicable
+    applicability_basis: null
+    document_scan_status: found | missing | not_scanned
+    source_choice: user_provided | ai_generated | downloaded_license_clear | unresolved | not_applicable
+    asset_path: null
+    license_note: null
+    user_decision_recorded: false
+
+# Hard gate for thin or uneven product docs. Initialization Done and
+# complete_confirmed_current automation require status=ready.
+# Fail closed: product_spec_coverage_incomplete (plus nested fail codes below).
+# Flow shape: operation flowchart → serial gates vs parallel ops → page count.
+# Not risk labels. Detail: granoflow-project-definition/product-spec-flow-decomposition.
+product_spec_coverage:
+  status: incomplete | ready
+  fail_closed_code: product_spec_coverage_incomplete
+  # How gaps from thin product docs were closed for initialization.
+  fill_policy:
+    interactive: ask_recommend_wait_for_every_missing_required_row
+    # Unattended must still run decomposition; must not silent-complete thin
+    # decision-changing product gaps. Prefer residual / fail closed over fake ready.
+    unattended_explicit_only:
+      non_decision_changing_gaps: recommend_and_auto_adopt_with_provenance
+      decision_changing_gaps: fail_closed_thin_product_doc_gap_requires_user
+      flow_decomposition: always_run_pass_and_record_conclusion
+    never_invent_as_user_stated: true
+    deferred_unknown_forbidden_for_initialization_blockers: true
+  # Every primary journey the product must support (from docs or gap-fill).
+  journey_coverage:
+    - journey_id: J-001
+      title: null
+      requirement_ids: []
+      acceptance_ids: []
+      source_refs: []
+      # user_stated | recommended_gap_fill | user_confirmed_gap_fill
+      provenance: null
+      screen_ids: []
+      critical_state_ids: []
+      disposition: adopted | needs_clarification | out_of_scope
+      # Mandatory once disposition=adopted. Operation-flow / serial-gate driven.
+      decomposition:
+        pass_completed: false
+        # Draw first: user ops, waits, decision points.
+        operation_flow:
+          summary: null
+          user_operations: []
+          # Groups of ops completable on one surface before a final confirm.
+          parallel_groups: []
+        # Mid-flow stops that force the next page; empty ⇒ one-page candidates.
+        serial_gates: []
+        # true when multiple ops need no mid-flow gate (only final confirm).
+        parallel_ops_ok: null
+        candidate_screens: []
+        # split | keep_cohesive | needs_user_decision
+        conclusion: null
+        concluded_screen_ids: []
+        # Required when conclusion=keep_cohesive
+        rejected_split_summary: null
+        # Required when conclusion=split
+        accepted_split_summary: null
+      # One stress_path per linked acceptance_id (beginner-walkable).
+      stress_paths:
+        - acceptance_id: null
+          entry: null
+          intermediate: []
+          success_exit: null
+          failure_exit: null
+  # Every user-visible screen / critical state Baseline must show.
+  screen_coverage:
+    - screen_id: S-001
+      title: null
+      journey_ids: []
+      requirement_ids: []
+      acceptance_ids: []
+      baseline_required: true
+      critical_states: []
+      source_refs: []
+      provenance: null
+      disposition: adopted | needs_clarification | out_of_scope
+  # Explicit gap fills when product docs were silent or too thin.
+  gap_fills:
+    - gap_id: G-001
+      missing_topic: null
+      decision_changing: true
+      recommended_value: null
+      resolved_value: null
+      mode: interactive | unattended
+      provenance: user_confirmed | agent_recommendation_adopted
+      linked_journey_ids: []
+      linked_screen_ids: []
+      linked_acceptance_ids: []
+  checklist:
+    all_primary_journeys_listed: false
+    every_journey_has_requirement_and_acceptance: false
+    every_adopted_journey_decomposition_pass_completed: false
+    every_adopted_journey_has_decomposition_conclusion: false
+    every_adopted_acceptance_has_stress_path: false
+    every_baseline_required_screen_listed: false
+    every_screen_has_requirement_and_acceptance: false
+    no_open_decision_changing_gaps: false
+    no_conflicting_undisposed_requirements: false
+    thin_doc_gap_fills_recorded: false
+    no_unattended_decision_changing_thin_gap_auto_accept: false
 
 acceptance:
   conditions:
@@ -360,6 +473,13 @@ engineering:
     # Paths to companion Design Tokens (DTCG-oriented JSON or equivalent).
     # Do not embed the full token graph in this YAML.
     token_sources: []
+    # Project widget catalog (contract only). Default file: widgets.yaml.
+    # Visual truth stays in confirmed prototypes; catalog records reusable
+    # chrome/control/pattern contracts + derived_from Baseline/task prototypes.
+    # First mandatory write after Baseline confirm; incremental after later
+    # confirmed prototypes. Missing after Baseline confirm =>
+    # widget_catalog_required.
+    widgets_attachment: null
     # Documented fields below (stack_capability_profile, acceptance_fidelity,
     # implementation_notes) are preserved by unknown_fields:preserve when the
     # App schema is older. Prefer writing them during Project Definition.
@@ -389,8 +509,12 @@ engineering:
     shared_component_policy: null
     page_local_override_policy: prohibited_by_default
     design_profile:
-      # Stable project-level lock. The host proposes one coherent system; the
-      # user confirms Baseline+Shell once instead of selecting Skills.
+      # Stable project-level lock. Interactive: Design Spec triad of Style
+      # Guide / Design Tokens boards (distinct random seeds; not full journey
+      # screen galleries) then Shell triad fitted to selected Spec (chrome
+      # variants only). Unattended: one random-seed Style Guide spec_match +
+      # one Spec-fitted shell_match. Journey screens enter Baseline after
+      # Spec+Shell. From Shell onward style converges. Never a Skills menu.
       id: null
       version: 1
       # proposed | locked | reopened
@@ -416,6 +540,21 @@ engineering:
       safe_choices: []
       deliberate_risks: []
       source_evidence: []
+    # After Spec/Shell rounds (see project-artifact-workflows Mode split).
+    design_spec_selection:
+      mode: interactive_triad | unattended_single
+      selected_option_id: null # spec_match | ai_challenger_a | ai_challenger_b | null when single
+      seed: null
+      candidates: [] # interactive: three entries with distinct seeds
+      provenance: user_selected | unattended_spec_match_random_seed | null
+    shell_selection:
+      mode: interactive_triad | unattended_single
+      selected_option_id: null
+      # chrome-variant id when interactive; not an independent palette seed
+      chrome_variant_id: null
+      fitted_to_design_spec_option_id: null
+      candidates: []
+      provenance: user_selected | unattended_shell_match_fitted_to_spec | null
     skill_routing:
       profile_id: granoflow_product_design_v1
       profile_version: 1
@@ -440,8 +579,9 @@ engineering:
       entry: null
       link_entity_type: project
     visual_confirmation:
-      # One confirmation covers Baseline+Shell (and tokens) for this exact
-      # package hash. Unattended default: auto_accept_recommendation.
+      # Interactive: after Spec triad + Shell triad picks (distinct random
+      # seeds). Unattended: after single random-seed spec_match + shell_match;
+      # default auto_accept_recommendation only when explicitly unattended.
       status: pending
       proposal_sha256: null
       template_package_sha256: null
@@ -532,6 +672,54 @@ engineering:
     unit_tests: []
     module_tests: []
     integration_tests: []
+    # User/project special constraints for authoring + campaign IT.
+    # Empty list = no extra constraints beyond Task Integration Test Policy.
+    # Schema and enforcement: integration-test-special-requirements.md
+    # Unknown older App schemas: preserve_without_admission_effect until upgraded.
+    integration_test_special_requirements:
+      - id: null # e.g. ITR-001
+        kind: seed_corpus | fixture_paths | forbidden_substitute | run_constraint | other
+        statement: null
+        corpus_paths: [] # required when kind=seed_corpus
+        not_app_seed: false # true => corpus is NOT production/app seed
+        app_seed_paths: [] # production seed paths kept distinct
+        forbidden_substitutes: [] # e.g. randomly_generated_fake_epub_as_primary_corpus
+        applies_when: [] # multi_book_library_it | folder_import_it | bookshelf_with_real_books_it | campaign_suite | all_authored_it | other:<label>
+        product_doc_refs: []
+        source_refs: []
+        provenance: user_stated | recommended | inferred | null
+        enforcement: fail_closed | advisory
+    # Stage-6 campaign artifacts (paths or attachment ids):
+    # integration_suite_plan: null
+    # integration_campaign_change_report: null
+    # integration_campaign_closing_summary: null
+    # e2e_campaign_coverage_matrix: null
+    # e2e_campaign_suite_plan: null
+    # e2e_campaign_evidence_pack: null
+    # e2e_campaign_closing_summary: null
+    # e2e_tests: [] # optional explicit UI entrypoints; coverage still driven by journeys
+    #
+    # Code signing default for local build/run. Omit => local_dev_run.
+    # Agents probe the host and declare code_signing_strategy (never ask the
+    # user to confirm). Detail: code-signing-strategy.md
+    # default_signing_goal: local_dev_run # local_dev_run | device_debug | distribute_store | distribute_direct
+    #
+    # Final-stage ship readiness (E2E campaign). Default when omitted at campaign
+    # time: market_smoke. Detail: granoflow-e2e-test-campaign/e2e-host-capabilities
+    # and e2e-user-flow-coverage (journey × host assignment).
+    # ship_bar: market_smoke # market_smoke | form_factor_smoke | full_campaign
+    # verification_host_matrix:
+    #   schema: granoflow_verification_host_matrix_v1
+    #   derived_from: [] # e.g. [scope.supported_platforms]
+    #   concurrency: parallel_when_capable # sequential | parallel_when_capable
+    #   primary_form_factors: [] # phone_portrait | tablet_landscape | desktop_landscape | web | other:<id>
+    #   hosts:
+    #     - id: null
+    #       kind: desktop | simulator | emulator | physical_device | remote_farm | browser | other
+    #       platforms: []
+    #       status: unprobed | available | unavailable | deferred_external
+    #       residual_code: null
+    #   assignment_policy: journey_at_least_one_capable_host
     ui_tests: []
     end_to_end_tests: []
     migration_tests: []
@@ -787,13 +975,14 @@ artifacts:
   # - entity_id: owning Granoflow entity
   # - logical_slot: project_work | milestone_work | task_work_execution |
   #     task_work_post_completion_revision | task_delivery | ui_prototype |
-  #     data_model | json_contracts | constants_catalog | workflows
+  #     data_model | json_contracts | constants_catalog | widgets | workflows
   # - attachment_id: App-owned current attachment id
   # - content_sha256: App-owned current content hash
   # - status: partial | current | confirmed | stale | conflicting
   # - source_decision: user-confirmed decision or inspected source reference
   # - related_acceptance_ids: acceptance.conditions ids
   # - file_name: must match data_and_migrations.*_attachment when applicable
+  #   or theme_and_design_system.widgets_attachment for widgets
   ui_prototype:
     suggestion_trigger: primary_screens_theme_menu_and_critical_states_are_clear
     preview_surface: host_sidebar_or_browser
@@ -831,6 +1020,20 @@ artifacts:
     file_name: constants-catalog.yaml
     one_current_attachment: true
     required_when_project_defines_shared_constants: true
+  widgets:
+    owner_entity_type: project
+    logical_slot: widgets
+    # Contract catalog only (identity, props, tokens, states, composition,
+    # reuse_policy, derived_from confirmed prototypes). Not full visual HTML.
+    # theme_and_design_system.widgets_attachment must match when present.
+    file_name: widgets.yaml
+    one_current_attachment: true
+    first_mandatory_after_baseline_confirm: true
+    incremental_after_confirmed_prototypes: true
+    fail_closed_codes:
+      - widget_catalog_required
+      - widget_catalog_stale
+      - widget_reuse_required
   workflows:
     logical_slot: workflows
     file_name: workflows.md
@@ -978,6 +1181,7 @@ readiness:
     blockers: []
   schema_validation: not_run
   requirement_completeness: not_run
+  product_spec_coverage: not_run
   engineering_baseline: not_run
   acceptance_testability: not_run
   authorization_readiness: not_run
@@ -1024,7 +1228,26 @@ completion:
    one batch. Each entry explains why the action needs the field, recommends a
    default when safe, records its source, and says whether user confirmation is
    required.
-7. Secret values never enter this document. Authorization and external
+7. **Product Spec Completeness Hard Gate** (`product_spec_coverage`): Project
+   Definition Done and every `complete_confirmed_current` automation action
+   require `product_spec_coverage.status: ready`. Thin or uneven product docs
+   do not waive this. Missing journeys, Baseline-required screens, acceptance
+   links, open decision-changing gaps, missing **flow decomposition** pass /
+   conclusion, or incomplete **stress paths** fail closed as
+   `product_spec_coverage_incomplete` (see nested codes in
+   `product-spec-flow-decomposition`). Decomposition is **operation-flow
+   driven**: draw the user-operation flowchart, detect serial gates vs
+   parallel ops + final confirm, then conclude `split` / `keep_cohesive` /
+   `needs_user_decision` — do **not** use risk labels to force multi-screen.
+   Interactive: ask → recommend → wait for missing required rows and for
+   decision-changing thin-doc gaps. Unattended (explicit only): may auto-adopt
+   **non-decision-changing** fills with `agent_recommendation_adopted`; must
+   still run the decomposition pass; decision-changing thin-doc gaps fail
+   closed `thin_product_doc_gap_requires_user` — never silent-complete an
+   underspecified product. Never relabel invented content as `user_stated`.
+   `deferred_unknown` is forbidden for initialization blockers listed under
+   `product_spec_coverage.checklist`.
+8. Secret values never enter this document. Authorization and external
    capability rows record disposition and availability references only.
 
 ## Current Capability Boundary

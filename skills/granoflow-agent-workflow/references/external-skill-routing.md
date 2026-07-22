@@ -117,14 +117,27 @@ For Task Work Grill work, the MCP-bundled Analysis and Execution Readiness
 checks remain mandatory phase gates. An available model-invocable
 `grill-finalizer` is an optional enhanced evidence path before a bundled gate
 concludes; it does not replace the bundled checklist or decide the phase result.
-`grill-me` declares `disable-model-invocation: true`,
-so route it as `user_only`: suggest user invocation and accept its returned
-result, but never invoke it automatically. Select only the relevant gstack or
-other provider reviewer; do not install or invoke an entire family. A missing
-optional provider does not waive, block, or weaken a bundled gate. After a
-decline or failure, record honest `model_fallback` evidence and still complete
-the bundled checklist without claiming equivalence to a provider that did not
-run.
+When that enhanced path **writes a temporary candidate**, the next step is
+**`pipeline_required`**: run `grill-me` / the grilling one-question contract
+before promoting the candidate or treating the enhanced evidence as closed.
+
+`grill-me` Mode Gate (same as Project Definition / docs-grill-finalizer):
+
+- Default **interactive**: one question + recommendation + **wait** for the user.
+- **Unattended** only after an explicit user declaration: one question +
+  recommendation + **auto-adopt**, then continue (no wait loop).
+- Never infer unattended from invoking finalizer/grill-me alone.
+
+Standalone `/grill-me` outside this pipeline may still be user-initiated. After
+a temp-writing finalizer, the host **must** run the pipeline (invoke `grill-me`
+when the host permits, otherwise follow the grilling contract inline). Skipping
+it fails closed as `post_finalizer_grill_me_required`. Select only the relevant
+gstack or other provider reviewer; do not install or invoke an entire family. A
+missing optional provider does not waive, block, or weaken a bundled gate. After
+a decline or failure of optional providers, record honest `model_fallback`
+evidence and still complete the bundled checklist without claiming equivalence
+to a provider that did not run. A missing `grill-me` Skill does **not** waive
+the post-finalizer pipeline—run the grilling contract inline.
 
 The first-run onboarding contract is the only collection-install exception:
 when `granoflow-first-run-import/references/recommended-external-skills.md` is
