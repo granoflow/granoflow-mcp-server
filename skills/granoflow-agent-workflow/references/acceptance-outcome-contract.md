@@ -106,6 +106,11 @@ user_path_claim: service_layers_only | full_user_path
   `secure_storage_capability: available` (or equivalent host probe residual).
 - Closing `os_capability` **Must** cite a host probe or real failure absence
   after the entitled path ran.
+- User-visible third-party capabilities (TTS, push, …) listed in
+  `third-party-capability-matrix` with `in_ship_bar: true` **Must** be probed on
+  mapped hosts before `full_user_path` / bare `green`, or residualled with
+  Closing leftovers (`third_party_capability_unprobed` /
+  `third_party_capability_overclaim`).
 - `user_path_claim: full_user_path` only when no in-scope AO remains open /
   deferred for that claim.
 
@@ -134,6 +139,7 @@ Mirror window/screenshot probing. Before claiming
 | `acceptance_outcome_user_path_overclaim`  | IT claims `full_user_path`                         |
 | `e2e_campaign_secure_storage_unprobed`    | Closed secure-store AO without capability probe    |
 | `e2e_campaign_secure_storage_unavailable` | Probe failed / entitlement missing                 |
+| `third_party_capability_*`                | See `third-party-capability-matrix` (TTS/push/…)   |
 
 ## Relationship
 
@@ -143,6 +149,7 @@ Mirror window/screenshot probing. Before claiming
 | IT suite order                | `integration-suite-orchestration`       |
 | E2E journey coverage          | `e2e-user-flow-coverage`                |
 | Window / screenshot / vision  | `e2e-host-capabilities`                 |
+| Third-party user-visible caps | `third-party-capability-matrix`         |
 | Host signing scheme selection | `code-signing-strategy`                 |
 | Lifecycle stage 6→7 honesty   | `project-lifecycle-progress-board`      |
 

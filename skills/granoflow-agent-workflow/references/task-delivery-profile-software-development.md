@@ -83,3 +83,18 @@ Append to the base Delivery when `profiles` contains `software_development`:
   `code_signing_user_confirmation_forbidden`, or
   `code_signing_goal_distribution_mismatch` when violated. Do **not** ask the
   user to confirm the scheme.
+- Third-party capability matrix (`third-party-capability-matrix.md`): when the
+  task implements or claims a **user-visible** third-party capability (TTS,
+  push, camera, IAP, maps, …), Delivery **Must** show a Project Work
+  `engineering.third_party_capabilities` row with `fallback`,
+  `required_platforms`, and `probe_by_platform` updates for platforms touched.
+  Do **not** claim “works on all target platforms” / 全平台可用 while any
+  required platform remains `unprobed` or `unavailable`. Lint with
+  `scripts/lint_third_party_capability_matrix.py`. Fail as
+  `third_party_capability_matrix_unloaded`,
+  `third_party_capability_matrix_incomplete`,
+  `third_party_capability_fallback_missing`,
+  `third_party_capability_unprobed`,
+  `third_party_capability_overclaim`,
+  `third_party_capability_platform_missing`, or
+  `third_party_capability_ship_bar_excluded` when violated.

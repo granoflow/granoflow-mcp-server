@@ -827,6 +827,13 @@ packages fails closed as `capability_dependency_unselected`. Later tasks may
 challenge and revise the same Project Work list; they must not silently swap
 critical libraries in code.
 
+For **user-visible** capabilities (TTS, push, camera, …), also maintain
+`engineering.third_party_capabilities` per
+`granoflow-agent-workflow/third-party-capability-matrix`: `required_platforms`,
+`probe_method`, `fallback`, `in_ship_bar`, and later `probe_by_platform`.
+Selection ≠ probed. Claiming full-platform support without probes fails closed
+as `third_party_capability_overclaim`.
+
 ## Data Persistence And Structured Contracts
 
 Established in Project Definition **Step 1**. Project Work records

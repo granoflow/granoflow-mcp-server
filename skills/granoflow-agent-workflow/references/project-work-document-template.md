@@ -435,6 +435,33 @@ engineering:
     upgrade_policy: null
     deprecation_policy: null
 
+  # Runtime honesty for user-visible third-party capabilities (TTS, push,
+  # camera, …). Package selection stays in dependencies.approved above; this
+  # matrix owns required_platforms / probe / fallback / ship_bar claims.
+  # See third-party-capability-matrix.md. Missing user-visible rows when
+  # primary journeys need them => third_party_capability_matrix_incomplete.
+  # Claiming “全平台可用” while any required platform is unprobed/unavailable
+  # => third_party_capability_overclaim.
+  third_party_capabilities:
+    schema: granoflow_third_party_capabilities_v1
+    contract_loaded: true
+    # not_started | incomplete | complete | not_applicable
+    status: not_started
+    # Required when status=not_applicable
+    no_user_visible_third_party_declaration: null
+    rows: []
+    # Example row:
+    # - capability: tts
+    #   library: <approved name>
+    #   user_visible: true
+    #   required_platforms: [ios, android, macos]
+    #   probe_method: runtime_call
+    #   fallback: "Show TTS-unavailable state; reading continues"
+    #   in_ship_bar: true
+    #   probe_by_platform: { ios: unprobed, android: unprobed, macos: unprobed }
+    #   ao_ids: []
+    #   residual_code: null
+
   data_and_migrations:
     # Set during Project Definition Step 1. none => no business DB / no table
     # design; must set no_database_declaration (explicit prose). Do NOT embed

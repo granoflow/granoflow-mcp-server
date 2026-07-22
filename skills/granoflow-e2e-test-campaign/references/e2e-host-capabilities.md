@@ -194,6 +194,28 @@ Do **not** mention git, `.gitignore`, or repository hygiene to the user. When
 the workspace is a git repo and `temp/` is not ignored, silently ensure ignore
 (see `e2e-evidence-pack.md`).
 
+## Third-Party User-Visible Capabilities
+
+Load `granoflow-agent-workflow/third-party-capability-matrix` when Project Work
+lists `engineering.third_party_capabilities` rows with `in_ship_bar: true`
+(TTS, push, camera, …).
+
+On each host that maps to a `required_platforms` entry:
+
+1. Run the row’s `probe_method` once (e.g. one TTS utterance / engine ready).
+2. Write `probe_by_platform[<platform>] = available | unavailable`.
+3. Inventory-only or stub doubles are **not** probes.
+
+Before bare `green` or `user_path_claim: full_user_path`, every ship-bar row’s
+required platforms covered by this campaign’s host matrix must be `available`
+or residualled with Closing leftovers. Claiming 全平台 / all-target-platform
+success while any required platform is `unprobed` or `unavailable` fails closed
+as `third_party_capability_overclaim` (also `third_party_capability_unprobed`).
+
+Lint with
+`skills/granoflow-agent-workflow/scripts/lint_third_party_capability_matrix.py`
+(`--require-complete` / `--claim-full-platform` as appropriate).
+
 ## Write-Back
 
 After probing, update:
@@ -204,6 +226,8 @@ After probing, update:
    for lint cross-checks
 3. Project Work `engineering.quality_gates.verification_host_matrix` when the
    campaign first derives it (provenance `recommended` / `inspected_fact`)
+4. Project Work `engineering.third_party_capabilities.probe_by_platform` when
+   third-party rows were probed
 
 Lint campaign state, suite plan, coverage, and host matrix with
 `scripts/lint_e2e_campaign_artifacts.py`.
