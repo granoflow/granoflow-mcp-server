@@ -302,3 +302,10 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
 - `acceptance_outcome_user_path_overclaim`
 - `e2e_campaign_secure_storage_unprobed`
 - `e2e_campaign_secure_storage_unavailable`
+- `third_party_capability_matrix_unloaded`
+- `third_party_capability_matrix_incomplete`
+- `third_party_capability_fallback_missing`
+- `third_party_capability_unprobed`
+- `third_party_capability_overclaim`
+- `third_party_capability_platform_missing`
+- `third_party_capability_ship_bar_excluded`

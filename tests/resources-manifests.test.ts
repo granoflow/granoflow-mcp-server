@@ -169,6 +169,32 @@ describe("resources-manifests agent-workflow extras", () => {
     });
   });
 
+  it("publishes third-party capability matrix and routing refs", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-agent-workflow");
+
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "third-party-capability-matrix",
+      path: "skills/granoflow-agent-workflow/references/third-party-capability-matrix.md",
+    });
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "connection-first",
+      path: "skills/granoflow-agent-workflow/references/connection-first.md",
+    });
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "milestone-and-task-deadlines",
+      path: "skills/granoflow-agent-workflow/references/milestone-and-task-deadlines.md",
+    });
+    await expect(
+      resources.readReference("granoflow-agent-workflow", "third-party-capability-matrix"),
+    ).resolves.toMatchObject({
+      content: expect.stringContaining("Third-Party Capability Matrix"),
+    });
+  });
+
   it("publishes app icon source and prototype implementation fidelity gates", async () => {
     const resources = createBundledSkillResources(new URL("../", import.meta.url));
     const manifest = await resources.listReferences("granoflow-agent-workflow");
