@@ -77,6 +77,10 @@ export const ACCEPTANCE_DELIVERY_SKILL_URL = new URL(
   "../skills/granoflow-acceptance-delivery/SKILL.md",
   import.meta.url,
 );
+export const SKILL_ORCHESTRATOR_SKILL_URL = new URL(
+  "../skills/granoflow-skill-orchestrator/SKILL.md",
+  import.meta.url,
+);
 
 export function compactRecord(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
@@ -180,6 +184,10 @@ export function readE2eTestCampaignSkill(): string {
 
 export function readAcceptanceDeliverySkill(): string {
   return readFileSync(ACCEPTANCE_DELIVERY_SKILL_URL, "utf8");
+}
+
+export function readSkillOrchestratorSkill(): string {
+  return readFileSync(SKILL_ORCHESTRATOR_SKILL_URL, "utf8");
 }
 
 export function isWithin(root: string, target: string): boolean {

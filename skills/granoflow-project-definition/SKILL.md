@@ -1,6 +1,6 @@
 ---
 name: granoflow-project-definition
-description: Initialize or refine a Granoflow software project through three steps—Project Work, Design Baseline with tokens, and App Shell—lock stack-capable visuals under contract fidelity, and hand off to milestone/task skills. Activate with "Initialize this project" / "Define this project" / "初始化这个项目"; not "Initialize Granoflow".
+description: Initialize or refine a Granoflow software project—AI self-checks Project Work, user browse-confirms Engineering Acceptance Pack (folder structure required), user-selects Design Spec/Shell when UI applies—then hand off to milestone/task skills. Activate with "Initialize this project" / "Define this project" / "初始化这个项目"; not "Initialize Granoflow".
 ---
 
 # Granoflow Project Definition
@@ -102,6 +102,10 @@ high-risk feasibility.
    `product.app_icon`, and lint with `lint_app_icon_source_gate.py` before
    confirm / Done (`app_icon_source_*` fail-closed codes in
    `hard-constraints.md`).
+   8c. Before Engineering Acceptance Pack emit / `granoflow_project_work_confirm`,
+   load `granoflow-agent-workflow/engineering-acceptance-pack` and
+   `granoflow-agent-workflow/markdown-html-acceptance-render`. YAML is AI
+   self-checked; the pack is user browse-confirm.
 9. Call `granoflow_agent_preferences_get(projectId)` when preferences exist;
    recommend `agent_preferences` during init (interactive: wait before write).
    Preferences never weaken readiness, quality, authorization, acceptance, or
@@ -137,8 +141,15 @@ auto-accepting Baseline+Shell is not.
 ### Step 1 — Project Work
 
 Intake → stack capability → capability-critical libraries → data persistence →
-design routing → Project Work confirm. Detail:
+directory/module locks → design routing → **AI self-check** → **Engineering
+Acceptance Pack (user browse-confirm)** → Project Work App confirm. Detail:
 [project-definition-interaction.md](references/project-definition-interaction.md).
+Pack contract: `granoflow-agent-workflow/engineering-acceptance-pack`.
+
+**Acceptance division (hard):** Project Work YAML is **AI self-checked** (never
+the user-facing acceptance page). Engineering Acceptance Pack is **user
+browse-and-confirm**. Design Spec / Shell remain **user selection** in Steps
+2–3 when `visual_baseline.applicability: required`.
 
 Actions:
 
@@ -162,29 +173,52 @@ Actions:
 6. Recommend `data_persistence`; if `none`, set `no_database_declaration`.
    Create `data_model` / `json_contracts` (`data-contracts.yaml`) /
    `constants_catalog` (`constants-catalog.yaml`) attachments when required.
-7. Recommend one `design_profile` + `skill_routing` (never a Skills menu).
-8. Use `grill-me` for remaining decision-changing gaps (interactive wait;
+7. Lock **directory structure + modules** (`engineering.directory_structure`
+   with non-empty `roots`; at least one `architecture.modules` row with `id` +
+   `responsibility`). Interactive: recommend → wait; unattended: adopt. Empty
+   roots → `directory_structure_unselected`.
+8. Recommend one `design_profile` + `skill_routing` (never a Skills menu). Set
+   `visual_baseline.applicability` to `required` or `not_applicable` with
+   basis (CLI/library/no UI chrome). Unresolved →
+   `visual_baseline_applicability_unresolved`.
+9. Use `grill-me` for remaining decision-changing gaps (interactive wait;
    unattended explicit-only auto-adopt).
-9. `granoflow_project_work_confirm` only after App content/hash readback **and**
-   interactive user confirm (or unattended Mode Gate adopt). Confirmation does
-   not authorize execute/commit/push/publish/deploy.
+10. **AI self-check** Project Work + companions (`init_ai_self_check`); record
+    `passed` or fail closed `init_ai_self_check_failed`. Do **not** present
+    raw YAML as the user acceptance page.
+11. Emit **Engineering Acceptance Pack** (project from YAML; MD→HTML via
+    `markdown-html-acceptance-render`). Interactive: Preview Gate links →
+    **wait** for browse accept/revise. Unattended: link digest + Mode Gate
+    adopt. Confirm without pack accept →
+    `engineering_acceptance_pack_unconfirmed`.
+12. `granoflow_project_work_confirm` only after pack accepted/adopted **and**
+    App content/hash readback. Confirmation does not authorize
+    execute/commit/push/publish/deploy.
 
 Success criteria:
 
 - `product_spec_coverage.status` is `ready`.
 - `stack_capability_profile` locked; capability libraries or explicit none.
+- `directory_structure.roots` non-empty; modules valid.
+- `init_ai_self_check.status: passed`; Engineering Pack `status: accepted`
+  (or valid unattended adopt).
 - Project Work App-confirmed with hash readback.
 
 Checkpoints:
 
 - Interactive batches wait; unattended never inferred.
 - No HTML baseline before stack capability lock.
+- No `granoflow_project_work_confirm` before Engineering Pack accept.
 
 ### Step 2 — Design Baseline + Design Tokens
 
-Design Spec round first (Mode split in
+**Skip** when `visual_baseline.applicability: not_applicable` (record basis;
+Steps 2–3 and `widgets.yaml` are not required for Done).
+
+When `required`: Design Spec round first (Mode split in
 [project-artifact-workflows.md](references/project-artifact-workflows.md)), then
-tokens for the chosen Spec.
+tokens for the chosen Spec. **User selects** Spec options (interactive triad
+Preview Gate).
 
 Actions:
 
@@ -223,11 +257,14 @@ Checkpoints:
 
 ### Step 3 — App Shell
 
-**From Shell onward, design style converges.** Shell Must **embed the selected
-Design Spec** (tokens + type/spacing roles) and present **product-near**
-portrait/landscape chrome with at least one Spec-styled primary surface—aiming
-for final-product effect under contract fidelity, not grey wireframes. Then
-merge, import, confirm Baseline, extract widgets.
+**Skip** when `visual_baseline.applicability: not_applicable`.
+
+When `required`: **From Shell onward, design style converges.** Shell Must
+**embed the selected Design Spec** (tokens + type/spacing roles) and present
+**product-near** portrait/landscape chrome with at least one Spec-styled
+primary surface—aiming for final-product effect under contract fidelity, not
+grey wireframes. Then merge, import, confirm Baseline, extract widgets.
+**User selects** Shell options (interactive triad Preview Gate).
 
 Actions:
 
@@ -254,7 +291,7 @@ Actions:
 6. After Baseline visual confirmation: first mandatory `widgets.yaml` extract
    (`derived_from` = that confirmed Baseline prototype).
 
-Success criteria:
+Success criteria (when `visual_baseline.applicability: required`):
 
 - Baseline SHA readback; landscape and portrait App Shell present.
 - Shell options consumed selected Spec tokens and were product-near (not
@@ -266,7 +303,7 @@ Success criteria:
 Checkpoints:
 
 - Spec-embedded Shell only; Preview Gate honored.
-- Missing Shell fails Done.
+- When applicability is `required`, Missing Shell fails Done.
 
 ### Done And Handoff
 
@@ -275,18 +312,29 @@ Initialization is Done only when all hold:
 - Project Work complete, current, App-confirmed;
 - `product_spec_coverage.status` is `ready`—else
   `product_spec_coverage_incomplete`;
-- Design Baseline current with exact SHA after mode-appropriate Spec + Shell
-  rounds—else `design_spec_triad_required` / `shell_triad_required` /
-  `shell_spec_mismatch` / seed-collision codes when interactive rules were
-  violated;
-- every Baseline journey/critical screen maps to
-  `product_spec_coverage.screen_coverage`;
-- Baseline includes landscape and portrait App Shell; **Missing Shell fails
-  Done**;
-- `widgets.yaml` written from confirmed Baseline—else `widget_catalog_required`;
-- `design_spec_selection` and `shell_selection` recorded;
+- `init_ai_self_check.status: passed`; Engineering Acceptance Pack accepted
+  (or valid unattended adopt)—else `engineering_acceptance_pack_*` /
+  `init_ai_self_check_failed`;
+- `directory_structure.roots` non-empty with valid modules—else
+  `directory_structure_unselected`;
+- `visual_baseline.applicability` resolved—else
+  `visual_baseline_applicability_unresolved`;
+- When `visual_baseline.applicability: required`:
+  - Design Baseline current with exact SHA after mode-appropriate Spec + Shell
+    rounds—else `design_spec_triad_required` / `shell_triad_required` /
+    `shell_spec_mismatch` / seed-collision codes when interactive rules were
+    violated;
+  - every Baseline journey/critical screen maps to
+    `product_spec_coverage.screen_coverage`;
+  - Baseline includes landscape and portrait App Shell; **Missing Shell fails
+    Done**;
+  - `widgets.yaml` written from confirmed Baseline—else `widget_catalog_required`;
+  - `design_spec_selection` and `shell_selection` recorded;
+- When `visual_baseline.applicability: not_applicable`: Spec / Shell /
+  `widgets.yaml` are not required for Done;
 - `skill_routing` and `stack_capability_profile` locked;
-- contract-fidelity and enhanced-implementation rules recorded;
+- contract-fidelity and enhanced-implementation rules recorded when UI path
+  applies;
 - `data_persistence` is set (`none` ⇒ explicit `no_database_declaration`);
   required data attachments registered with SHA readback;
 - capability-critical third-party libraries are selected in
@@ -318,21 +366,26 @@ milestone/task tree, run task Analysis/Plan Grill, or implement product code.
    Checkpoints:
    - Unattended never inferred from activation phrases alone.
    - Entry modes pace conversation; they are not authorization grants.
-3. Run Step 1 (intake → stack capability → capability-critical libraries →
-   data persistence → design routing → Project Work confirm). Every
-   communication states `recommended_value`, reason, and source. In
-   interactive mode, **ask → recommend → wait** for the user to decide before
-   locking or confirming. In unattended (explicit only), adopt recommendations immediately
-   except real blockers from `unattended-interaction-contract`
+3. Run Step 1 (intake → stack → libraries → data → directory/modules →
+   design routing → `visual_baseline.applicability` → AI self-check →
+   Engineering Acceptance Pack browse-confirm → `granoflow_project_work_confirm`).
+   Every communication states `recommended_value`, reason, and source. In
+   interactive mode, **ask → recommend → wait** for decision batches; pack
+   confirm is **browse accept/revise**, not a YAML read-through. In
+   unattended (explicit only), adopt recommendations immediately except real
+   blockers from `unattended-interaction-contract`
    (`direction_change`, `missing_user_only_input`, `forbidden_action`, etc.).
    Checkpoints:
    - No HTML baseline before stack capability lock.
    - `product_spec_coverage.status: ready` before confirm.
-4. Check `granoflow_product_builder_v1`, then run Steps 2 and 3 (interactive:
+   - Pack accepted/adopted before App confirm; YAML AI-self-checked only.
+4. When `visual_baseline.applicability: required`, check
+   `granoflow_product_builder_v1`, then run Steps 2 and 3 (interactive:
    Design Spec triad with distinct random seeds, then Shell triad fitted to
    the selected Spec; unattended explicit only: one random-seed `spec_match` +
    one Spec-fitted `shell_match`, then `auto_accept_recommendation`). After
-   Baseline confirm, write `widgets.yaml`.
+   Baseline confirm, write `widgets.yaml`. When `not_applicable`, skip Steps
+   2–3 and widgets for Done.
    Checkpoints:
    - Spec/Shell lots via `draw_visual_lots.py`; Preview Gate before pick.
    - Never auto-accept Baseline+Shell in interactive mode.
@@ -373,10 +426,13 @@ Hard constraints (non-exhaustive; full list in
 [hard-constraints.md](references/hard-constraints.md)):
 
 - Mode Gate + Preview Gate always apply.
+- Step 1: AI self-check YAML; user browse-confirms Engineering Acceptance Pack;
+  then App confirm. Spec/Shell are user selection when visual baseline required.
 - Interactive Spec/Shell: mainstream-first ≥5→**promote 3**, then true-random
   lots via `draw_visual_lots.py` (Shell: Spec-fitted chrome deck only).
 - From Shell onward, design style converges (`shell_spec_mismatch`).
-- `widgets.yaml` after Baseline confirm; task reuse + no task random seed.
+- `widgets.yaml` after Baseline confirm when visual baseline required; task
+  reuse + no task random seed.
 - Task interactive: **strict Baseline fit** (locked Spec tokens + Shell chrome
   language) + **confirmed chrome lock** when chrome-family siblings are already
   `visualConfirmed` + mainstream-first candidates → dual page expressions
@@ -402,7 +458,9 @@ tools and their own authorization gates.
 - `executionMode` defaults to interactive; unattended requires an explicit
   user declaration and is never inferred from activation phrases alone.
 - Interactive runs ask each decision batch, include a recommendation, and wait
-  for the user to decide before confirm / Baseline accept.
+  for the user to decide before Engineering Pack accept / Baseline accept.
+  Project Work YAML is AI-self-checked; users browse-confirm the Engineering
+  Acceptance Pack (not a YAML dump).
 - Thin product docs still require `product_spec_coverage.status: ready` before
   Done, including an operation-flow / serial-gate page-count conclusion per
   adopted journey and stress paths per acceptance. Interactive fills by
@@ -413,14 +471,19 @@ tools and their own authorization gates.
 - A partial discussion can produce a useful, hash-read-back Project Work YAML.
 - Every recommendation is explicit; unattended (explicit only) adopts
   recommendations without re-asking, except real blockers.
-- Stack capability is locked before Design Baseline HTML is authored.
-- Every automatic project initialization yields one App-linked Design Baseline
-  that includes Design Tokens references, landscape App Shell, and portrait
-  App Shell, plus one confirmed `skill_routing` profile and `widgets.yaml`.
-- Contract fidelity (not pixel 1:1) is the stated acceptance bar; enhanced
-  implementation notes are present where HTML is schematic.
-- Confirmed baseline is declared the reference for later milestones, task
-  prototypes, and code acceptance.
+- Stack capability is locked before Design Baseline HTML is authored (when
+  visual baseline is required).
+- Directory structure + modules are locked and projected into the Engineering
+  Acceptance Pack before App confirm.
+- When `visual_baseline.applicability: required`, automatic project
+  initialization yields one App-linked Design Baseline that includes Design
+  Tokens references, landscape App Shell, and portrait App Shell, plus one
+  confirmed `skill_routing` profile and `widgets.yaml`. When `not_applicable`,
+  Spec/Shell/widgets are skipped for Done.
+- Contract fidelity (not pixel 1:1) is the stated acceptance bar when UI path
+  applies; enhanced implementation notes are present where HTML is schematic.
+- Confirmed baseline (when required) is declared the reference for later
+  milestones, task prototypes, and code acceptance.
 - Initialization hands off to milestone/task Skills without pretending those
   phases already ran.
 - Manual milestone/task definition checks only real dependencies; automatic

@@ -78,20 +78,27 @@ These App-owned attachments support engineering and verification. They are
 **not** a second product journey/acceptance ledger—that stays in Project Work
 above. Task Work / Delivery hold history and evidence.
 
-| Attachment                         | Purpose                                         | Effect on development                                          |
-| ---------------------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
-| `project_snapshot.yaml`            | Code/module status quo, next step, blockers     | Hard Gate before first software edit (`project_context_*`)     |
-| `project_rules.yaml`               | Durable boundaries, prefs, `interaction_style`  | Same Hard Gate; not product acceptance SoT                     |
-| Design Baseline (App package)      | Project visual/IA authority + token refs        | Definition Done; task prototypes `derivedFrom` exact SHA       |
-| Design Tokens (`token_sources`)    | Color/type/spacing                              | Contract-fidelity basis                                        |
-| `widgets.yaml`                     | Reusable widget **contracts** (not full HTML)   | Mandatory after Baseline confirm; reuse or `widget_*`          |
-| Task/milestone `ui_prototype`      | Task UI authority (clickable HTML package)      | Ready before Readiness; Phase A/B fidelity                     |
-| `data-model.md`                    | Entities/tables when DB applies                 | Update in same task as schema changes or `data_artifact_stale` |
-| `data-contracts.yaml`              | JSON/structured file shapes                     | Same                                                           |
-| `constants-catalog.yaml`           | Shared constants catalog                        | Same                                                           |
-| `workflows.md`                     | Flow diagrams + notes                           | Consistency with data-model / acceptance                       |
-| Task Delivery / acceptance reports | Actual outcomes and evidence                    | Completion path                                                |
-| IT/E2E campaign artifacts          | Suite plans, coverage, evidence packs, closings | Stages 6–7; incomplete hard rows block bare green              |
+| Attachment                         | Purpose                                         | Effect on development                                           |
+| ---------------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
+| `project_snapshot.yaml`            | Code/module status quo, next step, blockers     | Hard Gate before first software edit (`project_context_*`)      |
+| `project_rules.yaml`               | Durable boundaries, prefs, `interaction_style`  | Same Hard Gate; not product acceptance SoT                      |
+| Design Baseline (App package)      | Project visual/IA authority + token refs        | Definition Done when `visual_baseline.applicability: required`  |
+| Design Tokens (`token_sources`)    | Color/type/spacing                              | Contract-fidelity basis                                         |
+| `widgets.yaml`                     | Reusable widget **contracts** (not full HTML)   | Mandatory after Baseline confirm (UI path); reuse or `widget_*` |
+| Task/milestone `ui_prototype`      | Task UI authority (clickable HTML package)      | Ready before Readiness; Phase A/B fidelity                      |
+| `data-model.md`                    | Entities/tables when DB applies                 | Update in same task as schema changes or `data_artifact_stale`  |
+| `data-contracts.yaml`              | JSON/structured file shapes                     | Same                                                            |
+| `constants-catalog.yaml`           | Shared constants catalog                        | Same                                                            |
+| `workflows.md`                     | Flow diagrams + notes                           | Consistency with data-model / acceptance                        |
+| Engineering Acceptance Pack (host) | Step 1 **user browse-confirm** MD→HTML surface  | Blocks `granoflow_project_work_confirm` until accepted/adopted  |
+| Task Delivery / acceptance reports | Actual outcomes and evidence                    | Completion path                                                 |
+| IT/E2E campaign artifacts          | Suite plans, coverage, evidence packs, closings | Stages 6–7; incomplete hard rows block bare green               |
+
+**Acceptance division (Project Definition):** Project Work YAML is **AI
+self-checked** (never the user-facing acceptance page). The Engineering
+Acceptance Pack is **user browse-and-confirm**. Design Spec / Shell HTML are
+**user selection** when `visual_baseline.applicability: required`. See
+`engineering-acceptance-pack.md`.
 
 See also `project-context-attachments.md` and project-definition
 `project-artifact-workflows.md`.
@@ -453,8 +460,12 @@ engineering:
     external_seams: []
     internal_seams: []
 
+  # Software Project Definition: roots Must be non-empty and architecture.modules
+  # Must include at least one row with id + responsibility before AI self-check /
+  # Engineering Acceptance Pack emit. Empty roots => directory_structure_unselected.
+  # Lock skeleton only (roots, ownership, naming)—not every leaf file.
   directory_structure:
-    roots: []
+    roots: [] # [{ path, purpose, owner_module }]
     ownership_rules: []
     naming_rules: []
     generated_paths: []
@@ -630,7 +641,15 @@ engineering:
       safe_choices: []
       deliberate_risks: []
       source_evidence: []
+    # Decide in Step 1 (before Engineering Acceptance Pack). Unresolved =>
+    # visual_baseline_applicability_unresolved. When not_applicable, skip
+    # Spec/Shell/widgets for initialization Done (CLI/library/no UI chrome).
+    visual_baseline:
+      # required | not_applicable
+      applicability: null
+      basis: null
     # After Spec/Shell rounds (see project-artifact-workflows Mode split).
+    # Only when visual_baseline.applicability: required.
     design_spec_selection:
       mode: interactive_triad | unattended_single
       selected_option_id: null # spec_match | ai_challenger_a | ai_challenger_b | null when single
@@ -1278,12 +1297,42 @@ readiness:
   external_capability_readiness: not_run
   recovery_readiness: not_run
 
+# AI-only checklist before Engineering Acceptance Pack emit. Never present
+# raw YAML as the user's acceptance page. Failed/pending blocks pack emit and
+# granoflow_project_work_confirm => init_ai_self_check_failed.
+init_ai_self_check:
+  status: pending # pending | passed | failed
+  checked_at: null
+  findings: []
+
+# Host-local Step 1 browse-confirm pack (temp/engineering-acceptance-…-vN.md).
+# Not an App logical slot in this release. status accepted (or unattended
+# adopt) required before granoflow_project_work_confirm.
+# See engineering-acceptance-pack.md.
+engineering_acceptance_pack:
+  status: absent # absent | draft | pending_acceptance | accepted | superseded | not_applicable
+  path: null
+  version: null
+  content_sha256: null
+  accepted_at: null
+  accepted_by: null # user | unattended_grant
+  html_render:
+    status: null # ready | tools_missing | error | skipped_markdown_only
+    html_path: null
+    html_file_url: null
+    markdown_path: null
+    markdown_file_url: null
+    link_emitted: false
+
 confirmation:
   user_confirmed: false
   confirmed_document_version: null
   confirmed_at: null
   confirmed_by: null
   app_confirmation_metadata_owner: granoflow_app
+  # User-facing confirm for Step 1 is the Engineering Acceptance Pack, not a
+  # YAML read-through. App confirm still records hash metadata here.
+  engineering_pack_accepted_before_app_confirm: true
 
 completion:
   status: not_started
@@ -1339,6 +1388,21 @@ completion:
    `product_spec_coverage.checklist`.
 8. Secret values never enter this document. Authorization and external
    capability rows record disposition and availability references only.
+9. **Engineering Acceptance Pack Hard Gate** (software Project Definition):
+   before `granoflow_project_work_confirm`, `init_ai_self_check.status` must be
+   `passed`, `directory_structure.roots` non-empty with at least one valid
+   `architecture.modules` row, `visual_baseline.applicability` resolved, and
+   `engineering_acceptance_pack.status` `accepted` (interactive) or validly
+   auto-adopted (unattended). Fail closed
+   `init_ai_self_check_failed` /
+   `directory_structure_unselected` /
+   `visual_baseline_applicability_unresolved` /
+   `engineering_acceptance_pack_unconfirmed` /
+   `engineering_acceptance_pack_missing`. YAML is AI-self-checked; the pack is
+   the user browse-confirm surface (`engineering-acceptance-pack.md`).
+10. When `visual_baseline.applicability: not_applicable`, initialization Done
+    does **not** require Design Spec / Shell / `widgets.yaml`. When
+    `required`, Missing Shell still fails Done.
 
 ## Current Capability Boundary
 

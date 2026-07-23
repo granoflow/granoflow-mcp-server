@@ -112,8 +112,10 @@ and review.
 
 ## Widgets
 
-- After Baseline visual confirmation: first mandatory `widgets.yaml` extract
-  (`widget_catalog_required` if missing).
+- After Baseline visual confirmation **when**
+  `visual_baseline.applicability: required`: first mandatory `widgets.yaml`
+  extract (`widget_catalog_required` if missing).
+- When `not_applicable`, widgets are not required for initialization Done.
 - YAML = contract (identity, props, tokens, states, reuse); visuals stay in
   confirmed prototypes.
 - Incremental extract after later confirmed prototypes; one current project
@@ -229,7 +231,20 @@ and review.
   - unattended must not auto-accept decision-changing thin-doc gaps
     (`thin_product_doc_gap_requires_user`).
     Detail: `product-spec-flow-decomposition.md`.
-- Missing Shell fails Done.
-- Stack capability before HTML; capability-critical libraries selected or
-  explicit `no_capability_dependency_declaration`.
+- **Engineering Acceptance Pack** (software Step 1): AI self-check YAML → pack
+  MD→HTML browse-confirm → then `granoflow_project_work_confirm`. Fail closed
+  `engineering_acceptance_pack_unread` /
+  `engineering_acceptance_pack_missing` /
+  `engineering_acceptance_pack_incomplete` /
+  `engineering_acceptance_pack_unconfirmed` /
+  `engineering_acceptance_pack_drift` /
+  `engineering_acceptance_link_digest_required` /
+  `init_ai_self_check_failed` /
+  `directory_structure_unselected` /
+  `visual_baseline_applicability_unresolved`. Detail:
+  `granoflow-agent-workflow/engineering-acceptance-pack`.
+- When `visual_baseline.applicability: required`, Missing Shell fails Done.
+  When `not_applicable`, Spec / Shell / widgets are not required for Done.
+- Stack capability before HTML (UI path); capability-critical libraries
+  selected or explicit `no_capability_dependency_declaration`.
 - Never resolve Baseline `"current"` or `"latest"`.

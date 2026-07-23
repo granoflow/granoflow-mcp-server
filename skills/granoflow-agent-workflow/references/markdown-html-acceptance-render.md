@@ -11,8 +11,9 @@ conversion does **not** consume LLM tokens.
 Load when:
 
 1. Granoflow **initialization / MCP first-run** offers host tools;
-2. emitting or presenting a **milestone Plan acceptance pack** (or any later
-   acceptance Markdown that opts into HTML preview);
+2. emitting or presenting a **milestone Plan acceptance pack**, a **Project
+   Definition Engineering Acceptance Pack**, or any later acceptance Markdown
+   that opts into HTML preview;
 3. rediscovering tools after the user says they installed them.
 
 ```text
@@ -124,17 +125,24 @@ html_render:
    ready) or Markdown (fallback). The accepted artifact identity remains the
    **Markdown** path + content hash (HTML is derivative).
 
-## Plan Acceptance Preview Gate (hard when HTML ready)
+## Plan / Engineering Acceptance Preview Gate (hard when HTML ready)
 
 MCP does not render inside chat. The host **Must** expose a **clickable**
 preview for the user — same bar as Prototype Preview Gate.
 
+Applies to:
+
+- milestone Plan acceptance packs (`milestone-plan-acceptance-pack.md`);
+- Project Definition Engineering Acceptance Packs
+  (`engineering-acceptance-pack.md`) — same link/wait rules; label the block
+  **Engineering Acceptance Link** / 工程验收链接 instead of Plan.
+
 ### Required user-visible block
 
-Emit a short **Plan Acceptance Link** block (localize labels) that includes:
+Emit a short **Plan Acceptance Link** or **Engineering Acceptance Link** block
+(localize labels) that includes:
 
-1. Milestone key / pack version / one-line what to review (copy, schema, flows,
-   UML, test cases — only sections with `present: true`).
+1. Milestone key / project key / pack version / one-line what to review.
 2. **Primary clickable link** when `html_render.status: ready`:
    - absolute `file://…/….html` Markdown link, **and**
    - host open when available (`open_resource` / IDE open / `open` on macOS) so
@@ -184,7 +192,8 @@ Example shape:
 
 When suggesting install, include at least:
 
-1. Why: better Plan acceptance preview (tables, images, Mermaid/UML).
+1. Why: better acceptance preview for Plan packs and Project Definition
+   Engineering Acceptance Packs (tables, images, Mermaid/UML).
 2. Token: Markdown→HTML is a **local CLI** step — **no LLM tokens**.
 3. Minimal commands (adjust per OS; do not claim MCP will run sudo):
 
@@ -200,23 +209,24 @@ Then: re-run the acceptance pack step (or ask the agent to re-probe).
 
 ## Fail-Closed / Soft Codes
 
-| Code                                   | Severity                   | When                                                                                                            |
-| -------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `plan_acceptance_html_link_required`   | **hard** (when HTML ready) | HTML file exists / `status: ready` but no clickable HTML link (or host open) was shown before asking acceptance |
-| `plan_acceptance_link_digest_required` | **hard** (unattended)      | HTML packs authored in the run but closing Plan Acceptance Link Digest omitted                                  |
-| `markdown_html_toolchain_missing`      | soft                       | Tools missing; Markdown acceptance continues (still require clickable `.md` link)                               |
-| `markdown_html_render_failed`          | soft                       | Tools present but convert failed; Markdown acceptance continues                                                 |
-| `markdown_html_render_skipped_so_t`    | n/a                        | Informational: HTML skipped by policy                                                                           |
+| Code                                          | Severity                   | When                                                                                                            |
+| --------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `plan_acceptance_html_link_required`          | **hard** (when HTML ready) | HTML file exists / `status: ready` but no clickable HTML link (or host open) was shown before asking acceptance |
+| `plan_acceptance_link_digest_required`        | **hard** (unattended)      | HTML Plan packs authored in the run but closing Plan Acceptance Link Digest omitted                             |
+| `engineering_acceptance_link_digest_required` | **hard** (unattended)      | HTML Engineering packs authored but closing Engineering Acceptance Link Digest omitted                          |
+| `markdown_html_toolchain_missing`             | soft                       | Tools missing; Markdown acceptance continues (still require clickable `.md` link)                               |
+| `markdown_html_render_failed`                 | soft                       | Tools present but convert failed; Markdown acceptance continues                                                 |
+| `markdown_html_render_skipped_so_t`           | n/a                        | Informational: HTML skipped by policy                                                                           |
 
-Never fail closed Plan acceptance solely because HTML tools are unavailable.
-**Do** fail closed when HTML **was** produced but the user was not given a
-convenient clickable/open path.
+Never fail closed Plan / Engineering pack acceptance solely because HTML tools
+are unavailable. **Do** fail closed when HTML **was** produced but the user was
+not given a convenient clickable/open path.
 
 ## Must Not
 
 - Replace Markdown SoT with HTML-only packs.
 - Claim HTML was shown when only Markdown was presented.
-- Ask for pack acceptance without the Plan Acceptance Link block.
+- Ask for pack acceptance without the Plan / Engineering Acceptance Link block.
 - Spend model tokens “hand-writing” HTML that mirrors the pack when the script
   can run (or when tools are missing — then show Markdown, do not invent a
   second full HTML by LLM).

@@ -2,6 +2,10 @@ node_modules/
 dist/
 coverage/
 docs-temp/
+temp/
+!temp/granoflow-project-definition-design.json
+!temp/acceptance-delivery-design-lock-v1.json
+!temp/pipeline-attachment-reentry-design-lock-v1.json
 .env
 .DS_Store
 npm-debug.log*

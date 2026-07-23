@@ -118,4 +118,13 @@ describe("tools-skill-routing", () => {
       ],
     );
   });
+
+  it("exposes the skill orchestrator skill", async () => {
+    const { handlers } = collectHandlers();
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_skill_orchestrator_skill")?.({})),
+      "skills/granoflow-skill-orchestrator/SKILL.md",
+      ["orchestration-contract", "recommendation-taxonomy"],
+    );
+  });
 });

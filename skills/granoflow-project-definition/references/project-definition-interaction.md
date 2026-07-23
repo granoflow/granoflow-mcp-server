@@ -35,8 +35,9 @@ project`, `定义这个项目`, document completeness, urgency, or the presence 
 ### Interactive mode (default)
 
 For every decision batch that would set or lock a Project Work field, dependency
-row, data-surface declaration, `skill_routing` / design profile, Project Work
-confirm, or Design Baseline + App Shell visual confirmation:
+row, data-surface declaration, `skill_routing` / design profile, directory /
+module locks, Engineering Acceptance Pack accept, or Design Baseline + App Shell
+visual confirmation:
 
 1. **Ask** the decision in plain language (what is being decided and why it
    matters).
@@ -48,8 +49,9 @@ confirm, or Design Baseline + App Shell visual confirmation:
 **Must not** in interactive mode:
 
 - adopt `recommended_value` without an explicit user response to that batch;
-- call `granoflow_project_work_confirm` without the user’s confirm decision for
-  that Project Work content;
+- call `granoflow_project_work_confirm` without **Engineering Acceptance Pack**
+  browse accept (or valid unattended adopt)—do **not** treat a YAML read-
+  through as user acceptance;
 - apply Design Baseline / App Shell `auto_accept_recommendation`;
 - use “safe assumption”, soft preference, or structural-budget defaults as a
   reason to skip the ask → recommend → wait loop.
@@ -340,6 +342,48 @@ YAML attachments. Never leave "probably no DB" implied.
   contract attachments as user-accepted.
 - Unattended (explicit only): adopt and continue.
 
+## Directory Structure And Modules Batch
+
+During Step 1, after stack / libraries / data persistence and before AI
+self-check, recommend a **skeleton** `engineering.directory_structure` and
+`architecture.modules`:
+
+- non-empty `roots` (path + purpose + owner module);
+- ownership / naming rules;
+- keep `forbidden_catch_all_names` (utils/helpers/managers/coordinators)
+  unless the user explicitly grants an exception;
+- at least one module with non-null `id` and `responsibility`.
+
+Do **not** invent every leaf file. Empty roots or no valid module →
+`directory_structure_unselected` (blocks pack emit and App confirm).
+
+Also set `visual_baseline.applicability` to `required` or `not_applicable`
+with basis (align with product type / app-icon Web-CLI-library口径). Unresolved
+→ `visual_baseline_applicability_unresolved`.
+
+- Interactive: ask → recommend → wait.
+- Unattended (explicit only): adopt and continue.
+
+## AI Self-Check And Engineering Acceptance Pack
+
+Before `granoflow_project_work_confirm`:
+
+1. Load `granoflow-agent-workflow/engineering-acceptance-pack` and
+   `markdown-html-acceptance-render`.
+2. Run **AI self-check** only (record `init_ai_self_check`). Never dump full
+   Project Work YAML as the user acceptance page. Fail →
+   `init_ai_self_check_failed`.
+3. Project an Engineering Acceptance Pack from YAML / companions
+   (`temp/engineering-acceptance-<projectKey>-v<n>.md`). Required sections:
+   `frameworks_and_libs`, `directory_structure`, `visual_baseline_plan`.
+4. Interactive: render MD→HTML (preferred), emit Engineering Acceptance Link,
+   **wait** for browse accept / revise. Unattended: links + digest; Mode Gate
+   adopt only.
+5. On accept/adopt, record `engineering_acceptance_pack` fields, then
+   `granoflow_project_work_confirm` with App hash readback.
+
+Confirm without pack accept → `engineering_acceptance_pack_unconfirmed`.
+
 ## Engineering Baseline
 
 For a software project, read the bundled
@@ -362,10 +406,12 @@ status, and real gate commands in Project Work. Never label a recorded policy
 `recorded_pending_enforcement` when the current action cannot write the repo.
 
 When the user has not overridden them, recommend official or mainstream rules
-for lint, format, type/static checks, tests, directory ownership, dependency
-admission, theme tokens, l10n, constants/configuration, error taxonomy,
-observability, security/privacy, accessibility, performance, refactoring,
-build/release, migration, backup, sync, and rollback. Record the exact source
-and keep unresolved defaults blocked when no reliable standard exists. In
+for lint, format, type/static checks, tests, dependency admission, theme
+tokens, l10n, constants/configuration, error taxonomy, observability,
+security/privacy, accessibility, performance, refactoring, build/release,
+migration, backup, sync, and rollback. **Directory ownership** is owned by the
+Directory Structure And Modules Batch above (and projected into the Engineering
+Acceptance Pack)—do not treat it as an optional soft reminder. Record the exact
+source and keep unresolved defaults blocked when no reliable standard exists. In
 interactive mode, include these rule recommendations in a decision batch and
 wait; in unattended mode, adopt them.

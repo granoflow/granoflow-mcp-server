@@ -25,6 +25,7 @@ type FoundationDependencies = {
   readIntegrationTestCampaignSkill: SkillReader;
   readE2eTestCampaignSkill: SkillReader;
   readAcceptanceDeliverySkill: SkillReader;
+  readSkillOrchestratorSkill: SkillReader;
   bundledSkillResources: BundledSkillResources;
   apiTool: (options: ApiRequestOptions) => Promise<ToolResult>;
   getSetupStatus: () => Promise<unknown>;
@@ -108,6 +109,13 @@ export function registerWorkflowSkillTools(
     "skills/granoflow-gfmcp-runner/SKILL.md",
     deps.readGfmcpRunnerSkill,
     "granoflow-gfmcp-runner",
+  );
+  read(
+    "granoflow_skill_orchestrator_skill",
+    "Read the bundled Granoflow Skill Orchestrator skill. Call when auditing or optimizing bundled MCP skills with the skill-polish family: default is a read-only report and human confirmation before any polish/validate apply. Not a product task orchestrator.",
+    "skills/granoflow-skill-orchestrator/SKILL.md",
+    deps.readSkillOrchestratorSkill,
+    "granoflow-skill-orchestrator",
   );
 }
 

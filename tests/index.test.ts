@@ -93,6 +93,7 @@ describe("granoflow MCP server executable", () => {
         ["granoflow_integration_test_campaign_skill", "granoflow-integration-test-campaign"],
         ["granoflow_e2e_test_campaign_skill", "granoflow-e2e-test-campaign"],
         ["granoflow_acceptance_delivery_skill", "granoflow-acceptance-delivery"],
+        ["granoflow_skill_orchestrator_skill", "granoflow-skill-orchestrator"],
       ] as const;
       for (const [toolName, skillId] of skillTools) {
         const skillResult = await client.callTool({ name: toolName, arguments: {} });

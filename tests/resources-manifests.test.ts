@@ -153,6 +153,32 @@ describe("resources-manifests", () => {
 });
 
 describe("resources-manifests agent-workflow extras", () => {
+  it("publishes the engineering acceptance pack contracts", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-agent-workflow");
+
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "engineering-acceptance-pack",
+      path: "skills/granoflow-agent-workflow/references/engineering-acceptance-pack.md",
+    });
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "engineering-acceptance-pack-template",
+      path: "skills/granoflow-agent-workflow/references/engineering-acceptance-pack-template.md",
+    });
+    await expect(
+      resources.readReference("granoflow-agent-workflow", "engineering-acceptance-pack"),
+    ).resolves.toMatchObject({
+      content: expect.stringContaining("Engineering Acceptance Pack"),
+    });
+    await expect(
+      resources.readReference("granoflow-agent-workflow", "engineering-acceptance-pack"),
+    ).resolves.toMatchObject({
+      content: expect.stringContaining("directory_structure_unselected"),
+    });
+  });
+
   it("publishes the confirmed chrome lock contract", async () => {
     const resources = createBundledSkillResources(new URL("../", import.meta.url));
     const manifest = await resources.listReferences("granoflow-agent-workflow");

@@ -11,14 +11,15 @@ Craft Gate And Option Set**. Fail-closed checklist:
 Authority and slots align with the **Companion attachments** table in
 `granoflow-agent-workflow/project-work-document-template`:
 
-| Artifact                                                           | Role                                                              |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| Design Baseline + tokens                                           | Project visual/IA **current** authority                           |
-| `widgets.yaml`                                                     | Reusable widget contracts after Baseline confirm                  |
-| Task/milestone `ui_prototype`                                      | Task-level clickable UI authority (`derivedFrom` Baseline SHA)    |
-| `data-model.md` / `data-contracts.yaml` / `constants-catalog.yaml` | Data/constants current shapes (not embedded in Project Work body) |
-| Project Work                                                       | Product/acceptance **current** truth and admission                |
-| `project_snapshot.yaml` / `project_rules.yaml`                     | Code status quo / durable boundaries—not product SoT              |
+| Artifact                                                           | Role                                                                  |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Design Baseline + tokens                                           | Project visual/IA **current** authority (when applicability required) |
+| `widgets.yaml`                                                     | Reusable widget contracts after Baseline confirm (UI path)            |
+| Task/milestone `ui_prototype`                                      | Task-level clickable UI authority (`derivedFrom` Baseline SHA)        |
+| `data-model.md` / `data-contracts.yaml` / `constants-catalog.yaml` | Data/constants current shapes (not embedded in Project Work body)     |
+| Engineering Acceptance Pack (host MD→HTML)                         | Step 1 **user browse-confirm** surface; YAML is AI self-check only    |
+| Project Work                                                       | Product/acceptance **current** truth and admission                    |
+| `project_snapshot.yaml` / `project_rules.yaml`                     | Code status quo / durable boundaries—not product SoT                  |
 
 Do not invent a parallel product ledger inside Baseline HTML or widgets.yaml.
 
@@ -465,6 +466,10 @@ closing digest includes the craft checklist summary.
 
 ## Project Design Baseline Package
 
+Applies when `visual_baseline.applicability: required`. When
+`not_applicable`, skip Spec / Shell / Baseline package / `widgets.yaml` for
+initialization Done (CLI / library / no UI chrome) and record basis.
+
 The project Design Baseline is not the mutable `ui_prototype` logical slot. It
 is a versioned App-owned Prototype linked to the project and referenced exactly
 from Project Work. It is the authoritative visual/IA reference for later
@@ -479,7 +484,8 @@ A complete initialization package **must** include:
 4. Portrait App Shell (or an explicit responsive Shell that covers both modes
    with documented breakpoints).
 
-Missing App Shell fails Done and fails visual confirmation for initialization.
+When applicability is `required`, Missing App Shell fails Done and fails visual
+confirmation for initialization.
 
 ### Design Spec then Shell (mode-split rounds)
 
@@ -923,8 +929,10 @@ or completion, verify:
   `visual_confirmation`;
 - referenced screen/menu/state ids exist in the baseline or are marked
   planned;
-- App Shell landscape and portrait coverage is present for initialization Done;
-- `widgets.yaml` exists after Baseline confirmation with registry SHA readback;
+- App Shell landscape and portrait coverage is present for initialization Done
+  when `visual_baseline.applicability: required`;
+- `widgets.yaml` exists after Baseline confirmation with registry SHA readback
+  when applicability is `required`;
 - data entities used by workflows exist in `data-model.md`;
 - workflow acceptance and failure paths map to Project Work acceptance ids;
 - implementation evidence does not claim completion beyond confirmed artifacts;
