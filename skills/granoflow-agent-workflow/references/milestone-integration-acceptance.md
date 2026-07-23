@@ -120,19 +120,26 @@ Skipping capture for a material product or harness lesson fails closed as
 `milestone_it_experience_unrecorded` when Delivery/closure claims Layer B done
 with known fix history.
 
-### B. 任务回顾 (after suite green)
+### B. 任务回顾 (after suite green, material learning only)
 
-After the milestone IT suite is green, for each in-scope child that contributed
-IT or was covered by the suite:
+After the milestone IT suite is green, compute `required_task_ids` from
+children that had a material failure, remediation, changed assumption, changed
+method, or reusable cross-task lesson. A child covered by a clean first-pass
+suite is `not_required`; coverage alone never invents a Task Review.
 
-1. Open or create **任务回顾** (Task Review) for that task.
-2. Record: which IT cases covered it, order dependencies (e.g. depended on add
-   before delete), failures/fixes relevant to the task, Experience ids linked.
-3. Use the Task Review workflow (preview/confirm where required)—do not claim
+For each required child:
+
+1. Append the material issue and validated remediation to its Implementation
+   Learning Ledger.
+2. Open, create, or revise **任务回顾** (Task Review) for that task.
+3. Record: which IT cases exposed it, order dependencies, supported cause,
+   failed and successful methods, validation, reuse boundary, and linked
+   Experience ids.
+4. Use the Task Review workflow (preview/confirm where required)—do not claim
    review written from chat alone.
 
 Fail closed `milestone_it_task_review_unrecorded` if Layer B is marked passed
-and in-scope tasks lack this review writeback when IT ran for them.
+and a `required_task_ids` task lacks this review writeback.
 
 ## Co-presentation With Layer A
 

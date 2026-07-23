@@ -235,6 +235,16 @@ describe("resources-manifests agent-workflow extras", () => {
       referenceId: "prototype-implementation-fidelity",
       path: "skills/granoflow-agent-workflow/references/prototype-implementation-fidelity.md",
     });
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "implementation-contract-semantic-replay",
+      path: "skills/granoflow-agent-workflow/references/implementation-contract-semantic-replay.md",
+    });
+    const semanticReplay = await resources.readReference(
+      "granoflow-agent-workflow",
+      "implementation-contract-semantic-replay",
+    );
+    expect(semanticReplay.content.length).toBeGreaterThan(0);
     await expect(
       resources.readReference("granoflow-agent-workflow", "prototype-doc-coverage"),
     ).resolves.toMatchObject({
@@ -339,6 +349,7 @@ describe("resources-manifests campaign and orchestration extras", () => {
     const coordManifest = await resources.listReferences("granoflow-milestone-coordination");
     expect(coordManifest.map((item) => item.referenceId)).toEqual([
       "milestone-collaboration-workflow",
+      "milestone-task-plan-template",
       "milestone-work-document-template",
     ]);
     await expect(
@@ -370,5 +381,50 @@ describe("resources-manifests campaign and orchestration extras", () => {
       skillId: "granoflow-task-orchestrator",
       path: "skills/granoflow-task-orchestrator/references/short-command-contract.md",
     });
+  });
+
+  it("publishes the milestone AI review reference", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-agent-workflow");
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "milestone-ai-review",
+      path: "skills/granoflow-agent-workflow/references/milestone-ai-review.md",
+    });
+    const reference = await resources.readReference(
+      "granoflow-agent-workflow",
+      "milestone-ai-review",
+    );
+    expect(reference.content.length).toBeGreaterThan(0);
+  });
+
+  it("publishes the responsive prototype finalization reference", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-agent-workflow");
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "responsive-prototype-finalization",
+      path: "skills/granoflow-agent-workflow/references/responsive-prototype-finalization.md",
+    });
+    const reference = await resources.readReference(
+      "granoflow-agent-workflow",
+      "responsive-prototype-finalization",
+    );
+    expect(reference.content.length).toBeGreaterThan(0);
+  });
+
+  it("publishes the task analysis finalization reference", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-agent-workflow");
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "task-analysis-finalization",
+      path: "skills/granoflow-agent-workflow/references/task-analysis-finalization.md",
+    });
+    const reference = await resources.readReference(
+      "granoflow-agent-workflow",
+      "task-analysis-finalization",
+    );
+    expect(reference.content.length).toBeGreaterThan(0);
   });
 });

@@ -1,9 +1,19 @@
 # Prototype Implementation Fidelity
 
+## Runtime Semantic Boundary
+
+Rendered and Phase A fidelity remain visual gates. After a runnable UI build,
+load `implementation-contract-semantic-replay` to prove Content Contract
+elements and behavior in the actual App. Screenshot artifacts may be shared,
+but neither gate may infer or copy the other's status.
+
 Single owner for comparing a task's **current implementation design** to its
 confirmed HTML `ui_prototype` **before unit tests**, recording divergences, and
 requiring **task-complete** E2E visual review (screenshot + prototype link +
 three-question decision) for every finalized task-level prototype—no omissions.
+
+`responsive-prototype-finalization` owns the additional runnable-UI,
+pre-Delivery rendered fidelity loop across every required layout family.
 
 Load via MCP:
 
@@ -98,6 +108,15 @@ it and rationale is non-empty. This is **distinct** from E2E Phase B AI loop,
 where `keep` is forbidden until user final acceptance.
 
 Human intervention is **not** required for Phase A, but the declaration **is**.
+
+## Rendered fidelity — runnable UI before Task Delivery
+
+After the UI can be rendered, capture every final Prototype Bundle layout at
+its exact reference viewport and DPR. Require both the Project fidelity
+policy's numeric threshold and AI visual review to pass. Disposition every
+region diff; platform-native exceptions require platform-contract evidence and
+explicit approval. Run `lint_rendered_prototype_fidelity.py`. This gate happens
+before Task Delivery and does not replace Phase B.
 
 When `decision: keep_implementation` and the divergence changes
 **product-visible** truth (behavior, chrome/entry, journeys—not form-factor
@@ -214,7 +233,9 @@ Rules:
   `prototype_task_reviews.inventory_loaded: true` fails closed as
   `e2e_prototype_task_inventory_unloaded`.
 - Phase A `matched` does **not** waive Phase B—still capture, show, and judge.
-- Form-factor / orientation-only gaps → `decision: matched`, never keep.
+- Form-factor / orientation-only differences count as matched only when they
+  follow the accepted responsive mapping and fidelity policy; otherwise revise
+  and recapture.
 - `ai_loop_status: complete` requires every review `ai_pass: true` and
   `decision: matched`. Campaign green / 「项目收尾」 requires AI loop complete
   **and** user final acceptance.

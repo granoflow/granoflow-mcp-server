@@ -47,6 +47,17 @@ deferred_external_work: []
 question_batch_size: 0
 ```
 
+## Milestone Final Grill
+
+For Milestone final acceptance, unattended mode does not skip `grill-me`.
+Process one question at a time: state the question, the AI recommendation, and
+the reason, then auto-adopt that recommendation without waiting. Record
+`grill_me_status: recommendations_auto_adopted`,
+`final_acceptance_status: unattended_auto_adopted`, and
+`accepted_by: unattended_grant`. Never label the result user-accepted. The
+accepted digest must equal the reviewed plan digest, and
+`authorization_effect` remains `none`.
+
 `interaction_budget: 0` counts every user-facing request for confirmation,
 choice, permission, information, or approval. Status notices, evidence reports,
 a Structural Change Forecast, an explicit `project_context_resolution`
@@ -375,3 +386,37 @@ may the run stop with a single blocker notice; still list what could not start.
 A failed test, incomplete draft, unfamiliar code, ordinary implementation
 choice, or preference for reassurance is not external-impossible—retry,
 diagnose, replan, or use the best evidence-backed local option.
+
+## Responsive Prototype Finalization
+
+For UI Project Definition and Task Analysis, unattended mode does not skip the
+platform, option-selection, layout-expansion, or final Bundle checkpoints.
+State each recommendation and its evidence, then auto-adopt it without waiting.
+
+- Record platform and Bundle acceptance as `unattended_auto_adopted`.
+- Record `accepted_by: unattended_grant`; never write `user_confirmed`.
+- Expand the selected primary-layout option to every required layout family.
+- Complete Widget Catalog writeback and App SHA readback before Analysis closes.
+- Preserve `authorization_effect: none`; prototype acceptance never authorizes
+  implementation.
+
+## Task Analysis Product And Technical Finalization
+
+Unattended UI Analysis still runs the complete
+`task-analysis-finalization` sequence:
+
+- review the internal Logic Draft with a logically independent reviewer;
+- state and auto-adopt the Page Definition Brief as
+  `unattended_auto_adopted` / `unattended_grant`;
+- run every Contract Grill axis question-by-question, stating the recommendation
+  and reason before auto-adopting it;
+- bind every option and layout to the same Content Contract digest;
+- produce deterministic DOM, state, screenshot, and interaction evidence for
+  the Contract-to-Prototype Semantic Review;
+- independently review and verify the Analysis Technical Package;
+- present the final layouts and behavior summary, then auto-adopt the
+  recommendation without claiming user acceptance;
+- complete Widget Catalog writeback and App SHA readback before Analysis
+  closes.
+
+Every acceptance record keeps `authorization_effect: none`.

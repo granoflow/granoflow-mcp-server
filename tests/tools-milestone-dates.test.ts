@@ -9,7 +9,7 @@ import {
 installToolTestLifecycle();
 
 describe("tools-milestone-dates", () => {
-  it("defaults an omitted milestone deadline to the next local Saturday", async () => {
+  it("defaults the first omitted milestone deadline to today", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 6, 16, 12));
     const port = await startServer((request, response) => {
@@ -32,13 +32,13 @@ describe("tools-milestone-dates", () => {
       data: {
         body: {
           projectId: "project-1",
-          dueAt: "2026-07-18T23:59:59.000",
+          dueAt: "2026-07-16T23:59:59.000",
         },
       },
     });
   });
 
-  it("uses the following Saturday when a milestone is created on Saturday", async () => {
+  it("uses the same day when the first milestone is created on Saturday", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 6, 18, 12));
     const port = await startServer((_request, response) => {
@@ -55,7 +55,7 @@ describe("tools-milestone-dates", () => {
     });
 
     expect(parseToolText(result)).toMatchObject({
-      data: { body: { dueAt: "2026-07-25T23:59:59.000" } },
+      data: { body: { dueAt: "2026-07-18T23:59:59.000" } },
     });
   });
 

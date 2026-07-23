@@ -4,6 +4,8 @@ import {
   startServer,
   parseToolText,
   collectHandlers,
+  startTaskReadbackServer,
+  taskDescriptionImpactReview,
 } from "./tools-test-harness.js";
 
 installToolTestLifecycle();
@@ -69,11 +71,13 @@ describe("tools-task-lifecycle", () => {
   });
 
   it("previews structured task reminder updates through the Local HTTP API", async () => {
+    await startTaskReadbackServer();
     const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_update_structured")?.({
       taskId: "task-1",
       remindAt: "2026-07-05T10:10:00.000",
+      descriptionImpactReview: taskDescriptionImpactReview("operational_only"),
       dryRun: true,
     });
 
@@ -90,11 +94,13 @@ describe("tools-task-lifecycle", () => {
   });
 
   it("preserves status doing for human focus without sending startedAt", async () => {
+    await startTaskReadbackServer();
     const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_update_structured")?.({
       taskId: "task-1",
       status: "doing",
+      descriptionImpactReview: taskDescriptionImpactReview("operational_only"),
       dryRun: true,
     });
 

@@ -55,10 +55,13 @@ Prefer:
 
 ```text
 python3 skills/granoflow-agent-workflow/scripts/lint_task_screen_portfolio.py \
-  <milestone-work.json> --skeleton <skeleton.json> --phase plan_passed
+  <milestone-work.json> --skeleton <skeleton.json> \
+  --project-work <project-work.json> --phase plan_passed
 ```
 
-before starting the create loop (`ok: true` required).
+before starting the create loop (`ok: true` required). Carry-forward of every
+in-scope Project Work `ui_details` row is required when `--project-work` is
+supplied.
 
 ## create_one Protocol
 

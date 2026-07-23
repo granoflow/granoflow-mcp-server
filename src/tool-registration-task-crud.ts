@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { CapabilityRegistrar } from "./tool-registration-evidence.js";
+import { registerTaskHistoryMutationTool } from "./tool-registration-task-history.js";
 import type { ToolRegistrationContext, ToolRegistrar } from "./tools.js";
 type RegistrationSchemas = {
   resourceIdSchema: z.ZodTypeAny;
@@ -117,78 +118,6 @@ function registerGranoflowTaskImportTool(
   );
 }
 
-function registerGranoflowTaskHistoryMutateTool(
-  registerTool: ToolRegistrar,
-  registerCapabilityTool: CapabilityRegistrar,
-  context: ToolRegistrationContext,
-  _schemas: RegistrationSchemas,
-): void {
-  const {
-    historicalTaskMutationSchema,
-    jsonTextResult,
-    mutateTaskHistory,
-    isObject,
-    validateTaskAuthoringQuality,
-  } = context;
-  registerTool(
-    "granoflow_task_history_mutate",
-    "Write evidence-based task timestamps and historical Granoflow facts through the dedicated AI-agent API. AI execution may update startedAt while the task remains pending so it never claims the human doing focus slot; node-managed completion may correct startedAt/endedAt after status=done. Every create mutation requires shared AI/automation authoringEvidence for an action/outcome title, plain language, a real analogy, and a concrete example. Use dryRun first; when dryRun=false, the running app must advertise historical_task_mutations_v1.",
-    {
-      source: z
-        .record(z.string(), z.unknown())
-        .optional()
-        .describe("Source metadata such as {kind, threadId, summary, startedAt, endedAt}."),
-      mutations: z.array(historicalTaskMutationSchema).max(20),
-      dryRun: z
-        .boolean()
-        .default(true)
-        .describe(
-          "When true, previews without writing. Set false only with explicit user approval.",
-        ),
-    },
-    async ({ source, mutations, dryRun }) => {
-      const typedMutations = Array.isArray(mutations)
-        ? (mutations as z.infer<typeof historicalTaskMutationSchema>[])
-        : [];
-      const preparedMutations = [];
-      for (const [mutationIndex, mutation] of typedMutations.entries()) {
-        const { authoringEvidence, ...mutationForApi } = mutation;
-        if (mutation.op === "create") {
-          const fields = isObject(mutation.fields) ? mutation.fields : {};
-          const issues = validateTaskAuthoringQuality(
-            fields.title,
-            fields.description,
-            authoringEvidence,
-          );
-          if (issues.length > 0) {
-            return jsonTextResult({
-              ok: false,
-              code: "task_authoring_quality_failed",
-              data: {
-                mutationIndex,
-                clientMutationId: mutation.clientMutationId,
-                issues,
-              },
-              error: {
-                message:
-                  "Historical create mutations require the shared task authoring quality evidence.",
-              },
-            });
-          }
-        }
-        preparedMutations.push(mutationForApi);
-      }
-      return jsonTextResult(
-        await mutateTaskHistory({
-          source: isObject(source) ? source : undefined,
-          mutations: preparedMutations,
-          dryRun: dryRun !== false,
-        }),
-      );
-    },
-  );
-}
-
 function registerGranoflowTaskCreateTool(
   registerTool: ToolRegistrar,
   registerCapabilityTool: CapabilityRegistrar,
@@ -205,7 +134,7 @@ function registerGranoflowTaskCreateTool(
   } = context;
   registerTool(
     "granoflow_task_create",
-    "Create a current Granoflow task from a JSON payload in pending state. Do not include createdAt, updatedAt, startedAt, endedAt, or deletedAt. AI execution keeps the task pending until its completion owner changes it to done and records its actual start through granoflow_task_history_mutate; status=doing is reserved for human focus. AI and automation callers must include input.authoringEvidence proving an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. Tags not in the local catalog are skipped automatically. Optional completionSource attaches AI/人工 source tags for completed-work capture.",
+    "Create a current Granoflow task from a JSON payload in pending state. Do not include createdAt, updatedAt, startedAt, endedAt, or deletedAt. AI execution keeps the task pending until its completion owner changes it to done and records its actual start through granoflow_task_history_mutate; status=doing is reserved for human focus. AI and automation callers must include input.authoringEvidence proving an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. A milestone-bound task without dueAt inherits the selected milestone deadline. Tags not in the local catalog are skipped automatically. Optional completionSource attaches AI/人工 source tags for completed-work capture.",
     {
       input: jsonInputSchema,
       dryRun: z
@@ -257,7 +186,7 @@ function registerGranoflowTaskCreateStructuredTool(
   } = context;
   registerTool(
     "granoflow_task_create_structured",
-    "Create a current Granoflow task in pending state with common structured fields. Ordinary creation never accepts startedAt or other historical physical fields. AI execution stays pending until verified completion, records its actual start through granoflow_task_history_mutate, and never claims the human doing focus slot. AI and automation callers must provide authoringEvidence for an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. For a milestone-bound task, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Tags not in the local catalog are skipped automatically. Defaults to dry-run.",
+    "Create a current Granoflow task in pending state with common structured fields. Ordinary creation never accepts startedAt or other historical physical fields. AI execution stays pending until verified completion, records its actual start through granoflow_task_history_mutate, and never claims the human doing focus slot. AI and automation callers must provide authoringEvidence for an action/outcome title, plain-language review, and exact real-analogy and concrete-example excerpts. Invalid evidence returns task_authoring_quality_failed before any task write. A milestone-bound task without dueAt inherits the selected milestone deadline; an explicit later date fails closed. Tags not in the local catalog are skipped automatically. Defaults to dry-run.",
     {
       title: z.string().min(1),
       description: z.string().optional(),
@@ -265,7 +194,7 @@ function registerGranoflowTaskCreateStructuredTool(
         .string()
         .optional()
         .describe(
-          "Task deadline. When milestoneId is supplied, choose from context, usually today, tomorrow, or the milestone deadline, and never silently place it after the milestone deadline.",
+          "Explicit task deadline. When milestoneId is supplied and this is omitted, the task inherits the selected milestone deadline. A later explicit date fails closed.",
         ),
       remindAt: z.string().optional(),
       projectId: z.string().min(1).optional(),
@@ -342,6 +271,8 @@ function registerGranoflowTaskUpdateTool(
     },
     async ({ taskId, input, dryRun }) => {
       const record = isObject(input) ? { ...input } : {};
+      const descriptionImpactReview = record.descriptionImpactReview;
+      delete record.descriptionImpactReview;
       const writeFailure = ordinaryTaskWriteFailure(record, "update");
       if (writeFailure) return writeFailure;
       return apiToolForTaskWrite(
@@ -351,6 +282,12 @@ function registerGranoflowTaskUpdateTool(
           dryRun: dryRun !== false,
         },
         record,
+        undefined,
+        {
+          taskId: String(taskId),
+          review: descriptionImpactReview,
+          operation: "update",
+        },
       );
     },
   );
@@ -362,10 +299,15 @@ function registerGranoflowTaskUpdateStructuredTool(
   context: ToolRegistrationContext,
   _schemas: RegistrationSchemas,
 ): void {
-  const { compactRecord, resourceStatusSchema, apiTool } = context;
+  const {
+    compactRecord,
+    resourceStatusSchema,
+    descriptionImpactReviewSchema,
+    apiToolForTaskWrite,
+  } = context;
   registerTool(
     "granoflow_task_update_structured",
-    "Update a current Granoflow task with common structured fields. AI execution never sets status=doing: it remains pending until verified completion and writes actual execution time through granoflow_task_history_mutate. status=doing is for human manual focus and keeps the App-recorded start behavior. When moving it into a milestone, choose dueAt from context, usually today, tomorrow, or the milestone deadline. Defaults to dry-run.",
+    "Update a current Granoflow task with common structured fields. AI execution never sets status=doing: it remains pending until verified completion and writes actual execution time through granoflow_task_history_mutate. status=doing is for human manual focus and keeps the App-recorded start behavior. When moving it into a milestone without dueAt, inherit the milestone deadline; a later explicit date fails closed. Defaults to dry-run.",
     {
       taskId: z.string().min(1).describe("Granoflow task id."),
       title: z.string().min(1).optional(),
@@ -375,13 +317,14 @@ function registerGranoflowTaskUpdateStructuredTool(
         .string()
         .optional()
         .describe(
-          "Task deadline. When milestoneId is supplied, choose from context, usually today, tomorrow, or the milestone deadline, and never silently place it after the milestone deadline.",
+          "Explicit task deadline. When milestoneId is supplied and this is omitted, the task inherits the selected milestone deadline. A later explicit date fails closed.",
         ),
       remindAt: z.string().optional(),
       projectId: z.string().min(1).optional(),
       milestoneId: z.string().min(1).optional(),
       status: resourceStatusSchema,
       expectedUpdatedAt: z.string().datetime().optional(),
+      descriptionImpactReview: descriptionImpactReviewSchema,
       dryRun: z
         .boolean()
         .default(true)
@@ -398,12 +341,16 @@ function registerGranoflowTaskUpdateStructuredTool(
       milestoneId,
       status,
       expectedUpdatedAt,
+      descriptionImpactReview,
       dryRun,
     }) =>
-      apiTool({
-        method: "PATCH",
-        path: `/v1/tasks/${String(taskId)}`,
-        body: compactRecord({
+      apiToolForTaskWrite(
+        {
+          method: "PATCH",
+          path: `/v1/tasks/${String(taskId)}`,
+          dryRun: dryRun !== false,
+        },
+        compactRecord({
           title,
           description,
           taskReview,
@@ -414,8 +361,13 @@ function registerGranoflowTaskUpdateStructuredTool(
           status,
           expectedUpdatedAt,
         }),
-        dryRun: dryRun !== false,
-      }),
+        undefined,
+        {
+          taskId: String(taskId),
+          review: descriptionImpactReview,
+          operation: "update",
+        },
+      ),
   );
 }
 
@@ -425,8 +377,14 @@ function registerGranoflowTaskReviewUpdateTool(
   context: ToolRegistrationContext,
   _schemas: RegistrationSchemas,
 ): void {
-  const { TASK_REVIEW_START, TASK_REVIEW_END, apiTool, jsonTextResult, validateManagedBlock } =
-    context;
+  const {
+    TASK_REVIEW_START,
+    TASK_REVIEW_END,
+    apiToolForTaskWrite,
+    descriptionImpactReviewSchema,
+    jsonTextResult,
+    validateManagedBlock,
+  } = context;
   registerTool(
     "granoflow_task_review_update",
     "Safely write a confirmed structured Task Review to any task, including completed inbox tasks, using the latest task revision. Review cards and context promotion remain separate controlled steps.",
@@ -434,9 +392,10 @@ function registerGranoflowTaskReviewUpdateTool(
       taskId: z.string().min(1),
       taskReview: z.string().min(1),
       expectedUpdatedAt: z.string().datetime(),
+      descriptionImpactReview: descriptionImpactReviewSchema,
       dryRun: z.boolean().default(true),
     },
-    async ({ taskId, taskReview, expectedUpdatedAt, dryRun }) => {
+    async ({ taskId, taskReview, expectedUpdatedAt, descriptionImpactReview, dryRun }) => {
       const review = String(taskReview);
       const markers = validateManagedBlock(review, TASK_REVIEW_START, TASK_REVIEW_END);
       const revisionPresent = /\breview_revision:\s*[1-9]\d*\b/.test(review);
@@ -458,12 +417,20 @@ function registerGranoflowTaskReviewUpdateTool(
           },
         });
       }
-      return apiTool({
-        method: "PATCH",
-        path: `/v1/tasks/${String(taskId)}`,
-        body: { taskReview: review, expectedUpdatedAt },
-        dryRun: dryRun !== false,
-      });
+      return apiToolForTaskWrite(
+        {
+          method: "PATCH",
+          path: `/v1/tasks/${String(taskId)}`,
+          dryRun: dryRun !== false,
+        },
+        { taskReview: review, expectedUpdatedAt },
+        undefined,
+        {
+          taskId: String(taskId),
+          review: descriptionImpactReview,
+          operation: "review",
+        },
+      );
     },
   );
 }
@@ -477,7 +444,8 @@ function registerGranoflowTaskCompletionSummaryUpdateTool(
   const {
     TASK_COMPLETION_SUMMARY_START,
     TASK_COMPLETION_SUMMARY_END,
-    apiTool,
+    apiToolForTaskWrite,
+    descriptionImpactReviewSchema,
     jsonTextResult,
     validateManagedBlock,
   } = context;
@@ -488,9 +456,10 @@ function registerGranoflowTaskCompletionSummaryUpdateTool(
       taskId: z.string().min(1),
       description: z.string().min(1),
       expectedUpdatedAt: z.string().datetime(),
+      descriptionImpactReview: descriptionImpactReviewSchema,
       dryRun: z.boolean().default(true),
     },
-    async ({ taskId, description, expectedUpdatedAt, dryRun }) => {
+    async ({ taskId, description, expectedUpdatedAt, descriptionImpactReview, dryRun }) => {
       const nextDescription = String(description);
       const markers = validateManagedBlock(
         nextDescription,
@@ -505,42 +474,25 @@ function registerGranoflowTaskCompletionSummaryUpdateTool(
           error: { message: "Task Completion Summary markers are not safe to update." },
         });
       }
-      return apiTool({
-        method: "PATCH",
-        path: `/v1/tasks/${String(taskId)}`,
-        body: { description: nextDescription, expectedUpdatedAt },
-        dryRun: dryRun !== false,
-      });
-    },
-  );
-}
-
-function registerGranoflowTaskCompleteTool(
-  registerTool: ToolRegistrar,
-  registerCapabilityTool: CapabilityRegistrar,
-  context: ToolRegistrationContext,
-  _schemas: RegistrationSchemas,
-): void {
-  const { jsonInputSchema, completeNodeLessTask, jsonTextResult, isObject } = context;
-  registerTool(
-    "granoflow_task_complete",
-    "Low-level node-less compatibility endpoint. Never call it for a task with Work Document nodes; NodeService owns completion for node-backed tasks.",
-    {
-      taskId: z.string().min(1).describe("Granoflow task id."),
-      input: jsonInputSchema.optional(),
-      dryRun: z
-        .boolean()
-        .default(true)
-        .describe("When true, previews the request without writing."),
-    },
-    async ({ taskId, input, dryRun }) =>
-      jsonTextResult(
-        await completeNodeLessTask({
-          taskId: String(taskId),
-          body: isObject(input) ? input : undefined,
+      return apiToolForTaskWrite(
+        {
+          method: "PATCH",
+          path: `/v1/tasks/${String(taskId)}`,
           dryRun: dryRun !== false,
-        }),
-      ),
+        },
+        { description: nextDescription, expectedUpdatedAt },
+        undefined,
+        {
+          taskId: String(taskId),
+          review: descriptionImpactReview,
+          operation: "completion_summary",
+          managedBlockMarkers: {
+            start: TASK_COMPLETION_SUMMARY_START,
+            end: TASK_COMPLETION_SUMMARY_END,
+          },
+        },
+      );
+    },
   );
 }
 
@@ -556,7 +508,7 @@ export function registerTaskCrudTools(
   registerGranoflowTaskExportTool(registerTool, registerCapabilityTool, context, schemas);
   registerGranoflowTaskValidateTool(registerTool, registerCapabilityTool, context, schemas);
   registerGranoflowTaskImportTool(registerTool, registerCapabilityTool, context, schemas);
-  registerGranoflowTaskHistoryMutateTool(registerTool, registerCapabilityTool, context, schemas);
+  registerTaskHistoryMutationTool(registerTool, context);
   registerGranoflowTaskCreateTool(registerTool, registerCapabilityTool, context, schemas);
   registerGranoflowTaskCreateStructuredTool(registerTool, registerCapabilityTool, context, schemas);
   registerGranoflowTaskUpdateTool(registerTool, registerCapabilityTool, context, schemas);
@@ -568,5 +520,4 @@ export function registerTaskCrudTools(
     context,
     schemas,
   );
-  registerGranoflowTaskCompleteTool(registerTool, registerCapabilityTool, context, schemas);
 }

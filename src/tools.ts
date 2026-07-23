@@ -27,6 +27,11 @@ import { registerTaskCrudTools } from "./tool-registration-task-crud.js";
 import { registerAttachmentTools } from "./tool-registration-attachments.js";
 import { registerPrototypeTools } from "./tool-registration-prototypes.js";
 import { registerTaskNodeTools } from "./tool-registration-task-nodes.js";
+import {
+  descriptionImpactReviewSchema,
+  historicalTaskMutationSchema,
+  taskAuthoringEvidenceInputSchema,
+} from "./tool-schemas-task-description.js";
 import { registerProjectMilestoneTools } from "./tool-registration-project-milestone.js";
 import { registerUtilityTools } from "./tool-registration-utility.js";
 import { registerAgentPreferenceTools } from "./tool-registration-agent-preferences.js";
@@ -192,20 +197,7 @@ const completionSourceSchema = z
   .describe(
     "When ai or human, attach the matching AI/人工 source tag after ensuring it exists. Omit or unknown means no source tag.",
   );
-const taskAuthoringEvidenceInputSchema = z
-  .record(z.string(), z.unknown())
-  .optional()
-  .describe(
-    "Required for AI or automation task creation: declare an action/outcome title, plain-language review, and exact analogy/example excerpts from the description.",
-  );
-export const historicalTaskMutationSchema = z.object({
-  clientMutationId: z.string().min(1),
-  op: z.enum(["create", "update", "softDelete"]),
-  taskId: z.string().min(1).optional(),
-  fields: z.record(z.string(), z.unknown()).optional(),
-  authoringEvidence: taskAuthoringEvidenceInputSchema,
-  reason: z.string().min(1).optional(),
-});
+export { historicalTaskMutationSchema } from "./tool-schemas-task-description.js";
 const memoryBatchItemSchema = z.object({
   clientItemId: z.string().min(1).optional(),
   kind: z
@@ -338,6 +330,7 @@ export type ToolRegistrationContext = {
   historicalTaskMutationSchema: typeof historicalTaskMutationSchema;
   completionSourceSchema: typeof completionSourceSchema;
   taskAuthoringEvidenceInputSchema: typeof taskAuthoringEvidenceInputSchema;
+  descriptionImpactReviewSchema: typeof descriptionImpactReviewSchema;
   resourceStatusSchema: typeof resourceStatusSchema;
   logicalAttachmentEntityTypeSchema: typeof logicalAttachmentEntityTypeSchema;
   logicalAttachmentSlotSchema: typeof logicalAttachmentSlotSchema;
@@ -417,6 +410,7 @@ export function createToolRegistrationContext(): ToolRegistrationContext {
     historicalTaskMutationSchema,
     completionSourceSchema,
     taskAuthoringEvidenceInputSchema,
+    descriptionImpactReviewSchema,
     resourceStatusSchema,
     logicalAttachmentEntityTypeSchema,
     logicalAttachmentSlotSchema,

@@ -43,6 +43,89 @@ prototype_input_status: not_applicable | awaiting_reference | awaiting_visual_co
 
 prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":"<id>","prototype_id":"<id>","version_id":"<id>","version_ordinal":1,"package_attachment_id":"<id>","package_sha256":"<64 lowercase hex>","visually_confirmed":true,"derived_from_prototype_id":"<baseline id|null>","derived_from_version_id":"<id|null>","derived_from_package_sha256":"<64 hex|null>","intended_use":"<purpose>"}]
 
+analysis_logic_draft:
+schema: granoflow_analysis_logic_draft_v1
+task_id: null
+system_type: existing | greenfield
+source_refs: []
+existing_system_evidence: []
+greenfield_basis: null
+domain_entities: []
+data_disposition: not_applicable | unchanged | extend | breaking
+data_disposition_basis: null
+workflows: []
+state_model: []
+permissions: []
+platform_constraints: []
+feasibility_findings: []
+open_blockers: []
+review:
+author_id: null
+reviewer_id: null
+status: pending
+evidence_refs: []
+reviewed_draft_sha256: null
+status: pending | prototype_ready
+draft_sha256: null
+
+screen_content_contract:
+schema: granoflow_screen_content_contract_v1
+task_id: null
+logic_draft_sha256: null
+requirement_refs: []
+acceptance_refs: []
+screens: []
+cross_screen_checks:
+data: false
+states: false
+navigation: false
+permissions: false
+out_of_scope: []
+page_definition_brief_ref: null
+page_definition_brief_sha256: null
+confirmation_status: pending | user_confirmed | unattended_auto_adopted
+accepted_by: null | user | unattended_grant
+authorization_effect: none
+content_contract_sha256: null
+
+requirement_contract_traceability:
+schema: granoflow_requirement_contract_traceability_v1
+content_contract_sha256: null
+rows: []
+review:
+author_id: null
+reviewer_id: null
+status: pending
+evidence_refs: []
+reviewed_traceability_sha256: null
+status: pending | passed
+traceability_sha256: null
+
+contract_grill:
+schema: granoflow_contract_grill_v1
+content_contract_sha256: null
+traceability_sha256: null
+mode: interactive | unattended
+questions: []
+coverage_axes:
+requirements: false
+fields: false
+actions: false
+states: false
+navigation: false
+permissions: false
+data_sources: false
+open_blockers: []
+authorization_effect: none
+status: pending | passed
+grill_sha256: null
+
+platform_contract:
+matrix_sha256: null
+primary_layout_family: null
+required_layout_family_ids: []
+source_project_work_sha256: null
+
 # Interactive: mainstream-reference-first candidate pool (≥5; brainstorm
 
 # backfill only when mainstream < 5), then promote dual page expressions
@@ -66,7 +149,9 @@ prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":
 # scripts/lint_prototype_expression_brainstorm.py
 
 prototype_option_set:
-mode: interactive_dual | interactive_dual_plus_industry_third | unattended_single
+mode: interactive_adaptive | unattended_single
+option_count_decision: two | three
+option_count_reason_code: null # three_viable_patterns | cross_form_factor_tradeoff | high_risk_interaction_choice
 design_system_locked: null # confirmed Spec/Baseline option id (required when dual)
 expression_brainstorm: null # { status, layer, source_strategy: mainstream_first, scope_mode: same_category|capability_match, scope_mode_rationale, mainstream_references[], brainstorm_backfill[], brainstorm_backfill_reason, candidate_count, promote_count, candidates[], selected, selection_rationale, parity_check, loaded_reference_sha256 }
 options: [] # [{ id: expr_a|expr_b|industry_peer_c, contrast_axes: [], rationale: null|string }]
@@ -84,6 +169,115 @@ expression_brainstorm_ok: false # must be true before dual visualConfirmed; lint
 baseline_fit_ok: false # must be true before visualConfirmed; see prototype-baseline-fit.md
 confirmed_chrome_lock_ok: false # true|not_applicable; see prototype-confirmed-chrome-lock.md when siblings are visualConfirmed
 craft_status: incomplete | ready # incomplete => task_prototype_craft_incomplete
+
+responsive_prototype_bundle:
+schema: granoflow_responsive_prototype_bundle_v2
+analysis_logic_draft_sha256: null
+screen_content_contract_sha256: null
+platform_matrix_sha256: null
+baseline_package_sha256: null
+widget_catalog_input_sha256: null
+primary_layout_family: null
+option_count_decision: two
+option_count_reason_code: null
+selection_round:
+layout_family_id: null
+options: []
+selected_option_id: null
+variants: []
+cross_layout_checks:
+functional: false
+data: false
+states: false
+navigation: false
+widgets: false
+cross_layout_consistency_status: pending
+widget_promotion_ref: null
+final_acceptance_status: pending
+accepted_by: null
+authorization_effect: none
+bundle_sha256: null
+
+contract_prototype_semantic_review:
+schema: granoflow_contract_prototype_semantic_review_v1
+content_contract_sha256: null
+traceability_sha256: null
+prototype_bundle_sha256: null
+required_layout_family_ids: []
+rows: []
+deterministic_browser: { status: pending, evidence_refs: [] }
+open_blockers: []
+ai_semantic_review:
+reviewer_id: null
+status: pending
+evidence_refs: []
+reviewed_semantic_sha256: null
+visual_quality_review:
+provider: null
+mode: review_only
+mutation_authorization: none
+status: pending
+evidence_refs: []
+final_verifier:
+verifier_id: null
+status: pending
+evidence_refs: []
+verified_semantic_sha256: null
+authorization_effect: none
+status: pending | passed
+semantic_review_sha256: null
+
+analysis_technical_package:
+schema: granoflow_analysis_technical_package_v1
+logic_draft_sha256: null
+content_contract_sha256: null
+platform_matrix_sha256: null
+prototype_bundle_sha256: null
+contract_prototype_semantic_review_sha256: null
+logical_data_model: []
+schema_impact: { disposition: null, summary: null, existing_schema_refs: [] }
+operation_flows: []
+state_model: []
+permission_model: []
+ui_data_bindings: []
+platform_behavior: []
+technical_risks: []
+reconciliation: { status: pending, rows: [] }
+behavior_summary_ref: null
+behavior_summary_sha256: null
+review:
+author_id: null
+reviewer_id: null
+status: pending
+evidence_refs: []
+reviewed_technical_package_sha256: null
+final_verifier:
+verifier_id: null
+status: pending
+evidence_refs: []
+verified_technical_package_sha256: null
+final_acceptance_status: pending | user_confirmed | unattended_auto_adopted
+accepted_by: null | user | unattended_grant
+authorization_effect: none
+status: pending | passed
+technical_package_sha256: null
+
+widget_promotion:
+schema: granoflow_widget_promotion_v1
+source_prototype_bundle_sha256: null
+catalog_before_sha256: null
+decisions: []
+catalog_after_sha256: null
+app_readback_sha256: null
+baseline_reopened: false
+status: pending
+
+rendered_prototype_fidelity:
+schema: granoflow_rendered_prototype_fidelity_v1
+prototype_bundle_sha256: null
+status: pending
+authorization_effect: none
+rows: []
 
 # When chrome_lock.status=applicable, list confirmed sibling package SHAs.
 
@@ -152,7 +346,7 @@ prototype_widget_reuse: null | { schema, contract_loaded, catalog_sha256, status
 
 # Plan-time prototype vs Task Work truth. Lint: --kind plan_truth
 
-prototype_plan_truth: null | { schema, contract_loaded, prototype_is_source_of_truth: true, status: not_applicable|aligned|conflict, conflicts: [], user_notified, user_resolution, task_work_updated, project_work_updated }
+prototype_plan_truth: null | { schema, contract_loaded, prototype_is_source_of_truth: true, screen_content_contract_sha256: null|"<64 hex>", status: not_applicable|aligned|conflict, conflicts: [], user_notified, user_resolution, task_work_updated, project_work_updated }
 
 # Prototype Implementation Fidelity (UI tasks). Phase A BEFORE unit tests.
 
@@ -163,6 +357,12 @@ prototype_plan_truth: null | { schema, contract_loaded, prototype_is_source_of_t
 # Lint: scripts/lint_prototype_implementation_fidelity.py
 
 prototype_impl_compare: null | { status: not_applicable|matched|diverged, method: code_review_guess, declaration_emitted: true|false, questions: {ux_better, visual_better, tech_stack_blocked}, decision: keep_implementation|revise_to_prototype|not_applicable, decision_rationale: string, diffs: [] }
+
+# Runtime semantic proof for runnable UI tasks. Full protocol remains in
+
+# implementation-contract-semantic-replay.md.
+
+implementation_contract_semantic_replay: null | { applicability: required|not_applicable, replay_sha256: null|"<64 hex>", implementation_snapshot_sha256: null|"<64 hex>", evidence_refs: [], status: pending|passed|not_applicable }
 
 # Implementation Design Fidelity (Plan/pack authority). See
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Lint Milestone Work task_plan composition coverage + split probes.
+"""Lint Milestone Work task_plan composition + PW detail carry-forward.
 
 Composition SoT is Milestone task_plan (not Project Work). Validates refined
 screens have split_probe and task rows; plan_passed requires status=passed;
-portfolio_ready also requires App task_ids on every task row.
+portfolio_ready also requires App task_ids. With --project-work, every in-scope
+PW ui_detail and key page must be dispositioned in detail_carryforward.
 
 Accepts JSON (preferred) or YAML when PyYAML is available.
 """
@@ -19,6 +20,7 @@ from typing import Any
 VALID_CONCLUSIONS = frozenset({"keep_cohesive", "split", "needs_user_decision"})
 VALID_PHASES = frozenset({"plan_passed", "portfolio_ready"})
 VALID_PROVENANCE = frozenset({"traces_to_key_screen", "milestone_discovered"})
+VALID_DETAIL_DISPOSITION = frozenset({"carried", "deferred_out_of_milestone", "out_of_scope"})
 
 
 def _load(path: Path) -> Any:
@@ -57,6 +59,47 @@ def _task_plan(doc: Any) -> dict[str, Any] | None:
     return plan
 
 
+def _pw_screen_rows(project_work: Any) -> list[dict[str, Any]]:
+    if not isinstance(project_work, dict):
+        return []
+    cov = project_work.get("product_spec_coverage")
+    if isinstance(cov, dict):
+        rows = cov.get("screen_coverage")
+    else:
+        rows = project_work.get("screen_coverage")
+    return [r for r in _list(rows) if isinstance(r, dict)]
+
+
+def _detail_id(detail: dict[str, Any]) -> str | None:
+    for key in ("detail_id", "id"):
+        if _nonempty_str(detail.get(key)):
+            return str(detail.get(key)).strip()
+    return None
+
+
+def _in_scope_key_screens(
+    pw_rows: list[dict[str, Any]],
+    *,
+    key_screen_refs: set[str],
+    milestone_acceptance_ids: set[str] | None,
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in pw_rows:
+        if row.get("disposition") != "adopted":
+            continue
+        sid = str(row.get("screen_id") or row.get("id") or "").strip()
+        if not sid:
+            continue
+        if sid in key_screen_refs:
+            out.append(row)
+            continue
+        if milestone_acceptance_ids is not None:
+            row_acc = {str(a).strip() for a in _list(row.get("acceptance_ids")) if _nonempty_str(a)}
+            if row_acc and not row_acc.isdisjoint(milestone_acceptance_ids):
+                out.append(row)
+    return out
+
+
 def _skeleton_rows(doc: Any, skeleton_doc: Any | None) -> list[dict[str, Any]]:
     candidates: list[Any] = []
     for source in (skeleton_doc, doc):
@@ -89,10 +132,167 @@ def _screen_ids_from_skeleton(rows: list[dict[str, Any]]) -> set[str]:
     return found
 
 
+def _lint_detail_carryforward(
+    plan: dict[str, Any],
+    *,
+    project_work: Any,
+    hit: Any,
+) -> None:
+    pw_rows = _pw_screen_rows(project_work)
+    key_refs = {str(s).strip() for s in _list(plan.get("key_screen_refs")) if _nonempty_str(s)}
+    task_acceptances: set[str] = set()
+    for task in _list(plan.get("tasks")):
+        if not isinstance(task, dict):
+            continue
+        for aid in _list(task.get("acceptance_ids")):
+            if _nonempty_str(aid):
+                task_acceptances.add(str(aid).strip())
+    milestone_acceptance = task_acceptances or None
+    in_scope = _in_scope_key_screens(
+        pw_rows,
+        key_screen_refs=key_refs,
+        milestone_acceptance_ids=milestone_acceptance,
+    )
+    if not in_scope and not key_refs:
+        return
+
+    for row in in_scope:
+        sid = str(row.get("screen_id") or row.get("id") or "?").strip()
+        if sid not in key_refs:
+            hit(
+                "milestone_detail_carryforward_incomplete",
+                sid,
+                "in-scope Project Work key page missing from key_screen_refs",
+            )
+
+    traces = set()
+    for refined in _list(plan.get("refined_screens")):
+        if not isinstance(refined, dict):
+            continue
+        if _nonempty_str(refined.get("traces_to_key_screen")):
+            traces.add(str(refined.get("traces_to_key_screen")).strip())
+    carry = plan.get("detail_carryforward")
+    if not isinstance(carry, dict):
+        # If any in-scope screen has ui_details, require the block.
+        has_details = any(_list(r.get("ui_details")) for r in in_scope)
+        if has_details or in_scope:
+            hit(
+                "milestone_detail_carryforward_incomplete",
+                "_detail_carryforward",
+                "task_plan.detail_carryforward object required when Project Work is provided",
+            )
+        return
+
+    if carry.get("status") == "not_applicable":
+        has_details = any(
+            isinstance(d, dict) and _detail_id(d)
+            for r in in_scope
+            for d in _list(r.get("ui_details"))
+        )
+        if has_details:
+            hit(
+                "milestone_detail_carryforward_incomplete",
+                "_detail_carryforward",
+                "detail_carryforward.status not_applicable but PW ui_details exist",
+            )
+        return
+
+    if plan.get("status") == "passed" and carry.get("status") != "complete":
+        hit(
+            "milestone_detail_carryforward_incomplete",
+            "_detail_carryforward",
+            "detail_carryforward.status must be complete when task_plan.status=passed",
+        )
+
+    rows = [r for r in _list(carry.get("rows")) if isinstance(r, dict)]
+    indexed: dict[tuple[str, str], dict[str, Any]] = {}
+    for crow in rows:
+        ks = str(crow.get("key_screen_id") or "").strip()
+        did = str(crow.get("detail_id") or "").strip()
+        if ks and did:
+            indexed[(ks, did)] = crow
+
+    task_keys = {
+        str(t.get("local_key")).strip()
+        for t in _list(plan.get("tasks"))
+        if isinstance(t, dict) and _nonempty_str(t.get("local_key"))
+    }
+    refined_ids = {
+        str(r.get("screen_id") or r.get("id") or "").strip()
+        for r in _list(plan.get("refined_screens"))
+        if isinstance(r, dict) and _nonempty_str(r.get("screen_id") or r.get("id"))
+    }
+
+    for row in in_scope:
+        sid = str(row.get("screen_id") or row.get("id") or "?").strip()
+        details = [d for d in _list(row.get("ui_details")) if isinstance(d, dict)]
+        if not details and sid not in traces:
+            # Key page with no details: still must be traced by a refined screen
+            # or explicitly deferred via detail_id=__key_screen__.
+            marker = indexed.get((sid, "__key_screen__"))
+            if marker is None:
+                hit(
+                    "milestone_detail_carryforward_incomplete",
+                    sid,
+                    "key page needs refined traces_to_key_screen or "
+                    "detail_carryforward row detail_id=__key_screen__",
+                )
+            continue
+        if not details:
+            continue
+        for detail in details:
+            did = _detail_id(detail)
+            if did is None:
+                hit(
+                    "milestone_detail_carryforward_incomplete",
+                    sid,
+                    "Project Work ui_details entry missing detail_id",
+                )
+                continue
+            crow = indexed.get((sid, did))
+            if crow is None:
+                hit(
+                    "milestone_detail_carryforward_incomplete",
+                    f"{sid}/{did}",
+                    "PW ui_detail not dispositioned in detail_carryforward.rows",
+                )
+                continue
+            disposition = crow.get("disposition")
+            if disposition not in VALID_DETAIL_DISPOSITION:
+                hit(
+                    "milestone_detail_carryforward_incomplete",
+                    f"{sid}/{did}",
+                    "disposition must be carried | deferred_out_of_milestone | out_of_scope",
+                )
+                continue
+            if disposition == "carried":
+                rs = str(crow.get("carried_to_refined_screen") or "").strip()
+                tk = str(crow.get("carried_to_task_local_key") or "").strip()
+                if rs not in refined_ids:
+                    hit(
+                        "milestone_detail_carryforward_incomplete",
+                        f"{sid}/{did}",
+                        "carried_to_refined_screen must reference a refined_screens id",
+                    )
+                if tk not in task_keys:
+                    hit(
+                        "milestone_detail_carryforward_incomplete",
+                        f"{sid}/{did}",
+                        "carried_to_task_local_key must reference a tasks[].local_key",
+                    )
+            elif not _nonempty_str(crow.get("rationale")):
+                hit(
+                    "milestone_detail_carryforward_incomplete",
+                    f"{sid}/{did}",
+                    f"{disposition} requires rationale",
+                )
+
+
 def lint_screen_task_portfolio(
     doc: Any,
     *,
     skeleton_doc: Any | None = None,
+    project_work: Any | None = None,
     phase: str = "plan_passed",
 ) -> dict[str, Any]:
     if phase not in VALID_PHASES:
@@ -144,16 +344,11 @@ def lint_screen_task_portfolio(
     skeleton_rows = _skeleton_rows(doc, skeleton_doc)
     skeleton_screen_ids = _screen_ids_from_skeleton(skeleton_rows)
 
-    if not refined and status == "passed":
-        # Passed with zero refined screens is OK for non-UI; treat as ok.
-        pass
-
     for row in refined:
         sid = str(row.get("screen_id") or row.get("id") or "?").strip()
         provenance = row.get("provenance")
         traces = row.get("traces_to_key_screen")
         if provenance not in VALID_PROVENANCE:
-            # Allow omitting provenance when traces_to_key_screen is set.
             if not _nonempty_str(traces):
                 hit(
                     "milestone_task_plan_incomplete",
@@ -230,6 +425,9 @@ def lint_screen_task_portfolio(
                 "task_plan.tasks[].task_id must be set for portfolio_ready",
             )
 
+    if project_work is not None:
+        _lint_detail_carryforward(plan, project_work=project_work, hit=hit)
+
     primary_fail = hits[0]["failCode"] if hits else None
     return {
         "ok": len(hits) == 0,
@@ -238,6 +436,7 @@ def lint_screen_task_portfolio(
         "hitCount": len(hits),
         "refinedScreenCount": len(refined),
         "phase": phase,
+        "projectWorkChecked": project_work is not None,
     }
 
 
@@ -245,18 +444,23 @@ def lint_path(
     path: Path,
     *,
     skeleton_path: Path | None = None,
+    project_work_path: Path | None = None,
     phase: str = "plan_passed",
 ) -> dict[str, Any]:
     doc = _load(path)
     skeleton_doc = _load(skeleton_path) if skeleton_path is not None else None
+    project_work = _load(project_work_path) if project_work_path is not None else None
     result = lint_screen_task_portfolio(
         doc,
         skeleton_doc=skeleton_doc,
+        project_work=project_work,
         phase=phase,
     )
     result["path"] = str(path)
     if skeleton_path is not None:
         result["skeletonPath"] = str(skeleton_path)
+    if project_work_path is not None:
+        result["projectWorkPath"] = str(project_work_path)
     return result
 
 
@@ -272,6 +476,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Skeleton JSON/YAML (task_skeleton / skeleton list)",
     )
     parser.add_argument(
+        "--project-work",
+        type=Path,
+        default=None,
+        help="Project Work JSON/YAML for key-page / ui_details carry-forward checks",
+    )
+    parser.add_argument(
         "--phase",
         choices=sorted(VALID_PHASES),
         default="plan_passed",
@@ -282,6 +492,7 @@ def main(argv: list[str] | None = None) -> int:
     result = lint_path(
         args.path,
         skeleton_path=args.skeleton,
+        project_work_path=args.project_work,
         phase=args.phase,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))

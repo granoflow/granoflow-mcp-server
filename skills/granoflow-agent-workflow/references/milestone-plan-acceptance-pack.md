@@ -119,6 +119,20 @@ Gate** (clickable links are mandatory).
 | `interactive` | Write Markdown SoT → run `render_markdown_acceptance_html.py` → emit **Plan Acceptance Link** block with clickable `file://` HTML (when ready) plus Markdown SoT link → prefer host open (`open_resource` / equivalent) → **wait** for explicit pack accept/revise. Missing clickable HTML when `html_render.status: ready` → `plan_acceptance_html_link_required`. Tools missing → clickable Markdown + token-free install hint every time. |
 | `unattended`  | Same convert + clickable links as non-blocking notice; ledger + closing **Plan Acceptance Link Digest** (`plan_acceptance_link_digest_required` if omitted). Auto-adopt only under a valid unattended Planning grant (`unattended-interaction-contract.md`).                                                                                                                                                                                 |
 
+The acceptance sequence is fixed: create the pack candidate with
+`ai_decomposition_review_ref` and `ai_decomposition_plan_sha256` → run
+`grill-finalizer` → persist the temporary candidate → run `grill-me` → accept
+the same digest → promote and read back the App hash.
+
+Interactive `grill-me` asks one question at a time and waits; record
+`grill_me_status: shared_understanding_confirmed` and
+`final_acceptance_status: user_accepted`. Unattended `grill-me` still states
+each question, recommendation, and reason one at a time, then auto-adopts the
+recommendation; record `grill_me_status: recommendations_auto_adopted`,
+`final_acceptance_status: unattended_auto_adopted`, and
+`accepted_by: unattended_grant`. Never present unattended adoption as user
+acceptance. In both modes `authorization_effect: none`.
+
 Pack frontmatter **Must** include `html_render` (with `html_file_url` /
 `markdown_file_url` / `link_emitted`) per `markdown-html-acceptance-render.md`.
 
@@ -137,6 +151,11 @@ accepting this pack (interactive) fails closed as
 Per-task Gate `passed` for all children is **necessary but not sufficient** to
 leave milestone Planning: the acceptance pack must be shown (and interactively
 accepted).
+
+For UI milestones, load `responsive-prototype-finalization`. The pack records
+the current Project platform matrix digest and every in-scope task's accepted
+responsive Prototype Bundle digest plus required layout families. Missing or
+stale Bundle coverage blocks pack acceptance.
 
 ## Implementation And Delivery Reference — hard
 
@@ -207,6 +226,24 @@ Fail closed:
 | `plan_copy_extra_locale`                               | Non-selected locales treated as Plan deliverables                    |
 | `plan_acceptance_html_link_required`                   | HTML ready but no clickable/open HTML link before acceptance ask     |
 | `plan_acceptance_link_digest_required`                 | Unattended run authored HTML packs but omitted closing link digest   |
+| `milestone_ai_review_required`                         | Schema v2 review, provider evidence, or review pass is missing       |
+| `milestone_ai_review_blocking_findings`                | Review retains an open blocking finding                              |
+| `milestone_ai_review_verifier_failed`                  | Independent Final Verifier did not pass                              |
+| `milestone_ai_review_plan_digest_mismatch`             | Current task plan differs from reviewed digest                       |
+| `milestone_final_grill_me_required`                    | Final Grill Me was skipped                                           |
+| `milestone_final_acceptance_required`                  | Final acceptance state is missing or invalid                         |
+| `milestone_final_acceptance_digest_mismatch`           | Accepted digest differs from reviewed plan                           |
+
+Additional UI fail-closed codes:
+
+- `responsive_prototype_bundle_required`
+- `analysis_technical_package_required`
+- `contract_prototype_semantic_review_required`
+- `contract_prototype_semantic_mismatch`
+- `analysis_technical_package_digest_mismatch`
+- `analysis_behavior_acceptance_required`
+- `responsive_prototype_layout_missing`
+- `responsive_prototype_digest_mismatch`
 
 ## Admission Test
 
@@ -221,3 +258,5 @@ Fail closed:
    Markdown link (fallback) **before** the acceptance question, and did we wait?
 7. Before implement: is the accepted pack path in context, and will Delivery
    reconcile `present: true` sections?
+8. Did `grill-finalizer` and `grill-me` complete for the reviewed digest, with
+   unattended adoption labeled as unattended rather than user acceptance?

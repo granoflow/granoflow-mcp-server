@@ -185,12 +185,15 @@ prototype_doc_coverage:
 
 Rules:
 
-1. Prototype is the **source of truth** for UI/product surface description.
+1. Prototype is the **source of truth** for confirmed visual and presentation
+   details. The accepted Screen Content Contract is the source of truth for
+   fields, actions, states, navigation, permissions, and data sources.
 2. `coverage: missing` → Task Work and/or Project Work must be updated until
    covered (`prototype_doc_coverage_gap`).
-3. `coverage: conflict` → docs disagree with the prototype; rewrite docs to
-   match the prototype (`prototype_doc_conflict`). Do not “keep docs” by
-   soft-passing Analysis.
+3. `coverage: conflict` → classify the difference. Presentation-only conflicts
+   update docs to match the prototype. Product-behavior conflicts reopen and
+   update the Screen Content Contract first, then regenerate the prototype and
+   docs (`prototype_doc_conflict`). Do not soft-pass Analysis.
 4. Analysis / discussion batch **Must not** close while any row is
    `missing`/`conflict`, or while `status` is `pending` with a non-empty
    required inventory.
@@ -212,7 +215,8 @@ python3 skills/granoflow-agent-workflow/scripts/lint_prototype_doc_coverage.py \
 During Planning, **re-read** the current App prototype against Task Work. If
 they disagree:
 
-1. Treat the **prototype as source of truth**.
+1. Treat the prototype as visual source of truth and the accepted Screen
+   Content Contract as product-behavior source of truth.
 2. Emit `prototype_plan_truth` with conflicts + recommended doc updates.
 3. **Explicitly remind** the user (interactive) and list recommendation items.
 4. After the user **agrees**, update Task Work **and** Project Work (when in
@@ -224,7 +228,8 @@ they disagree:
 prototype_plan_truth:
   schema: granoflow_prototype_plan_truth_v1
   contract_loaded: true
-  prototype_is_source_of_truth: true # must be true
+  prototype_is_source_of_truth: true # visual/presentation authority
+  screen_content_contract_sha256: <required for Bundle v2 behavior authority>
   status: not_applicable | aligned | conflict
   conflicts: [] # [{ page_id, field, prototype_says, task_work_says, recommendation }]
   user_notified: true | false

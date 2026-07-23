@@ -42,6 +42,19 @@ Before filling a template:
 A path, filename, heading, or attachment status proves only identity. It does
 not prove content. Read the material before claiming that a requirement exists.
 
+At Project Definition and requirement review, route through Project Work
+`review_routing`. Map `prd-review` findings into the existing requirement
+ledger as decisions, gaps, risks, or evidence references. The review report is
+evidence only; it must not become a second product source of truth. If the
+preferred reviewer is unavailable, record native fallback evidence.
+
+For UI software projects, extract platform and compatibility statements into
+Project Work `platform_support_matrix`. Record explicit rows for iOS, Android,
+macOS, and Windows even when unsupported. Preserve exact OS/API/SDK versions,
+device classes, orientations, window constraints, layout families, and source
+refs. Missing values become Project Definition decisions; do not defer them to
+Task Analysis.
+
 ## Requirement Record
 
 Each material requirement uses this semantic shape:

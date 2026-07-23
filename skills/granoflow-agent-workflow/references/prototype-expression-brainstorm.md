@@ -6,6 +6,9 @@ and post-Baseline **task/milestone page expressions**. It forces an explicit
 **mainstream-reference-first** candidate set before HTML, and prevents splitting
 one product surface into incomplete options.
 
+For task option count, required layout families, and final multi-layout
+confirmation, also load `responsive-prototype-finalization`.
+
 ## Mandatory Load (fail closed if skipped)
 
 Before authoring HTML for any interactive option batch below, the host **Must**
@@ -30,12 +33,11 @@ reviewer-only candidate theses outside user-facing Preview Gate jargon.
 Do **not** collapse Spec/Shell into task-level duals. Promote count is layer-
 specific:
 
-| Layer                                | When                                         | Candidate pool                        | Promote (interactive)           | Option ids                                         |
-| ------------------------------------ | -------------------------------------------- | ------------------------------------- | ------------------------------- | -------------------------------------------------- |
-| **Design Spec**                      | Project Definition Round A                   | ≥5 (mainstream first; backfill if <5) | **exactly 3**                   | `spec_match`, `ai_challenger_a`, `ai_challenger_b` |
-| **App Shell**                        | Project Definition Round B (after Spec lock) | ≥5 (mainstream first; backfill if <5) | **exactly 3**                   | `shell_match`, chrome challenger a/b (deck labels) |
-| **Task / milestone page expression** | After Baseline lock                          | ≥5 (mainstream first; backfill if <5) | **exactly 2**                   | `expr_a`, `expr_b`                                 |
-| **Task industry third**              | Only with documented peer deadlock           | same candidate pool                   | **3** (A/B + `industry_peer_c`) | see Craft Gate                                     |
+| Layer                                | When                                         | Candidate pool                        | Promote (interactive) | Option ids                                         |
+| ------------------------------------ | -------------------------------------------- | ------------------------------------- | --------------------- | -------------------------------------------------- |
+| **Design Spec**                      | Project Definition Round A                   | ≥5 (mainstream first; backfill if <5) | **exactly 3**         | `spec_match`, `ai_challenger_a`, `ai_challenger_b` |
+| **App Shell**                        | Project Definition Round B (after Spec lock) | ≥5 (mainstream first; backfill if <5) | **exactly 3**         | `shell_match`, chrome challenger a/b (deck labels) |
+| **Task / milestone page expression** | After Baseline lock                          | ≥5 (mainstream first; backfill if <5) | **2 or justified 3**  | `expr_a`, `expr_b`, optional `expr_c`              |
 
 **Unattended (explicit only):** candidate protocol still runs; promote **one**
 faithful option (`spec_match` / `shell_match` / `expr_a`) per that round’s Mode
@@ -181,8 +183,10 @@ fail closed `prototype_option_brainstorm_incomplete`. Missing
 1. Record the full pool under `expression_brainstorm` (Project Work for
    Spec/Shell; Task Work `prototype_option_set` for task pages).
 2. AI judges fit to locked product truth / Baseline / Spec / Shell / Scope and
-   **promotes** the best candidates to the **layer promote count** (3 / 3 / 2),
-   stating `selection_rationale` and why each wins on allowed contrast axes.
+   promotes the best candidates to the layer count. Spec and Shell use three.
+   Task pages default to two and may use three only with a permitted
+   `option_count_reason_code`; state `selection_rationale` and why each wins on
+   allowed contrast axes.
 3. **Design Spec / Shell:** after promote-3, still draw lots with
    `draw_visual_lots.py --kind spec|shell --count 3 --record` and bind one
    distinct seed/chrome card per promoted slot (existing seed collision /
@@ -222,7 +226,7 @@ prototype_option_set:
     brainstorm_backfill: [] # only when len(mainstream_references) < 5
     brainstorm_backfill_reason: null # required when backfill non-empty
     candidate_count: 6 # mainstream + backfill; band 5–8 default
-    promote_count: 2 # 3 for Spec/Shell; 2 for task page expressions
+    promote_count: 2 # 3 for Spec/Shell; task uses 2 or justified 3
     candidates: # unified view (mainstream + backfill); ids may mirror r*/b*
       - id: c1
         source: mainstream # mainstream | brainstorm_backfill

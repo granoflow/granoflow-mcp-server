@@ -32,12 +32,12 @@ Skipping the load when the gate applies → `screen_task_portfolio_coverage_unre
 
 ## When It Applies
 
-| Trigger                                                         | Gate     |
-| --------------------------------------------------------------- | -------- |
-| Milestone `decompose_required` for UI / user-visible pages      | Required |
-| `granoflow-task-authoring` `batch_skeleton` / `create_one`      | Required |
-| `granoflow-portfolio-orchestrator` per-milestone task authoring | Required |
-| Declaring Portfolio Ready (UI milestones)                       | Required |
+| Trigger                                                         | Gate                                                    |
+| --------------------------------------------------------------- | ------------------------------------------------------- |
+| Milestone `decompose_required` for UI / user-visible pages      | Required                                                |
+| `granoflow-task-authoring` `batch_skeleton` / `create_one`      | Required                                                |
+| `granoflow-portfolio-orchestrator` per-milestone task authoring | Required                                                |
+| Declaring Portfolio Ready (UI milestones)                       | Required                                                |
 | Task Analysis for a UI-changing task                            | Verify only (fail closed back to milestone `task_plan`) |
 
 Non-UI milestones → `task_plan.status: not_applicable` (or omit refined
@@ -89,6 +89,28 @@ create, write `tasks[].task_id`. Missing mapping →
 `task_portfolio_screen_coverage_incomplete` /
 `milestone_task_plan_incomplete`. Acceptance-only coverage is **not** enough.
 
+### 3b. Project Work detail carry-forward (hard)
+
+Users cannot reliably accept long detail lists at this phase. Agents Must still
+**disposition every** Project Work `ui_details[]` on in-scope key pages into
+`task_plan.detail_carryforward.rows`:
+
+| disposition                 | Meaning                                            |
+| --------------------------- | -------------------------------------------------- |
+| `carried`                   | Bound to a refined screen + task local_key         |
+| `deferred_out_of_milestone` | Explicitly not this milestone (rationale required) |
+| `out_of_scope`              | Explicitly not product scope (rationale required)  |
+
+Silent omission → `milestone_detail_carryforward_incomplete`.
+`detail_carryforward.status` Must be `complete` (or `not_applicable` when no
+in-scope PW details exist) before `task_plan.status: passed`.
+
+Also: every in-scope Project Work key page (shares milestone acceptance ids, or
+listed in `key_screen_refs`) Must appear in `key_screen_refs` and be covered by
+at least one refined screen (`traces_to_key_screen`) or an explicit deferred /
+out-of-scope carryforward row for that screen with no tasks (rare; prefer a
+task).
+
 ### 4. Pass before create; freeze against Analysis reopen
 
 - UI: `task_plan.status: passed` and `decomposition_status: passed` before
@@ -124,22 +146,43 @@ that task's frozen `screen_ids`.
   task_id: null | <app id after create>
 ```
 
+## AI judgment assist (optional; not a substitute for lint)
+
+This phase is **AI self-audit + deterministic lint**. Do not ask the user to
+accept long detail tables. Preferred external reviewers when available
+(`preferred_method`, `native_fallback` if missing):
+
+| Skill                        | Source                                   | Fit for task_plan auto-audit                                        |
+| ---------------------------- | ---------------------------------------- | ------------------------------------------------------------------- |
+| `prd-review`                 | `yihannangua/prd-review-skill`           | Strong: omissions/contradictions/testability vs product docs        |
+| `prd-implementation-ready`   | `wair56/prd-implementation-ready-skills` | Strong: page UX / fields / exceptions readiness                     |
+| gstack `/plan-ceo-review`    | `garrytan/gstack`                        | Product/scope pressure-test (prefer report mode; avoid user Q loop) |
+| gstack `/plan-design-review` | `garrytan/gstack`                        | Design-dimension review of the plan (same caveat)                   |
+| `grill-finalizer`            | Product Builder pack                     | Missing-issue scan on the written plan                              |
+| `grill-me`                   | Product Builder pack                     | **Poor fit here** — interviews the user; not silent auto-accept     |
+| `impeccable`                 | Product Builder pack                     | Taste/slop only — not requirements carry-forward                    |
+
+Record evidence on Milestone Work when a reviewer ran; never claim equivalence
+if it did not. Lint remain the hard gate for carry-forward completeness.
+
 ## Lint
 
 `skills/granoflow-agent-workflow/scripts/lint_task_screen_portfolio.py`
 
 Input: Milestone Work JSON/YAML containing `task_plan` (or bare `task_plan`),
-optionally plus `--skeleton`. Phases: `plan_passed` | `portfolio_ready`.
+optionally `--skeleton`, and **`--project-work`** for detail/key-page
+carry-forward checks. Phases: `plan_passed` | `portfolio_ready`.
 
 ## Fail Closed Codes
 
-| Code                                        | Meaning                                           |
-| ------------------------------------------- | ------------------------------------------------- |
-| `screen_task_portfolio_coverage_unread`     | Gate reference not loaded                         |
-| `milestone_task_plan_incomplete`            | Missing/invalid `task_plan` or status not passed  |
-| `task_portfolio_screen_coverage_incomplete` | Refined screen missing from tasks / skeleton      |
-| `screen_split_probe_incomplete`             | Missing/invalid `split_probe` on refined screen   |
-| `screen_split_probe_requires_user`          | Unattended hit `needs_user_decision`              |
+| Code                                        | Meaning                                          |
+| ------------------------------------------- | ------------------------------------------------ |
+| `screen_task_portfolio_coverage_unread`     | Gate reference not loaded                        |
+| `milestone_task_plan_incomplete`            | Missing/invalid `task_plan` or status not passed |
+| `milestone_detail_carryforward_incomplete`  | PW ui_detail or key page not dispositioned       |
+| `task_portfolio_screen_coverage_incomplete` | Refined screen missing from tasks / skeleton     |
+| `screen_split_probe_incomplete`             | Missing/invalid `split_probe` on refined screen  |
+| `screen_split_probe_requires_user`          | Unattended hit `needs_user_decision`             |
 
 ## Admission Test (host self-check)
 

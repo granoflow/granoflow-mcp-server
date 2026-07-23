@@ -7,8 +7,59 @@ import { afterEach, beforeEach, vi } from "vitest";
 import type { z } from "zod";
 
 import { registerGranoflowTools } from "../src/tools.js";
+import { taskDescriptionSha256 } from "../src/tool-runtime-task-description-impact.js";
 
 export const servers: Array<{ close: () => Promise<void> }> = [];
+export const taskImpactDescription =
+  "用户需要让任务保持清晰且可长期理解。打个比方，这像更新地图前先核对道路是否改变。例如，只调整提醒时间时不应重写目的。";
+export const taskImpactUpdatedAt = "2026-07-23T10:00:00.000Z";
+
+export function taskDescriptionImpactReview(
+  reasonCode: string,
+  decision: "unchanged" | "rewrite" = "unchanged",
+) {
+  return {
+    reviewedTaskUpdatedAt: taskImpactUpdatedAt,
+    reviewedDescriptionSha256: taskDescriptionSha256(taskImpactDescription),
+    decision,
+    reasonCode,
+    rationale: "The changed fields were compared with the current task meaning.",
+  };
+}
+
+export function writeTaskReadback(
+  response: ServerResponse,
+  overrides: Record<string, unknown> = {},
+): void {
+  response.end(
+    JSON.stringify({
+      ok: true,
+      data: {
+        entity: {
+          id: "task-1",
+          title: "保持任务描述准确",
+          description: taskImpactDescription,
+          status: "pending",
+          updatedAt: taskImpactUpdatedAt,
+          ...overrides,
+        },
+      },
+    }),
+  );
+}
+
+export async function startTaskReadbackServer(): Promise<void> {
+  const port = await startServer((request, response) => {
+    response.setHeader("content-type", "application/json");
+    if (request.url === "/v1/tasks/task-1") {
+      writeTaskReadback(response);
+      return;
+    }
+    response.statusCode = 404;
+    response.end(JSON.stringify({ ok: false }));
+  });
+  process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
+}
 
 export async function startServer(
   handler: (request: IncomingMessage, response: ServerResponse) => void,

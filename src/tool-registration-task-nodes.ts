@@ -1,6 +1,11 @@
 import { z } from "zod";
 import type { CapabilityRegistrar } from "./tool-registration-evidence.js";
-import type { ReviewCardDraft, ToolRegistrationContext, ToolRegistrar } from "./tools.js";
+import { registerTaskCompletionTools } from "./tool-registration-task-completion.js";
+import {
+  reviewTaskDescriptionImpact,
+  verifyTaskDescriptionImpact,
+} from "./tool-runtime-task-description-impact.js";
+import type { ToolRegistrationContext, ToolRegistrar } from "./tools.js";
 type RegistrationSchemas = {
   resourceIdSchema: z.ZodTypeAny;
   approvedAuthoringSchema: Record<string, z.ZodTypeAny>;
@@ -59,6 +64,8 @@ function registerGranoflowTaskNodeUpdateTool(
     taskNodeStatusSchema,
     requireTaskAnalysisPlanAttachment,
     jsonTextResult,
+    descriptionImpactReviewSchema,
+    validateTaskAuthoringQuality,
   } = context;
   registerTool(
     "granoflow_task_node_update",
@@ -69,19 +76,53 @@ function registerGranoflowTaskNodeUpdateTool(
       expectedUpdatedAt: z.string().datetime(),
       title: z.string().min(1).optional(),
       status: taskNodeStatusSchema.optional(),
+      descriptionImpactReview: descriptionImpactReviewSchema.optional(),
       dryRun: z.boolean().default(true),
     },
-    async ({ taskId, nodeId, expectedUpdatedAt, title, status, dryRun }) => {
+    async ({
+      taskId,
+      nodeId,
+      expectedUpdatedAt,
+      title,
+      status,
+      descriptionImpactReview,
+      dryRun,
+    }) => {
+      const impactGate =
+        status === "finished"
+          ? await reviewTaskDescriptionImpact(
+              {
+                taskId: String(taskId),
+                review: descriptionImpactReview,
+                operation: "node_completion",
+                syntheticBody: { status: "done" },
+                verifyFields: false,
+              },
+              { status: "done" },
+              validateTaskAuthoringQuality,
+            )
+          : null;
+      if (impactGate && !impactGate.ok) return jsonTextResult(impactGate);
       if (status === "finished" && dryRun === false) {
         const documentGate = await requireTaskAnalysisPlanAttachment(String(taskId));
         if (!documentGate.ok) return jsonTextResult(documentGate);
       }
-      return taskNodeApiTool({
+      const result = await taskNodeApiTool({
         method: "PATCH",
         path: `/v1/tasks/${String(taskId)}/nodes/${String(nodeId)}`,
         body: compactRecord({ expectedUpdatedAt, title, status }),
         dryRun: dryRun !== false,
       });
+      if (impactGate?.ok && dryRun === false) {
+        const verification = await verifyTaskDescriptionImpact(
+          String(taskId),
+          impactGate,
+          { status: "done" },
+          false,
+        );
+        if (!verification.ok) return jsonTextResult(verification);
+      }
+      return result;
     },
   );
 }
@@ -113,104 +154,6 @@ function registerGranoflowTaskNodeDeleteTool(
   );
 }
 
-function registerGranoflowTaskFinishTool(
-  registerTool: ToolRegistrar,
-  registerCapabilityTool: CapabilityRegistrar,
-  context: ToolRegistrationContext,
-  _schemas: RegistrationSchemas,
-): void {
-  const {
-    jsonTextResult,
-    finishTask,
-    reviewCardDraftSchema,
-    completionSourceSchema,
-    parseCompletionSource,
-  } = context;
-  registerTool(
-    "granoflow_task_finish",
-    "Finish a node-less compatibility task after its required Delivery gate and verify status=done. For AI execution, keep the task pending until this completion action and supply the captured actual startedAt plus confirmed endedAt; never claim status=doing or substitute discussion/creation time. Human manual focus may already have an App-recorded start from doing. Do not use for node-backed tasks. taskReview/reviewCardDrafts remain legacy explicit-inline compatibility only; deferred Review is the default.",
-    {
-      taskId: z.string().min(1).describe("Granoflow task id."),
-      projectId: z
-        .string()
-        .min(1)
-        .optional()
-        .describe("Required when taskReview or reviewCardDrafts are provided."),
-      milestoneId: z
-        .string()
-        .min(1)
-        .optional()
-        .describe("Required when taskReview or reviewCardDrafts are provided."),
-      summary: z
-        .string()
-        .optional()
-        .describe("Short import summary for the completion, review, and card write."),
-      startedAt: z
-        .string()
-        .optional()
-        .describe(
-          "Actual execution start time. AI execution captures this while the task stays pending and supplies it at completion. Do not use task discussion or creation time.",
-        ),
-      taskReview: z
-        .string()
-        .optional()
-        .describe(
-          "Meaningful task review only. Omit this when the content would be a mere activity log.",
-        ),
-      reviewCardDrafts: z
-        .array(reviewCardDraftSchema)
-        .optional()
-        .describe(
-          "One card per durable knowledge point worth long-term memory; omit when there is nothing worth remembering.",
-        ),
-      endedAt: z
-        .string()
-        .optional()
-        .describe(
-          "Task end time inferred from the current agent conversation, preferably ISO-like.",
-        ),
-      completionSource: completionSourceSchema.describe(
-        "Defaults to ai when an agent finishes the task. Use human for clearly human-completed work, or unknown to skip source tags.",
-      ),
-      confirmComplete: z.boolean().default(false).describe("Must be true when dryRun=false."),
-      dryRun: z
-        .boolean()
-        .default(true)
-        .describe("When true, previews the update/complete/import/readback sequence."),
-    },
-    async ({
-      taskId,
-      projectId,
-      milestoneId,
-      summary,
-      startedAt,
-      taskReview,
-      reviewCardDrafts,
-      endedAt,
-      completionSource,
-      confirmComplete,
-      dryRun,
-    }) =>
-      jsonTextResult(
-        await finishTask({
-          taskId: String(taskId),
-          projectId: typeof projectId === "string" ? projectId : undefined,
-          milestoneId: typeof milestoneId === "string" ? milestoneId : undefined,
-          summary: typeof summary === "string" ? summary : undefined,
-          startedAt: typeof startedAt === "string" ? startedAt : undefined,
-          taskReview: typeof taskReview === "string" ? taskReview : undefined,
-          reviewCardDrafts: Array.isArray(reviewCardDrafts)
-            ? (reviewCardDrafts as ReviewCardDraft[])
-            : undefined,
-          endedAt: typeof endedAt === "string" ? endedAt : undefined,
-          completionSource: parseCompletionSource(completionSource),
-          confirmComplete: confirmComplete === true,
-          dryRun: dryRun !== false,
-        }),
-      ),
-  );
-}
-
 export function registerTaskNodeTools(
   registerTool: ToolRegistrar,
   registerCapabilityTool: CapabilityRegistrar,
@@ -223,5 +166,5 @@ export function registerTaskNodeTools(
   registerGranoflowTaskNodeBatchCreateTool(registerTool, registerCapabilityTool, context, schemas);
   registerGranoflowTaskNodeUpdateTool(registerTool, registerCapabilityTool, context, schemas);
   registerGranoflowTaskNodeDeleteTool(registerTool, registerCapabilityTool, context, schemas);
-  registerGranoflowTaskFinishTool(registerTool, registerCapabilityTool, context, schemas);
+  registerTaskCompletionTools(registerTool, context);
 }

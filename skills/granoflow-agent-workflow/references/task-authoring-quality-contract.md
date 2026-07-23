@@ -9,6 +9,8 @@ second version of these rules.
 
 Human title-only quick capture in the App remains unchanged. This contract
 governs tasks authored by AI agents and automation through Granoflow tools.
+Existing-task mutations are owned by `task-description-update-contract`; do
+not copy update classification or completion-freeze rules into this file.
 
 ## Required Title And Description
 

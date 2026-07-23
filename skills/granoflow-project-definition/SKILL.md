@@ -33,13 +33,13 @@ conversation, recommendations, HTML authoring, packaging, and execution tools.
 
 - User asks to initialize or define **this** software project (not Granoflow
   itself).
-- Need Project Work + Design Baseline (tokens + landscape/portrait App Shell)
+- Need Project Work + Design Baseline (tokens + required layout-family App Shell)
   locked under contract fidelity before milestone/task automation.
 
 ## Authority Of Initialization Outputs
 
 The confirmed Project Work YAML plus the App-linked Design Baseline (including
-Design Tokens and landscape/portrait App Shell) are the authoritative visual
+Design Tokens and every required layout-family App Shell) are the authoritative visual
 and information-architecture reference for every later milestone, task-level
 prototype, and code acceptance.
 
@@ -49,14 +49,18 @@ visual confirmation. Subsequent prototypes Must declare `derivedFrom` the exact
 baseline `prototypeId` / `versionId` / `packageSha256` (document-level gate in
 this release).
 
-**Acceptance bar is contract fidelity (契约级一致), not pixel parity:**
+**Acceptance bar combines contract fidelity with reference-viewport
+pixel-level high-fidelity:**
 
 - **Must:** primary navigation IA; landscape/portrait Shell modes and stated
   breakpoints; locked Design Tokens; main-journey layout regions; no new global
   primary entry absent from the baseline; locked widgets when catalog exists.
-- **Should:** secondary visual closeness.
-- **Won't:** pixel-perfect screenshots; spring-feel video match; native control
-  chrome.
+- **Must at reference viewports:** meet the Project fidelity policy's numeric
+  threshold and AI visual review.
+- **Should elsewhere:** preserve responsive mapping and secondary visual
+  closeness.
+- **May differ:** platform-native chrome only with a declared, approved
+  exception.
 
 **Enhanced implementation:** when the target stack can look better with mature
 third-party widgets, HTML may convey intent only, but each such case must carry
@@ -77,23 +81,30 @@ high-risk feasibility.
    canonical YAML shape.
 2. Read `granoflow-agent-workflow/requirement-intake-and-traceability` before
    extracting mixed-format product sources.
-3. Read `granoflow-agent-workflow/discussion-writeback-contract` whenever the
+   Route Project Definition review through Project Work `review_routing`:
+   `prd-review` by default, with office-hours or CEO review only when strategy,
+   market, or product-risk conditions apply. Record native fallback evidence
+   if a preferred reviewer is unavailable.
+3. Read `granoflow-agent-workflow/responsive-prototype-finalization` for the
+   platform matrix, required layout families, Prototype Bundle, Widget
+   promotion, and rendered fidelity gates.
+4. Read `granoflow-agent-workflow/discussion-writeback-contract` whenever the
    user accepts a mid-init adjustment (product coverage, Baseline/Shell, later
    task prototypes): App-slot writeback before the next gate. In the same
    batch, read `granoflow-agent-workflow/change-impact-fanout` and close the
    impact ledger (sibling tasks/docs/notes/cards) before claiming the decision
    done.
-4. Read [project-definition-interaction.md](references/project-definition-interaction.md)
+5. Read [project-definition-interaction.md](references/project-definition-interaction.md)
    before interviewing or recommending values (Mode Gate, batches).
-5. Read [project-artifact-workflows.md](references/project-artifact-workflows.md)
+6. Read [project-artifact-workflows.md](references/project-artifact-workflows.md)
    for Design Spec/Shell, Preview Gate, widgets, and task Craft Gate / option
    sets.
-6. Read [hard-constraints.md](references/hard-constraints.md) before Done or
+7. Read [hard-constraints.md](references/hard-constraints.md) before Done or
    any `visualConfirmed=true` to verify thread-confirmed fail-closed rules.
-7. Read [product-spec-flow-decomposition.md](references/product-spec-flow-decomposition.md)
+8. Read [product-spec-flow-decomposition.md](references/product-spec-flow-decomposition.md)
    during Step 1 product-spec coverage (operation flowchart → serial gates vs
    parallel ops → page-count conclusion + stress paths; not risk labels).
-8. Apply Mode Gate: default `executionMode: interactive` unless the user
+9. Apply Mode Gate: default `executionMode: interactive` unless the user
    **explicitly** declares unattended. Read
    `granoflow-agent-workflow/unattended-interaction-contract` only when
    unattended.
@@ -106,10 +117,10 @@ high-risk feasibility.
    load `granoflow-agent-workflow/engineering-acceptance-pack` and
    `granoflow-agent-workflow/markdown-html-acceptance-render`. YAML is AI
    self-checked; the pack is user browse-confirm.
-9. Call `granoflow_agent_preferences_get(projectId)` when preferences exist;
-   recommend `agent_preferences` during init (interactive: wait before write).
-   Preferences never weaken readiness, quality, authorization, acceptance, or
-   external-action gates.
+10. Call `granoflow_agent_preferences_get(projectId)` when preferences exist;
+    recommend `agent_preferences` during init (interactive: wait before write).
+    Preferences never weaken readiness, quality, authorization, acceptance, or
+    external-action gates.
 
 ## Entry Modes
 
@@ -179,7 +190,8 @@ Actions:
    with non-empty `roots`; at least one `architecture.modules` row with `id` +
    `responsibility`). Interactive: recommend → wait; unattended: adopt. Empty
    roots → `directory_structure_unselected`.
-8. Recommend one `design_profile` + `skill_routing` (never a Skills menu). Set
+8. Recommend one `design_profile` + design `skill_routing` (never a Skills
+   menu), separately from Project Work `review_routing`. Set
    `visual_baseline.applicability` to `required` or `not_applicable` with
    basis (CLI/library/no UI chrome). Unresolved →
    `visual_baseline_applicability_unresolved`.
@@ -216,6 +228,14 @@ Checkpoints:
 
 **Skip** when `visual_baseline.applicability: not_applicable` (record basis;
 Steps 2–3 and `widgets.yaml` are not required for Done).
+
+Before entering Step 2 for a UI project, complete and lint
+`platform_support_matrix`. iOS, Android, macOS, and Windows each need an
+explicit support disposition. Supported rows require exact versions, devices,
+architectures, orientations, required test versions, layout-family mappings,
+and source refs. Product documents win; otherwise recommend values from
+authoritative platform evidence. Interactive mode waits, while explicitly
+unattended mode records `unattended_auto_adopted`.
 
 When `required`: Design Spec round first (Mode split in
 [project-artifact-workflows.md](references/project-artifact-workflows.md)), then
@@ -263,10 +283,11 @@ Checkpoints:
 **Skip** when `visual_baseline.applicability: not_applicable`.
 
 When `required`: **From Shell onward, design style converges.** Shell Must
-**embed the selected Design Spec** (tokens + type/spacing roles) and present
-**product-near** portrait/landscape chrome with at least one Spec-styled
-primary surface—aiming for final-product effect under contract fidelity, not
-grey wireframes. Then merge, import, confirm Baseline, extract widgets.
+**embed the selected Design Spec** (tokens + type/spacing roles). Present the
+choice triad in `platform_support_matrix.primary_layout_family`; after
+selection, expand only the winner to every required layout family, then show
+and confirm the complete product-near Baseline package. Finally extract
+widgets.
 **User selects** Shell options (interactive triad Preview Gate).
 
 Actions:
@@ -296,7 +317,7 @@ Actions:
 
 Success criteria (when `visual_baseline.applicability: required`):
 
-- Baseline SHA readback; landscape and portrait App Shell present.
+- Baseline SHA readback; every required layout-family App Shell present.
 - Shell options consumed selected Spec tokens and were product-near (not
   wireframe-only).
 - `widgets.yaml` + `widgets_attachment` + registry SHA
@@ -333,8 +354,8 @@ Initialization is Done only when all hold:
   - `screen_inventory` marks key pages as `not_portfolio_complete` (not tasks);
   - `screen_detail_registration` adopted with durable `ui_details` registered
     when product docs / stories state them;
-  - Baseline includes landscape and portrait App Shell; **Missing Shell fails
-    Done**;
+  - Baseline includes every required layout-family App Shell; **Missing
+    required layout fails Done**;
   - `widgets.yaml` written from confirmed Baseline—else `widget_catalog_required`;
   - `design_spec_selection` and `shell_selection` recorded;
 - When `visual_baseline.applicability: not_applicable`: Spec / Shell /
@@ -409,13 +430,14 @@ milestone/task tree, run task Analysis/Plan Grill, or implement product code.
    Checkpoints:
    - App admission gates never bypassed for automation.
    - Incomplete Project Work → `project_document_incomplete`.
-7. After initialization Done, later visual work reads the confirmed baseline,
-   `skill_routing`, and `widgets.yaml`. Task/milestone prototypes Must
+7. After initialization Done, later visual work reads
+   `responsive-prototype-finalization`, the confirmed platform matrix,
+   baseline, `skill_routing`, and `widgets.yaml`. Task/milestone prototypes Must
    `derivedFrom` the exact baseline package SHA, **must not** re-roll random
    visual seeds, reuse catalog widgets when the same role exists, pass **Task
    Prototype Craft Gate And Option Set** (interactive: mainstream-reference-
    first candidates ≥5, brainstorm backfill only when mainstream `<5`, then
-   dual **page expressions** `expr_a`/`expr_b` with functional parity inside
+   AI-selected two or three **page expressions** with functional parity inside
    locked Design System **and confirmed sibling chrome vocabulary when
    applicable**, **side-by-side Contrast Gallery** + Baseline-fit /
    chrome-lock / candidate digests, mix-and-match per task/page, conditional
@@ -484,11 +506,12 @@ tools and their own authorization gates.
   Acceptance Pack before App confirm.
 - When `visual_baseline.applicability: required`, automatic project
   initialization yields one App-linked Design Baseline that includes Design
-  Tokens references, landscape App Shell, and portrait App Shell, plus one
+  Tokens references and all required layout-family Shell variants, plus one
   confirmed `skill_routing` profile and `widgets.yaml`. When `not_applicable`,
   Spec/Shell/widgets are skipped for Done.
-- Contract fidelity (not pixel 1:1) is the stated acceptance bar when UI path
-  applies; enhanced implementation notes are present where HTML is schematic.
+- Contract fidelity plus reference-viewport pixel-level high-fidelity is the
+  acceptance bar; enhanced implementation notes are present where HTML is
+  schematic.
 - Confirmed baseline (when required) is declared the reference for later
   milestones, task prototypes, and code acceptance.
 - Initialization hands off to milestone/task Skills without pretending those

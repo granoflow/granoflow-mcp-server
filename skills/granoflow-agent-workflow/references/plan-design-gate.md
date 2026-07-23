@@ -23,6 +23,12 @@ Do not invent a second Planning template. Put Gate content under the existing
 `Verification Plan`, and `Execution Plan` sections (see
 `task-work-document-template.md`).
 
+For UI software tasks, Planning must first load the passed
+`analysis_technical_package` and record its SHA. Inherited logical flows, state
+models, permissions, and UI-to-data bindings may be referenced by exact
+section/evidence ref instead of copied. Planning owns only the physical and
+implementation decisions layered on that logical authority.
+
 ## Minimal Sufficient Set
 
 Every required Gate must include all of the following. Omit nothing by claiming
@@ -54,11 +60,13 @@ Every required Gate must include all of the following. Omit nothing by claiming
 
 2. **Operation flowchart** (Mermaid `flowchart`) — main path plus failure and
    protected-surface branches that implementers must not collapse. Required when
-   the task has non-trivial control flow; for pure scaffold with a single linear
-   build path, a minimal flowchart still naming stop boundaries is enough.
+   the task has non-trivial control flow; a current Analysis Technical Package
+   flow may be referenced by SHA instead of duplicated. Planning adds a new
+   flow only for implementation sequencing that the logical flow does not own.
 
-3. **Data structure disposition** — frontmatter `data_disposition` plus a short
-   table or bullets with basis:
+3. **Data structure disposition** — inherit the logical disposition from the
+   Analysis Technical Package, then add the physical Planning decision in
+   frontmatter `data_disposition` plus a short table or bullets with basis:
    - `unchanged` — consume existing schema/contracts; no invent-on-the-fly
    - `extend` — additive fields/contracts; follow data_model / json_contracts
      writeback rules
@@ -75,15 +83,18 @@ Every required Gate must include all of the following. Omit nothing by claiming
    `dependencies.approved` update before continuing (`needs_decision` → stop).
 
 5. **UI ↔ data binding** — **only when** the task has a UI change or confirmed
-   `ui_prototype`. Map prototype pages / controls / states to fields and events;
-   reaffirm the flow and disposition still make the UI operable. Non-UI tasks
-   omit this subsection (do not fabricate).
+   `ui_prototype`. Reference the passed Analysis binding by SHA and add only
+   physical field/event/API mappings needed for implementation. Do not
+   duplicate or silently override product behavior. Non-UI tasks omit this
+   subsection.
 
 5b. **Prototype ↔ Task Work truth check** — when a confirmed `ui_prototype`
 exists, load `prototype-doc-coverage` and emit `prototype_plan_truth`.
 Re-diff the **current App prototype** against Task Work. On conflict:
-prototype is source of truth; notify the user with recommendation items;
-after agreement, update Task Work **and** Project Work; lint
+the prototype owns visual presentation while the accepted Screen Content
+Contract owns product behavior. Notify the user with recommendation items;
+behavior changes reopen Analysis and update the Content Contract before HTML
+and Task/Project Work; lint
 `lint_prototype_doc_coverage.py --kind plan_truth`. Do **not** set
 `plan_design_gate_status: passed` while
 `prototype_plan_truth.status: conflict` and
@@ -127,6 +138,8 @@ Fail closed when Planning for a Gate-required task has any of:
 - listing every Project Work dependency instead of **task-local** libraries;
 - `data_disposition` missing while claiming readiness;
 - UI task missing UI ↔ data binding against the **current** App prototype;
+- UI task missing or stale `analysis_technical_package_sha256`, or Planning
+  restating conflicting logical behavior instead of reopening Analysis;
 - UI task with unresolved `prototype_plan_truth` conflict
   (`prototype_plan_truth_conflict` / `prototype_plan_truth_docs_stale`);
 - user-visible copy in Scope without a locale-bound copy inventory
@@ -148,10 +161,11 @@ Codes:
 plan_design_gate_status: not_applicable | pending | passed
 plan_design_diagrams: [] # e.g. [flowchart, state] — diagrams actually included
 data_disposition: not_applicable | unchanged | extend | breaking
+analysis_technical_package_sha256: null | <64 lowercase hex>
 ```
 
-- Set `pending` while drafting or awaiting user confirmation of the Design
-  Package.
+- Set `pending` while drafting or awaiting the normal Plan acceptance gate.
+  Ordinary users are not required to approve inherited professional notation.
 - Set `passed` only after the Gate content is complete **and** (interactive)
   the user has accepted it, or (unattended) a valid current authorization
   covers Planning confirmation and the Gate is complete with no

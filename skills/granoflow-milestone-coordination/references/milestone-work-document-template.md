@@ -11,10 +11,11 @@ hi-fi prototypes live in **Task Work**. This document **must not** rewrite
 
 **Composition SoT (hard for UI portfolio):** before App task create for a
 milestone that touches user-visible pages, persist machine-readable
-`task_plan` per `milestone-task-plan-template.yaml` (refined screens, page
-journeys, task summaries, split probes). `task_plan.status: passed` aligns
-with `decomposition_status: passed`. Non-UI milestones may keep Milestone Work
-thin (entity + Project coverage only) when no refined screens apply.
+schema v2 `task_plan` per `milestone-task-plan-template.yaml` (review ledger,
+refined screens, page journeys, task summaries, split probes).
+`task_plan.status: passed` aligns with `decomposition_status: passed` only
+after `milestone-ai-review` passes. Historical completed v1 records remain
+readable; reopen, modification, or continued task creation requires v2.
 
 When used, it freezes the milestone Outcome boundary, Scope, and—after
 `task_plan` pass—child-task responsibilities. It is not a large Task Work
@@ -30,11 +31,11 @@ controller Task reference in the active milestone description.
 
 Do not pretend every section is complete at charter confirmation. Fill by phase:
 
-| Phase key                    | When it must be complete                                 | Typical sections                                                                                                                                                                                                                                                           |
-| ---------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `charter_required`           | Before `charter_status: confirmed`                       | Reader Summary, Outcome, Acceptance, Requirement Coverage (owned ids), Scope/Non-goals, Current Truth (milestone-level only), Workstreams (coarse), Milestone Risks (cross-task), Integration Verification **skeleton**, one end-to-end example, Next Orchestration Action |
-| `decompose_required`         | Before `decomposition_status: passed` / `task_plan.status: passed` | Decomposition Rules, structured **`task_plan`** (see `milestone-task-plan-template.yaml`), Task Portfolio table synced to `task_plan.tasks`, Dependency And Handoff Map; Integration Verification rows named to accountable tasks |
-| `execute_preflight_required` | Before non-dry-run child execution or persistent workers | Parallel Execution, Delegation And Authorization Boundary, Persistent Execution Preflight, External Capability Matrix                                                                                                                                                      |
+| Phase key                    | When it must be complete                                           | Typical sections                                                                                                                                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `charter_required`           | Before `charter_status: confirmed`                                 | Reader Summary, Outcome, Acceptance, Requirement Coverage (owned ids), Scope/Non-goals, Current Truth (milestone-level only), Workstreams (coarse), Milestone Risks (cross-task), Integration Verification **skeleton**, one end-to-end example, Next Orchestration Action |
+| `decompose_required`         | Before `decomposition_status: passed` / `task_plan.status: passed` | Decomposition Rules, structured **`task_plan`** (see `milestone-task-plan-template.yaml`), Task Portfolio table synced to `task_plan.tasks`, Dependency And Handoff Map; Integration Verification rows named to accountable tasks                                          |
+| `execute_preflight_required` | Before non-dry-run child execution or persistent workers           | Parallel Execution, Delegation And Authorization Boundary, Persistent Execution Preflight, External Capability Matrix                                                                                                                                                      |
 
 **Fill ownership for `execute_preflight_required`:**
 
@@ -57,7 +58,7 @@ milestone design authority.
 # Milestone Work: <milestone title>
 
 document_type: milestone_work
-schema_version: 1
+schema_version: 2
 project_id: <project id>
 milestone_id: <milestone id>
 controller_task_id: <controller task id>

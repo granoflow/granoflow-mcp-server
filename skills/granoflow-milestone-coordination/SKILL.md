@@ -83,6 +83,13 @@ required child tasks are **missing as App entities**, stop and hand off to
 silently invent incomplete tasks here. Prefer tasks that already exist from
 authoring.
 
+For every new or reopened requirement-driven/software Milestone, also load
+`granoflow-agent-workflow/milestone-ai-review`. Upgrade a continued v1 plan to
+schema v2, run the required PRD/engineering and conditional reviewers, close
+the generated Grill questions, obtain an independent Final Verifier pass, and
+validate the reviewed digest before any child-task create. Do not run
+`grill-finalizer` during decomposition.
+
 When requirement-driven, also read
 `granoflow-agent-workflow/requirement-intake-and-traceability`.
 

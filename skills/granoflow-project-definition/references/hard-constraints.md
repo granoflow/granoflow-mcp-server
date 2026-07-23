@@ -133,19 +133,42 @@ and review.
   confirmed prototypes.
 - Incremental extract after later confirmed prototypes; one current project
   slot.
+- Every incremental extract records a Widget Promotion Ledger with source
+  Bundle SHA, catalog-before/catalog-after SHA, and matching App readback.
+- New reusable roles are promoted; `task_local` requires rationale. Changing a
+  locked visual/Shell/token contract requires Baseline reopen.
+
+## Platform And Responsive Prototype
+
+- UI projects record explicit iOS, Android, macOS, and Windows support rows,
+  exact versions, required validation versions, devices, orientations, layout
+  families, and source refs.
+- Shell selection uses the primary layout. Only the selected Shell expands to
+  all required layout families before final Baseline confirmation.
+- Task Analysis defaults to two page expressions and permits three only with a
+  supported reason code and functional parity.
+- Analysis cannot pass without a current responsive Prototype Bundle digest,
+  every required layout family, final acceptance, and Widget promotion
+  readback.
+- Runnable UI cannot reach Task Delivery until every Bundle layout passes the
+  numeric and AI rendered fidelity gates.
 
 ## Milestone / task authoring (task_plan)
 
 - After Project Definition, UI portfolio authoring Must apply
   `granoflow-agent-workflow/screen-task-portfolio-coverage`: write Milestone
   Work `task_plan` (refined screens + page journeys + task summaries) with
-  per-screen `split_probe` and ≥1 task per refined screen before App task
-  create. Acceptance-only skeleton coverage is not enough. Composition SoT is
-  Milestone Work—not Project Work. Fail closed
+  per-screen `split_probe`, ≥1 task per refined screen, and
+  `detail_carryforward` that dispositions every in-scope Project Work
+  `ui_details` row (`carried` / `deferred_out_of_milestone` / `out_of_scope`)
+  before App task create. Acceptance-only skeleton coverage is not enough.
+  Composition SoT is Milestone Work—not Project Work. Fail closed
   `milestone_task_plan_incomplete` /
+  `milestone_detail_carryforward_incomplete` /
   `task_portfolio_screen_coverage_incomplete` /
   `screen_split_probe_incomplete`. Analysis Must not reopen ownership/split
-  without reopening milestone `task_plan`.
+  without reopening milestone `task_plan`. Users are not the acceptors of
+  detail tables at this phase—AI self-audit + lint are.
 
 ## Task / milestone `ui_prototype`
 

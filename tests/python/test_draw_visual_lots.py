@@ -99,6 +99,122 @@ class DrawVisualLotsTest(unittest.TestCase):
             self.assertEqual(len(ledger["entries"]), 2)
             self.assertEqual(ledger["entries"][0]["kind"], "shell_chrome")
 
+    def test_refresh_requires_recorded_ledger_dedupe(self) -> None:
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(
+                [
+                    "--kind",
+                    "spec",
+                    "--request-type",
+                    "refresh",
+                ]
+            )
+        self.assertEqual(code, 2)
+        self.assertEqual(json.loads(buf.getvalue())["code"], "visual_lot_dedupe_required")
+
+    def test_refresh_is_disjoint_and_writes_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            ledger_path = Path(directory) / "ledger.json"
+            receipt_path = Path(directory) / "receipt.json"
+            first = io.StringIO()
+            with redirect_stdout(first):
+                self.assertEqual(
+                    main(
+                        [
+                            "--kind",
+                            "spec",
+                            "--count",
+                            "2",
+                            "--ledger",
+                            str(ledger_path),
+                            "--record",
+                        ]
+                    ),
+                    0,
+                )
+            prior_ids = set(json.loads(first.getvalue())["ids"])
+
+            refreshed = io.StringIO()
+            with redirect_stdout(refreshed):
+                self.assertEqual(
+                    main(
+                        [
+                            "--kind",
+                            "spec",
+                            "--count",
+                            "2",
+                            "--request-type",
+                            "refresh",
+                            "--ledger",
+                            str(ledger_path),
+                            "--dedupe",
+                            "ledger",
+                            "--record",
+                            "--receipt-out",
+                            str(receipt_path),
+                        ]
+                    ),
+                    0,
+                )
+            payload = json.loads(refreshed.getvalue())
+            self.assertTrue(prior_ids.isdisjoint(payload["ids"]))
+            self.assertEqual(payload["receipt"]["request_type"], "refresh")
+            self.assertNotEqual(
+                payload["receipt"]["prior_ledger_sha256"],
+                payload["receipt"]["ledger_after_sha256"],
+            )
+            self.assertEqual(
+                json.loads(receipt_path.read_text())["visual_lot_receipt"]["ids"],
+                payload["ids"],
+            )
+
+    def test_revise_preserves_recorded_seed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            ledger_path = Path(directory) / "ledger.json"
+            seed_id = load_spec_deck()[0]
+            append_ledger(ledger_path, kind="spec_seed", ids=[seed_id])
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = main(
+                    [
+                        "--kind",
+                        "spec",
+                        "--request-type",
+                        "revise",
+                        "--ledger",
+                        str(ledger_path),
+                        "--existing-id",
+                        seed_id,
+                    ]
+                )
+            payload = json.loads(buf.getvalue())
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["ids"], [seed_id])
+            self.assertFalse(payload["receipt"]["redrawn"])
+
+    def test_revise_rejects_unknown_seed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = main(
+                    [
+                        "--kind",
+                        "spec",
+                        "--request-type",
+                        "revise",
+                        "--ledger",
+                        str(Path(directory) / "ledger.json"),
+                        "--existing-id",
+                        "seed-unknown",
+                    ]
+                )
+            self.assertEqual(code, 1)
+            self.assertEqual(
+                json.loads(buf.getvalue())["code"],
+                "visual_lot_revise_source_unknown",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

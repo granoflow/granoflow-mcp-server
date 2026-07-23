@@ -18,7 +18,7 @@ it does not reopen the user's pack or visual-style decision.
 external_skills:
   - skill: <stable skill name>
     source: <repository, plugin, package, or provider>
-    phase: analysis | planning | execution | delivery | review | baseline | shell | later_ui
+    phase: project_definition | milestone_decomposition | analysis | planning | execution | delivery | review | baseline | shell | later_ui
     purpose: <required capability and reason>
     necessity: required_capability | preferred_method | explicit_only
     missing_behavior: wait | native_fallback | skip_nonblocking
@@ -59,6 +59,14 @@ Skill cannot accidentally become a blocker or a source of authority.
 
 Select only Skills whose trigger and capability match the task and current
 phase. Never invoke every installed Skill mechanically.
+
+Project review routing is stored in Project Work `review_routing`, separately
+from design-only `theme_and_design_system.skill_routing`. Load
+`milestone-ai-review` for the provider matrix and Milestone gates. The
+installation collection id `prd-review-skill` maps to runtime skill id
+`prd-review`. All third-party reviewers are `preferred_method`; record an
+evidenced native fallback when unavailable. Keep `gstack-autoplan`
+`explicit_only`, and never treat reviewer output as authorization.
 
 - Task Work Analysis may use diagnosis or architecture Skills to establish facts,
   boundaries, risks, and Evidence.

@@ -5,6 +5,8 @@ import {
   readJsonBody,
   parseToolText,
   collectHandlers,
+  taskDescriptionImpactReview,
+  writeTaskReadback,
 } from "./tools-test-harness.js";
 
 installToolTestLifecycle();
@@ -26,6 +28,10 @@ describe("tools-history-write", () => {
         );
         return;
       }
+      if (request.url === "/v1/tasks/task-1") {
+        writeTaskReadback(response);
+        return;
+      }
       response.statusCode = 500;
       response.end(JSON.stringify({ ok: false }));
     });
@@ -38,6 +44,7 @@ describe("tools-history-write", () => {
           clientMutationId: "mutation-1",
           op: "softDelete",
           taskId: "task-1",
+          descriptionImpactReview: taskDescriptionImpactReview("historical_time_only"),
           reason: "Remove duplicate historical import.",
         },
       ],
@@ -52,13 +59,21 @@ describe("tools-history-write", () => {
         endpoint: "/v1/ai-agent/tasks/historical-mutations",
       },
     });
-    expect(requestedUrls).toEqual(["/v1/ai-agent/tools"]);
+    expect(requestedUrls).toEqual(["/v1/tasks/task-1", "/v1/ai-agent/tools"]);
   });
+});
 
+describe("tools-history-write with capability", () => {
   it("writes historical task mutations only after capability confirmation", async () => {
     const requested: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    let startedAt: string | undefined;
     const port = await startServer(async (request, response) => {
       response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/tasks/task-1") {
+        requested.push({ method: request.method, url: request.url });
+        writeTaskReadback(response, { startedAt });
+        return;
+      }
       if (request.url === "/v1/ai-agent/tools") {
         requested.push({ method: request.method, url: request.url });
         response.end(
@@ -84,6 +99,7 @@ describe("tools-history-write", () => {
         return;
       }
       if (request.url === "/v1/ai-agent/tasks/historical-mutations") {
+        startedAt = "2026-06-30T10:00:00.000";
         requested.push({
           method: request.method,
           url: request.url,
@@ -112,6 +128,7 @@ describe("tools-history-write", () => {
           op: "update",
           taskId: "task-1",
           fields: { startedAt: "2026-06-30T10:00:00.000" },
+          descriptionImpactReview: taskDescriptionImpactReview("historical_time_only"),
           reason: "Restore true start time.",
         },
       ],
@@ -124,6 +141,7 @@ describe("tools-history-write", () => {
       data: { results: [{ clientMutationId: "mutation-1", ok: true }] },
     });
     expect(requested).toEqual([
+      { method: "GET", url: "/v1/tasks/task-1" },
       { method: "GET", url: "/v1/ai-agent/tools" },
       {
         method: "POST",
@@ -142,6 +160,7 @@ describe("tools-history-write", () => {
           ],
         },
       },
+      { method: "GET", url: "/v1/tasks/task-1" },
     ]);
   });
 });

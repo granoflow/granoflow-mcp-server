@@ -68,12 +68,14 @@ updated after every successful step.
    - Prefer `role: first_ship` first when present; otherwise follow sequencing order.
 
 4. **Per milestone tasks** —
-   - when UI applies: ensure Milestone Work `task_plan` exists and
+   - for requirement-driven/software work: load `milestone-ai-review`, ensure
+     schema v2 AI review passed with current digest; when UI applies, ensure
+     Milestone Work `task_plan` exists and
      `status: passed` (refined screens, page journeys, split probes, task
      summaries) per `screen-task-portfolio-coverage` +
      `milestone-task-plan-template`;
    - `granoflow-task-authoring` `batch_skeleton` aligned to `task_plan.tasks`
-     + acceptance / task_plan lint (`lint_task_screen_portfolio.py`);
+     - acceptance / task_plan lint (`lint_task_screen_portfolio.py`);
    - then `create_one` for each pending row (description batch size **1**);
    - quality contract on every create; fail only that row;
    - write back App `task_id` onto Milestone `task_plan.tasks[]` (not Project
@@ -81,7 +83,8 @@ updated after every successful step.
 
    Checkpoints:
 
-   - UI: `task_plan.status: passed` before any `create_one` loop.
+   - Requirement-driven/software: schema v2 AI review and
+     `task_plan.status: passed` before any `create_one` loop.
    - Run skeleton coverage check before create (acceptance + task_plan).
    - Full description batch size is **1**; never merge multiple descriptions in one turn.
    - Quality failure fails only that row; rewrite and retry the same row.

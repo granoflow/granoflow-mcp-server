@@ -86,29 +86,31 @@ def lint_html(html_path: Path, baseline_tokens: Path | None) -> dict:
         else:
             base = load_baseline_vars(baseline_tokens)
             for name in REQUIRED_VARS:
-                if name in base and name in vars_in_html:
-                    if vars_in_html[name] != base[name]:
-                        errors.append(
-                            {
-                                "code": "prototype_spec_tokens_drift",
-                                "detail": (
-                                    f"{name} drifted: html={vars_in_html[name]!r} "
-                                    f"baseline={base[name]!r}"
-                                ),
-                            }
-                        )
+                if name in base and name in vars_in_html and vars_in_html[name] != base[name]:
+                    errors.append(
+                        {
+                            "code": "prototype_spec_tokens_drift",
+                            "detail": (
+                                f"{name} drifted: html={vars_in_html[name]!r} "
+                                f"baseline={base[name]!r}"
+                            ),
+                        }
+                    )
 
     # Soft structural smell: Inter/Roboto as only display stack while Literata
     # is common in GranoReader Baseline — warn as mismatch when present without
     # Literata/Source Sans.
-    if re.search(r"font-family:\s*Inter\b|font-family:\s*Roboto\b", text, re.I):
-        if "Literata" not in text and "Source Sans" not in text:
-            errors.append(
-                {
-                    "code": "prototype_shell_chrome_mismatch",
-                    "detail": "generic Inter/Roboto stack without Baseline typefaces",
-                }
-            )
+    if (
+        re.search(r"font-family:\s*Inter\b|font-family:\s*Roboto\b", text, re.I)
+        and "Literata" not in text
+        and "Source Sans" not in text
+    ):
+        errors.append(
+            {
+                "code": "prototype_shell_chrome_mismatch",
+                "detail": "generic Inter/Roboto stack without Baseline typefaces",
+            }
+        )
 
     ok = not errors
     return {

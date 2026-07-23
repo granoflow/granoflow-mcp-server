@@ -63,6 +63,13 @@ Also follow `project-interaction-style.md`: durable records are
    leftovers to waive Phase B AI fails—those go through remediation + next
    round.
 
+`prototype_task_reviews` proves prototype fidelity; it is not the retrospective
+Task Review field. When E2E remediation exposes a material wrong assumption,
+failed method, or reusable correction, append it through the agent workflow's
+`implementation-learning-ledger` reference and revise the affected completed
+task's Deferred Task Review after green. A clean first-pass E2E run creates no
+retrospective requirement.
+
 ## Required Artifact
 
 Schema: `granoflow_e2e_campaign_closing_summary_v1`  

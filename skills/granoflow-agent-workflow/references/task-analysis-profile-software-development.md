@@ -5,6 +5,12 @@ engineering repository, including code-bearing MCP, Agent, or Skill work. Use
 it as an omission check, not a fixed rendered section. Add only triggered
 requirements to the most relevant Work Document core or optional section:
 
+Read `task-analysis-finalization.md` for every UI software task. Analysis owns
+the pre-prototype Logic Draft, user-confirmed Screen Content Contract,
+Responsive Prototype Bundle v2, post-prototype logical Technical Package, and
+digest reconciliation. Planning must consume that package rather than
+redesigning product behavior.
+
 Read `software-structural-budget.md` when Project Definition, Planning,
 execution, or Delivery needs file and function/method limits. It is the single
 owner of numeric defaults, initialization, forecast, and reconciliation rules.
@@ -32,7 +38,9 @@ page/control/state/copy/flow into Task Work **and** Project Work with no
 - affected modules and explicit non-goals, including any architecture, design
   system, state management, dependency, public-contract, schema, rename, or
   cleanup work that is not authorized;
-- database table/schema judgment and evidence;
+- logical data/schema impact judgment and current-system evidence; new physical
+  tables, columns, indexes, migrations, API signatures, and class decomposition
+  remain Planning decisions;
 - UI judgment and evidence;
 - API, compatibility, migration, authorization, and release impact;
 - lint, format, type/static analysis, tests, build, and runtime smoke gates;

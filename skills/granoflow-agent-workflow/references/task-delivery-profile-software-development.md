@@ -77,6 +77,13 @@ Append to the base Delivery when `profiles` contains `software_development`:
   `milestone_plan_acceptance_pack_not_used`,
   `milestone_plan_acceptance_pack_drift`, or
   `milestone_plan_acceptance_pack_delivery_unreconciled` when violated.
+- Implementation Contract Semantic Replay
+  (`implementation-contract-semantic-replay.md`): a new, reopened, or modified
+  runnable UI task must bind current Analysis and implementation snapshot SHA
+  values; cover every required contract element/runtime target; pass
+  deterministic runtime, independent AI review, and Final Verifier; and retain
+  `authorization_effect: none`. Fail closed with `implementation_contract_*`;
+  `grill-me`, visual review, or rendered fidelity cannot substitute for it.
 - Implementation Design Fidelity (`implementation-design-fidelity.md`): for
   software code/schema/workflow edits, Delivery **Must** show a complete
   `impl_design_fidelity` ledger (Plan/pack authority—not Analysis drafts):

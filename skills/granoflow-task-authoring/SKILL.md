@@ -38,6 +38,9 @@ Also read `references/task-authoring-modes.md`. For UI milestones, also load
 `granoflow-agent-workflow/screen-task-portfolio-coverage` and
 `granoflow-milestone-coordination/milestone-task-plan-template` before treating
 skeleton coverage as passed. Require Milestone `task_plan.status: passed`.
+For every requirement-driven/software Milestone, load
+`granoflow-agent-workflow/milestone-ai-review` and require schema v2 AI review
+plus current digest before creating or continuing child tasks.
 
 ## Modes
 
@@ -80,8 +83,10 @@ many full descriptions.
 
    - `batch_create` is a loop of `create_one`, never one multi-description dump.
 
-3. For `batch_skeleton`: ensure Milestone `task_plan.status: passed` when UI
-   applies; write the table aligned to `task_plan.tasks`; verify every
+3. For `batch_skeleton`: ensure Milestone schema v2
+   `task_plan.status: passed` with current AI review digest for
+   requirement-driven/software work; when UI applies, write the table aligned
+   to `task_plan.tasks`; verify every
    mandatory acceptance id **and** every refined `screen_id` has at least one
    accountable skeleton row. On failure, revise the skeleton / Milestone
    `task_plan`—do not proceed to create.

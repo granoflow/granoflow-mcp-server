@@ -7,40 +7,33 @@ before creating/moving a task into a milestone.
 
 Every new milestone must have a deadline. If the user explicitly provides
 `dueAt`, preserve it unchanged. Otherwise call `granoflow_milestone_create`
-without `dueAt`; the tool reads the existing milestones and selects the strictly
-next Saturday in the user's local time at `23:59:59.000`.
+without `dueAt`; the tool reads the existing milestones. The first milestone in
+that project uses today in the user's local time at `23:59:59.000`. Each later
+milestone uses at least the local calendar day after the latest valid project
+deadline.
 
-The default is project-aware. If any milestone in the same project has a valid
-deadline equal to or later than that candidate Saturday, the tool advances the
-candidate by seven-day increments until it is later than every existing
-deadline in that project. Milestones in other projects and milestones without a
-valid deadline do not affect the result. If the existing milestone schedule
-cannot be read, creation without an explicit deadline fails closed; do not guess
-or create a milestone with no deadline.
+The fallback is project-aware and strictly increasing. Existing deadlines in
+other projects and invalid or absent deadlines do not affect it. When all valid
+project deadlines are before today, the next inferred deadline is today. If the
+existing milestone schedule cannot be read, creation without an explicit
+deadline fails closed; do not guess or create a milestone with no deadline.
 
 ## Task deadlines within milestones
 
-Before creating or moving a task into a milestone, read that milestone's
-`dueAt` and choose a task deadline from the task's real urgency, scope,
-dependencies, and wording. Unless the user or evidence indicates another
-specific date, the normal candidates are today, tomorrow, or the milestone
-deadline:
+Before creating or moving a task into a milestone, the shared MCP task-write
+runtime reads that milestone's `dueAt`. An explicit valid task deadline is
+preserved when it is not later than the milestone. When task `dueAt` is omitted,
+the runtime copies the milestone deadline and reports
+`deadlineResolution.source: inherited_milestone` in its result.
 
-- choose today for explicitly urgent work, work already under way, or a small
-  prerequisite that must unblock other near-term work;
-- choose tomorrow for a concrete next action that should happen soon but has no
-  same-day urgency;
-- choose the milestone deadline when there is no nearer timing signal, the work
-  may happen at any point in the milestone, or the task represents a milestone
-  deliverable.
+Agents may still choose a justified earlier date from explicit user wording,
+dependencies, active blocking work, or a concrete near action. Supply that date
+explicitly so the readback records `deadlineResolution.source: explicit`.
 
-Do not default every milestone task to today, and do not default every milestone
-task to the milestone deadline. A strong explicit or contextual signal may
-justify another date. A task inferred from date-only context uses the caller's
-local end of day. Never silently assign a task after its milestone deadline. If
-the user's explicit date is later, or the milestone is already overdue, expose
-the conflict and ask whether to change the task date, milestone deadline, or
-placement instead of silently clamping it.
+Never silently assign a task after its milestone deadline. An invalid parent
+deadline, unreadable parent, invalid explicit task date, or explicit date later
+than the parent fails before the App write. Ask whether to change the task
+date, milestone deadline, or placement instead of silently clamping it.
 
 ## Success criteria
 
@@ -50,4 +43,4 @@ placement instead of silently clamping it.
 ## Checkpoints
 
 - Milestone create without `dueAt` only when schedule read succeeds.
-- Task placement reads parent `dueAt` before choosing a date.
+- Shared Task write resolves parent `dueAt` before every milestone placement.

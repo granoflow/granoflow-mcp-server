@@ -222,7 +222,7 @@ function registerGranoflowMilestoneCreateTool(
     context;
   registerTool(
     "granoflow_milestone_create",
-    "Create a Granoflow milestone with common structured fields. When dueAt is omitted, defaults to the next available Saturday for the project. Defaults to dry-run.",
+    "Create a Granoflow milestone with common structured fields. When dueAt is omitted, the first project milestone defaults to today and each later milestone defaults to at least one local calendar day after the latest project deadline. Defaults to dry-run.",
     {
       projectId: z.string().min(1).describe("Granoflow project id."),
       title: z.string().min(1),
@@ -231,7 +231,7 @@ function registerGranoflowMilestoneCreateTool(
         .string()
         .optional()
         .describe(
-          "Explicit deadline. When omitted, uses the next local Saturday at 23:59:59.000 and advances by whole weeks past existing deadlines in the same project.",
+          "Explicit deadline. When omitted, uses today at 23:59:59.000 for the first project milestone, then one local calendar day after the latest valid project deadline.",
         ),
       status: resourceStatusSchema,
       dryRun: z

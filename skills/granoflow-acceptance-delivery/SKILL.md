@@ -60,6 +60,12 @@ Also emit `project-lifecycle-progress-board` on project-bound turns.
 
 ## Workflow
 
+For Delivery and review, route code review plus QA by default. Add
+`design-review`, `benchmark`, CSO, or `canary` only when their conditions
+apply. Treat third-party reviewers as preferred methods with evidenced native
+fallback and no authorization effect; do not copy Milestone review protocol
+into this skill.
+
 ### 1. Layer A — task closeout
 
 Finish each child task with Delivery / `acceptance_report`. Author integration
@@ -182,6 +188,10 @@ Rules:
 5. Path by project feature-milestone count (`e2e_direct` vs `full_unit_and_it`).
 6. E2E is always full-project.
 7. Preview→confirm→write for Experience / 任务回顾 / App-writing closeouts.
+8. Before UI Task Delivery, load `responsive-prototype-finalization` and require
+   rendered fidelity rows for every required layout family. Missing captures,
+   threshold failures, failed AI visual review, or unapproved native
+   differences block Delivery.
 
 ## References
 

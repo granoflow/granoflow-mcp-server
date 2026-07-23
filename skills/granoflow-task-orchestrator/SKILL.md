@@ -104,7 +104,7 @@ Apply one deterministic deadline ladder without turning every task into urgent w
 
 Actions:
 
-- Use explicit date first, then a real dependency date, today for active blocking work, tomorrow for a concrete near action, and the active milestone deadline for a milestone deliverable.
+- Use an explicit or fact-supported earlier date when present. Otherwise a milestone-bound task inherits the active milestone deadline in the shared MCP task-write runtime.
 - Leave dueAt empty for side thoughts, someday/later work, inbox items with no timing signal, and weakly understood tasks.
 - Never place a task after its milestone deadline without a separately resolved schedule change.
   Success criteria:

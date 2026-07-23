@@ -270,6 +270,77 @@ scope:
   compatibility_commitments: []
   delivery_surfaces: []
 
+platform_support_matrix:
+  schema: granoflow_platform_support_v1
+  confirmation_status: pending # pending | user_confirmed | unattended_auto_adopted
+  accepted_by: null # user | unattended_grant
+  primary_layout_family: null
+  layout_families:
+    - id: mobile_portrait
+      orientation: portrait # portrait | landscape | adaptive
+      reference_viewport: { width: 390, height: 844, dpr: 3 }
+  platforms:
+    - id: ios
+      support_status: not_supported # supported | not_supported | deferred
+      rationale: null
+      min_os_version: null
+      target_sdk_version: null
+      target_sdk_not_applicable_reason: null
+      required_test_versions: []
+      device_classes: []
+      architectures: []
+      layout_family_ids: []
+      orientations: []
+      source_refs: []
+    - id: android
+      support_status: not_supported
+      rationale: null
+      min_os_version: null
+      min_api_level: null
+      target_sdk_version: null
+      target_sdk_not_applicable_reason: null
+      required_test_versions: []
+      device_classes: []
+      architectures: []
+      layout_family_ids: []
+      orientations: []
+      source_refs: []
+    - id: macos
+      support_status: not_supported
+      rationale: null
+      min_os_version: null
+      target_sdk_version: null
+      target_sdk_not_applicable_reason: null
+      required_test_versions: []
+      device_classes: []
+      architectures: []
+      layout_family_ids: []
+      orientations: []
+      window_constraints: null
+      source_refs: []
+    - id: windows
+      support_status: not_supported
+      rationale: null
+      min_os_version: null
+      target_sdk_version: null
+      target_sdk_not_applicable_reason: null
+      required_test_versions: []
+      device_classes: []
+      architectures: []
+      layout_family_ids: []
+      orientations: []
+      window_constraints: null
+      source_refs: []
+  matrix_sha256: null
+
+fidelity_policy:
+  schema: granoflow_fidelity_policy_v1
+  reference_layout_family_ids: []
+  numeric_metric: null
+  threshold_by_layout_family: {}
+  ai_visual_review_required: true
+  platform_native_exception_policy: require_platform_contract_and_approval
+
 product:
   primary_user_journeys: []
   critical_states: []
@@ -601,6 +672,29 @@ engineering:
     # fails closed as data_artifact_stale.
     code_must_match_data_attachments: true
 
+  review_routing:
+    control_plane: granoflow
+    gstack_autoplan: explicit_only
+    stages:
+      project_definition:
+        required_capabilities: [prd-review]
+        conditional_capabilities: [office-hours, ceo-reviewer]
+      milestone_decomposition:
+        required_capabilities: [prd-review, engineering-reviewer]
+        conditional_capabilities: [ceo-reviewer, design-reviewer, cso]
+      analysis:
+        conditional_capabilities: [prd-review, investigate, cso]
+      planning:
+        required_capabilities: [engineering-reviewer]
+        conditional_capabilities: [design-reviewer, cso]
+      delivery:
+        required_capabilities: [code-review, qa]
+        conditional_capabilities: [design-review, benchmark, cso, canary]
+    provider_policy:
+      method: preferred_method
+      unavailable: native_fallback_with_evidence
+      authorization_effect: none
+
   theme_and_design_system:
     owner: null
     # Paths to companion Design Tokens (DTCG-oriented JSON or equivalent).
@@ -712,7 +806,8 @@ engineering:
       capabilities: []
     prototype_template:
       # App-owned Design Baseline exact reference. Never resolve "latest".
-      # Package must include Design Tokens refs + landscape/portrait App Shell.
+      # Package includes Design Tokens refs + every required layout family
+      # from platform_support_matrix; do not force unsupported orientations.
       # Authority for later milestone/task prototypes and code acceptance.
       prototype_id: null
       version_id: null
