@@ -68,6 +68,19 @@ and review.
   **loads selected Spec tokens** and aims for final-product effect under
   contract fidelity—**not** grey wireframes. Fail closed
   `shell_spec_tokens_missing` / `shell_wireframe_only`.
+- **Init HTML budget (hard):** Design Baseline package at Project Definition =
+  Spec Style Guide + App Shell only. Do **not** ship every
+  `screen_coverage` page as init HTML. Per-screen hi-fi → task/milestone
+  `ui_prototype`. Fail closed when Spec is used as a walkthrough gallery →
+  `design_spec_wrong_artifact_type`.
+- **Screen detail registration (hard):** before
+  `product_spec_coverage.status: ready`, adopt
+  `screen_detail_registration` and register durable `ui_details` when product
+  docs / user stories state them. Design-truth priority (high→low):
+  `user_confirmed` → `from_product_doc` → `from_user_story` → `inferred` →
+  `ai_live_inference`. Lower Must not override higher without user confirm.
+  Fail closed `screen_detail_registration_missing` /
+  `screen_ui_details_source_invalid`.
 - **Lot draw (hard):** Spec seeds and Shell chrome ids Must come from
   `scripts/draw_visual_lots.py` (**true random** only—no classroom salt /
   `--from`). Hand-invented `seed-*` / chrome ids → `design_spec_seed_not_drawn`.
@@ -120,6 +133,19 @@ and review.
   confirmed prototypes.
 - Incremental extract after later confirmed prototypes; one current project
   slot.
+
+## Milestone / task authoring (task_plan)
+
+- After Project Definition, UI portfolio authoring Must apply
+  `granoflow-agent-workflow/screen-task-portfolio-coverage`: write Milestone
+  Work `task_plan` (refined screens + page journeys + task summaries) with
+  per-screen `split_probe` and ≥1 task per refined screen before App task
+  create. Acceptance-only skeleton coverage is not enough. Composition SoT is
+  Milestone Work—not Project Work. Fail closed
+  `milestone_task_plan_incomplete` /
+  `task_portfolio_screen_coverage_incomplete` /
+  `screen_split_probe_incomplete`. Analysis Must not reopen ownership/split
+  without reopening milestone `task_plan`.
 
 ## Task / milestone `ui_prototype`
 
@@ -228,9 +254,14 @@ and review.
     risk→multi-screen);
   - every adopted acceptance: stress path
     (`journey_stress_path_incomplete`);
+  - `screen_detail_registration.status: adopted` + checklist
+    `screen_detail_registration_adopted`
+    (`screen_detail_registration_missing` /
+    `screen_ui_details_source_invalid`);
   - unattended must not auto-accept decision-changing thin-doc gaps
     (`thin_product_doc_gap_requires_user`).
-    Detail: `product-spec-flow-decomposition.md`.
+    Detail: `product-spec-flow-decomposition.md` and
+    `granoflow-agent-workflow/requirement-intake-and-traceability`.
 - **Engineering Acceptance Pack** (software Step 1): AI self-check YAML → pack
   MD→HTML browse-confirm → then `granoflow_project_work_confirm`. Fail closed
   `engineering_acceptance_pack_unread` /
@@ -243,7 +274,8 @@ and review.
   `directory_structure_unselected` /
   `visual_baseline_applicability_unresolved`. Detail:
   `granoflow-agent-workflow/engineering-acceptance-pack`.
-- When `visual_baseline.applicability: required`, Missing Shell fails Done.
+- When `visual_baseline.applicability: required`, Missing Shell fails Done;
+  init Baseline = Spec + Shell only (not a full S-* HTML gallery).
   When `not_applicable`, Spec / Shell / widgets are not required for Done.
 - Stack capability before HTML (UI path); capability-critical libraries
   selected or explicit `no_capability_dependency_declaration`.

@@ -267,37 +267,51 @@ contract before initialization Done. See
 
 During Step 1, after source intake and before Project Work confirm:
 
-1. Build `journey_coverage` and `screen_coverage` from docs; list every silence
-   that blocks a primary journey, Baseline screen, critical state, or
-   acceptance condition as a decision-changing gap.
-2. For every **adopted** journey: **draw the operation flowchart**, mark
+1. Build `journey_coverage` and **key-page** `screen_coverage` from docs
+   (`screen_inventory.inventory_role: key_pages_from_sources`,
+   `completeness: not_portfolio_complete`). These are not tasks and do not
+   promise full milestone page coverage. List every silence that blocks a
+   primary journey, key-page inventory, critical state, or acceptance
+   condition as a decision-changing gap.
+2. For every **adopted** key screen: when product docs or user stories state
+   durable UI details, register them under `ui_details[]` with
+   `source` / `source_ref` (`from_product_doc` / `from_user_story` /
+   `inferred` / `user_confirmed`). Adopt
+   `screen_detail_registration` (design-truth priority +
+   `init_html_policy: design_spec_and_shell_only`). Do not invent layout as
+   `from_product_doc`.
+3. For every **adopted** journey: **draw the operation flowchart**, mark
    **serial gates** vs parallel ops + final confirm, then record conclusion
    `split` / `keep_cohesive` / `needs_user_decision` and sync
    `screen_ids` / `screen_coverage` when splitting. Attach a beginner-walkable
    `stress_path` per linked acceptance. Do not use risk labels for page count.
-3. Interactive: ask → recommend → wait until every required row is adopted or
+4. Interactive: ask → recommend → wait until every required row is adopted or
    explicitly `out_of_scope` with rationale; wait on decision-changing thin-doc
    gaps and on `needs_user_decision` decomposition conclusions.
-4. Unattended (explicit only): may recommend and auto-adopt
+5. Unattended (explicit only): may recommend and auto-adopt
    **non-decision-changing** missing rows with `agent_recommendation_adopted`;
    must still run the decomposition pass and record a conclusion; must **not**
    silent-auto-accept decision-changing thin-doc gaps → fail closed
    `thin_product_doc_gap_requires_user`. Never invent journeys as `user_stated`.
-5. Set `product_spec_coverage.status: ready` only when the checklist is all
-   true (including decomposition + stress-path flags). Otherwise fail closed
-   `product_spec_coverage_incomplete` (or nested decomposition/stress codes)
-   and do not confirm Project Work for automation.
-6. Step 2 Baseline screens Must map 1:1 (or documented many-to-one) onto
-   `screen_coverage` rows with `baseline_required: true`, including screens
-   adopted via a `split` conclusion.
-7. If product docs or the user state durable **integration-test fixture /
+6. Set `product_spec_coverage.status: ready` only when the checklist is all
+   true (including decomposition + stress-path +
+   `screen_detail_registration_adopted` flags). Otherwise fail closed
+   `product_spec_coverage_incomplete` (or nested decomposition/stress /
+   `screen_detail_registration_*` codes) and do not confirm Project Work for
+   automation.
+7. Steps 2–3 init Baseline package = **Spec Style Guide + App Shell only**.
+   Do not author every key page as full-page HTML at init. Any HTML page that
+   **is** packaged Must map onto a key-page `screen_coverage` row (or
+   Spec/Shell roles). Per-screen hi-fi HTML is task `ui_prototype`; refined
+   screens and task summaries are Milestone Work `task_plan`.
+8. If product docs or the user state durable **integration-test fixture /
    corpus** rules (fixed seed files, “not app seed”, forbidden substitutes),
    record them under
    `engineering.quality_gates.integration_test_special_requirements` per
    `granoflow-agent-workflow/integration-test-special-requirements`. Empty
    list is valid when no special IT constraints exist. Interactive: ask →
    recommend → wait before inventing corpus paths.
-8. Default app signing goal: omit
+9. Default app signing goal: omit
    `engineering.quality_gates.default_signing_goal` or set `local_dev_run`
    unless the product already requires store / notarized distribution
    (`distribute_store` / `distribute_direct`). Agents follow

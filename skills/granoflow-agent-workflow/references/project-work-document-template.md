@@ -349,7 +349,13 @@ product_spec_coverage:
           intermediate: []
           success_exit: null
           failure_exit: null
-  # Every user-visible screen / critical state Baseline must show.
+  # Key pages inventory from product docs / stories (Init). NOT tasks.
+  # Does NOT promise full milestone page coverage. Refined screens + task
+  # binding live in Milestone Work task_plan (screen-task-portfolio-coverage).
+  # Listing here does NOT require init-time full-page HTML.
+  screen_inventory:
+    inventory_role: key_pages_from_sources
+    completeness: not_portfolio_complete
   screen_coverage:
     - screen_id: S-001
       title: null
@@ -361,6 +367,31 @@ product_spec_coverage:
       source_refs: []
       provenance: null
       disposition: adopted | needs_clarification | out_of_scope
+      # Register durable UI details when product docs / stories state them.
+      # Empty when sources are silent. Never invent as from_product_doc.
+      ui_details:
+        - detail_id: null
+          statement: null
+          # user_confirmed | from_product_doc | from_user_story | inferred
+          source: null
+          source_ref: null
+  # Hard gate before status: ready. See requirement-intake-and-traceability.
+  screen_detail_registration:
+    status: adopted | incomplete
+    fail_closed_code: screen_detail_registration_missing
+    # High → low. Lower ranks Must not override higher without user_confirmed.
+    design_truth_priority:
+      - user_confirmed
+      - from_product_doc
+      - from_user_story
+      - inferred
+      - ai_live_inference
+    # Init ships Spec Style Guide + App Shell HTML only—not every S-* page.
+    init_html_policy: design_spec_and_shell_only
+    # Per-screen hi-fi HTML: task Analysis ui_prototype.
+    per_screen_hifi_phase: task_analysis_ui_prototype
+    # Refined screens + task summaries: Milestone Work task_plan (not PW).
+    refined_screen_and_task_plan_phase: milestone_task_plan
   # Explicit gap fills when product docs were silent or too thin.
   gap_fills:
     - gap_id: G-001
@@ -381,6 +412,7 @@ product_spec_coverage:
     every_adopted_acceptance_has_stress_path: false
     every_baseline_required_screen_listed: false
     every_screen_has_requirement_and_acceptance: false
+    screen_detail_registration_adopted: false
     no_open_decision_changing_gaps: false
     no_conflicting_undisposed_requirements: false
     thin_doc_gap_fills_recorded: false
@@ -648,6 +680,9 @@ engineering:
       # required | not_applicable
       applicability: null
       basis: null
+      # When required: init package = Design Spec Style Guide + App Shell only.
+      # Do not require every screen_coverage row as HTML at initialization.
+      init_deliverables: design_spec_and_shell_only
     # After Spec/Shell rounds (see project-artifact-workflows Mode split).
     # Only when visual_baseline.applicability: required.
     design_spec_selection:
@@ -1372,17 +1407,23 @@ completion:
    require `product_spec_coverage.status: ready`. Thin or uneven product docs
    do not waive this. Missing journeys, Baseline-required screens, acceptance
    links, open decision-changing gaps, missing **flow decomposition** pass /
-   conclusion, or incomplete **stress paths** fail closed as
+   conclusion, incomplete **stress paths**, or missing
+   **screen_detail_registration** fail closed as
    `product_spec_coverage_incomplete` (see nested codes in
-   `product-spec-flow-decomposition`). Decomposition is **operation-flow
+   `product-spec-flow-decomposition` and
+   `screen_detail_registration_missing` /
+   `screen_ui_details_source_invalid`). Decomposition is **operation-flow
    driven**: draw the user-operation flowchart, detect serial gates vs
    parallel ops + final confirm, then conclude `split` / `keep_cohesive` /
    `needs_user_decision` — do **not** use risk labels to force multi-screen.
-   Interactive: ask → recommend → wait for missing required rows and for
-   decision-changing thin-doc gaps. Unattended (explicit only): may auto-adopt
-   **non-decision-changing** fills with `agent_recommendation_adopted`; must
-   still run the decomposition pass; decision-changing thin-doc gaps fail
-   closed `thin_product_doc_gap_requires_user` — never silent-complete an
+   While listing screens, register durable `ui_details` when product docs /
+   user stories state them (provenance via design-truth priority). Init HTML
+   remains Spec + Shell only. Interactive: ask → recommend → wait for missing
+   required rows and for decision-changing thin-doc gaps. Unattended (explicit
+   only): may auto-adopt **non-decision-changing** fills with
+   `agent_recommendation_adopted`; must still run the decomposition pass;
+   decision-changing thin-doc gaps fail closed
+   `thin_product_doc_gap_requires_user` — never silent-complete an
    underspecified product. Never relabel invented content as `user_stated`.
    `deferred_unknown` is forbidden for initialization blockers listed under
    `product_spec_coverage.checklist`.

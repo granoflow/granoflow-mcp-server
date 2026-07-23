@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Lint Project Work product_spec_coverage for flow-decomposition gates.
 
-Validates operation-flow / serial-gate page-count conclusions + stress paths.
+Validates operation-flow / serial-gate page-count conclusions + stress paths,
+plus screen_detail_registration / ui_details provenance when status=ready.
 Does not treat risk labels as a reason to force multi-screen.
 
 Accepts JSON (preferred) or YAML when PyYAML is available. Input may be a full
@@ -17,6 +18,21 @@ from pathlib import Path
 from typing import Any
 
 VALID_CONCLUSIONS = frozenset({"split", "keep_cohesive", "needs_user_decision"})
+VALID_UI_DETAIL_SOURCES = frozenset(
+    {
+        "user_confirmed",
+        "from_product_doc",
+        "from_user_story",
+        "inferred",
+    }
+)
+REQUIRED_DESIGN_TRUTH_PRIORITY = (
+    "user_confirmed",
+    "from_product_doc",
+    "from_user_story",
+    "inferred",
+    "ai_live_inference",
+)
 
 
 def _load(path: Path) -> Any:
@@ -88,7 +104,7 @@ def lint_coverage(cov: dict[str, Any]) -> dict[str, Any]:
                 "journeyId": journey_id,
                 "detail": detail,
                 "failCode": code
-                if code.startswith(("flow_", "journey_", "thin_"))
+                if code.startswith(("flow_", "journey_", "thin_", "screen_"))
                 else "product_spec_coverage_incomplete",
             }
         )
@@ -215,6 +231,72 @@ def lint_coverage(cov: dict[str, Any]) -> dict[str, Any]:
                 "unattended must not auto-adopt decision-changing thin-doc gaps",
             )
 
+    for row in _list(cov.get("screen_coverage")):
+        if not isinstance(row, dict):
+            continue
+        sid = str(row.get("screen_id") or row.get("id") or "?")
+        for detail in _list(row.get("ui_details")):
+            if not isinstance(detail, dict):
+                hit(
+                    "screen_ui_details_source_invalid",
+                    sid,
+                    "ui_details entry must be an object",
+                )
+                continue
+            source = detail.get("source")
+            if source not in VALID_UI_DETAIL_SOURCES:
+                hit(
+                    "screen_ui_details_source_invalid",
+                    sid,
+                    "ui_details.source must be user_confirmed | from_product_doc | "
+                    "from_user_story | inferred",
+                )
+            if not _nonempty_str(detail.get("detail_id")) and not _nonempty_str(detail.get("id")):
+                hit(
+                    "screen_ui_details_source_invalid",
+                    sid,
+                    "ui_details entry needs detail_id",
+                )
+            if not _nonempty_str(detail.get("statement")):
+                hit(
+                    "screen_ui_details_source_invalid",
+                    sid,
+                    "ui_details entry needs statement",
+                )
+
+    if cov.get("status") == "ready":
+        registration = cov.get("screen_detail_registration")
+        if not isinstance(registration, dict):
+            hit(
+                "screen_detail_registration_missing",
+                "_screen_detail_registration",
+                "status=ready requires screen_detail_registration object",
+            )
+        else:
+            if registration.get("status") != "adopted":
+                hit(
+                    "screen_detail_registration_missing",
+                    "_screen_detail_registration",
+                    "screen_detail_registration.status must be adopted",
+                )
+            priority = [
+                str(item).strip()
+                for item in _list(registration.get("design_truth_priority"))
+                if _nonempty_str(item)
+            ]
+            if tuple(priority) != REQUIRED_DESIGN_TRUTH_PRIORITY:
+                hit(
+                    "screen_detail_registration_missing",
+                    "_screen_detail_registration",
+                    "design_truth_priority must be " + " > ".join(REQUIRED_DESIGN_TRUTH_PRIORITY),
+                )
+            if registration.get("init_html_policy") != "design_spec_and_shell_only":
+                hit(
+                    "screen_detail_registration_missing",
+                    "_screen_detail_registration",
+                    "init_html_policy must be design_spec_and_shell_only",
+                )
+
     checklist = cov.get("checklist")
     if isinstance(checklist, dict) and cov.get("status") == "ready":
         required_flags = [
@@ -222,6 +304,7 @@ def lint_coverage(cov: dict[str, Any]) -> dict[str, Any]:
             "every_adopted_journey_has_decomposition_conclusion",
             "every_adopted_acceptance_has_stress_path",
             "no_unattended_decision_changing_thin_gap_auto_accept",
+            "screen_detail_registration_adopted",
         ]
         for flag in required_flags:
             if checklist.get(flag) is not True:

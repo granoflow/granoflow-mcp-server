@@ -521,10 +521,16 @@ Shadows&Radius). Real product copy for labels is required; no lorem ipsum.
 - Treating Spec preview as an app walkthrough / phone gallery of all screens;
 - Shipping Spec as marketing landing grids instead of token/component boards.
 
-Journey/screen high-fidelity belongs in **App Shell + Baseline package** (and
-later task `ui_prototype`), always **fitted to** the selected Spec tokens.
-`product_spec_coverage.screen_coverage` still gates Baseline completeness—not
-the Spec artifact shape.
+**Init HTML budget (hard):** Design Baseline at Project Definition =
+**selected Spec Style Guide + App Shell** (portrait/landscape chrome + at
+least one Spec-styled primary surface). Do **not** complete every
+`screen_coverage` journey/critical screen as full-page HTML during Spec/Shell
+rounds. Per-screen high-fidelity belongs in task/milestone `ui_prototype`
+(Analysis), always **fitted to** the selected Spec tokens + Shell chrome.
+`product_spec_coverage.screen_coverage` (+ `ui_details`) gates the **product
+contract inventory**; it does **not** require an init-time HTML gallery.
+Any page that **is** packaged into Baseline Must still map to a coverage row
+(or Spec/Shell artifact roles).
 
 #### Mode split (hard)
 
@@ -703,13 +709,17 @@ Catalog extract** (see below) from that confirmed Baseline prototype.
    bar (`shell_spec_mismatch` / `shell_spec_tokens_missing` /
    `shell_wireframe_only` if not). Shell is where landscape/portrait chrome,
    primary navigation, and Spec-styled primary surfaces appear—not Round A.
-7. When merging Spec+Shell into the Baseline package, extend to high-fidelity
-   journey/critical screens that map 1:1 (or documented many-to-one) onto
-   adopted `product_spec_coverage.screen_coverage` rows with
-   `baseline_required: true`. Unmapped Baseline screens fail closed as
-   `product_spec_coverage_incomplete`. Screens Must consume locked Spec tokens.
-   Prefer evolving the chosen Shell’s product-near surfaces rather than
-   redrawing from a disconnected wireframe.
+7. When merging Spec+Shell into the Baseline package, ship **Spec Style Guide +
+   App Shell only** (`visual_baseline.init_deliverables:
+   design_spec_and_shell_only`). Do **not** author a full journey-screen HTML
+   gallery at init. Journey/critical screens stay listed in
+   `product_spec_coverage.screen_coverage` (with `ui_details` when sources
+   state them). Any extra HTML page that **is** included Must map to a
+   coverage row—unmapped pages fail closed as
+   `product_spec_coverage_incomplete`. Shell primary surfaces Must consume
+   locked Spec tokens. Prefer evolving the chosen Shell’s product-near
+   surfaces rather than redrawing from a disconnected wireframe. Per-screen
+   hi-fi HTML is authored later as task/milestone `ui_prototype`.
 8. Add `implementation_notes` / `【增强实现】` where HTML is schematic.
 9. Package the chosen Spec+Shell with `scripts/package_prototype.py`.
 10. Call `granoflow_project_design_baseline_import`; then

@@ -118,23 +118,45 @@ Required coverage (fail closed `product_spec_coverage_incomplete`):
 3. Every adopted journey acceptance has a beginner-walkable `stress_path`
    (entry → intermediate* → success_exit + failure_exit when negatives apply)
    or fail `journey_stress_path_incomplete`.
-4. Every **Baseline-required screen / critical state** is listed under
+4. Every **key page / critical state** found in product docs (and screens
+   adopted after a journey `split` conclusion) is listed under
    `product_spec_coverage.screen_coverage` with adopted `requirement_ids` and
-   `acceptance_ids`, and linked journey ids (including screens adopted after a
-   `split` conclusion).
-5. `product.primary_user_journeys` and `product.critical_states` match those
+   `acceptance_ids`, and linked journey ids. Set
+   `screen_inventory.inventory_role: key_pages_from_sources` and
+   `completeness: not_portfolio_complete`. These rows are **not tasks** and do
+   **not** promise full milestone page coverage. Listing a screen is **not**
+   permission to author that screen's full-page HTML during Project Definition.
+5. **Screen detail registration (hard):** while building `screen_coverage`,
+   scan product docs and user stories for **durable UI details** (chrome
+   regions, control groups, states, density, gestures, empty/error affordances).
+   When a detail is present, register it under that screen's `ui_details[]`
+   with honest `source` / `source_ref`. Silence → leave `ui_details` empty
+   (do not invent layout as `from_product_doc`). Adopt
+   `product_spec_coverage.screen_detail_registration` before
+   `status: ready`. Fail closed `screen_detail_registration_missing` /
+   `screen_ui_details_source_invalid`.
+6. **Design truth priority (high → low, hard):** when UI details conflict,
+   lower ranks Must not override higher ranks without an explicit
+   `user_confirmed` adjudication:
+   1. `user_confirmed`
+   2. `from_product_doc`
+   3. `from_user_story`
+   4. `inferred` (recorded gap-fill / recommendation already adopted)
+   5. `ai_live_inference` (agent inventing detail in the current turn—ephemeral
+      until registered with a higher-rank source or user confirm)
+7. `product.primary_user_journeys` and `product.critical_states` match those
    coverage tables (no orphan journeys/screens).
-6. Open `needs_clarification` / `conflicting` dispositions that affect
+8. Open `needs_clarification` / `conflicting` dispositions that affect
    journeys, screens, or acceptance are resolved before initialization Done.
-7. Thin-doc silence is not permission to skip: record each fill in
+9. Thin-doc silence is not permission to skip: record each fill in
    `product_spec_coverage.gap_fills` with provenance
    (`user_confirmed` interactive, or `agent_recommendation_adopted` only for
    **non-decision-changing** unattended fills). Never relabel invented content
    as `user_stated`. Unattended decision-changing thin-doc gaps fail closed
    `thin_product_doc_gap_requires_user`.
-8. For these initialization blockers, `deferred_unknown` is **forbidden**.
-   Only non-blocking polish or explicitly out-of-scope items may remain
-   deferred.
+10. For these initialization blockers, `deferred_unknown` is **forbidden**.
+    Only non-blocking polish or explicitly out-of-scope items may remain
+    deferred.
 
 Mode Gate for fills:
 
@@ -144,8 +166,18 @@ Mode Gate for fills:
   always run decomposition + record conclusion; emit notices; keep provenance
   honest; never silent-complete an underspecified product.
 
-Design Baseline HTML screens Must map to `screen_coverage` rows; unmapped
-Baseline screens fail closed as `product_spec_coverage_incomplete`.
+**Init HTML budget (hard):** when `visual_baseline.applicability: required`,
+Project Definition ships **Design Spec (Style Guide) + App Shell only**. Do
+**not** author a full journey-screen HTML gallery at init. Per-screen
+high-fidelity HTML belongs in task `ui_prototype` during Analysis (fitted to
+locked Spec tokens + Shell chrome). Refined screens and task summaries belong
+in Milestone Work `task_plan`—not by silently inventing init HTML or binding
+tasks on Project Work.
+
+Any HTML page that **does** land in the Design Baseline package Must map to a
+key-page `screen_coverage` row (or Shell/Spec artifact roles). Unmapped
+Baseline pages fail closed as `product_spec_coverage_incomplete`. Init Does
+**not** require every key-page row to already have a full-page HTML file.
 
 Content outside the expected headings is not noise. Preserve extra design
 direction, failure behavior, platform limits, privacy promises, examples,
@@ -169,12 +201,12 @@ conflict:
   journeys, global design direction, data/privacy promises, supported platforms,
   non-goals, project acceptance, source registry, and the canonical requirement
   ledger. This is the only editable product SoT at project scope.
-- **Milestone Work** (optional, thin) owns **coverage references** to a bounded
-  subset of requirement ids / acceptance ids, plus dependency/handoff and
-  integration evidence for coordination. It **must not** hold a second editable
-  product ledger or rewrite `R-*` statements. Default portfolio path: milestone
-  **entities** + Project `acceptance_coverage` / `requirement_coverage` without
-  a thick Milestone Work document.
+- **Milestone Work** owns this milestone's **task_plan** (refined screens, page
+  journeys, task summaries, screen→task freeze) when UI/software portfolio
+  authoring applies, plus thin coverage references, dependency/handoff, and
+  integration evidence. It **must not** hold a second editable product ledger
+  or rewrite `R-*` statements. Key-page inventory stays on Project Work;
+  composition SoT for child tasks is Milestone `task_plan`.
 - **Task Work** owns the requirement ids implemented or verified by that task,
   task-local interpretation, minimum-change boundary, execution steps, Delivery
   evidence, and **history** of how this task decided or changed things. Product
@@ -194,7 +226,8 @@ Before automatic decomposition or execution, verify:
   an explicit interaction boundary;
 - `product_spec_coverage.status` is `ready` (journeys, Baseline-required
   screens, acceptance links, flow decomposition conclusions, stress paths,
-  and thin-doc gap fills complete);
+  screen_detail_registration + ui_details when sources state them, and
+  thin-doc gap fills complete);
 - milestone/task coverage points to stable requirement and acceptance ids;
 - extra requirements remain traceable;
 - inferred content is labeled and cannot unlock automation by itself.

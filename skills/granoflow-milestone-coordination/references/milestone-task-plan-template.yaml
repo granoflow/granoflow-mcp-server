@@ -1,0 +1,52 @@
+# Milestone Work task_plan — composition SoT for this milestone.
+# Shape authority for decompose_required. Not a second product R-* ledger.
+# Key-page inventory stays on Project Work (key_pages_from_sources).
+# Hi-fi HTML stays in task Analysis ui_prototype.
+
+document_type: milestone_task_plan
+schema_version: 1
+project_id: null
+milestone_id: null
+work_version: 1
+updated_at: null
+
+# Align with Milestone Work decomposition_status when status: passed.
+task_plan:
+  status: draft # draft | passed | reopened | not_applicable
+  fail_closed_code: milestone_task_plan_incomplete
+  # Project Work key screen_ids this milestone traces (may be empty for non-UI).
+  key_screen_refs: []
+  refined_screens:
+    - screen_id: S-example
+      title: null
+      # Trace to a PW key page, or mark milestone_discovered.
+      traces_to_key_screen: null # S-* | null
+      provenance: traces_to_key_screen # traces_to_key_screen | milestone_discovered
+      acceptance_ids: []
+      split_probe:
+        pass_completed: false
+        # keep_cohesive | split | needs_user_decision
+        conclusion: null
+        rejected_split_summary: null
+        accepted_split_summary: null
+        resulting_screen_ids: []
+        rationale: null
+  page_journeys:
+    - journey_id: MJ-001
+      title: null
+      screen_ids: []
+      summary: null
+      acceptance_ids: []
+  tasks:
+    - local_key: T1
+      task_id: null # App id after create_one
+      responsibility: null # frozen one-line duty
+      screen_ids: []
+      acceptance_ids: []
+      depends_on: []
+      reopen_policy: forbidden_without_milestone_task_plan_reopen
+  checklist:
+    every_refined_screen_has_split_probe: false
+    every_refined_screen_has_task: false
+    every_task_has_responsibility: false
+    traces_or_discovered_set: false

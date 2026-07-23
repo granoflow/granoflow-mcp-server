@@ -31,6 +31,20 @@ MOD = load_module()
 def ready_coverage(**overrides):
     base = {
         "status": "ready",
+        "screen_detail_registration": {
+            "status": "adopted",
+            "design_truth_priority": [
+                "user_confirmed",
+                "from_product_doc",
+                "from_user_story",
+                "inferred",
+                "ai_live_inference",
+            ],
+            "init_html_policy": "design_spec_and_shell_only",
+            "per_screen_hifi_phase": "task_analysis_ui_prototype",
+            "missing_screen_fill_phase": "milestone_or_task_decomposition",
+        },
+        "screen_coverage": [],
         "journey_coverage": [
             {
                 "journey_id": "J-001",
@@ -87,6 +101,7 @@ def ready_coverage(**overrides):
             "every_adopted_journey_has_decomposition_conclusion": True,
             "every_adopted_acceptance_has_stress_path": True,
             "no_unattended_decision_changing_thin_gap_auto_accept": True,
+            "screen_detail_registration_adopted": True,
         },
     }
     base.update(overrides)
@@ -248,6 +263,55 @@ class LintProductSpecCoverageTests(unittest.TestCase):
             payload = json.loads(proc.stdout)
             self.assertEqual(proc.returncode, 0)
             self.assertTrue(payload["ok"])
+
+    def test_ready_requires_screen_detail_registration(self) -> None:
+        cov = ready_coverage()
+        del cov["screen_detail_registration"]
+        result = MOD.lint_coverage(cov)
+        self.assertFalse(result["ok"])
+        codes = {h["code"] for h in result["hits"]}
+        self.assertIn("screen_detail_registration_missing", codes)
+
+    def test_ui_details_invalid_source_fails(self) -> None:
+        cov = ready_coverage(
+            screen_coverage=[
+                {
+                    "screen_id": "S-reader",
+                    "disposition": "adopted",
+                    "ui_details": [
+                        {
+                            "detail_id": "bottom_bar",
+                            "statement": "Reader has a bottom action bar",
+                            "source": "ai_guess",
+                        }
+                    ],
+                }
+            ]
+        )
+        result = MOD.lint_coverage(cov)
+        self.assertFalse(result["ok"])
+        codes = {h["code"] for h in result["hits"]}
+        self.assertIn("screen_ui_details_source_invalid", codes)
+
+    def test_ui_details_valid_source_ok(self) -> None:
+        cov = ready_coverage(
+            screen_coverage=[
+                {
+                    "screen_id": "S-reader",
+                    "disposition": "adopted",
+                    "ui_details": [
+                        {
+                            "detail_id": "bottom_bar",
+                            "statement": "Reader has a bottom action bar",
+                            "source": "from_product_doc",
+                            "source_ref": "docs/product.md#reader",
+                        }
+                    ],
+                }
+            ]
+        )
+        result = MOD.lint_coverage(cov)
+        self.assertTrue(result["ok"], result)
 
 
 if __name__ == "__main__":

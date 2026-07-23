@@ -72,18 +72,23 @@ Checkpoints:
 
 ### 3. Decompose Coverage Against Acceptance
 
-Read `references/milestone-collaboration-workflow.md`. Complete
-`decompose_required` sections: portfolio table, handoffs, decomposition rules,
-and acceptance coverage. If required child tasks are **missing as App
-entities**, stop and hand off to `granoflow-task-authoring` (or
-`granoflow-portfolio-orchestrator`)—do not silently invent incomplete tasks
-here. Prefer tasks that already exist from authoring.
+Read `references/milestone-collaboration-workflow.md` and, for UI portfolios,
+`references/milestone-task-plan-template.yaml` plus
+`granoflow-agent-workflow/screen-task-portfolio-coverage`. Complete
+`decompose_required` sections: structured `task_plan`, portfolio table,
+handoffs, decomposition rules, and acceptance coverage. Reach
+`task_plan.status: passed` before App create when user-visible pages apply. If
+required child tasks are **missing as App entities**, stop and hand off to
+`granoflow-task-authoring` (or `granoflow-portfolio-orchestrator`)—do not
+silently invent incomplete tasks here. Prefer tasks that already exist from
+authoring.
 
 When requirement-driven, also read
 `granoflow-agent-workflow/requirement-intake-and-traceability`.
 
 Checkpoints:
 
+- UI: `task_plan` passed (refined screens + split probes + task summaries) before create handoff.
 - Missing required child App entities → hand off to task authoring; do not silently invent tasks.
 - Prefer tasks that already exist from authoring.
 

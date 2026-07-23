@@ -15,11 +15,15 @@ set of child tasks. It owns dependencies, handoffs, integration proof, and
 milestone acceptance. It does not replace child Task Work and does not
 batch-create milestones or author task prose.
 
-**Milestone Work is optional and thin.** Product/acceptance current truth stays
-in Project Work. Prefer milestone entity + Project coverage tables. Draft a
-Milestone Work attachment only for parallel execution, authorization
-aggregation, or integration closeout that needs a shared coordinator document.
-Never treat Milestone Work as a second product requirement ledger.
+**Product/acceptance current truth stays in Project Work** (including key-page
+inventory). **Composition SoT for child tasks** is Milestone Work `task_plan`
+when the milestone authors UI/software child tasks with user-visible pages:
+persist `milestone-task-plan-template.yaml` shape, reach
+`task_plan.status: passed` before App create, and forbid Analysis from
+reopening ownership/split without reopening `task_plan`. Non-UI milestones may
+stay thin (entity + Project coverage). Never treat Milestone Work as a second
+product `R-*` ledger. Parallel execution / authorization aggregation still use
+the same Milestone Work attachment when needed.
 
 ## Phase Model
 
@@ -81,7 +85,11 @@ Do not treat permission to discuss or decompose as execution authorization.
 
 ## 3. Decomposition Check
 
-Complete `decompose_required` fields. Build the smallest sufficient portfolio.
+Complete `decompose_required` fields. For UI/software milestones with
+user-visible pages, also complete structured `task_plan` per
+`milestone-task-plan-template.yaml` and
+`granoflow-agent-workflow/screen-task-portfolio-coverage` (lint with
+`lint_task_screen_portfolio.py`). Build the smallest sufficient portfolio.
 Each child task must have one distinct responsibility and contribute evidence to
 at least one milestone acceptance ID.
 
@@ -89,17 +97,21 @@ The decomposition passes only when all checks below pass:
 
 1. **Coverage:** every mandatory acceptance ID has an accountable task or the
    controller.
-2. **Necessity:** every proposed child task changes an acceptance result, removes
+2. **Task plan (UI):** `task_plan` present; every refined screen has
+   `split_probe` + ≥1 task row; every task has frozen `responsibility` and
+   `screen_ids` when UI applies; screens trace to Project Work key pages or
+   declare `milestone_discovered`.
+3. **Necessity:** every proposed child task changes an acceptance result, removes
    a material blocker, or provides required integration evidence.
-3. **Boundary:** child responsibilities do not duplicate each other or hide a
+4. **Boundary:** child responsibilities do not duplicate each other or hide a
    second milestone.
-4. **Dependencies:** every edge names an observable output and consuming input;
+5. **Dependencies:** every edge names an observable output and consuming input;
    cycles are removed or represented as explicit human/integration gates.
-5. **Handoffs:** source of truth, compatibility contract, verification, and
+6. **Handoffs:** source of truth, compatibility contract, verification, and
    invalidation conditions are explicit.
-6. **Acceptance:** cross-task checks have owners and cannot be satisfied only by
+7. **Acceptance:** cross-task checks have owners and cannot be satisfied only by
    local task completion.
-7. **Readiness:** known accounts, inputs, environments, authorization, and manual
+8. **Readiness:** known accounts, inputs, environments, authorization, and manual
    decisions are available or recorded as blockers.
 
 Set `decomposition_status: revisions_required` when the portfolio is plausible
@@ -108,7 +120,8 @@ prevents safe decomposition. Do not create speculative tasks merely to make the
 table look complete. When required portfolio rows lack App task entities, hand
 off to `granoflow-task-authoring` (or `granoflow-portfolio-orchestrator`) instead
 of authoring full task prose inside this Skill. When the check passes, set
-`decomposition_status: passed` and `required_fields_phase: decompose_required`.
+`decomposition_status: passed`, `task_plan.status: passed` (UI), and
+`required_fields_phase: decompose_required`.
 
 ## 4. Portfolio Execution
 

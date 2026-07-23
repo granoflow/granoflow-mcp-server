@@ -1,21 +1,26 @@
 # Milestone Work Document Template
 
 Owned by `granoflow-milestone-coordination`. Use this template for one
-milestone-level **coordination** contract when parallel workers, dense handoffs,
-or integration closeout need a thin shared attachment.
+milestone-level **coordination** contract and—when UI/software child tasks are
+authored—the structured **`task_plan`** composition SoT.
 
-**Not product SoT.** Product journeys, acceptance, and verification mandates
-live in **Project Work** (current). Task history lives in **Task Work**. Do
-**not** require a thick Milestone Work document for every milestone. Default
-path: milestone **entity** + Project `acceptance_coverage` /
-`requirement_coverage`. Create or keep Milestone Work only when coordination
-needs exceed that default.
+**Not product SoT.** Product journeys, key-page inventory, acceptance, and
+verification mandates live in **Project Work** (current). Task history and
+hi-fi prototypes live in **Task Work**. This document **must not** rewrite
+`R-*` statements or copy the full Project requirement ledger.
 
-When used, it freezes the milestone Outcome boundary and Scope while allowing
-the child-task portfolio to evolve. It is not a large Task Work document and
-must not duplicate child implementation plans or copy the full Project
-requirement ledger. Milestone/task **entity creation** is out of scope for this
-template.
+**Composition SoT (hard for UI portfolio):** before App task create for a
+milestone that touches user-visible pages, persist machine-readable
+`task_plan` per `milestone-task-plan-template.yaml` (refined screens, page
+journeys, task summaries, split probes). `task_plan.status: passed` aligns
+with `decomposition_status: passed`. Non-UI milestones may keep Milestone Work
+thin (entity + Project coverage only) when no refined screens apply.
+
+When used, it freezes the milestone Outcome boundary, Scope, and—after
+`task_plan` pass—child-task responsibilities. It is not a large Task Work
+document and must not duplicate child implementation plans. Milestone **entity**
+creation remains `granoflow-milestone-workflow`; App task create remains
+`granoflow-task-authoring` against a passed `task_plan`.
 
 Until Granoflow exposes milestone attachments, store the complete document on one
 controller Task bound to the milestone. Keep only a concise living summary and the
@@ -28,7 +33,7 @@ Do not pretend every section is complete at charter confirmation. Fill by phase:
 | Phase key                    | When it must be complete                                 | Typical sections                                                                                                                                                                                                                                                           |
 | ---------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `charter_required`           | Before `charter_status: confirmed`                       | Reader Summary, Outcome, Acceptance, Requirement Coverage (owned ids), Scope/Non-goals, Current Truth (milestone-level only), Workstreams (coarse), Milestone Risks (cross-task), Integration Verification **skeleton**, one end-to-end example, Next Orchestration Action |
-| `decompose_required`         | Before `decomposition_status: passed`                    | Decomposition Rules, Task Portfolio, Dependency And Handoff Map; Integration Verification rows named to accountable tasks                                                                                                                                                  |
+| `decompose_required`         | Before `decomposition_status: passed` / `task_plan.status: passed` | Decomposition Rules, structured **`task_plan`** (see `milestone-task-plan-template.yaml`), Task Portfolio table synced to `task_plan.tasks`, Dependency And Handoff Map; Integration Verification rows named to accountable tasks |
 | `execute_preflight_required` | Before non-dry-run child execution or persistent workers | Parallel Execution, Delegation And Authorization Boundary, Persistent Execution Preflight, External Capability Matrix                                                                                                                                                      |
 
 **Fill ownership for `execute_preflight_required`:**
@@ -130,11 +135,29 @@ copy the complete product ledger.
 
 <When to create, split, merge, reorder, defer, cancel, or move a task to follow-up.>
 
+## Task Plan (structured YAML — composition SoT)
+
+Persist the machine-readable `task_plan` object from
+`milestone-task-plan-template.yaml` on this Milestone Work (YAML attachment /
+embedded block). Required before App `create_one` when the milestone has
+user-visible pages.
+
+- Start from Project Work **key pages** (`key_screen_refs`); refine into
+  `refined_screens` + `page_journeys` (may add `milestone_discovered` screens).
+- Every refined screen: completed `split_probe`; ≥1 `tasks[]` row listing it.
+- Freeze responsibilities in `tasks[].responsibility` + `screen_ids`.
+- `task_plan.status: passed` ⇔ `decomposition_status: passed` for UI
+  portfolios. Changing ownership/split → `reopened` / `draft`; Task Analysis
+  Must not silently reopen (`forbidden_without_milestone_task_plan_reopen`).
+- Lint: `granoflow-agent-workflow/scripts/lint_task_screen_portfolio.py`.
+
 ## Task Portfolio
 
-| Task ID | Responsibility | Depends On | Acceptance Contribution | Current Evidence Reference |
-| ------- | -------------- | ---------- | ----------------------- | -------------------------- |
-| <id>    | <one outcome>  | <ids/none> | <acceptance ids>        | <live Task Work/Delivery>  |
+Human-readable mirror of `task_plan.tasks` (keep in sync after create):
+
+| Task ID | local_key | Responsibility | screen_ids | Depends On | Acceptance Contribution | Current Evidence Reference |
+| ------- | --------- | -------------- | ---------- | ---------- | ----------------------- | -------------------------- |
+| <id>    | T1        | <one outcome>  | <S-*>      | <ids/none> | <acceptance ids>        | <live Task Work/Delivery>  |
 
 ## Dependency And Handoff Map
 
@@ -194,9 +217,11 @@ during final acceptance:
   material milestone risk. A material change to any of them sets `reopened` and
   requires confirmation again. Confirming charter does **not** require
   `execute_preflight_required` sections to be complete.
-- `decomposition_status` says whether the current task portfolio minimally and
-  sufficiently covers the confirmed charter. It may return to `draft` after a
-  portfolio change without reopening the charter.
+- `decomposition_status` says whether the current task portfolio / `task_plan`
+  minimally and sufficiently covers the confirmed charter. For UI portfolios it
+  tracks `task_plan.status`. It may return to `draft` / `reopened` after a
+  portfolio or ownership/split change without necessarily reopening the
+  charter.
 - `required_fields_phase` is the highest phase whose required sections are
   currently satisfied for this `work_version`.
 - `execution_state` is the contract's collaboration phase, not a replacement for

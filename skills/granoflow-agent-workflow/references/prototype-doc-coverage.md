@@ -43,7 +43,12 @@ Before Analysis confirmation, inventory **every material user-visible UI
 surface owned by this task**—pages, dialogs/modals, sheets, popovers, toasts
 (when user-visible and task-owned), and other overlays—and map each to a
 **high-fidelity HTML prototype file** in the task `ui_prototype` package (or
-linked option batch). No omissions.
+linked option batch). No omissions. When Project Work
+`product_spec_coverage.screen_coverage[].ui_details` lists durable details for
+those surfaces, the HTML Must cover them (design-truth priority:
+`user_confirmed` > `from_product_doc` > `from_user_story` > `inferred` >
+live AI guess). Init Design Baseline Spec+Shell is **not** per-screen
+coverage.
 
 Persist on Task Work:
 

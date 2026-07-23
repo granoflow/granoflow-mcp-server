@@ -178,6 +178,27 @@ simulated product UI; internal filtering, design rationale, confidence,
 quantity, architecture, test, and acceptance language must not become product
 copy (`user_visible_copy_boundary_violation`).
 
+### Screen portfolio ownership (before UI prototype)
+
+UI-changing Analysis Assumes Milestone Work `task_plan.status: passed` already
+freezes this task's `screen_ids`, responsibility, and refined-screen
+`split_probe` (`granoflow-agent-workflow/screen-task-portfolio-coverage`).
+Project Work key pages are inventory only—not task binding.
+
+If Analysis finds orphan product pages, missing probes, or wants to change
+ownership/split:
+
+1. fail closed `milestone_task_plan_incomplete` /
+   `task_portfolio_screen_coverage_incomplete` /
+   `screen_split_probe_incomplete`;
+2. do **not** silently absorb orphan screens into this task's prototype;
+3. reopen Milestone `task_plan` (`reopened` / `draft`), amend via
+   milestone coordination / task-authoring / portfolio orchestrator, re-pass,
+   then resume Analysis.
+
+Analysis owns hi-fi + detail fill only for screens listed on this task's
+frozen `task_plan` row.
+
 ### UI Change Prototype Mandate
 
 Any task that changes UI—layout, navigation/shell, visual treatment, interaction
@@ -278,7 +299,11 @@ Hard rules:
    Planning Must not start while that deliverable is missing. Readiness and
    non-dry-run execution remain blocked as well, but those are later gates—
    do not treat “before Readiness” as permission to confirm Analysis without
-   the prototype.
+   the prototype. When Project Work lists `screen_coverage[].ui_details` for
+   the touched screens, the prototype Must honor those details under
+   `screen_detail_registration.design_truth_priority` (product-doc /
+   user-story details outrank `inferred` / live AI guesses). Init Baseline
+   Spec+Shell is not a substitute for per-screen Analysis hi-fi.
 9. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
    `ui_prototype_required` and `analysis_deliverables_incomplete`; refuse
    Analysis confirmation and refuse Planning entry. Stale Task Work refs after

@@ -156,7 +156,9 @@ Actions:
 1. Resolve one project; emit Mode Gate notice.
 2. Requirement intake + **Product Spec Completeness Hard Gate**
    (`product_spec_coverage`; mandatory operation-flow / serial-gate page-count
-   conclusion + stress paths; no confirm while status is not `ready`).
+   conclusion + stress paths + **screen detail registration** /
+   `ui_details` when sources state them; no confirm while status is not
+   `ready`).
 3. Fill Project Work from the canonical template; preserve unknowns; no fake
    completeness. Initialization blockers must not stay `deferred_unknown`.
    When product docs name durable IT fixture/corpus rules, fill
@@ -248,7 +250,8 @@ Success criteria:
 
 - `design_spec_selection` recorded (option id if any, seed, provenance).
 - `token_sources` set for the chosen Spec.
-- Spec previews are Style Guides; journey screens deferred to Shell/Baseline.
+- Spec previews are Style Guides; journey-screen HTML deferred to task/milestone
+  `ui_prototype` (init Baseline = Spec + Shell only).
 
 Checkpoints:
 
@@ -324,8 +327,12 @@ Initialization is Done only when all hold:
     rounds—else `design_spec_triad_required` / `shell_triad_required` /
     `shell_spec_mismatch` / seed-collision codes when interactive rules were
     violated;
-  - every Baseline journey/critical screen maps to
-    `product_spec_coverage.screen_coverage`;
+  - init Baseline package is Spec Style Guide + App Shell only (not every key
+    page as HTML); any packaged HTML page maps to key-page
+    `product_spec_coverage.screen_coverage` (or Spec/Shell roles);
+  - `screen_inventory` marks key pages as `not_portfolio_complete` (not tasks);
+  - `screen_detail_registration` adopted with durable `ui_details` registered
+    when product docs / stories state them;
   - Baseline includes landscape and portrait App Shell; **Missing Shell fails
     Done**;
   - `widgets.yaml` written from confirmed Baseline—else `widget_catalog_required`;
