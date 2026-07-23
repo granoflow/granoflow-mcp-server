@@ -1,5 +1,17 @@
 # Task Work Document Workflow
 
+## Truth layers (must)
+
+- **Project Work** = project **current** product/acceptance truth.
+- **Task Work** = this task's **history** and task-local Analysis/Plan contract.
+- After any user-accepted **product-truth** change (journeys, screens,
+  acceptance, verification mandates, locked product behavior): write back
+  **Project Work** in the same batch (`discussion-writeback-contract`). Updating
+  only Task Work fails closed as incomplete writeback.
+- Implement and fidelity-compare against App **readback** prototype SHA; if Task
+  Work refs disagree with App `current`, rewrite refs after writeback before
+  Readiness/Execution (`stale_reference_after_discussion`).
+
 Use this owner for every new task Analysis and applicable Planning. Read
 `task-work-document-template.md` first. Load other references only after a
 specific trigger below fires.

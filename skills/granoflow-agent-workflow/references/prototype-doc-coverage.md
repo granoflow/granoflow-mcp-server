@@ -79,6 +79,28 @@ Rules:
 5. `status: complete` only when every inventoried surface is `covered` (or
    `not_applicable` when the task truly has no UI surfaces).
 
+### Navigable prototype policy (Analysis / Baseline checklist)
+
+Authoritative prototypes are **clickable UX truth**, not a pile of isolated
+preview links. For Project Work `product_spec_coverage.screen_coverage` rows
+that are `disposition: adopted` and user-reachable, and for every task-owned
+surface in `prototype_html_coverage`:
+
+1. Prefer reaching the surface by **in-prototype navigation** from Shell / a
+   primary entry (tap list rows, tabs, buttons, back stack)—not only an
+   external deep-link that bypasses IA.
+2. An isolated HTML file opened only via an out-of-app link, with no in-shell
+   path, does **not** satisfy navigability for that surface. Mark the surface
+   incomplete until a navigable path exists (or an allowed exception applies).
+3. **Exceptions (do not force fake pages):**
+   - same-page empty / loading / inline error states of one operation;
+   - OS chrome (uninjected file dialogs, tray, system sheets)—may use an
+     in-app entry affordance; full OS chrome is verified in E2E/manual;
+   - `out_of_scope` / non-adopted screens.
+4. Design Baseline Done and task Analysis close **Must** run this checklist
+   (policy). Mechanical `reachable_from` lint is not required in this skill
+   revision.
+
 Lint:
 
 ```text

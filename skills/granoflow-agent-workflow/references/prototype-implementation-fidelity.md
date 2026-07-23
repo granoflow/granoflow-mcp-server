@@ -28,6 +28,17 @@ UI change).
 - `prototype_requirement: not_required`; or
 - the task has no UI / no prototype authority.
 
+## Authority SHA (implement and compare)
+
+- Implementation and fidelity compares use the App **readback**
+  `prototypeId` / `versionId` / `packageSha256` for the task `ui_prototype`
+  current slot—not a stale Task Work filename or chat link.
+- If Task Work refs disagree with App `current`, complete discussion writeback
+  and rewrite Task Work refs before Readiness, first UI edit, or Phase A/B
+  (`stale_reference_after_discussion`).
+- Project Work holds only the **current** Design Baseline pointer; task packages
+  stay on task slots.
+
 ## Phase A — Implement (before unit tests)
 
 After code for the UI change is authored (or substantially updated) and
@@ -88,6 +99,20 @@ where `keep` is forbidden until user final acceptance.
 
 Human intervention is **not** required for Phase A, but the declaration **is**.
 
+When `decision: keep_implementation` and the divergence changes
+**product-visible** truth (behavior, chrome/entry, journeys—not form-factor
+carve-out alone): update **Project Work** current acceptance/coverage (and
+product docs when `product_truth_changing`) in the same batch, or record an
+explicit non-promotion residual on Delivery. Task Work alone is not enough.
+
+### Delivery checklist (software UI tasks)
+
+Before marking Delivery complete when Phase A applies:
+
+- `prototype_impl_compare.declaration_emitted: true` with required questions;
+- authority SHA matches App readback current;
+- product-truth `keep` paths show Project writeback or explicit non-promotion.
+
 ### Fail-closed (Phase A)
 
 | Code                                                | When                                                        |
@@ -108,10 +133,12 @@ agent **Must** treat **every finalized / confirmed** task-level prototype as the
 ### Hard loop (agent_auto — no user confirm mid-loop)
 
 1. **Inventory** every project task that has a finalized / confirmed task-level
-   `ui_prototype` (or equivalent HTML authority). Sources: Granoflow task list +
-   `ui_prototype` attachments / prototype import readbacks / Delivery
-   `prototype_inputs`. Empty inventory is allowed only when truly none exist—
-   and must still be declared (`required_task_ids: []`).
+   `ui_prototype` (or equivalent HTML authority). Prefer App enumeration of
+   `ui_prototype` current slots; otherwise build a complete manual inventory
+   from task list + attachment readbacks + Delivery `prototype_inputs`. Record
+   `inventory_basis: app_enumeration | manual_inventory` on the evidence pack.
+   Do **not** silently sample. Empty inventory is allowed only when truly none
+   exist—and must still be declared (`required_task_ids: []`).
 2. For **each** inventoried `task_id`, emit a **user-visible compare row** that
    **Must** include all of:
    - clickable `prototype_link` (opens in embedded or external browser)

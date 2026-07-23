@@ -41,7 +41,10 @@ Append to the base Delivery when `profiles` contains `software_development`:
   Delivery must show Phase A `prototype_impl_compare` ran **before unit
   tests** (`method: code_review_guess`, `declaration_emitted: true`, three
   questions answered, closed `diffs` when diverged) per
-  `prototype-implementation-fidelity.md`. Fail as
+  `prototype-implementation-fidelity.md`. Compare authority is App readback
+  SHA. If Phase A `decision: keep_implementation` changes product-visible
+  truth (not form-factor-only), Delivery must show Project Work writeback (or
+  an explicit non-promotion residual). Fail as
   `prototype_impl_compare_unread`, `prototype_impl_compare_undeclared`,
   `prototype_impl_compare_three_questions_incomplete`,
   `prototype_diff_ledger_incomplete`, `prototype_impl_compare_wrong_method`,

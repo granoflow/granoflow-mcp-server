@@ -17,8 +17,15 @@ Resolve it with `granoflow_project_interaction_style`; if it is absent, use the
 newcomer-friendly default. This is a presentation preference, not a second
 source of project facts.
 
-These files are project consistency guards, not a second automatic source of
-truth for task Outcome. Prefer app-owned project-context-attachment tools when
+These files are project **consistency guards**, not product SoT:
+
+- They are **not** the product journey, screen, or acceptance ledger (that is
+  **Project Work** current truth).
+- They are **not** Task Work history or Delivery evidence.
+- Do not treat `project_snapshot.yaml` as acceptance/journey authority.
+- Do not treat `project_rules.yaml` as a second editable requirement ledger.
+
+Prefer app-owned project-context-attachment tools when
 `granoflow_ai_agent_tools` advertises `granoflow_project_context_attachments_v1`.
 
 ## Hard Gate: Pre-Change Conflict Check (fail closed)

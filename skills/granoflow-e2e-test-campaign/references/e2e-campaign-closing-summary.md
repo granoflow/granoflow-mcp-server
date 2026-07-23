@@ -48,6 +48,12 @@ Also follow `project-interaction-style.md`: durable records are
 5. **Embed or reference evidence pack** (`evidence_pack` or `evidence_pack_ref`).
 6. **`plain.next_step`** may suggest 「项目收尾」 only after
    `user_final_acceptance: true`.
+   6b. **No bare green with open hard coverage.** If the coverage matrix still has
+   unfinished **hard acceptance rows** (see `e2e-user-flow-coverage`) or
+   `prototype_task_reviews.ai_loop_status` is not `complete` /
+   `not_applicable`, do **not** report bare `green` and do **not** suggest
+   project close. Use `green_with_residuals` / blocked outcomes with leftovers,
+   or keep the campaign incomplete.
 7. **Manual-test leftovers.** When any residual uses
    `e2e_campaign_manual_test_required` / `e2e_campaign_automation_too_hard`
    (or short aliases), `outcome` **Must** be `green_with_residuals` (or

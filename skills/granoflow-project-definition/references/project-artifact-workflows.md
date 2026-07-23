@@ -6,6 +6,22 @@ Preview Gate**, Spec/Shell Mode split, Widget Catalog, and **Task Prototype
 Craft Gate And Option Set**. Fail-closed checklist:
 `hard-constraints.md`.
 
+## Companion roles (see Project Work map)
+
+Authority and slots align with the **Companion attachments** table in
+`granoflow-agent-workflow/project-work-document-template`:
+
+| Artifact                                                           | Role                                                              |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| Design Baseline + tokens                                           | Project visual/IA **current** authority                           |
+| `widgets.yaml`                                                     | Reusable widget contracts after Baseline confirm                  |
+| Task/milestone `ui_prototype`                                      | Task-level clickable UI authority (`derivedFrom` Baseline SHA)    |
+| `data-model.md` / `data-contracts.yaml` / `constants-catalog.yaml` | Data/constants current shapes (not embedded in Project Work body) |
+| Project Work                                                       | Product/acceptance **current** truth and admission                |
+| `project_snapshot.yaml` / `project_rules.yaml`                     | Code status quo / durable boundaries—not product SoT              |
+
+Do not invent a parallel product ledger inside Baseline HTML or widgets.yaml.
+
 ## Design-first, product-truth, and high-risk feasibility
 
 **Default order stays design-first.** Confirmed product docs and previewable UI

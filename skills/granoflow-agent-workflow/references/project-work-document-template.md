@@ -5,6 +5,29 @@ contract. A project may attach and update this document from the first partial
 discussion. Partial content is useful evidence and must never be padded with
 invented answers.
 
+## Role: current project truth
+
+Project Work holds the project's **latest current** product and admission
+contract—not a change-log narrative and not a full copy of user product docs.
+
+- **Update in place** when product truth, acceptance, boundaries, or quality
+  rules change; bump `document.document_version` on material change.
+- Put process history in Task Work / Delivery / `change_control.amendment_history`
+  pointers—not as growing prose in the Project Work body.
+- User product documents and user stories are **evidence** under
+  `requirement_intake.source_documents`. Extract dispositioned `R-*` /
+  `product_spec_coverage` / `acceptance` rows; **do not paste** full product
+  manuals or user-story books into this YAML.
+
+### Layered fill (do not flatten)
+
+| Layer                              | Typical sections                                                                                           | Rule                                                         |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Charter / current product contract | `identity`, `requirement`, `requirement_intake`, `scope`, `product`, `product_spec_coverage`, `acceptance` | Keep as adjudicated current truth with provenance            |
+| Engineering locks                  | `repositories`, `engineering.*` (stack, deps, data attachments, theme, quality gates)                      | Lock early; change via reopen/confirm when material          |
+| Automation admission               | `automation`, `action_requirements`, `readiness`, `confirmation`                                           | Gate automatic actions; never invent grants                  |
+| Companion artifacts                | `artifacts` + named attachments below                                                                      | Current slots with SHA readback; not a second product ledger |
+
 The attachment gate and the automation gate are deliberately different:
 
 - `attachment` may be `ready` while the document is `partial`;
@@ -19,19 +42,59 @@ The attachment gate and the automation gate are deliberately different:
   readback truth. MCP remains a thin interface and must fail closed while that
   app-owned capability is unavailable.
 
-Project Work is a living project contract, not a one-time setup form. At task
-completion, milestone review, release preparation, and before a commit that
-changes behavior or a quality gate, compare the implementation and gate output
-with this document. If the current state, boundary, rationale, commands,
-acceptance evidence, or quality rules changed, update the same Project Work
-attachment, increment its document version when the change is material, and
+Project Work is a living **current** project contract, not a one-time setup
+form. At task completion, milestone review, release preparation, and before a
+commit that changes behavior or a quality gate, compare the implementation and
+gate output with this document. If the current state, boundary, rationale,
+commands, acceptance evidence, or quality rules changed, update the same Project
+Work attachment, increment its document version when the change is material, and
 obtain the required App-owned validation/readback before relying on it again.
 Never restore code to satisfy a stale Project Work rule without first checking
 whether the rule itself is obsolete. A mismatch must be reported as a document
 refresh or conflict, not silently resolved by reverting the implementation.
 
+### Mid-flight verification upgrades
+
+When discussion discovers a high-risk or error-prone point, or the user states
+an extra test mandate: after user confirmation, update
+`acceptance.conditions` and `acceptance_coverage` on **this** document (current
+truth). Prefer `required_evidence` entries such as `integration_test`,
+`e2e_or_manual`, and `screenshot_checkpoint`; set `manual_acceptance_required`
+when E2E automation is too hard. Record the discovery and writeback on the
+triggering Task Work (history). Do not leave the mandate only in chat.
+
+### Design Baseline pointer
+
+`engineering.theme_and_design_system.prototype_template` holds the **current**
+confirmed Design Baseline ids/SHA only. Do not dump per-task prototype history
+into Project Work; task `ui_prototype` slots own task-level packages.
+
 Store secret availability or a private reference only. Never store tokens,
 passwords, OTPs, recovery codes, auth URLs, or credential values.
+
+## Companion attachments (not a fourth product Work)
+
+These App-owned attachments support engineering and verification. They are
+**not** a second product journey/acceptance ledger—that stays in Project Work
+above. Task Work / Delivery hold history and evidence.
+
+| Attachment                         | Purpose                                         | Effect on development                                          |
+| ---------------------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
+| `project_snapshot.yaml`            | Code/module status quo, next step, blockers     | Hard Gate before first software edit (`project_context_*`)     |
+| `project_rules.yaml`               | Durable boundaries, prefs, `interaction_style`  | Same Hard Gate; not product acceptance SoT                     |
+| Design Baseline (App package)      | Project visual/IA authority + token refs        | Definition Done; task prototypes `derivedFrom` exact SHA       |
+| Design Tokens (`token_sources`)    | Color/type/spacing                              | Contract-fidelity basis                                        |
+| `widgets.yaml`                     | Reusable widget **contracts** (not full HTML)   | Mandatory after Baseline confirm; reuse or `widget_*`          |
+| Task/milestone `ui_prototype`      | Task UI authority (clickable HTML package)      | Ready before Readiness; Phase A/B fidelity                     |
+| `data-model.md`                    | Entities/tables when DB applies                 | Update in same task as schema changes or `data_artifact_stale` |
+| `data-contracts.yaml`              | JSON/structured file shapes                     | Same                                                           |
+| `constants-catalog.yaml`           | Shared constants catalog                        | Same                                                           |
+| `workflows.md`                     | Flow diagrams + notes                           | Consistency with data-model / acceptance                       |
+| Task Delivery / acceptance reports | Actual outcomes and evidence                    | Completion path                                                |
+| IT/E2E campaign artifacts          | Suite plans, coverage, evidence packs, closings | Stages 6–7; incomplete hard rows block bare green              |
+
+See also `project-context-attachments.md` and project-definition
+`project-artifact-workflows.md`.
 
 ```yaml
 schema: granoflow_project_work_v1

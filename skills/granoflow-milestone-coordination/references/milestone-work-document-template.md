@@ -1,11 +1,21 @@
 # Milestone Work Document Template
 
 Owned by `granoflow-milestone-coordination`. Use this template for one
-milestone-level collaboration contract. It freezes the confirmed Outcome,
-acceptance boundary, Scope, and non-goals while allowing the child-task
-portfolio to evolve. It is not a large Task Work document and must not
-duplicate child implementation plans. Milestone/task **entity creation** is out
-of scope for this template.
+milestone-level **coordination** contract when parallel workers, dense handoffs,
+or integration closeout need a thin shared attachment.
+
+**Not product SoT.** Product journeys, acceptance, and verification mandates
+live in **Project Work** (current). Task history lives in **Task Work**. Do
+**not** require a thick Milestone Work document for every milestone. Default
+path: milestone **entity** + Project `acceptance_coverage` /
+`requirement_coverage`. Create or keep Milestone Work only when coordination
+needs exceed that default.
+
+When used, it freezes the milestone Outcome boundary and Scope while allowing
+the child-task portfolio to evolve. It is not a large Task Work document and
+must not duplicate child implementation plans or copy the full Project
+requirement ledger. Milestone/task **entity creation** is out of scope for this
+template.
 
 Until Granoflow exposes milestone attachments, store the complete document on one
 controller Task bound to the milestone. Keep only a concise living summary and the

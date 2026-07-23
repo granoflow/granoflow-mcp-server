@@ -33,10 +33,20 @@ CI fixer, or repo-automation framework.
 ## Branch Router
 
 Pick one branch. Load refs with
-`granoflow_bundled_skill_reference(skillId, referenceId)` before steps. Public
-listing copy stays English-only; runtime accepts localized equivalents. Always
+`granoflow_bundled_skill_reference(skillId, referenceId)` before steps. Always
 apply matching **Hard Gates**. Project-bound software turns also emit the
 lifecycle board.
+
+### Language policy
+
+- Skill and reference **contract body** stays English (including Hard Gates,
+  field names, fail-closed codes, and templates).
+- Public listing / npm / registry copy stays English-only.
+- Runtime may accept localized **trigger phrases** and may use localized
+  **user-facing sample utterances** when that helps the user and does not
+  remove or weaken the English contract path for English users.
+- Do **not** translate skill text for human reading of Skills—readers may ask
+  an AI to translate. Do not maintain dual-language contract copies.
 
 | User intent                            | Branch                                    | Call first                                    | Must load                                                  | Stop if                                     |
 | -------------------------------------- | ----------------------------------------- | --------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------- |
@@ -65,7 +75,7 @@ lifecycle board.
 | UI implement before unit tests         | Prototype Phase A        | `prototype-implementation-fidelity`                                                          | Phase A / undeclared codes                                                        |
 | Signing/entitlement work               | Code signing             | `code-signing-strategy`                                                                      | missing declaration; user-confirm `local_dev_run`                                 |
 | Long/unattended implement/campaign     | Run continuity           | `long-task-run-continuity`, `durable-run-plan-template`                                      | `long_task_continuity_*`, `long_run_plan_*`                                       |
-| Before software edits                  | Project context          | `project-context-attachments`                                                                | `project_context_*`                                                               |
+| Before software edits                  | Project context          | `project-context-attachments` (snapshot/rules guards; product SoT remains Project Work)      | `project_context_*`                                                               |
 | Plan Readiness / first edit / Delivery | Plan Design + structural | `plan-design-gate`, `software-structural-budget`                                             | `plan_design_gate_*`, `structural_forecast_*`, `acceptance_report_missing`        |
 | Material discussion acceptance         | Writeback + fanout       | `discussion-writeback-contract`, `change-impact-fanout`, `prototype-product-truth-writeback` | `discussion_writeback_pending`, `change_impact_*`, `temp_only_artifact_forbidden` |
 | Milestone Plan done / implement        | Acceptance pack          | `milestone-plan-acceptance-pack`                                                             | `milestone_plan_acceptance_pack_*`                                                |
@@ -162,8 +172,11 @@ When: context YAML / living Project Work (init → project-definition skill).
 Must load: `project-context-attachments` (+ `project-work-document-template` if
 automation).
 Do: prefer steward tools; stale YAML=hint; context Hard Gate before software
-edits; interactive confirm / unattended emit `revise_code`|`revise_context_yaml`.
-Must not: silent overwrite; skip check; secrets in YAML.
+edits (snapshot/rules are consistency guards—product SoT remains Project Work);
+interactive confirm / unattended emit `revise_code`|`revise_context_yaml`.
+IT/E2E campaign artifacts belong to lifecycle stages 6–7, not this branch.
+Must not: silent overwrite; skip check; secrets in YAML; treat snapshot as
+acceptance ledger.
 Success criteria: freshness explicit; conflicts decided visibly.
 Checkpoints: Hard Gate evidence before edits; unattended decisions emitted.
 
@@ -274,6 +287,7 @@ Checkpoints: immediate correction before wrapper detour.
 - Preview→confirm→write except explicit capture.
 - Complete only after readback when possible.
 - Dissatisfaction ≠ publish/commit/delete/reset auth.
+- Language policy above: English contracts; no reading-oriented localization.
 
 ## Success Criteria
 

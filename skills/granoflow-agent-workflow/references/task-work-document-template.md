@@ -6,6 +6,18 @@ separate new Task Analysis or Task Plan files. A task may have at most two activ
 `document_type: task_work` attachments: one actual execution document and, only
 when needed, one post-completion revision.
 
+## Role: task history + task-local contract
+
+Task Work is the **history and execution contract for one task**—Analysis,
+Planning, gates, and writeback evidence for that unit of work. It is **not** the
+project-wide latest product truth.
+
+- Cross-task product, journey, acceptance, or verification-mandate changes must
+  update **Project Work** (current) in the same discussion batch; keep
+  `discussion_writeback` / traceability / Verification Plan here as history.
+- Do not maintain a parallel “current product rules” section that disagrees with
+  Project Work.
+
 ```markdown
 # Task Work: <task title>
 

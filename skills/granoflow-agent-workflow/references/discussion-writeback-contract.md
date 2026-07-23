@@ -9,6 +9,12 @@ Plan or Execution.
 **Owner:** keep App-owned artifacts current so Plan / Readiness / Execution
 always resolve the same truth the user just approved.
 
+**Truth layers:** Project Work is the project's **current** product/acceptance
+truth. Task Work records **history** and task-local contracts for this
+discussion. Product-truth, journey/screen/acceptance, or verification-mandate
+changes **Must** update Project Work (and related product docs when
+`product_truth_changing`) in the same batch—never Task Work alone.
+
 MCP stays thin: write through existing App tools (`logical_attachment_replace`,
 `task_prototype_import`, `task_attachment_*`, Project Work confirm, etc.). Do
 not invent a second store.

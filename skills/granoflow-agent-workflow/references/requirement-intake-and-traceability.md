@@ -165,15 +165,20 @@ conflict:
 
 ## Layer Ownership
 
-- Project Work owns durable product outcome, users, primary journeys, global
-  design direction, data/privacy promises, supported platforms, non-goals,
-  project acceptance, source registry, and the canonical requirement ledger.
-- Milestone Work owns the bounded subset of requirement ids, milestone
-  acceptance contribution, dependency/handoff coverage, and integration
-  evidence. It references canonical records rather than copying their prose.
-- Task Work owns the requirement ids implemented or verified by that task,
-  task-local interpretation, minimum-change boundary, execution steps, and
-  Delivery evidence.
+- **Project Work** owns the **current** durable product outcome, users, primary
+  journeys, global design direction, data/privacy promises, supported platforms,
+  non-goals, project acceptance, source registry, and the canonical requirement
+  ledger. This is the only editable product SoT at project scope.
+- **Milestone Work** (optional, thin) owns **coverage references** to a bounded
+  subset of requirement ids / acceptance ids, plus dependency/handoff and
+  integration evidence for coordination. It **must not** hold a second editable
+  product ledger or rewrite `R-*` statements. Default portfolio path: milestone
+  **entities** + Project `acceptance_coverage` / `requirement_coverage` without
+  a thick Milestone Work document.
+- **Task Work** owns the requirement ids implemented or verified by that task,
+  task-local interpretation, minimum-change boundary, execution steps, Delivery
+  evidence, and **history** of how this task decided or changed things. Product
+  truth that still binds later tasks must be written back to Project Work.
 
 Every adopted requirement has one primary owner layer. Cross-layer tables are
 references and coverage, never multiple editable sources of truth.

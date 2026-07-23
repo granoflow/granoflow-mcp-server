@@ -15,6 +15,12 @@ set of child tasks. It owns dependencies, handoffs, integration proof, and
 milestone acceptance. It does not replace child Task Work and does not
 batch-create milestones or author task prose.
 
+**Milestone Work is optional and thin.** Product/acceptance current truth stays
+in Project Work. Prefer milestone entity + Project coverage tables. Draft a
+Milestone Work attachment only for parallel execution, authorization
+aggregation, or integration closeout that needs a shared coordinator document.
+Never treat Milestone Work as a second product requirement ledger.
+
 ## Phase Model
 
 ```text
