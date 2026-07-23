@@ -89,13 +89,17 @@ Checkpoints:
 
 ### 4. Execute Through Child Task Work
 
-For each ready child, first ensure Task Work **Analysis** exists. Any child that
-changes UI must already satisfy the UI Change Prototype Mandate
-(`prototype_requirement: required`, confirmed `ui_prototype`, `derivedFrom`
-Design Baseline when present) before readiness or non-dry-run execution. The
-coordinator then fills `execute_preflight_required` in Milestone Work by
-aggregating Analysis outputs. Then continue readiness, execution, Delivery, and
-local acceptance via the single-task Agent Workflow and
+For each ready child, first ensure Task Work **Analysis** exists and
+**Analysis Deliverables** are complete. Any child that changes UI Must have a
+confirmed `ui_prototype` (`prototype_requirement: required`, `derivedFrom`
+Design Baseline when present) **before Analysis may be marked complete** and
+before readiness or non-dry-run execution. Do not claim milestone-level
+Analysis done while any in-scope UI child still lists the prototype as missing;
+emit the remaining-deliverables list from
+`task-work-document-workflow` § Analysis Deliverables. The coordinator then
+fills `execute_preflight_required` in Milestone Work by aggregating Analysis
+outputs. Then continue readiness, execution, Delivery, and local acceptance via
+the single-task Agent Workflow and
 `granoflow-agent-workflow/parallel-task-execution`.
 
 When execution may outlive one Agent turn, use
@@ -105,7 +109,8 @@ manifest.
 
 Checkpoints:
 
-- UI-changing children require confirmed `ui_prototype` before readiness or non-dry-run execution.
+- UI-changing children: confirmed `ui_prototype` is an Analysis deliverable;
+  refuse milestone Analysis-complete claims and Planning entry until present.
 - Before first non-dry run require complete `execute_preflight_required` and confirmed authorization manifest.
 
 ### 5. Reconcile And Replan
@@ -114,29 +119,63 @@ Classify changes as `task_local`, `portfolio_change`, `charter_change`,
 `follow_up`, or `stop`. Update the living milestone summary through
 context-steward when needed. Never use Milestone Work as a second status DB.
 
+For `portfolio_change`, `charter_change`, and `follow_up` (and for
+`task_local` when Plan/Implement already started), apply the stage-rewind table
+in `pipeline-attachment-and-reentry` after writeback + fan-out: re-open
+Analysis/Plan as required, recompute the lifecycle board, and set
+`entry_kind: midstream_change` when the digression was mid-pipeline. Do not keep
+later stages falsely `done` (`pipeline_stage_not_rewound`).
+
 Checkpoints:
 
 - Never use Milestone Work as a second status DB.
+- Confirmed early-scope changes mid-pipeline must rewind before more implement.
 
-### 6. Prove Integration Readiness
+### 6. Milestone IT Acceptance (Layer B)
 
-Do not infer readiness from every child being `done`. Re-run acceptance coverage
-against Delivery/readback, verify handoffs, run required integration checks.
+**Milestone delivery stops here** (user-invisible IT only—no E2E).
+
+Actions:
+
+- Before implement: IT sufficiency + Suite Plan for all in-scope tasks.
+- After Layer A: run **milestone-scoped** IT; orchestrate
+  (add/browse/list before delete).
+- After green: Experience from issues → **任务回顾** (preview→confirm→write).
+- Load `milestone-integration-acceptance` +
+  `task-and-milestone-acceptance-layers`.
+
+Success criteria:
+
+- Preflight passed; suite scoped to this milestone; green or residual.
+- Experience + 任务回顾 writeback done.
 
 Checkpoints:
 
-- Child `done` ≠ milestone done; integration evidence is independent.
+- Child `done` ≠ Layer B.
+- Co-present Layer A then Layer B (`acceptance_layers_fused` if fused).
 
-### 7. Accept And Close
+### 7. Accept And Close + optional最终交付
 
-Present Outcome, acceptance results, integration evidence, residuals, and
-follow-ups. Obtain explicit acceptance unless a precise authorization envelope
-permits closure. Preview archive/closure, write, and read back.
+Actions:
+
+- Present Outcome, Layer B evidence, residuals, follow-ups.
+- Milestone accept: no E2E required.
+- May offer最终交付 after any Layer B green via
+  `granoflow_acceptance_delivery_skill` / `full-delivery-acceptance`:
+  `project_feature_milestone_count` 1 → `e2e_direct` full-project E2E;
+  ≥2 → unit + project IT + full-project E2E.
+- Obtain milestone acceptance unless authorization envelope permits closure.
+- Preview archive/closure, write, read back.
+
+Success criteria:
+
+- Milestone close evidenced by Layer B (not E2E).
+- If最终交付 offered: `session_delivery` with correct `pre_e2e_path`.
 
 Checkpoints:
 
-- Obtain explicit acceptance unless a precise authorization envelope permits closure.
-- Preview archive/closure, write, and read back on App/API.
+- Preview→confirm→write for App mutations.
+- Design lock: `temp/acceptance-delivery-design-lock-v1.json`.
 
 ## Periodic Review And Unattended Closure
 

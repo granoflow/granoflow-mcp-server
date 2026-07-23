@@ -24,6 +24,7 @@ type FoundationDependencies = {
   readProjectDefinitionSkill: SkillReader;
   readIntegrationTestCampaignSkill: SkillReader;
   readE2eTestCampaignSkill: SkillReader;
+  readAcceptanceDeliverySkill: SkillReader;
   bundledSkillResources: BundledSkillResources;
   apiTool: (options: ApiRequestOptions) => Promise<ToolResult>;
   getSetupStatus: () => Promise<unknown>;
@@ -198,6 +199,13 @@ export function registerAuthorizationAndProjectSkillTools(
     "skills/granoflow-e2e-test-campaign/SKILL.md",
     deps.readE2eTestCampaignSkill,
     "granoflow-e2e-test-campaign",
+  );
+  read(
+    "granoflow_acceptance_delivery_skill",
+    "Read the bundled Granoflow Acceptance And Final Delivery skill. Route Layer A/B milestone acceptance (user-invisible milestone IT) and最终交付 paths: 1 feature milestone → e2e_direct full-project E2E; ≥2 → full unit + project IT + full-project E2E. Thin router over agent-workflow references and IT/E2E campaigns.",
+    "skills/granoflow-acceptance-delivery/SKILL.md",
+    deps.readAcceptanceDeliverySkill,
+    "granoflow-acceptance-delivery",
   );
 }
 

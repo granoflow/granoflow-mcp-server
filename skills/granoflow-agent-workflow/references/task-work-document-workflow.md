@@ -271,13 +271,18 @@ Hard rules:
    only in chat/`temp` → `discussion_writeback_pending` /
    `temp_only_artifact_forbidden` / `change_impact_*`. Later rematches Must
    import a new current package and rewrite Task Work refs in the same batch.
-8. Prefer completing the prototype **before Analysis confirmation** so the user
-   can see the change before implementation. At latest, the confirmed
-   `ui_prototype` must exist before `readiness_grill_status: passed` and before
-   any non-dry-run execution.
+8. Confirmed `ui_prototype` is an **Analysis deliverable**, not a Plan-phase
+   add-on and not a separate lifecycle stage. For UI-changing tasks, the
+   package Must exist with `visualConfirmed=true` (and `derivedFrom` the
+   Design Baseline when present) **before** `analysis_status: confirmed`.
+   Planning Must not start while that deliverable is missing. Readiness and
+   non-dry-run execution remain blocked as well, but those are later gates—
+   do not treat “before Readiness” as permission to confirm Analysis without
+   the prototype.
 9. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
-   `ui_prototype_required` / block Readiness. Stale Task Work refs after a
-   discussion change return `stale_reference_after_discussion`. Do not
+   `ui_prototype_required` and `analysis_deliverables_incomplete`; refuse
+   Analysis confirmation and refuse Planning entry. Stale Task Work refs after
+   a discussion change return `stale_reference_after_discussion`. Do not
    implement UI first and "backfill" a prototype after code. Missing
    interactive wait returns `prototype_preview_review_required`. Missing
    unattended closing digest when prototypes were authored returns
@@ -498,6 +503,72 @@ For `planning_status=not_required`:
 Task impact and uncertainty determine lightness. Repository size and changed
 line count do not.
 
+## Analysis Deliverables
+
+Analysis owns the accepted problem framing **and**, for UI-changing tasks, the
+confirmed high-fidelity prototype. Prototypes are **not** a separate lifecycle
+stage and **Must not** be deferred into Planning.
+
+Orchestration may be per-milestone (Analysis → Plan → Implement) or
+project-wide (finish all Analyses including prototypes, then Plan batches, then
+Implement batches). Either way: **Planning Must not start for a task while that
+task's Analysis deliverables are incomplete.**
+
+### Required for every task
+
+| Deliverable             | Done when                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| Task Work Analysis body | Outcome, Evidence, Scope, Risk, Decision (and triggered sections) are coherent |
+| Analysis Grill          | `analysis_grill_status: passed`                                                |
+| Planning recommendation | `planning_status` path chosen: `required` or `not_required` (justified)        |
+
+### Conditionally required (UI-changing tasks)
+
+| Deliverable                                  | Done when                                                                                           |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `prototype_requirement`                      | `required` (not `not_required` / unresolved `conditional`)                                          |
+| Confirmed `ui_prototype`                     | App slot with `visualConfirmed=true`, exact package SHA, `derivedFrom` Design Baseline when present |
+| HTML / widget / doc coverage (Analysis side) | `prototype-doc-coverage` Analysis ledgers complete; no pending gaps                                 |
+
+### Explicitly not Analysis deliverables
+
+Do **not** mark these done to close Analysis, and do **not** claim Analysis
+complete because they exist:
+
+- Plan Design Gate / Plan confirmation / milestone Plan acceptance pack
+- Structural Change Forecast notice for first edit
+- Project context Hard Gate (`project_snapshot.yaml` / `project_rules.yaml`)
+- Implementation, Delivery, integration/E2E campaigns
+
+### User-visible remaining list (mandatory)
+
+At the end of every Analysis turn (interactive or unattended), emit a Markdown
+table listing **each** applicable deliverable with status `done` or `pending` /
+`missing`, and a one-line next action. Example shape:
+
+```markdown
+## Analysis 交付物
+
+| 交付物                          | 状态    |
+| ------------------------------- | ------- |
+| Task Work Analysis              | done    |
+| 确认 ui_prototype（UI）         | missing |
+| Analysis Grill                  | pending |
+| Planning recommendation         | pending |
+| → 未全部 done 前不得进入 Plan。 |
+```
+
+Rules:
+
+1. If any applicable row is not `done`, refuse `analysis_status: confirmed` and
+   refuse Planning entry. Fail closed as `analysis_deliverables_incomplete`
+   (and `ui_prototype_required` when the missing item is the prototype).
+2. Do not claim milestone- or portfolio-level “Analysis done” while any
+   in-scope UI child still lacks a confirmed `ui_prototype`.
+3. Unattended mode may auto-accept solvable prototype craft when the
+   unattended contract allows, but Must still list remaining deliverables and
+   Must not skip the table.
+
 ## Analysis Confirmation
 
 Ask only questions that can change Outcome, Evidence, Scope, Risk, Decision, or
@@ -505,21 +576,26 @@ whether Planning is required. For unattended completion, first read
 `unattended-interaction-contract.md`; a valid same-run instruction or durable
 grant consumes ordinary phase confirmations unless a real blocker exists.
 
+Before setting `analysis_status=awaiting_confirmation` or `confirmed`, verify
+**Analysis Deliverables** above and show the remaining-deliverables table.
+UI-changing tasks without a confirmed `ui_prototype` stay in Analysis.
+
 Set `analysis_status=awaiting_confirmation` before final review. Only explicit
 user authorization sets `analysis_status=confirmed`; a qualifying current
 unattended instruction is explicit authorization, while Agent self-confirmation
 is not. Then run the mandatory MCP-bundled Analysis Grill. It checks source discipline, decision-changing
 unknowns, Outcome/Evidence/Scope/Risk/Decision consistency, concrete examples,
-false-success paths, whether Planning recommendation is justified, and—when the
-task depends on DB / JSON / constants or capability-critical libraries—whether
-unreasonable project data attachments or dependency selections were challenged
-and a revision path was decided (not silently deferred into execution). Set
-`analysis_grill_status=passed` only when all material findings are resolved.
-Resolve findings by revising the relevant Analysis prose and acceptance
-contracts; do not append a Grill section or finding ledger. Material revisions
-re-evaluate Analysis under the interaction contract and require another question
-only for a real blocker. Analysis confirmation alone does not authorize Planning,
-node creation, attachment upload, or execution.
+false-success paths, whether Planning recommendation is justified, Analysis
+Deliverables completeness (including confirmed `ui_prototype` when UI applies),
+and—when the task depends on DB / JSON / constants or capability-critical
+libraries—whether unreasonable project data attachments or dependency selections
+were challenged and a revision path was decided (not silently deferred into
+execution). Set `analysis_grill_status=passed` only when all material findings
+are resolved. Resolve findings by revising the relevant Analysis prose and
+acceptance contracts; do not append a Grill section or finding ledger. Material
+revisions re-evaluate Analysis under the interaction contract and require another
+question only for a real blocker. Analysis confirmation alone does not authorize
+Planning, node creation, attachment upload, or execution.
 
 Before confirming Analysis, recommend one Planning outcome:
 
@@ -558,8 +634,11 @@ itself confirm Planning or authorize execution.
 Planning starts from the clean rewritten Analysis document produced after the
 Analysis Grill and adds only triggered Planning sections during discussion. It
 does not repeat a second template or candidate-Skill inventory. It may start
-only when Analysis is confirmed and
-`analysis_grill_status=passed`. Planning confirmation sets:
+only when Analysis is confirmed,
+`analysis_grill_status=passed`, and **Analysis Deliverables** are complete
+(including confirmed `ui_prototype` for UI-changing tasks). Starting Plan while
+those deliverables are incomplete fails closed as
+`analysis_deliverables_incomplete`. Planning confirmation sets:
 
 ```yaml
 analysis_status: confirmed
@@ -756,8 +835,8 @@ Record `prototype_requirement`, `prototype_condition_result`,
 
 - If the task changes UI: `prototype_requirement` **must** be `required`,
   `prototype_condition_result` must be `required`, and
-  `prototype_input_status` must reach `ready` (exact confirmed package) before
-  Readiness passes.
+  `prototype_input_status` must reach `ready` (exact confirmed package) **before
+  Analysis confirmation** and before Readiness passes.
 - `not_required` is allowed only when the task explicitly has **no** UI change
   (stated in Task Work). `conditional` may exist only while Detection is still
   unresolved during early draft Analysis; it cannot survive Analysis
@@ -769,12 +848,14 @@ Record `prototype_requirement`, `prototype_condition_result`,
 - Record `【增强实现】` / `implementation_notes` where HTML is schematic and the
   stack will use richer widgets.
 
-Before Readiness passes, call `granoflow_task_export` and treat the App-owned
-`executionAdmission.allowed` value as authoritative. Missing, ambiguous,
-deleted, stale, link-mismatched, unconfirmed, or hash-mismatched references
-block execution. For UI-changing tasks, also block when `ui_prototype` is
-missing, unconfirmed, or not derived from the confirmed Design Baseline
-(document-level gate: return `ui_prototype_required`). When a package changes,
+Before Analysis confirmation and before Readiness passes, call
+`granoflow_task_export` and treat the App-owned `executionAdmission.allowed`
+value as authoritative for execution admission. Missing, ambiguous, deleted,
+stale, link-mismatched, unconfirmed, or hash-mismatched references block
+execution. For UI-changing tasks, also block Analysis confirmation and Planning
+entry when `ui_prototype` is missing, unconfirmed, or not derived from the
+confirmed Design Baseline (`ui_prototype_required` /
+`analysis_deliverables_incomplete`). When a package changes,
 add the new attachment, rewrite every affected exact reference and relevant
 prose, upload and hash-read back the new Task Work, then remove the old
 attachment. Do not model this as overwrite.

@@ -24,11 +24,16 @@ a required fact, omit it and use the conservative route.
 
 1. An explicit short command selects a route but does not waive its phase gates.
 2. A confirmed `alreadyComplete` fact selects `finish_audit`.
-3. `side_thought` selects `capture`, unless the user explicitly overrides it.
-4. A semantic imperative selects its route.
-5. `register` plus clear Outcome, boundaries, and evidence selects `enrich`;
+3. Confirmed midstream change to early requirements / acceptance / prototype
+   while already in Plan, Implement, or delivery: treat as pipeline
+   `entry_kind: midstream_change` (`pipeline-attachment-and-reentry`). Prefer
+   `analyze` or `plan` after writeback + stage rewind; **never** select `run`
+   until the board’s `next_action` again points at implement.
+4. `side_thought` selects `capture`, unless the user explicitly overrides it.
+5. A semantic imperative selects its route.
+6. `register` plus clear Outcome, boundaries, and evidence selects `enrich`;
    otherwise it selects `capture`.
-6. Unsupported or contradictory facts fail closed instead of guessing.
+7. Unsupported or contradictory facts fail closed instead of guessing.
 
 Existing target ambiguity blocks update, finish, and review writes. New-task
 capture may safely use inbox without asking.

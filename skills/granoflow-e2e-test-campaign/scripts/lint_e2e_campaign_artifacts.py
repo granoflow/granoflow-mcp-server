@@ -1468,11 +1468,11 @@ def lint_campaign_state(data: Any) -> dict[str, Any]:
             )
         )
 
-    if data.get("integration_gate") != "complete":
+    if data.get("integration_gate") not in {"complete", "waived_single_milestone"}:
         errors.append(
             _err(
                 "e2e_campaign_integration_gate_incomplete",
-                "integration_gate must be complete before e2e campaign",
+                "integration_gate must be complete|waived_single_milestone before e2e campaign",
             )
         )
 

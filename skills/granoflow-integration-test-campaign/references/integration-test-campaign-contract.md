@@ -15,7 +15,22 @@ the feature task, device chosen by the user (recommend local machine). When
 those cases are authored, **recommend** recording `requires` / `produces` (and
 optional `mutates` / `destroys`) so later orchestration can build a minimal path.
 
-This campaign contract is the **execution** path for stage
+## Relationship To Per-Milestone Layer B
+
+**Feature-milestone acceptance (Layer B)** is owned by
+`granoflow-agent-workflow/milestone-integration-acceptance`: milestone-scoped
+suite, preflight before implement, user-invisible IT decision, then Experience +
+任务回顾 writeback. Reuse this campaign’s **orchestration + agent_auto run**
+mechanics for that suite.
+
+This campaign contract’s default stage-`integration_campaign` path is the
+**IT leg of最终交付** when `pre_e2e_path: full_unit_and_it` (project has ≥2
+feature milestones): portfolio / project-wide hardening after a green **full
+unit** suite. It does **not** replace per-feature-milestone Layer B. When the
+project has exactly one feature milestone,最终交付 uses `e2e_direct` and
+**skips** this stage (`full-delivery-acceptance`).
+
+This campaign contract is also the **execution** path for stage
 `integration_campaign`: inventory and orchestrate the suite, run it under
 **agent auto-drive**, triage failures, fix product or test code, re-test until
 green, and emit a change report when anything was edited.

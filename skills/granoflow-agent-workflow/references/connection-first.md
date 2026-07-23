@@ -40,7 +40,15 @@ Use the Task Work Document workflow for the recovery sequence.
 
 If the user seems to have installed the MCP server without knowing Granoflow,
 explain that this MCP server is a bridge to the running Granoflow app, not a
-standalone task database or a coding-agent capability booster.
+standalone task database or a coding-agent capability booster. Point them at
+first-run initialization (`granoflow-first-run-import`), including the optional
+**Pandoc + Mermaid CLI** consent for token-free Markdown→HTML acceptance
+previews (`markdown-html-acceptance-render`).
+
+When setup succeeds and the host has not yet recorded
+`markdownHtmlToolchain.consent`, remind once that Plan acceptance packs can
+render to HTML locally without spending model tokens if those tools are
+installed.
 
 ## Success criteria
 

@@ -269,9 +269,12 @@ Phase A makes code match the prototype.
 | `widget_reuse_required`              | Same role not reused from `widgets.yaml`; near-duplicate widget ids; `new_role` when catalog entry exists |
 | `prototype_doc_coverage_lint_failed` | Structural lint failure on any ledger kind                                                                |
 
-Analysis confirmation (`analysis_status: confirmed`, Readiness pass) **Must
+Analysis confirmation (`analysis_status: confirmed`) and Planning entry **Must
 not** proceed while any Analysis ledger above reports `pending`, gap/conflict
-rows, or lint `ok: false`.
+rows, or lint `ok: false`. That incompleteness is also an Analysis Deliverable
+failure (`analysis_deliverables_incomplete`); Readiness remains blocked as a
+later gate. Always emit the user-visible Analysis Deliverables remaining list
+from `task-work-document-workflow` when closing or pausing Analysis.
 
 ## Agent Checklist
 

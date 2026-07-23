@@ -213,11 +213,13 @@ Treat as authorized and execute when the environment can do it now:
   project-context hard gates;
 - local Git checkpoint/commit when the project/git preference and grant allow
   local history writes;
-- integration-test and E2E **campaign** suite runs on the campaign device
-  (stages `integration_campaign` and `e2e_campaign` use
-  `campaign_drive: agent_auto` in interactive and unattended alike—orchestrate,
-  run, triage, fix, re-test without ordinary confirm questions; E2E also
-  captures/shows screenshots under `temp/` when the host can);
+- integration-test and E2E **campaign** suite runs on the campaign device when
+  **最终交付** was entered (`full-delivery-acceptance`; stages
+  `integration_campaign` and `e2e_campaign` use `campaign_drive: agent_auto` in
+  interactive and unattended alike—orchestrate, run, triage, fix, re-test
+  without ordinary confirm questions; E2E also captures/shows screenshots under
+  `temp/` when the host can). Single feature-milestone projects may waive
+  portfolio IT and run full-project E2E directly;
 - adopting recommendations and `revise_code` / `revise_context_yaml` decisions
   with emitted notices.
 
@@ -345,6 +347,12 @@ When no solvable ready work remains, set
 - Completed: <count / summary refs>
 - Prototype Link Digest: <clickable links for every HTML prototype authored;
   required when any prototype was produced>
+- Plan Acceptance Link Digest: <clickable HTML/Markdown pack links authored this
+  run; required when any Plan acceptance HTML was produced>
+- Acceptance layers (when any task/milestone closed this run):
+  - Layer A 单任务完成: <per-task Delivery / acceptance_report refs>
+  - Layer B 里程碑集成验收: <Suite Plan order / IT green|residual / Experience / 任务回顾>
+  - Do not fuse into one unlabeled “all done” list (`acceptance_layers_fused`)
 - Deferred / not executed:
   1. <title> — <blocker_class> — <why external> — <resume_condition>
   2. ...

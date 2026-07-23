@@ -164,6 +164,14 @@ prototype_plan_truth: null | { schema, contract_loaded, prototype_is_source_of_t
 
 prototype_impl_compare: null | { status: not_applicable|matched|diverged, method: code_review_guess, declaration_emitted: true|false, questions: {ux_better, visual_better, tech_stack_blocked}, decision: keep_implementation|revise_to_prototype|not_applicable, decision_rationale: string, diffs: [] }
 
+# Implementation Design Fidelity (Plan/pack authority). See
+
+# implementation-design-fidelity.md. Delivery requires complete ledger when
+
+# code/schema/workflows changed. Keep divergence ⇒ better_rationale + design writeback.
+
+impl_design_fidelity: null | { schema: granoflow_impl_design_fidelity_v1, contract_loaded: true, status: not_applicable|pending|complete, declaration_emitted: true|false, decision: matched_all|revise_to_design|keep_with_design_writeback|not_applicable, better_rationale: string, axes: { data_structures, flowcharts, uml_diagrams, modular_split }, diffs: [], design_writeback: { status, slots_updated, content_sha256 } }
+
 unit_test_sufficiency: not_applicable | unassessed | sufficient | insufficient
 integration_test_requirement: not_applicable | not_required | required
 integration_tests_added_count: 0 | 1 | 2
@@ -201,6 +209,13 @@ integration_test_special_requirements_applied: [] # ITR-* ids applied in authore
 # destroys: []
 
 analysis_status: draft | awaiting_confirmation | confirmed
+
+# Analysis Deliverables (task-work-document-workflow): UI tasks Must have
+
+# confirmed ui_prototype before confirmed; emit remaining-deliverables list
+
+# every Analysis turn. Fail closed: analysis_deliverables_incomplete.
+
 analysis_grill_status: not_run | passed | revisions_required | blocked
 decision: proceed | needs_input | user_action | split | redefine | defer | abandon | completion_audit
 planning_status: not_assessed | not_required | draft | awaiting_confirmation | confirmed
@@ -591,9 +606,11 @@ upload plus content/hash readback.
 Set `readiness_grill_status: passed` only when no execution-blocking unknown is
 left. For UI-changing tasks, also require `prototype_requirement: required`,
 `prototype_input_status: ready`, and a visually confirmed `ui_prototype`
-readback (`derivedFrom` the project Design Baseline when one exists). Otherwise
-keep Readiness `blocked` / `ui_prototype_required`. For software tasks that will
-edit code, also require a complete `Structural Change Forecast` and
+readback (`derivedFrom` the project Design Baseline when one exists)—these are
+**Analysis Deliverables** first; never reach Planning or Readiness while they
+are missing (`analysis_deliverables_incomplete` / `ui_prototype_required`).
+Otherwise keep Readiness `blocked` / `ui_prototype_required`. For software tasks
+that will edit code, also require a complete `Structural Change Forecast` and
 `structural_forecast_status: present_in_plan`; otherwise keep Readiness
 `blocked` / `structural_forecast_missing`. Also require the Plan to name the
 project-context check against `project_snapshot.yaml` /

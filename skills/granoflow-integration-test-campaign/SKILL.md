@@ -7,8 +7,10 @@ description: Run a standard integration-test campaign—orchestrate a minimal sh
 
 Use this Skill when the user **requires running** standard integration tests as a
 campaign (for example: `Run integration test campaign`, `开始集成测试战役`,
-`无人值守跑集成测试直到全绿`), or when the project reaches lifecycle stage
-`integration_campaign`.
+`无人值守跑集成测试直到全绿`, `开始最终交付`), or when最终交付 uses
+`pre_e2e_path: full_unit_and_it` and enters stage `integration_campaign` per
+`full-delivery-acceptance` (after full unit suite). Skip this Skill when
+`pre_e2e_path: e2e_direct` (exactly one feature milestone).
 
 This stage is **not** end-to-end UI testing. Real taps, screenshots, and vision
 belong to `granoflow-e2e-test-campaign` / stage `e2e_campaign` **after** this
@@ -48,6 +50,14 @@ Start integration testing until green
 - `#integration-campaign`
 - `#integration-test`
 - `#集成测试`
+- `#最终交付`
+
+## Relationship To Final Delivery
+
+When path selection is unclear, call `granoflow_acceptance_delivery_skill`
+first, then load `granoflow-agent-workflow` / `full-delivery-acceptance`. This
+Skill is the IT leg of `pre_e2e_path: full_unit_and_it` only. It **does not**
+replace per-milestone Layer B (`milestone-integration-acceptance`).
 
 ## Progress Board
 

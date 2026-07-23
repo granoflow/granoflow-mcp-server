@@ -1,0 +1,4 @@
+interface:
+  display_name: Granoflow Acceptance And Final Delivery
+  short_description: Route Layer A/B milestone IT acceptance and final delivery paths (e2e_direct vs unit+IT+E2E); E2E always full-project.
+  default_prompt: Load acceptance-delivery routing—close Layer A then Layer B (user-invisible milestone IT), then offer最终交付 with the correct pre_e2e_path and full-project E2E.

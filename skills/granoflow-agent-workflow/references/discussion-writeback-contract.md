@@ -70,13 +70,13 @@ same batch before claiming the decision is done. Discover those slots via
 
 ## Timing
 
-| Moment                                        | Requirement                                                                        |
-| --------------------------------------------- | ---------------------------------------------------------------------------------- |
-| User accepts a material change mid-discussion | Writeback before the next phase gate or before ending the turn’s decision batch    |
-| Before Analysis confirmation                  | Confirmed prototypes/product truths already on App if UI/product changed           |
-| Before Plan confirmation / Readiness `passed` | Task Work + `ui_prototype` (if UI) match App readback                              |
-| Before Execution (non-dry-run)                | Same; export/`executionAdmission` must not see stale refs                          |
-| Unattended (explicit only)                    | Same writebacks with notices; never skip App write because interaction_budget is 0 |
+| Moment                                        | Requirement                                                                                                         |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| User accepts a material change mid-discussion | Writeback before the next phase gate or before ending the turn’s decision batch                                     |
+| Before Analysis confirmation                  | Confirmed prototypes/product truths already on App if UI/product changed; emit Analysis Deliverables remaining list |
+| Before Plan confirmation / Readiness `passed` | Task Work + `ui_prototype` (if UI) match App readback                                                               |
+| Before Execution (non-dry-run)                | Same; export/`executionAdmission` must not see stale refs                                                           |
+| Unattended (explicit only)                    | Same writebacks with notices; never skip App write because interaction_budget is 0                                  |
 
 Interactive: user confirmation of the **content** authorizes the writeback of
 that content. Do not wait for a second “may I upload?” when the user already

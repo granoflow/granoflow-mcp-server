@@ -66,29 +66,40 @@ lifecycle board.
 
 ## Hard Gates (must)
 
-| When                                   | Gate                     | Load                                                                                         | Fail closed                                                                       |
-| -------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Project-bound software turn end        | Lifecycle board          | `project-lifecycle-progress-board` (+ render script)                                         | `project_lifecycle_board_missing`                                                 |
-| User-facing workflow jargon            | Plain-language gloss     | `project-interaction-style`, `workflow-jargon-plain-language`                                | `workflow_jargon_unexplained`                                                     |
-| Mobile/desktop App PD                  | App icon                 | `app-icon-source-gate`                                                                       | `app_icon_source_*`                                                               |
-| UI prototype lock/rematch              | HTML/widget/doc coverage | `prototype-doc-coverage`                                                                     | `prototype_html_coverage_*`, `widget_reuse_required`, `prototype_plan_truth_*`    |
-| UI implement before unit tests         | Prototype Phase A        | `prototype-implementation-fidelity`                                                          | Phase A / undeclared codes                                                        |
-| Signing/entitlement work               | Code signing             | `code-signing-strategy`                                                                      | missing declaration; user-confirm `local_dev_run`                                 |
-| Long/unattended implement/campaign     | Run continuity           | `long-task-run-continuity`, `durable-run-plan-template`                                      | `long_task_continuity_*`, `long_run_plan_*`                                       |
-| Before software edits                  | Project context          | `project-context-attachments` (snapshot/rules guards; product SoT remains Project Work)      | `project_context_*`                                                               |
-| Plan Readiness / first edit / Delivery | Plan Design + structural | `plan-design-gate`, `software-structural-budget`                                             | `plan_design_gate_*`, `structural_forecast_*`, `acceptance_report_missing`        |
-| Material discussion acceptance         | Writeback + fanout       | `discussion-writeback-contract`, `change-impact-fanout`, `prototype-product-truth-writeback` | `discussion_writeback_pending`, `change_impact_*`, `temp_only_artifact_forbidden` |
-| Milestone Plan done / implement        | Acceptance pack          | `milestone-plan-acceptance-pack`                                                             | `milestone_plan_acceptance_pack_*`                                                |
-| User-visible third-party (TTS/push/…)  | Capability matrix        | `third-party-capability-matrix`                                                              | `third_party_capability_*`                                                        |
-| Meaningful App write (except capture)  | Preview→confirm→write    | branch refs + Boundaries                                                                     | skipped preview/confirm                                                           |
+| When                                   | Gate                     | Load                                                                                                                  | Fail closed                                                                                                                |
+| -------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Project-bound software turn end        | Lifecycle board + attach | `project-lifecycle-progress-board` (+ render) + `pipeline-attachment-and-reentry`                                     | `project_lifecycle_board_missing`, `pipeline_entry_unclassified`, `pipeline_reentry_skipped`, `pipeline_stage_not_rewound` |
+| User-facing workflow jargon            | Plain-language gloss     | `project-interaction-style`, `workflow-jargon-plain-language`                                                         | `workflow_jargon_unexplained`                                                                                              |
+| Mobile/desktop App PD                  | App icon                 | `app-icon-source-gate`                                                                                                | `app_icon_source_*`                                                                                                        |
+| Analysis close (UI tasks)              | Analysis deliverables    | `task-work-document-workflow` § Analysis Deliverables (+ `prototype-doc-coverage` when UI)                            | `analysis_deliverables_incomplete`, `ui_prototype_required`                                                                |
+| UI prototype lock/rematch              | HTML/widget/doc coverage | `prototype-doc-coverage`                                                                                              | `prototype_html_coverage_*`, `widget_reuse_required`, `prototype_plan_truth_*`                                             |
+| UI implement before unit tests         | Prototype Phase A        | `prototype-implementation-fidelity`                                                                                   | Phase A / undeclared codes                                                                                                 |
+| Software Delivery (non-UI design)      | Impl design fidelity     | `implementation-design-fidelity`                                                                                      | `impl_design_fidelity_*` (keep⇒rationale+design writeback)                                                                 |
+| Task vs milestone closeout             | Acceptance layers        | `task-and-milestone-acceptance-layers`                                                                                | `acceptance_layers_fused` if Layer A/B merged into one unlabeled “all done”                                                |
+| Milestone acceptance (software)        | Milestone IT suite       | `milestone-integration-acceptance`                                                                                    | `milestone_it_preflight_*` / `_coverage_*` / `_experience_*` / `_task_review_*`                                            |
+| Final delivery (after Layer B)         | Path by milestone count  | `granoflow_acceptance_delivery_skill` + `full-delivery-acceptance` (1→`e2e_direct`; ≥2→unit+IT+E2E; E2E full-project) | `full_delivery_*` (design lock: `temp/acceptance-delivery-design-lock-v1.json`)                                            |
+| Signing/entitlement work               | Code signing             | `code-signing-strategy`                                                                                               | missing declaration; user-confirm `local_dev_run`                                                                          |
+| Long/unattended implement/campaign     | Run continuity           | `long-task-run-continuity`, `durable-run-plan-template`                                                               | `long_task_continuity_*`, `long_run_plan_*`                                                                                |
+| Before software edits                  | Project context          | `project-context-attachments` (snapshot/rules guards; product SoT remains Project Work)                               | `project_context_*`                                                                                                        |
+| Plan Readiness / first edit / Delivery | Plan Design + structural | `plan-design-gate`, `software-structural-budget`                                                                      | `plan_design_gate_*`, `structural_forecast_*`, `acceptance_report_missing`                                                 |
+| Material discussion acceptance         | Writeback + fanout       | `discussion-writeback-contract`, `change-impact-fanout`, `prototype-product-truth-writeback`                          | `discussion_writeback_pending`, `change_impact_*`, `temp_only_artifact_forbidden`                                          |
+| Milestone Plan done / implement        | Acceptance pack          | `milestone-plan-acceptance-pack` (+ `markdown-html-acceptance-render`)                                                | `milestone_plan_acceptance_pack_*` (HTML missing is soft)                                                                  |
+| Plan/acceptance Markdown preview       | Pandoc HTML + link gate  | `markdown-html-acceptance-render`                                                                                     | hard when HTML ready: `plan_acceptance_html_link_required` / `_link_digest_required`; soft MD fallback if tools missing    |
+| User-visible third-party (TTS/push/…)  | Capability matrix        | `third-party-capability-matrix`                                                                                       | `third_party_capability_*`                                                                                                 |
+| Meaningful App write (except capture)  | Preview→confirm→write    | branch refs + Boundaries                                                                                              | skipped preview/confirm                                                                                                    |
 
 ### Lifecycle pipeline (do not skip)
 
-1. Project init → 2. Milestones+tasks → 3. Analysis → 4. Plan/Design Gate +
-   acceptance pack → 5. Implement (unit tests + author IT; do not run suite) →
-2. Integration campaign → 7. E2E campaign → 8. Project complete.
+1. Project init → 2. Milestones+tasks → 3. Analysis (**includes confirmed
+   `ui_prototype` for UI-changing tasks**; emit remaining-deliverables list) → 4. Plan/Design Gate + acceptance pack → 5. Implement (Layer A + milestone
+   Layer B IT; milestone delivery stops here—no E2E) → 6–7. **最终交付** per
+   `granoflow_acceptance_delivery_skill` + `full-delivery-acceptance` (1 feature
+   milestone → full-project E2E direct; ≥2 → unit + project IT + full-project
+   E2E) → 8. Project complete. Plan Must not start ahead of that task's Analysis
+   deliverables.
 
-Interactive: confirm next stage action when needed; stages 6–7 agent auto-drive.
+Interactive: may offer最终交付 after any Layer B green (route via
+`granoflow_acceptance_delivery_skill`). Campaigns agent auto-drive once entered.
 Unattended: board display-only (`unattended-interaction-contract`).
 
 ### Preferences / Git
@@ -211,12 +222,14 @@ Checkpoints: waiting-node readback before sync claims.
 When: analyze/start/execute **one** task (not a date batch).
 Must load: `task-work-document-workflow`, template, `knowledge-distillation-workflow`
 as needed; UI also prototype craft refs + project-artifact-workflows.
-Do: Analysis-only draft → Analysis Grill → Planning → Readiness Grill → upload
-clean rewrite with hash readback → wait for separate execution instruction →
-discussion acceptance triggers writeback+fanout → software enforces context/
-plan-design/structural/(pack) gates.
-Must not: Plan before Analysis Grill; upload pre-Grill; execute without separate
-auth; undeclared Phase A keep.
+Do: Analysis-only draft → Analysis Deliverables (UI: confirmed `ui_prototype`)
+with explicit remaining-deliverables list → Analysis Grill → Planning →
+Readiness Grill → upload clean rewrite with hash readback → wait for separate
+execution instruction → discussion acceptance triggers writeback+fanout →
+software enforces context/plan-design/structural/(pack) gates.
+Must not: Plan before Analysis Grill or before Analysis Deliverables complete;
+Plan before confirmed `ui_prototype` on UI tasks; upload pre-Grill; execute
+without separate auth; undeclared Phase A keep.
 Success criteria: Grill/readiness/verified doc before execute eligibility; UI/
 software gates satisfied or fail-closed.
 Checkpoints: Work Document slots reconciled; required refs loaded before

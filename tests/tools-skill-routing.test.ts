@@ -105,4 +105,17 @@ describe("tools-skill-routing", () => {
       ],
     );
   });
+
+  it("exposes the acceptance delivery skill", async () => {
+    const { handlers } = collectHandlers();
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_acceptance_delivery_skill")?.({})),
+      "skills/granoflow-acceptance-delivery/SKILL.md",
+      [
+        "full-delivery-acceptance",
+        "milestone-integration-acceptance",
+        "task-and-milestone-acceptance-layers",
+      ],
+    );
+  });
 });

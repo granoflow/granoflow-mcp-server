@@ -394,6 +394,12 @@ class LintCampaignStateTests(unittest.TestCase):
         codes = {e["code"] for e in result["errors"]}
         self.assertIn("e2e_campaign_integration_gate_incomplete", codes)
 
+    def test_integration_gate_waived_single_milestone_ok(self) -> None:
+        state = ok_campaign_state()
+        state["integration_gate"] = "waived_single_milestone"
+        result = MOD.lint_campaign_state(state)
+        self.assertTrue(result["ok"], result)
+
     def test_vision_skipped_needs_residual(self) -> None:
         state = ok_campaign_state()
         state["vision_result"] = "skipped"

@@ -6,7 +6,9 @@ milestones, tasks, and completion.
 
 `service_path` integration campaigns belong to
 `granoflow-integration-test-campaign` / stage `integration_campaign` **before**
-this stage.
+this stage. Together with a prior full unit suite, this stage is the E2E leg of
+**完整交付** (`full-delivery-acceptance`). Session prompt rules (when to enter)
+live there—not in this contract.
 
 ## Visible Window (hard)
 
@@ -36,11 +38,15 @@ Fail closed:
 E2E **Must not** start until integration campaign is complete. On durable state:
 
 ```yaml
-integration_gate: complete # required before phase leaves awaiting_integration_gate
+integration_gate: complete | waived_single_milestone
+# complete — portfolio IT green (multi-milestone最终交付 path)
+# waived_single_milestone — project has exactly one feature milestone; Layer B
+#   already covered that milestone’s IT (`full-delivery-acceptance` e2e_direct)
 ```
 
-Starting with `integration_gate: incomplete` fails closed as
-`e2e_campaign_integration_gate_incomplete`.
+Starting with `integration_gate: incomplete` (or any other value) fails closed as
+`e2e_campaign_integration_gate_incomplete`. E2E suite **Must** still be
+**full-project** even when the gate is waived.
 
 ## User-Flow Coverage (hard)
 
@@ -97,7 +103,7 @@ campaign_drive: agent_auto
 execution_mode: interactive | unattended
 interaction_fidelity: human_path # default; hybrid allowed
 display_mode: visible_window # default when omitted; headless forbidden
-integration_gate: complete | incomplete # must be complete to run
+integration_gate: complete | incomplete | waived_single_milestone # incomplete blocks run
 screenshot_capability: available | unavailable
 window_capability: available | unavailable # independent of screenshots; required when phase=complete
 vision_capability: available | unavailable
@@ -140,7 +146,7 @@ When `vision_result: skipped`, record a `e2e_campaign_vision_skipped` (or
 ## Round Machine
 
 ```text
-verify integration_gate complete
+verify integration_gate complete|waived_single_milestone
   -> probe screenshot_capability + vision_capability
   -> open milestone(round N)
   -> orchestrate suite (inventory + Suite Plan + checkpoints)

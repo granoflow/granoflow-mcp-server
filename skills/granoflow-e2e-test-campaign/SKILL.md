@@ -6,17 +6,19 @@ description: Final-stage E2E after integration is green—visible-window UI huma
 # Granoflow E2E Test Campaign
 
 Use this Skill when the user **requires running** end-to-end UI journeys as a
-campaign (for example: `Run e2e campaign`, `开始 E2E 战役`, `开始端到端测试`),
-or when the project reaches lifecycle stage `e2e_campaign`.
+campaign (for example: `Run e2e campaign`, `开始 E2E 战役`, `开始端到端测试`,
+`开始最终交付` / `开始完整交付`), or when最终交付 has entered lifecycle stage
+`e2e_campaign` per `full-delivery-acceptance`.
 
-This is the **final test stage** before `project_complete`: real UI
-`human_path` coverage of **daily user operations** declared in Project Work and
-related sources, with screenshot delivery under `temp/` and an auto-drive bug
-fix loop until green (or green_with_external_residuals).
+This is the **E2E leg of最终交付** and the **final test stage** before
+`project_complete`: real UI `human_path` coverage of **daily user operations**
+from Project Work, with live-window screenshots under `temp/` and auto-drive
+fixes until green (or green_with_external_residuals).
 
-Cross-module `service_path` integration belongs to
-`granoflow-integration-test-campaign` / stage `integration_campaign` **before**
-this campaign starts.
+Start gate: `integration_gate` is `complete` (multi-milestone path after full
+unit + portfolio IT) **or** `waived_single_milestone` (exactly one feature
+milestone; Layer B already covered IT). **E2E coverage is always full-project**
+(never narrowed to "what we touched"). Detail: `e2e-test-campaign-contract`.
 
 After campaign start, the E2E loop is **agent auto-drive** for both
 `interactive` and `unattended` project modes: do not ask ordinary phase
@@ -48,13 +50,14 @@ Run e2e campaign
 - `#e2e-campaign`
 - `#e2e`
 - `#端到端测试`
+- `#最终交付`
 
 ## Start Gate
 
-**Must** confirm `integration_campaign` is complete before opening round 1.
-Read campaign state / lifecycle board; `integration_gate` on durable state
-**Must** be `complete`. Starting early fails closed as
-`e2e_campaign_integration_gate_incomplete`.
+Durable `integration_gate` **Must** be `complete` or `waived_single_milestone`
+before round 1 (`e2e_campaign_integration_gate_incomplete` otherwise). When the
+waiver/path is unclear, call `granoflow_acceptance_delivery_skill` then load
+`full-delivery-acceptance`.
 
 ## Progress Board
 
@@ -128,7 +131,8 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
    if not → fail closed (`e2e_campaign_window_required`), do not invent
    headless covered journeys.
    Success criteria:
-   - `integration_gate: complete` on durable campaign state.
+   - `integration_gate: complete` or `waived_single_milestone` on durable
+     campaign state.
    - `window_capability`, screenshot/vision capability, and verification hosts
      probed from Project Work platforms.
      Checkpoints:

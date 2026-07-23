@@ -111,10 +111,16 @@ false` + basis (e.g. `no_user_visible_copy_in_milestone_plan`).
 
 ## Acceptance Interaction
 
-| Mode          | Behavior                                                                                                                                                                                    |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `interactive` | Present the whole pack Markdown to the user; milestone Plan phase ends only after explicit acceptance of **this pack** (or an equivalent explicit “确认 M* Plan Gate” that names the pack). |
-| `unattended`  | Emit the pack as **display-only** notice; do not ask for pack acknowledgement; follow `unattended-interaction-contract.md`. Auto-adopt only under a valid unattended Planning grant.        |
+Load `markdown-html-acceptance-render` and apply its **Plan Acceptance Preview
+Gate** (clickable links are mandatory).
+
+| Mode          | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `interactive` | Write Markdown SoT → run `render_markdown_acceptance_html.py` → emit **Plan Acceptance Link** block with clickable `file://` HTML (when ready) plus Markdown SoT link → prefer host open (`open_resource` / equivalent) → **wait** for explicit pack accept/revise. Missing clickable HTML when `html_render.status: ready` → `plan_acceptance_html_link_required`. Tools missing → clickable Markdown + token-free install hint every time. |
+| `unattended`  | Same convert + clickable links as non-blocking notice; ledger + closing **Plan Acceptance Link Digest** (`plan_acceptance_link_digest_required` if omitted). Auto-adopt only under a valid unattended Planning grant (`unattended-interaction-contract.md`).                                                                                                                                                                                 |
+
+Pack frontmatter **Must** include `html_render` (with `html_file_url` /
+`markdown_file_url` / `link_emitted`) per `markdown-html-acceptance-render.md`.
 
 Setting every in-scope task `plan_design_gate_status: passed` without emitting /
 accepting this pack (interactive) fails closed as
@@ -159,7 +165,9 @@ Rules:
      `passed` / `failed` / `blocked_by_dependency`;
    - confirm shipped copy matches the pack inventory for `copy_locale` (other
      locales remain Execution extras, not silent Plan drift);
-   - note schema / flow deviations explicitly.
+   - note schema / flow / UML deviations via `implementation-design-fidelity`
+     (kept divergences require better_rationale **and** pack/Task Work/data
+     attachment writeback in the same batch).
 4. **Conflict / drift:** if implementation discovers the pack or Task Work is
    wrong, revise Task Work (discussion writeback), update the pack to a new
    `v<n+1>` when milestone-accepted content changes, and (interactive) re-seek
@@ -197,6 +205,8 @@ Fail closed:
 | `plan_copy_locale_unresolved`                          | Copy needed; locale not resolved                                     |
 | `plan_copy_missing`                                    | Copy needed; no inventory                                            |
 | `plan_copy_extra_locale`                               | Non-selected locales treated as Plan deliverables                    |
+| `plan_acceptance_html_link_required`                   | HTML ready but no clickable/open HTML link before acceptance ask     |
+| `plan_acceptance_link_digest_required`                 | Unattended run authored HTML packs but omitted closing link digest   |
 
 ## Admission Test
 
@@ -205,7 +215,9 @@ Fail closed:
 3. Are all five section keys listed with `present`?
 4. If any task has user-visible copy: is `copy_locale` set and only that locale
    shown?
-5. Interactive: did we wait for pack acceptance before marking milestone Plan
-   closed?
-6. Before implement: is the accepted pack path in context, and will Delivery
+5. Was `render_markdown_acceptance_html.py` run, and does frontmatter
+   `html_render` record paths / file URLs / `link_emitted`?
+6. Interactive: did the user get a clickable HTML link (when ready) or
+   Markdown link (fallback) **before** the acceptance question, and did we wait?
+7. Before implement: is the accepted pack path in context, and will Delivery
    reconcile `present: true` sections?

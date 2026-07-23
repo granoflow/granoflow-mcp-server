@@ -34,13 +34,64 @@ STAGE_LABELS = {
     "milestones_created": "2. 里程碑与任务组合创建",
     "milestone_analysis": "3. 分里程碑 Analysis",
     "milestone_plan": "4. 分里程碑 Plan / Design Gate",
-    "milestone_implement": "5. 实施（代码 + 单测 + 规划集成测试）",
-    "integration_campaign": "6. App 编译 + 集成测试战役",
-    "e2e_campaign": "7. E2E 战役（界面路径 + 截图交付）",
+    "milestone_implement": "5. 实施（Layer A + 里程碑 Layer B IT）",
+    "integration_campaign": "6. 最终交付 · 项目级 IT（单里程碑可跳过）",
+    "e2e_campaign": "7. 最终交付 · 全面 E2E（界面路径 + 截图）",
     "project_complete": "8. 项目完成",
 }
 
 STATUS_OK = frozenset({"not_started", "in_progress", "done", "blocked"})
+SESSION_DELIVERY_STATUSES = frozenset(
+    {
+        "offer_or_ask",
+        "in_progress",
+        "complete",
+        "not_applicable",
+    }
+)
+PRE_E2E_PATHS = frozenset({"e2e_direct", "full_unit_and_it", "not_selected"})
+
+
+def _validate_session_delivery(sd: dict[str, Any]) -> str | None:
+    status = sd.get("status")
+    if status not in SESSION_DELIVERY_STATUSES:
+        return f"session_delivery.status invalid: {status!r}"
+    touched = sd.get("milestones_touched_count")
+    if not isinstance(touched, int) or touched < 0:
+        return "session_delivery.milestones_touched_count must be int ≥ 0"
+    project_count = sd.get("project_feature_milestone_count")
+    if not isinstance(project_count, int) or project_count < 1:
+        return "session_delivery.project_feature_milestone_count must be int ≥ 1"
+    path = sd.get("pre_e2e_path")
+    if path not in PRE_E2E_PATHS:
+        return f"session_delivery.pre_e2e_path invalid: {path!r}"
+    prompt = sd.get("prompt_full_delivery")
+    if prompt not in {True, False}:
+        return "session_delivery.prompt_full_delivery must be bool"
+    if path == "e2e_direct" and project_count != 1:
+        return "e2e_direct requires project_feature_milestone_count == 1"
+    if path == "full_unit_and_it" and project_count < 2:
+        return "full_unit_and_it requires project_feature_milestone_count ≥ 2"
+    if status == "offer_or_ask" and not str(sd.get("recommendation") or "").strip():
+        return "offer_or_ask requires recommendation"
+    return None
+
+
+def _session_override_allows_next_action(
+    sd: dict[str, Any] | None,
+    earliest_incomplete: str | None,
+    na_stage: str,
+) -> bool:
+    """Single feature-milestone project: skip stage 6, jump to full-project E2E."""
+    if not isinstance(sd, dict):
+        return False
+    if sd.get("pre_e2e_path") != "e2e_direct":
+        return False
+    if sd.get("project_feature_milestone_count") != 1:
+        return False
+    if earliest_incomplete != "integration_campaign":
+        return False
+    return na_stage == "e2e_campaign"
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -142,6 +193,17 @@ def validate_and_render(board: dict[str, Any]) -> dict[str, Any]:
                     f"{sid}=done but earlier {earlier}={by_id[earlier]['status']}",
                 )
 
+    session_delivery = board.get("session_delivery")
+    if session_delivery is not None:
+        if not isinstance(session_delivery, dict):
+            return _fail(
+                "project_lifecycle_board_render_failed",
+                "session_delivery must be an object when present",
+            )
+        sd_err = _validate_session_delivery(session_delivery)
+        if sd_err:
+            return _fail("full_delivery_session_fields_missing", sd_err)
+
     next_action = board.get("next_action")
     if not isinstance(next_action, dict):
         return _fail(
@@ -155,16 +217,34 @@ def validate_and_render(board: dict[str, Any]) -> dict[str, Any]:
             "project_lifecycle_board_render_failed",
             "next_action.stage_id and summary required",
         )
+    session_override = _session_override_allows_next_action(
+        session_delivery if isinstance(session_delivery, dict) else None,
+        earliest_incomplete,
+        str(na_stage),
+    )
     if earliest_incomplete is None:
         if na_stage != "project_complete":
             return _fail(
                 "project_lifecycle_board_render_failed",
                 "all stages done; next_action.stage_id must be project_complete",
             )
-    elif na_stage != earliest_incomplete and by_id[earliest_incomplete]["status"] != "blocked":
+    elif (
+        na_stage != earliest_incomplete
+        and by_id[earliest_incomplete]["status"] != "blocked"
+        and not session_override
+    ):
         return _fail(
             "project_lifecycle_board_render_failed",
             f"next_action.stage_id={na_stage} but first incomplete is {earliest_incomplete}",
+        )
+    if (
+        isinstance(session_delivery, dict)
+        and session_delivery.get("pre_e2e_path") == "e2e_direct"
+        and session_delivery.get("project_feature_milestone_count") != 1
+    ):
+        return _fail(
+            "full_delivery_pre_e2e_skip_invalid",
+            "e2e_direct requires exactly one project feature milestone",
         )
 
     needs_confirm = next_action.get("needs_user_confirmation")
@@ -180,6 +260,14 @@ def validate_and_render(board: dict[str, Any]) -> dict[str, Any]:
             "interactive next_action.needs_user_confirmation must be bool",
         )
 
+    entry_kind = str(board.get("entry_kind") or "").strip()
+    reentry = board.get("reentry")
+    if reentry is not None and not isinstance(reentry, dict):
+        return _fail(
+            "project_lifecycle_board_render_failed",
+            "reentry must be an object when present",
+        )
+
     title = str(board.get("project_title") or board.get("project_id") or "Project")
     lines: list[str] = [
         "## 项目进度板",
@@ -188,12 +276,18 @@ def validate_and_render(board: dict[str, Any]) -> dict[str, Any]:
         f"- 模式：{mode}"
         + ("（进度板仅展示，不要求确认）" if mode == "unattended" else "（阶段门禁需确认）"),
         f"- 更新：{board.get('updated_at') or '—'}",
-        "",
-        "### 流水线",
-        "",
-        "| 阶段 | 状态 | 证据 |",
-        "| --- | --- | --- |",
     ]
+    if entry_kind:
+        lines.append(f"- 入口：`{entry_kind}`")
+    lines.extend(
+        [
+            "",
+            "### 流水线",
+            "",
+            "| 阶段 | 状态 | 证据 |",
+            "| --- | --- | --- |",
+        ]
+    )
     for sid in STAGE_IDS:
         row = by_id[sid]
         lines.append(f"| {STAGE_LABELS[sid]} | `{row['status']}` | {row.get('evidence')} |")
@@ -223,6 +317,39 @@ def validate_and_render(board: dict[str, Any]) -> dict[str, Any]:
                     f"- {b.get('summary') or b.get('id')} "
                     f"(`{b.get('blocker_class') or 'other'}`)"
                 )
+
+    if isinstance(session_delivery, dict):
+        lines.extend(["", "### 最终交付（本会话）", ""])
+        lines.append(f"- 状态：`{session_delivery.get('status')}`")
+        lines.append(
+            f"- 项目功能里程碑数：{session_delivery.get('project_feature_milestone_count')}"
+        )
+        lines.append(f"- 预 E2E 路径：`{session_delivery.get('pre_e2e_path')}`")
+        lines.append(f"- 本会话触及里程碑数：{session_delivery.get('milestones_touched_count')}")
+        touched = session_delivery.get("milestones_touched") or []
+        if isinstance(touched, list) and touched:
+            lines.append(f"- 触及：{', '.join(str(x) for x in touched)}")
+        lines.append(
+            f"- 提示最终交付：{'是' if session_delivery.get('prompt_full_delivery') else '否'}"
+        )
+        rec = str(session_delivery.get("recommendation") or "").strip()
+        if rec:
+            lines.append(f"- 建议：{rec}")
+
+    if isinstance(reentry, dict):
+        lines.extend(["", "### 回轨", ""])
+        from_stage = reentry.get("from_stage")
+        if from_stage:
+            lines.append(f"- 从阶段：`{from_stage}`")
+        change_class = reentry.get("change_class")
+        if change_class:
+            lines.append(f"- 变更类：`{change_class}`")
+        writeback_status = reentry.get("writeback_status")
+        if writeback_status:
+            lines.append(f"- 写回：`{writeback_status}`")
+        reason = str(reentry.get("reason") or "").strip()
+        if reason:
+            lines.append(f"- 原因：{reason}")
 
     lines.extend(
         [
