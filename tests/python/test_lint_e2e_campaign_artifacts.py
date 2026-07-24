@@ -796,12 +796,47 @@ class LintClosingSummaryTests(unittest.TestCase):
 
 
 def ok_host_matrix(*hosts: dict) -> dict:
+    normalized_hosts = []
+    for host in hosts:
+        normalized_hosts.append(
+            {
+                "provider": (
+                    "current_platform"
+                    if host.get("kind") in {"desktop", "browser"}
+                    else "official_virtual"
+                ),
+                "e2e_capable": host.get("status") == "available",
+                **host,
+            }
+        )
+    current = next(
+        (host for host in normalized_hosts if host["provider"] == "current_platform"),
+        None,
+    )
+    fallback = next(
+        (host for host in normalized_hosts if host.get("status") == "available"),
+        None,
+    )
+    selected = current or fallback
+    source = "current_platform_default" if current else "ai_fallback"
+    selected_ids = [selected["id"]] if selected else []
     return {
         "schema": "granoflow_verification_host_matrix_v1",
         "derived_from": ["scope.supported_platforms"],
         "concurrency": "parallel_when_capable",
         "primary_form_factors": [],
-        "hosts": list(hosts),
+        "project_platforms": sorted(
+            {platform for host in normalized_hosts for platform in host.get("platforms", [])}
+        ),
+        "hosts": normalized_hosts,
+        "selection": {
+            "mode": "interactive",
+            "source": source,
+            "current_platform": "macos",
+            "current_host_id": current["id"] if current else "macos_desktop",
+            "project_includes_current_platform": bool(current),
+            "selected_host_ids": selected_ids,
+        },
         "assignment_policy": "journey_at_least_one_capable_host",
     }
 
@@ -815,9 +850,82 @@ class HostMatrixAndShipBarTests(unittest.TestCase):
         self.assertNotIn("simulator", kinds)
         self.assertNotIn("emulator", kinds)
 
-    def test_l2_multi_platform_requires_desktop_sim_emu(self) -> None:
+    def test_l2_multi_platform_lists_candidate_kinds_without_making_them_mandatory(self) -> None:
         kinds = MOD.derive_required_host_kinds(["ios", "android", "macos"])
         self.assertEqual(kinds, {"simulator", "emulator", "desktop"})
+
+    def test_virtual_capability_does_not_expand_default_test_scope(self) -> None:
+        matrix = ok_host_matrix(
+            {
+                "id": "desktop_native",
+                "kind": "desktop",
+                "platforms": ["macos"],
+                "status": "available",
+            },
+            {
+                "id": "ios_simulator",
+                "kind": "simulator",
+                "platforms": ["ios"],
+                "status": "available",
+            },
+        )
+        result = MOD.lint_host_matrix(matrix, platforms=["macos", "ios"])
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(
+            matrix["selection"]["selected_host_ids"],
+            ["desktop_native"],
+        )
+
+    def test_unattended_mobile_only_allows_one_ai_selected_virtual_host(self) -> None:
+        matrix = ok_host_matrix(
+            {
+                "id": "ios_simulator",
+                "kind": "simulator",
+                "platforms": ["ios"],
+                "status": "available",
+            }
+        )
+        matrix["selection"] = {
+            "mode": "unattended",
+            "source": "ai_fallback",
+            "current_platform": "macos",
+            "current_host_id": "macos_desktop",
+            "project_includes_current_platform": False,
+            "selected_host_ids": ["ios_simulator"],
+        }
+        result = MOD.lint_host_matrix(matrix, platforms=["ios"])
+        self.assertTrue(result["ok"], result)
+
+    def test_nonselected_platform_needs_acknowledged_untested_handoff(self) -> None:
+        matrix = ok_host_matrix(
+            {
+                "id": "desktop_native",
+                "kind": "desktop",
+                "platforms": ["macos"],
+                "status": "available",
+            },
+            {
+                "id": "ios_simulator",
+                "kind": "simulator",
+                "platforms": ["ios"],
+                "status": "available",
+            },
+        )
+        errors = MOD.lint_external_device_handoffs(matrix, [], outcome="green")
+        self.assertIn("external_device_handoff_missing", {row["code"] for row in errors})
+        errors = MOD.lint_external_device_handoffs(
+            matrix,
+            [
+                {
+                    "platform": "ios",
+                    "tested": False,
+                    "handoff": "user_external_device_test",
+                    "acknowledgement": "acknowledged",
+                }
+            ],
+            outcome="green",
+        )
+        self.assertEqual(errors, [])
 
     def test_l9_omitted_ship_bar_defaults_market_smoke(self) -> None:
         self.assertEqual(MOD.normalize_ship_bar(None), "market_smoke")
@@ -896,7 +1004,7 @@ class HostMatrixAndShipBarTests(unittest.TestCase):
         result = MOD.lint_suite_plan(plan)
         self.assertTrue(result["ok"], result)
 
-    def test_l6_unavailable_host_without_residual_fails(self) -> None:
+    def test_l6_unavailable_capability_only_host_needs_no_residual(self) -> None:
         matrix = ok_host_matrix(
             {
                 "id": "ios_simulator",
@@ -906,36 +1014,9 @@ class HostMatrixAndShipBarTests(unittest.TestCase):
             }
         )
         errors = MOD.lint_host_availability_residuals(matrix, residuals=[], outcome=None)
-        codes = {e["code"] for e in errors}
-        self.assertIn("e2e_campaign_host_unavailable", codes)
+        self.assertEqual(errors, [])
 
-    def test_l7_unavailable_host_with_residual_allows_green_with_residuals(self) -> None:
-        summary = ok_closing_summary()
-        summary["outcome"] = "green_with_residuals"
-        summary["host_matrix"] = ok_host_matrix(
-            {
-                "id": "ios_simulator",
-                "kind": "simulator",
-                "platforms": ["ios"],
-                "status": "unavailable",
-            }
-        )
-        summary["residuals"] = [
-            {
-                "code": "e2e_campaign_host_unavailable",
-                "detail": "iOS simulator not installed",
-            }
-        ]
-        summary["plain"]["leftovers"] = "本机没有 iOS 模拟器，相关检查先记下，其余主流程已通过。"
-        # Keep markdown leftovers section consistent enough for residual unexplained gate
-        summary["markdown_body"] = summary["markdown_body"].replace(
-            "没有未完成事项。",
-            "本机没有 iOS 模拟器，相关检查先记下。",
-        )
-        result = MOD.lint_closing_summary(summary)
-        self.assertTrue(result["ok"], result)
-
-    def test_l6_unavailable_host_green_outcome_fails(self) -> None:
+    def test_l7_unavailable_capability_only_host_allows_green(self) -> None:
         summary = ok_closing_summary()
         summary["outcome"] = "green"
         summary["host_matrix"] = ok_host_matrix(
@@ -946,16 +1027,33 @@ class HostMatrixAndShipBarTests(unittest.TestCase):
                 "status": "unavailable",
             }
         )
-        summary["residuals"] = [{"code": "e2e_campaign_host_unavailable", "detail": "missing sim"}]
-        summary["plain"]["leftovers"] = "缺少 iOS 模拟器。"
-        summary["markdown_body"] = summary["markdown_body"].replace(
-            "没有未完成事项。",
-            "缺少 iOS 模拟器。",
-        )
+        summary["external_device_handoffs"] = [
+            {
+                "platform": "ios",
+                "tested": False,
+                "handoff": "user_external_device_test",
+                "acknowledgement": "acknowledged",
+            }
+        ]
         result = MOD.lint_closing_summary(summary)
+        self.assertTrue(result["ok"], result)
+
+    def test_selected_host_must_be_available(self) -> None:
+        summary = ok_closing_summary()
+        summary["outcome"] = "green"
+        summary["host_matrix"] = ok_host_matrix(
+            {
+                "id": "ios_simulator",
+                "kind": "simulator",
+                "platforms": ["ios"],
+                "status": "unavailable",
+            }
+        )
+        summary["host_matrix"]["selection"]["selected_host_ids"] = ["ios_simulator"]
+        result = MOD.lint_host_matrix(summary["host_matrix"], platforms=["ios"])
         self.assertFalse(result["ok"])
         codes = {e["code"] for e in result["errors"]}
-        self.assertIn("e2e_campaign_host_unavailable", codes)
+        self.assertIn("verification_host_selection_unavailable", codes)
 
     def test_platforms_imply_matrix_missing_on_suite(self) -> None:
         plan = ok_suite_plan()

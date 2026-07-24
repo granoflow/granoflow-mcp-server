@@ -52,6 +52,13 @@ VALID_HOST_KINDS = frozenset(
 )
 VALID_HOST_STATUS = frozenset({"unprobed", "available", "unavailable", "deferred_external"})
 VALID_CONCURRENCY = frozenset({"sequential", "parallel_when_capable"})
+VALID_HOST_PROVIDERS = frozenset(
+    {"current_platform", "official_virtual", "third_party_virtual", "external"}
+)
+VALID_HOST_SELECTION_MODES = frozenset({"interactive", "unattended"})
+VALID_HOST_SELECTION_SOURCES = frozenset(
+    {"user_selection", "current_platform_default", "ai_fallback"}
+)
 HOST_UNAVAILABLE_RESIDUAL_CODES = frozenset(
     {
         "e2e_campaign_host_unavailable",
@@ -582,8 +589,8 @@ def platforms_from_project_work(project_work: Any) -> list[str]:
     return out
 
 
-def derive_required_host_kinds(platforms: list[str]) -> set[str]:
-    """Map supported_platforms → required host kinds (L1/L2/L10)."""
+def derive_candidate_host_kinds(platforms: list[str]) -> set[str]:
+    """Map product platforms to capability candidates, never mandatory test scope."""
     tokens = {_normalize_platform_token(p) for p in platforms if p and str(p).strip()}
     if not tokens:
         return set()
@@ -602,6 +609,11 @@ def derive_required_host_kinds(platforms: list[str]) -> set[str]:
     return kinds
 
 
+# Compatibility name for callers. The returned kinds describe discoverable
+# candidates; selection, not this set, determines the E2E test scope.
+derive_required_host_kinds = derive_candidate_host_kinds
+
+
 def lint_host_matrix(
     data: Any,
     *,
@@ -610,8 +622,8 @@ def lint_host_matrix(
 ) -> dict[str, Any]:
     errors: list[dict[str, str]] = []
     if data is None:
-        required_kinds = derive_required_host_kinds(platforms or [])
-        if require_present or required_kinds:
+        candidate_kinds = derive_candidate_host_kinds(platforms or [])
+        if require_present or candidate_kinds:
             errors.append(
                 _err(
                     "verification_host_matrix_missing",
@@ -682,22 +694,104 @@ def lint_host_matrix(
                     f"{prefix}.status must be unprobed|available|unavailable|deferred_external",
                 )
             )
+        provider = host.get("provider")
+        if provider not in VALID_HOST_PROVIDERS:
+            errors.append(
+                _err(
+                    "verification_host_matrix_missing",
+                    f"{prefix}.provider must be one of {sorted(VALID_HOST_PROVIDERS)}",
+                )
+            )
         hosts_by_id[host_id] = host
 
-    required_kinds = derive_required_host_kinds(platforms or [])
-    present_kinds = {h.get("kind") for h in hosts_by_id.values() if isinstance(h.get("kind"), str)}
-    missing_kinds = sorted(required_kinds - present_kinds)
-    if missing_kinds:
+    selection = data.get("selection")
+    selected_host_ids: list[str] = []
+    if not isinstance(selection, dict):
         errors.append(
             _err(
-                "verification_host_matrix_missing",
-                "host_matrix missing required kinds for platforms: " + ", ".join(missing_kinds),
+                "verification_host_selection_missing",
+                "selection must describe how capability candidates became the test scope",
             )
         )
-
-    # Empty platforms must not invent a required desktop host (L10).
-    if not (platforms or []) and "desktop" in present_kinds and not hosts_by_id:
-        pass  # unreachable; present_kinds empty if no hosts
+    else:
+        mode = selection.get("mode")
+        source = selection.get("source")
+        if mode not in VALID_HOST_SELECTION_MODES:
+            errors.append(
+                _err(
+                    "verification_host_selection_missing",
+                    "selection.mode must be interactive|unattended",
+                )
+            )
+        if source not in VALID_HOST_SELECTION_SOURCES:
+            errors.append(
+                _err(
+                    "verification_host_selection_missing",
+                    "selection.source must be user_selection|current_platform_default|ai_fallback",
+                )
+            )
+        selected = _as_str_list(selection.get("selected_host_ids"))
+        if selected is None or (platforms and not selected):
+            errors.append(
+                _err(
+                    "verification_host_selection_missing",
+                    "selection.selected_host_ids must select at least one available host "
+                    "when the project declares platforms",
+                )
+            )
+        else:
+            selected_host_ids = selected
+        unknown = sorted(set(selected_host_ids) - set(hosts_by_id))
+        if unknown:
+            errors.append(
+                _err(
+                    "verification_host_selection_missing",
+                    "selected_host_ids not present in hosts: " + ", ".join(unknown),
+                )
+            )
+        current_supported = selection.get("project_includes_current_platform")
+        current_host_id = selection.get("current_host_id")
+        if not (platforms or []) and not selected_host_ids:
+            pass
+        elif source == "ai_fallback":
+            if current_supported is not False or len(selected_host_ids) != 1:
+                errors.append(
+                    _err(
+                        "verification_host_selection_invalid",
+                        "ai_fallback requires project_includes_current_platform=false "
+                        "and exactly one selected host",
+                    )
+                )
+        elif source == "current_platform_default" and (
+            current_supported is not True or selected_host_ids != [current_host_id]
+        ):
+            errors.append(
+                _err(
+                    "verification_host_selection_invalid",
+                    "current_platform_default must select only current_host_id",
+                )
+            )
+        if (
+            mode == "unattended"
+            and current_supported is True
+            and source != "current_platform_default"
+        ):
+            errors.append(
+                _err(
+                    "verification_host_selection_invalid",
+                    "unattended mode must use current_platform_default when the project "
+                    "supports the current platform",
+                )
+            )
+        for host_id in selected_host_ids:
+            host = hosts_by_id.get(host_id, {})
+            if host.get("status") != "available" or host.get("e2e_capable") is not True:
+                errors.append(
+                    _err(
+                        "verification_host_selection_unavailable",
+                        f"selected host {host_id} must be available and e2e_capable=true",
+                    )
+                )
 
     ok = not errors
     return {
@@ -794,8 +888,14 @@ def lint_host_availability_residuals(
         return errors
     residual_list = residuals if isinstance(residuals, list) else []
     codes = _residual_codes(residual_list)
+    selection = host_matrix.get("selection")
+    selected_ids = set()
+    if isinstance(selection, dict):
+        selected_ids = set(_as_str_list(selection.get("selected_host_ids")) or [])
     unavailable_required = [
-        h for h in hosts if isinstance(h, dict) and h.get("status") == "unavailable"
+        h
+        for h in hosts
+        if isinstance(h, dict) and h.get("id") in selected_ids and h.get("status") == "unavailable"
     ]
     if not unavailable_required:
         return errors
@@ -815,6 +915,76 @@ def lint_host_availability_residuals(
                 "use green_with_residuals or blocked_external",
             )
         )
+    return errors
+
+
+def lint_external_device_handoffs(
+    host_matrix: Any,
+    handoffs: Any,
+    *,
+    outcome: str | None = None,
+) -> list[dict[str, str]]:
+    """Non-selected product platforms stay untested and require acknowledgement."""
+    if not isinstance(host_matrix, dict):
+        return []
+    project_platforms = _as_str_list(host_matrix.get("project_platforms")) or []
+    selection = host_matrix.get("selection")
+    hosts = host_matrix.get("hosts")
+    if not isinstance(selection, dict) or not isinstance(hosts, list):
+        return []
+    selected_ids = set(_as_str_list(selection.get("selected_host_ids")) or [])
+    selected_platforms: set[str] = set()
+    for host in hosts:
+        if not isinstance(host, dict) or host.get("id") not in selected_ids:
+            continue
+        selected_platforms.update(_as_str_list(host.get("platforms")) or [])
+    required = sorted(set(project_platforms) - selected_platforms)
+    rows = handoffs if isinstance(handoffs, list) else []
+    by_platform = {
+        row.get("platform"): row
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("platform"), str)
+    }
+    errors: list[dict[str, str]] = []
+    for platform_id in required:
+        row = by_platform.get(platform_id)
+        if row is None:
+            errors.append(
+                _err(
+                    "external_device_handoff_missing",
+                    f"non-selected platform {platform_id} requires an external-device handoff",
+                )
+            )
+            continue
+        if row.get("tested") is not False:
+            errors.append(
+                _err(
+                    "external_device_test_overclaim",
+                    f"{platform_id} handoff must preserve tested=false",
+                )
+            )
+        if row.get("handoff") != "user_external_device_test":
+            errors.append(
+                _err(
+                    "external_device_handoff_missing",
+                    f"{platform_id} handoff must be user_external_device_test",
+                )
+            )
+        acknowledgement = row.get("acknowledgement")
+        if acknowledgement not in {"pending", "acknowledged"}:
+            errors.append(
+                _err(
+                    "external_device_handoff_missing",
+                    f"{platform_id} acknowledgement must be pending|acknowledged",
+                )
+            )
+        if outcome in {"green", "green_with_residuals"} and acknowledgement != "acknowledged":
+            errors.append(
+                _err(
+                    "external_device_handoff_unacknowledged",
+                    f"{platform_id} handoff must be acknowledged before acceptance completes",
+                )
+            )
     return errors
 
 
@@ -2358,6 +2528,13 @@ def lint_closing_summary(
             lint_host_availability_residuals(
                 host_matrix,
                 residuals,
+                outcome=outcome if isinstance(outcome, str) else None,
+            )
+        )
+        errors.extend(
+            lint_external_device_handoffs(
+                host_matrix,
+                data.get("external_device_handoffs"),
                 outcome=outcome if isinstance(outcome, str) else None,
             )
         )

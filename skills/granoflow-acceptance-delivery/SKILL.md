@@ -178,6 +178,12 @@ Rules:
 
 - Final delivery does not replace Layer B.
 - Design lock: `temp/acceptance-delivery-design-lock-v1.json`.
+- Device capability inventory is not the required E2E matrix. Run only
+  `host_matrix.selection.selected_host_ids`. For every other supported
+  platform, Delivery must preserve `tested: false` and provide an
+  external-device test handoff. A reply equivalent to “知道了 / 了解 / 我会测试”
+  changes only handoff acknowledgement to accepted; it must not claim that
+  platform green.
 
 ## Hard Rules
 

@@ -100,6 +100,7 @@ describe("tools-surface-registration", () => {
         "granoflow_project_work_confirm",
         "granoflow_task_attachment_add_markdown",
         "granoflow_task_attachment_delete",
+        "granoflow_task_execution_snapshot",
         "granoflow_task_node_list",
         "granoflow_task_node_batch_create",
         "granoflow_task_node_update",

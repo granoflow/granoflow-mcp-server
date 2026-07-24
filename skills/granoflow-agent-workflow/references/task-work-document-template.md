@@ -376,8 +376,10 @@ unit_test_sufficiency: not_applicable | unassessed | sufficient | insufficient
 integration_test_requirement: not_applicable | not_required | required
 integration_tests_added_count: 0 | 1 | 2
 integration_test_execution: not_applicable | not_run_manual_only | awaiting_campaign_execution | executed_forbidden
-integration_test_device_recommendation: not_applicable | local_machine
-integration_test_device: not_applicable | unselected | local_machine | simulator_or_emulator | physical_device | remote_farm | other
+execution_host_matrix: null # granoflow_verification_host_matrix_v1 capability inventory + selection
+integration_test_device_recommendation: not_applicable | current_platform | ai_fallback
+integration_test_device: not_applicable | current_platform | simulator_or_emulator | third_party_virtual_machine | physical_device | remote_farm | other
+external_device_handoffs: [] # [{ platform, tested: false, handoff: user_external_device_test, acknowledgement: pending|acknowledged }]
 
 # Project Work engineering.quality_gates.integration_test_special_requirements
 

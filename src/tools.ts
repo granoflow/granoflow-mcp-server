@@ -35,6 +35,7 @@ import {
 import { registerProjectMilestoneTools } from "./tool-registration-project-milestone.js";
 import { registerUtilityTools } from "./tool-registration-utility.js";
 import { registerAgentPreferenceTools } from "./tool-registration-agent-preferences.js";
+import { addTaskWorkflowAttachment } from "./tool-runtime-attachments.js";
 import type { CapabilityRegistrar } from "./tool-registration-evidence.js";
 import {
   AGENT_WORKFLOW_SKILL_URL,
@@ -85,7 +86,6 @@ import {
   supportsResourceActions,
   resourceCapabilityApiTool,
   extractEntity,
-  addTaskWorkflowAttachment,
   taskNodeApiTool,
   requireTaskAnalysisPlanAttachment,
   completeNodeLessTask,
@@ -174,7 +174,6 @@ export {
   supportsResourceActions,
   resourceCapabilityApiTool,
   extractEntity,
-  addTaskWorkflowAttachment,
   taskNodeApiTool,
   requireTaskAnalysisPlanAttachment,
   completeNodeLessTask,

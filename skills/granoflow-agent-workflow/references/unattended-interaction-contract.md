@@ -15,7 +15,7 @@ declaration is the authorization boundary for the run:
    can complete without a human-held secret, physical presence, third-party
    human approval, or out-of-band channel is treated as granted. Execute it
    directly (phase confirms, local tools, recommended defaults, local gates,
-   Delivery, campaign suite runs on the declared device, project-context
+   Delivery, campaign suite runs on the selected device, project-context
    `revise_code` / `revise_context_yaml` decisions, etc.). Do not invent a
    mid-run confirmation for solvable work.
 2. **Externally impossible work is deferred—not a whole-run stop.** If evidence
@@ -32,6 +32,26 @@ declaration is the authorization boundary for the run:
 
 Inventing credentials, impersonating the user, or marking external work done
 without evidence remains forbidden.
+
+### Device capability is not unattended test scope
+
+Inventory the current platform, official simulators/emulators, and already
+installed third-party VMs with a proven E2E path. This is a capability list,
+not a mandatory matrix. In unattended mode:
+
+1. if the project supports the current development platform, select only that
+   platform for integration/E2E execution;
+2. if it does not, select exactly one already-available supported host,
+   preferring the project primary platform, then an official virtual device,
+   then an installed E2E-capable third-party VM;
+3. never install a third-party VM stack or image;
+4. keep all non-selected supported platforms development-only and record an
+   external-device handoff with `tested: false`.
+
+The final Residual Report may ask the user to test those platforms. A later
+reply equivalent to “知道了 / 了解 / 我会测试” acknowledges and completes that
+handoff, but does not change `tested: false` or authorize a green platform
+claim.
 
 ## Observable Invariant
 

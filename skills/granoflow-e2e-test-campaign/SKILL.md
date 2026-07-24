@@ -125,16 +125,19 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
 `scripts/lint_e2e_campaign_artifacts.py` when artifacts are written.
 
 1. **Start gate** — Integration complete; probe `window_capability`,
-   screenshot/vision capability and verification hosts (desktop / simulator /
-   emulator / browser) from Project Work platforms; default
-   `ship_bar: market_smoke`. Confirm a **visible OS/app window** can be raised;
+   screenshot/vision capability and inventory available verification hosts
+   (current platform, official simulator/emulator, installed third-party VM).
+   Show inventory as capability information, then select scope using
+   `e2e-host-capabilities`: interactive no-selection and unattended both test
+   current platform only; if the project excludes it, AI selects one available
+   supported host. Default `ship_bar: market_smoke`. Confirm a **visible OS/app window** can be raised;
    if not → fail closed (`e2e_campaign_window_required`), do not invent
    headless covered journeys.
    Success criteria:
    - `integration_gate: complete` or `waived_single_milestone` on durable
      campaign state.
-   - `window_capability`, screenshot/vision capability, and verification hosts
-     probed from Project Work platforms.
+   - `window_capability`, screenshot/vision capability, host inventory, and
+     explicit `selection.selected_host_ids` are recorded.
      Checkpoints:
    - Starting early → `e2e_campaign_integration_gate_incomplete`.
    - No visible window → fail closed (`e2e_campaign_window_required`); never
@@ -184,7 +187,7 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
    Outcomes for user-required real results (close UI / secure-store / session
    layers with real evidence; probe `secure_storage_capability` when needed);
    embed `host_matrix` when platforms require it;
-   `concurrency: parallel_when_capable` when multiple hosts available;
+   `concurrency: parallel_when_capable` only when multiple hosts were selected;
    non-empty `checkpoints` for every covered journey. Lint with
    `--project-work`. Running before this fails as
    `e2e_campaign_suite_unorchestrated`.
@@ -224,7 +227,9 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
    - Re-capture affected screenshots after fixes.
 8. **Round / campaign close** — Green (or green_with_residuals) + Closing
    Summary with 「关键步骤截图」 when capable; `plain.next_step` → 项目收尾.
-   Unavailable required hosts need residual + plain leftovers. Missing live
+   Non-selected supported platforms need an external-device handoff with
+   `tested: false`; a user acknowledgement such as “知道了” completes workflow
+   acceptance but is never test evidence. Missing live
    window → **fail closed** (not green_with_residuals).
    Success criteria:
    - Plain-language Closing Summary emitted; lifecycle board shows next stage

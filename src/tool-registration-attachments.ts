@@ -40,7 +40,7 @@ function registerGranoflowLogicalAttachmentReplaceTool(
   } = context;
   registerTool(
     "granoflow_logical_attachment_replace",
-    "Replace the current typed project, milestone, or task artifact and require App-owned SHA-256 readback before it becomes current.",
+    "Read local file bytes at the MCP boundary, upload them through the Local HTTP API as Base64, replace the current typed project, milestone, or task artifact, and require App-owned SHA-256 readback before it becomes current. The file path is not sent to or opened by the Granoflow app.",
     {
       entityType: logicalAttachmentEntityTypeSchema,
       entityId: z.string().min(1),
@@ -112,7 +112,7 @@ function registerGranoflowLogicalAttachmentReadTool(
   } = context;
   registerTool(
     "granoflow_logical_attachment_read",
-    "Read bounded Markdown or YAML content and App-owned SHA-256 for one current logical attachment. Acceptance HTML is previewed by the App and uses replace-response hash readback.",
+    "Read one current logical attachment receipt. Bounded Markdown/YAML includes content; acceptance HTML and other non-text artifacts return App-owned SHA-256 and size metadata without exposing content.",
     {
       entityType: logicalAttachmentEntityTypeSchema,
       entityId: z.string().min(1),
@@ -197,7 +197,7 @@ function registerGranoflowTaskAttachmentAddMarkdownTool(
   const { validatedWorkflowMarkdownPath, jsonTextResult, addTaskWorkflowAttachment } = context;
   registerTool(
     "granoflow_task_attachment_add_markdown",
-    "Conditionally attach a versioned Task Work Document, legacy Task Analysis/Plan, or Task Delivery Markdown file and verify App-owned content/hash readback.",
+    "Read Markdown bytes locally and upload through the Local HTTP API as Base64. Typed Task Work and Task Delivery headers are automatically routed to their logical slots; legacy untyped Analysis/Plan stays a generic attachment. Defaults to dry-run.",
     {
       taskId: z.string().min(1),
       filePath: z.string().min(1),
@@ -216,15 +216,28 @@ function registerGranoflowTaskAttachmentAddMarkdownTool(
           error: { message: error instanceof Error ? error.message : String(error) },
         });
       }
-      return jsonTextResult(
-        await addTaskWorkflowAttachment({
-          taskId: String(taskId),
-          filePath: file,
-          idempotencyKey: String(idempotencyKey),
-          expectedTaskUpdatedAt: String(expectedTaskUpdatedAt),
-          dryRun: dryRun !== false,
-        }),
-      );
+      try {
+        return jsonTextResult(
+          await addTaskWorkflowAttachment({
+            taskId: String(taskId),
+            filePath: file,
+            idempotencyKey: String(idempotencyKey),
+            expectedTaskUpdatedAt: String(expectedTaskUpdatedAt),
+            dryRun: dryRun !== false,
+          }),
+        );
+      } catch (error) {
+        return jsonTextResult({
+          ok: false,
+          code: "task_workflow_header_invalid",
+          data: {
+            transport: "contentBase64",
+            localPathRole: "mcp_read_boundary_only",
+            writesPerformed: false,
+          },
+          error: { message: error instanceof Error ? error.message : String(error) },
+        });
+      }
     },
   );
 }

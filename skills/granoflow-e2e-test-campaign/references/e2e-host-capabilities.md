@@ -130,53 +130,97 @@ for remaining material gaps; record per-row `vision_compare`, `ai_pass`, and
 When skipped (policy off, timeout, or host block), set `vision_result: skipped`
 and add residual `e2e_campaign_vision_skipped` or `vision_skipped`.
 
-## Verification Host Matrix (multi-device)
+## Verification Host Matrix (capability inventory and selected scope)
 
-Derive **where** to run UI journeys from Project Work
-`scope.supported_platforms` (+ optional
-`engineering.quality_gates.verification_host_matrix` / `ship_bar`). Never
-hardcode product-specific flows into this Skill.
+Project Work `scope.supported_platforms` describes what the product supports.
+The local host inventory describes what this development machine could test.
+Neither list is the E2E test scope. Only `selection.selected_host_ids` is the
+test scope.
+
+Inventory and show:
+
+1. the current development platform;
+2. installed official simulators/emulators;
+3. installed third-party virtual machines that have a confirmed app-driving
+   E2E path.
+
+Use `scripts/probe_execution_hosts.py` for a read-only inventory. It must never
+install a VM product, emulator image, simulator runtime, or third-party device
+stack. A detected third-party VM with no proven app-driving path remains
+`e2e_capable: false`; it is still shown as capability information.
 
 ```yaml
 schema: granoflow_verification_host_matrix_v1
 derived_from: [scope.supported_platforms]
 concurrency: parallel_when_capable # or sequential
 primary_form_factors: [] # phone_portrait | tablet_landscape | desktop_landscape | web | ...
+project_platforms: [macos, ios]
 hosts:
   - id: desktop_native
     kind: desktop | simulator | emulator | physical_device | remote_farm | browser | other
+    provider: current_platform | official_virtual | third_party_virtual | external
     platforms: [macos]
     status: unprobed | available | unavailable | deferred_external
-    residual_code: null
-assignment_policy: journey_at_least_one_capable_host
+    e2e_capable: true
+selection:
+  mode: interactive | unattended
+  source: user_selection | current_platform_default | ai_fallback
+  current_platform: macos
+  current_host_id: macos_current
+  project_includes_current_platform: true
+  selected_host_ids: [macos_current]
+assignment_policy: selected_hosts_only
 ```
 
-### Derivation (required kinds)
+### Selection policy
 
-| Platforms include              | Required host kind (candidate) |
-| ------------------------------ | ------------------------------ |
-| macos / windows / linux        | `desktop`                      |
-| ios                            | `simulator` (prefer)           |
-| android                        | `emulator` (prefer)            |
-| web only (no native platforms) | `browser`                      |
-| platforms empty                | **no** invented desktop host   |
+- Interactive mode: show the capability inventory and let the user optionally
+  select extra virtual devices. If the user selects none, test only the current
+  development platform.
+- Unattended mode: do not expand the matrix automatically; test only the
+  current development platform.
+- If the project does not support the current development platform, select
+  exactly one available E2E-capable host. Deterministic priority is:
+  project-declared primary platform, then remaining declared platforms; within
+  a platform prefer an official simulator/emulator, then an already-installed
+  third-party VM.
+- A user-selected, AI-selected, or default host must be `available` and
+  `e2e_capable: true`.
+- All non-selected platforms are development-only in this run. Do not execute
+  their integration/E2E suites and do not claim them green.
 
-Probe each candidate once per campaign. When ≥2 hosts are `available` and
+Probe each inventory candidate once per campaign. When ≥2 **selected** hosts are `available` and
 `concurrency: parallel_when_capable`, the agent **May** run disjoint journey
 subsets in parallel. Do not claim green for a host that did not execute its
 assigned journeys.
 
-Unavailable **required** host → residual `e2e_campaign_host_unavailable` (or
-`verification_host_unavailable`). Closing as `green` without residual fails
-closed; `green_with_residuals` requires plain-language leftovers.
+An unavailable capability-only host is not a failure and does not create a
+residual. A selected host becoming unavailable invalidates selection; reselect
+within policy or hand the platform to the user for external device testing.
+
+### External device acceptance
+
+For every supported platform not selected locally, Delivery records:
+
+```yaml
+platform: ios
+tested: false
+handoff: user_external_device_test
+acknowledgement: pending | acknowledged
+```
+
+Tell the user plainly which device/platform still needs their own test. Replies
+equivalent to “知道了 / 了解 / 我会测试” set `acknowledgement: acknowledged` and
+complete the workflow acceptance. This acknowledgement is not test evidence:
+`tested` stays `false`, and no platform-green claim is allowed.
 
 ### Ship bar
 
-| Value               | Meaning                                                              |
-| ------------------- | -------------------------------------------------------------------- |
-| `market_smoke`      | **Default** when omitted. Every adopted journey on ≥1 capable host   |
-| `form_factor_smoke` | `market_smoke` + each declared primary form factor has ≥1 checkpoint |
-| `full_campaign`     | Full matrix × required hosts                                         |
+| Value               | Meaning                                                                 |
+| ------------------- | ----------------------------------------------------------------------- |
+| `market_smoke`      | **Default**. Every adopted journey on selected host(s)                  |
+| `form_factor_smoke` | Selected scope also covers each explicitly selected primary form factor |
+| `full_campaign`     | Full journey matrix × selected hosts; never all inventory candidates    |
 
 Hard fails for `market_smoke` (agent judgment; not all are lintable): crash on
 launch, primary journey blocked, destructive wrong-key / data-loss path,
@@ -225,7 +269,9 @@ After probing, update:
 2. `granoflow_e2e_evidence_pack_v1` — `screenshot_capability` mirror when needed
    for lint cross-checks
 3. Project Work `engineering.quality_gates.verification_host_matrix` when the
-   campaign first derives it (provenance `recommended` / `inspected_fact`)
+   campaign first inventories and selects it (inventory provenance
+   `inspected_fact`; selection provenance `user_selection`,
+   `current_platform_default`, or `ai_fallback`)
 4. Project Work `engineering.third_party_capabilities.probe_by_platform` when
    third-party rows were probed
 

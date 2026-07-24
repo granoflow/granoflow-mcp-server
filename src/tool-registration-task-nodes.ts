@@ -10,6 +10,22 @@ type RegistrationSchemas = {
   resourceIdSchema: z.ZodTypeAny;
   approvedAuthoringSchema: Record<string, z.ZodTypeAny>;
 };
+function registerGranoflowTaskExecutionSnapshotTool(
+  registerTool: ToolRegistrar,
+  context: ToolRegistrationContext,
+): void {
+  const { apiTool } = context;
+  registerTool(
+    "granoflow_task_execution_snapshot",
+    "Read one App-owned execution snapshot containing task, parent project/milestone, current revisions, nodes, and current logical attachment receipts.",
+    { taskId: z.string().min(1) },
+    async ({ taskId }) =>
+      apiTool({
+        path: `/v1/ai-agent/tasks/${String(taskId)}/execution-snapshot`,
+      }),
+  );
+}
+
 function registerGranoflowTaskNodeListTool(
   registerTool: ToolRegistrar,
   registerCapabilityTool: CapabilityRegistrar,
@@ -162,6 +178,7 @@ export function registerTaskNodeTools(
   approvedAuthoringSchema: Record<string, z.ZodTypeAny>,
 ): void {
   const schemas = { resourceIdSchema, approvedAuthoringSchema };
+  registerGranoflowTaskExecutionSnapshotTool(registerTool, context);
   registerGranoflowTaskNodeListTool(registerTool, registerCapabilityTool, context, schemas);
   registerGranoflowTaskNodeBatchCreateTool(registerTool, registerCapabilityTool, context, schemas);
   registerGranoflowTaskNodeUpdateTool(registerTool, registerCapabilityTool, context, schemas);

@@ -899,6 +899,15 @@ managed summary. Filename or HTTP success alone is insufficient. After the
 pointer switches, reconcile the superseded attachment so the task still has at
 most two active Task Work documents.
 
+The legacy-named tool reads `filePath` only at the MCP process boundary, then
+uploads the bytes as `contentBase64`; the path is not an App sandbox dependency.
+It parses the stable header and automatically routes `task_work/execution`,
+`task_work/post_completion_revision`, and `task_delivery` to their App-owned
+logical slots. Invalid typed headers fail before any HTTP write. Binary and
+non-previewable attachments still receive an App-owned metadata receipt with
+stored-byte SHA-256 and size; absence of inline text is not absence of an
+attachment capability.
+
 The built-in post-Grill clean rewrite affects the local working copy first; App
 attachments change only through the transactional upload/readback/active-slot
 flow. Runtime progress never creates or overwrites a Work Document.

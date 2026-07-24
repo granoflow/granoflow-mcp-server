@@ -1,8 +1,6 @@
-/* eslint-disable max-lines */
-import { createHash } from "node:crypto";
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, extname, isAbsolute, relative, resolve } from "node:path";
+import { extname, isAbsolute, relative, resolve } from "node:path";
 
 import {
   maybeCreateDailyReviewSuggestion,
@@ -358,83 +356,6 @@ export function extractEntity(value: unknown): Record<string, unknown> | null {
   if (isObject(value.entity)) return value.entity;
   if (isObject(value.data)) return extractEntity(value.data);
   return null;
-}
-
-export async function addTaskWorkflowAttachment(input: {
-  taskId: string;
-  filePath: string;
-  idempotencyKey: string;
-  expectedTaskUpdatedAt: string;
-  dryRun: boolean;
-}) {
-  const file = validatedWorkflowMarkdownPath(input.filePath);
-  const bytes = readFileSync(file);
-  const contentSha256 = createHash("sha256").update(bytes).digest("hex");
-  const body = {
-    contentBase64: bytes.toString("base64"),
-    fileName: basename(file),
-    idempotencyKey: input.idempotencyKey,
-    expectedTaskUpdatedAt: input.expectedTaskUpdatedAt,
-    expectedContentSha256: contentSha256,
-  };
-  if (input.dryRun) {
-    return requestGranoflowApi({
-      method: "POST",
-      path: `/v1/tasks/${input.taskId}/attachments`,
-      body,
-      dryRun: true,
-    });
-  }
-  const capabilities = await requestGranoflowApi({ path: "/v1/capabilities" });
-  if (!capabilities.ok || !supportsTaskWorkflowAttachmentReadback(capabilities)) {
-    return {
-      ok: false,
-      code: "unsupported_capability",
-      data: { requiredCapability: "task_workflow_attachment_readback_v1" },
-      error: {
-        message:
-          "The running Granoflow app does not advertise conditional task attachment write and content/hash readback.",
-      },
-      runtime: capabilities.runtime,
-    };
-  }
-  const write = await requestGranoflowApi({
-    method: "POST",
-    path: `/v1/tasks/${input.taskId}/attachments`,
-    body,
-  });
-  if (!write.ok) return write;
-  const entity = extractEntity(write);
-  const attachmentId = typeof entity?.id === "string" ? entity.id : undefined;
-  if (!attachmentId) {
-    return {
-      ok: false,
-      code: "attachment_readback_unavailable",
-      data: { write },
-      error: { message: "The app did not return the created task attachment id." },
-      runtime: write.runtime,
-    };
-  }
-  const readback = await requestGranoflowApi({
-    path: `/v1/tasks/${input.taskId}/attachments/${attachmentId}`,
-  });
-  const readbackData = isObject(readback.data) ? readback.data : {};
-  const storedHash =
-    typeof readbackData.contentSha256 === "string"
-      ? readbackData.contentSha256
-      : isObject(readbackData.data) && typeof readbackData.data.contentSha256 === "string"
-        ? readbackData.data.contentSha256
-        : undefined;
-  const verified = readback.ok && storedHash === contentSha256;
-  return {
-    ok: verified,
-    code: verified ? "task_attachment_written" : "attachment_readback_mismatch",
-    data: { attachment: entity, contentSha256, verified, write, readback },
-    error: verified
-      ? undefined
-      : { message: "Task attachment content/hash readback did not match the local Markdown." },
-    runtime: readback.runtime ?? write.runtime,
-  };
 }
 
 export async function taskNodeApiTool(options: ApiRequestOptions) {
