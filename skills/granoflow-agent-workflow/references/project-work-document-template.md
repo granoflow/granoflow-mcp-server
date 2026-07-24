@@ -380,6 +380,39 @@ product_spec_coverage:
       flow_decomposition: always_run_pass_and_record_conclusion
     never_invent_as_user_stated: true
     deferred_unknown_forbidden_for_initialization_blockers: true
+  # Atomic source facts; do not compress named controls or OS boundaries into
+  # generic feature prose. See granoflow-project-definition/
+  # requirement-integrity-contract.
+  source_fact_ledger:
+    schema: granoflow_source_fact_ledger_v1
+    facts:
+      - fact_id: F-001
+        statement: null
+        source_ref: null
+        source_locator: null
+        subject: null
+        action: null
+        object: null
+        conditions: []
+        expected_outcomes: []
+        failure_outcomes: []
+        platforms: []
+        # user_stated | necessary_implication | domain_baseline | product_expansion
+        source_kind: user_stated
+        disposition: adopted | out_of_scope | conflict
+        rationale: null # required for necessary_implication/domain_baseline
+        evidence_refs: []
+        confirmation_ref: null # required for adopted product_expansion
+        mapped_acceptance_ids: []
+        explicit_non_goal_ref: null # required for out_of_scope/conflict
+    review:
+      author_id: null
+      reviewer_id: null
+      status: pending | passed
+      evidence_refs: []
+      reviewed_ledger_sha256: null
+    status: pending | passed
+    ledger_sha256: null
   # Every primary journey the product must support (from docs or gap-fill).
   journey_coverage:
     - journey_id: J-001
@@ -420,6 +453,74 @@ product_spec_coverage:
           intermediate: []
           success_exit: null
           failure_exit: null
+  # Ordered, atomic execution of every adopted journey. Test layers are
+  # step-specific; do not force unit+integration+e2e on ordinary steps.
+  journey_step_traceability:
+    schema: granoflow_journey_step_traceability_v1
+    source_fact_ledger_sha256: null
+    journeys:
+      - journey_id: J-001
+        steps:
+          - step_id: J-001-entry
+            sequence: 1
+            step_type: entry | action | system_response | outcome | failure
+            entry_ref: null # required for entry
+            control: null # required for visible action
+            actor: null
+            action: null
+            interaction_surface: in_app_ui | os_chrome | mixed | service_path
+            platform_boundary: none | plugin | os
+            expected_observation: null
+            source_fact_ids: []
+            required_test_layers: [] # unit | integration | e2e
+            failure_modes: [] # required for plugin/os boundary
+    semantic_replay:
+      status: pending | passed
+      missing_fact_ids: []
+      distorted_fact_ids: []
+      evidence_refs: []
+    review:
+      author_id: null
+      reviewer_id: null
+      status: pending | passed
+      evidence_refs: []
+      reviewed_traceability_sha256: null
+    status: pending | passed
+    traceability_sha256: null
+  # Classify every adopted fact. Keep activities empty only when all facts are
+  # `none`. A visible activity must retain user control across later updates.
+  background_activity_control:
+    schema: granoflow_background_activity_control_v1
+    source_fact_ledger_sha256: null
+    journey_step_traceability_sha256: null
+    fact_classifications:
+      - fact_id: F-001
+        role: none | starts_activity | background_update | protected_control | exit_action
+        background_activity_ids: []
+    activities:
+      - activity_id: BA-001
+        continues_after_user_action: true
+        background_events: []
+        allowed_background_changes: []
+        must_not_change: []
+        controls_that_must_keep_working: []
+        ways_to_exit: []
+        source_fact_ids: []
+        journey_step_ids: []
+        required_test_layers: [] # integration + e2e for visible activities
+    semantic_replay:
+      status: pending | passed
+      missing_fact_ids: []
+      distorted_fact_ids: []
+      evidence_refs: []
+    review:
+      author_id: null
+      reviewer_id: null
+      status: pending | passed
+      evidence_refs: []
+      reviewed_traceability_sha256: null
+    status: pending | passed
+    traceability_sha256: null
   # Key pages inventory from product docs / stories (Init). NOT tasks.
   # Does NOT promise full milestone page coverage. Refined screens + task
   # binding live in Milestone Work task_plan (screen-task-portfolio-coverage).
@@ -483,6 +584,12 @@ product_spec_coverage:
     every_adopted_acceptance_has_stress_path: false
     every_baseline_required_screen_listed: false
     every_screen_has_requirement_and_acceptance: false
+    source_fact_ledger_reviewed: false
+    every_adopted_fact_mapped: false
+    every_adopted_journey_step_traced: false
+    every_adopted_fact_background_activity_classified: false
+    background_activity_control_reviewed: false
+    semantic_replay_passed: false
     screen_detail_registration_adopted: false
     no_open_decision_changing_gaps: false
     no_conflicting_undisposed_requirements: false
@@ -704,8 +811,10 @@ engineering:
     # Visual truth stays in confirmed prototypes; catalog records reusable
     # chrome/control/pattern contracts + derived_from Baseline/task prototypes.
     # First mandatory write after Baseline confirm; incremental after later
-    # confirmed prototypes. Missing after Baseline confirm =>
-    # widget_catalog_required.
+    # confirmed prototypes. Every promotion also refreshes a browseable Design
+    # System HTML catalog generated from widgets.yaml. Task-local widgets stay
+    # local; token-contract changes reopen Baseline. Missing after Baseline
+    # confirm => widget_catalog_required.
     widgets_attachment: null
     # Documented fields below (stack_capability_profile, acceptance_fidelity,
     # implementation_notes) are preserved by unknown_fields:preserve when the
@@ -736,12 +845,11 @@ engineering:
     shared_component_policy: null
     page_local_override_policy: prohibited_by_default
     design_profile:
-      # Stable project-level lock. Interactive: Design Spec triad of Style
-      # Guide / Design Tokens boards (distinct random seeds; not full journey
-      # screen galleries) then Shell triad fitted to selected Spec (chrome
-      # variants only). Unattended: one random-seed Style Guide spec_match +
-      # one Spec-fitted shell_match. Journey screens enter Baseline after
-      # Spec+Shell. From Shell onward style converges. Never a Skills menu.
+      # Stable project-level lock. Interactive: product-fit HTML direction
+      # chooser, then 3 complete HTML Specs by default (justified 2 allowed),
+      # then a Shell triad fitted to the selected Spec. Unattended: one
+      # product-fitted random-seed Spec + one Spec-fitted Shell. Journey screens
+      # enter later. From Shell onward style converges. Never a Skills menu.
       id: null
       version: 1
       # proposed | locked | reopened
@@ -777,21 +885,64 @@ engineering:
       # When required: init package = Design Spec Style Guide + App Shell only.
       # Do not require every screen_coverage row as HTML at initialization.
       init_deliverables: design_spec_and_shell_only
-    # After Spec/Shell rounds (see project-artifact-workflows Mode split).
-    # Only when visual_baseline.applicability: required.
+    # After the two Design Spec HTML rounds (or unattended single).
+    # Exact v2 contract: design-spec-two-round-selection.md.
     design_spec_selection:
-      mode: interactive_triad | unattended_single
-      selected_option_id: null # spec_match | ai_challenger_a | ai_challenger_b | null when single
+      schema: granoflow_design_spec_selection_v2
+      mode: interactive_two_round | unattended_single
+      product_fit_envelope:
+        status: pending | passed
+        input_sha256: null
+        source_refs: []
+        allowed_directions: []
+        excluded_directions: []
+        accessibility_requirements: []
+        rationale: null
+      generation:
+        algorithm: hmac-sha256
+        algorithm_version: 1
+        master_seed: null
+        product_fit_sha256: null
+      direction_round:
+        artifact_ref: null
+        artifact_sha256: null
+        quality_status: pending | passed
+        asset_policy: html_css_inline_svg_only
+        dimensions: [] # fixed 1..6, each options a..d
+        selection_code_input: null
+        selection_code_canonical: null
+        completed_selections: []
+      spec_round:
+        candidate_count: null # interactive 3, or 2 with reason; unattended 1
+        reduction_reason_code: null # insufficient_distinct_third
+        comparison_artifact_ref: null
+        comparison_artifact_sha256: null
+        quality_status: pending | passed
+        asset_policy: html_css_inline_svg_only
+        candidates: []
+        pairwise_differences: []
+      selected_option_id: null
       seed: null
-      candidates: [] # interactive: three entries with distinct seeds
+      candidates: [] # compatibility mirror of spec_round.candidates
       provenance: user_selected | unattended_spec_match_random_seed | null
     shell_selection:
+      schema: granoflow_shell_selection_v2
       mode: interactive_triad | unattended_single
       selected_option_id: null
       # chrome-variant id when interactive; not an independent palette seed
       chrome_variant_id: null
       fitted_to_design_spec_option_id: null
+      # Derived from platform_support_matrix. Each platform lists portrait,
+      # landscape, or both. Every candidate covers every listed orientation.
+      required_layout_families: []
       candidates: []
+      # Selected Shell only. Includes app_shell.top_bar and
+      # app_shell.bottom_navigation, with platform/orientation variants and
+      # exact derived_from Shell artifact SHA.
+      widget_catalog_projection:
+        status: pending | passed
+        source_shell_artifact_sha256: null
+        widgets: []
       provenance: user_selected | unattended_shell_match_fitted_to_spec | null
     skill_routing:
       profile_id: granoflow_product_design_v1

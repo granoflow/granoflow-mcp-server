@@ -34,6 +34,13 @@ Project Definition locks style Skills under Project Work `skill_routing` with
 initialization phases `baseline`, `shell`, and `later_ui`. Invoke them only in
 the matching step; never open a style-Skill menu for the user.
 
+Project Work `skill_routing` records intended capability selection only. It is
+not proof that a Task invoked a provider. UI-changing Task Analysis must also
+record and lint `task_ui_skill_pipeline_v1` with host discovery evidence,
+safe mutation mode, input SHA, output artifact SHA, result, and fallback.
+Provider brands are preferred methods; acceptance depends on evidenced
+capabilities.
+
 Use `available` only after host-side discovery. MCP responses and assumptions do
 not prove host availability. Record actual output, an observable artifact, or
 the applied Skill contract as evidence; never record hidden reasoning.

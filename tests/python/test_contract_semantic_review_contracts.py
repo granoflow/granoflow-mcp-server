@@ -240,6 +240,36 @@ class ContractGrillTest(unittest.TestCase):
         self.assertIn("contract_grill_coverage_incomplete", codes)
         self.assertIn("contract_grill_open_questions", codes)
 
+    def test_background_control_gaps_have_specific_plain_failures(self) -> None:
+        grill = make_grill(self.content, self.traceability)
+        grill["questions"] = [
+            row
+            for row in grill["questions"]
+            if row["axis"] not in {"background_activity_control", "post_update_user_control"}
+        ]
+        grill["coverage_axes"]["background_activity_control"] = False
+        grill["coverage_axes"]["post_update_user_control"] = False
+        grill["grill_sha256"] = canonical_contract_grill_sha256(grill)
+        result = validate_contract_grill(grill, self.content, self.traceability)
+        codes = {error["code"] for error in result["errors"]}
+        self.assertIn("background_state_write_scope_missing", codes)
+        self.assertIn("post_update_interaction_test_missing", codes)
+
+    def test_human_path_gaps_have_specific_plain_failures(self) -> None:
+        grill = make_grill(self.content, self.traceability)
+        grill["questions"] = [
+            row
+            for row in grill["questions"]
+            if row["axis"] not in {"human_path_continuity", "shortcut_non_interference"}
+        ]
+        grill["coverage_axes"]["human_path_continuity"] = False
+        grill["coverage_axes"]["shortcut_non_interference"] = False
+        grill["grill_sha256"] = canonical_contract_grill_sha256(grill)
+        result = validate_contract_grill(grill, self.content, self.traceability)
+        codes = {error["code"] for error in result["errors"]}
+        self.assertIn("e2e_campaign_human_interaction_evidence_missing", codes)
+        self.assertIn("e2e_campaign_shortcut_overclaim", codes)
+
     def test_wrong_answer_source_and_authorization_fail(self) -> None:
         grill = make_grill(self.content, self.traceability, unattended=True)
         grill["questions"][0]["answer_source"] = "user"

@@ -308,6 +308,8 @@ Checkpoints: immediate correction before wrapper detour.
 - Complete without verified Work Document/Delivery.
 - Start periodic review from a nudge.
 - Headless/inventory-only UI where live-window E2E applies.
+- URL/deep-link/direct-route shortcuts claiming full-project user steps without
+  ordered visible-control interaction evidence.
 
 ## Boundaries
 
@@ -335,6 +337,7 @@ Load via `granoflow_bundled_skill_reference` using **Branch Router Must load** a
   `granoflow_daily_review_skill`, `granoflow-review-card-draft`,
   `granoflow_delegated_authorization_skill`
 - Cross-cutting: `external-skill-routing`, `requirement-intake-and-traceability`,
+  `test-route-traceability`,
   `execution-modes-and-acceptance-reports`, `parallel-task-execution`,
   `acceptance-outcome-contract`, `integration-test-special-requirements`,
   `knowledge-distillation-workflow`, `review-card-authoring`,

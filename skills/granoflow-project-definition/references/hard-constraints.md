@@ -47,10 +47,10 @@ and review.
 
 ## Design Spec / Shell
 
-| Mode        | Design Spec                                                                             | Shell                                                                                   |
-| ----------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Interactive | Mainstream-first ≥5→**promote 3**, then triad via **true-random** `draw_visual_lots.py` | Mainstream-first ≥5→**promote 3**, then triad chrome cards; all **embed selected Spec** |
-| Unattended  | Mainstream-first→one `spec_match` via true-random draw                                  | Mainstream-first→one `shell_match` embedding Spec (no palette seed)                     |
+| Mode        | Design Spec                                                                                                                                                             | Shell                                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Interactive | Product-fit envelope → six-dimension HTML chooser → three complete HTML Specs by default, or justified two; one true-random master seed with reproducible derived seeds | Mainstream-first ≥5→**promote 3**, then triad chrome cards; all **embed selected Spec** |
+| Unattended  | Mainstream-first→one `spec_match` via true-random draw                                                                                                                  | Mainstream-first→one `shell_match` embedding Spec (no palette seed)                     |
 
 - **Candidate protocol (hard):** load
   `granoflow-agent-workflow/prototype-expression-brainstorm` before Spec/Shell
@@ -61,13 +61,18 @@ and review.
   `prototype_option_promote_count_mismatch`. Candidate analysis does **not**
   replace lot draw. Lint with
   `lint_prototype_expression_brainstorm.py`.
-- Design Spec artifact = **Style Guide / Design Tokens board** (Colors,
+- Complete Design Spec candidate = **Style Guide / Design Tokens board** (Colors,
   Typescale, Spacing, Grid/Breakpoints, Component states, Shadows&Radius)—**not**
-  a full journey-screen gallery. Wrong shape → `design_spec_wrong_artifact_type`.
+  a full journey-screen gallery. One controlled product-component composition
+  is required. Wrong shape → `design_spec_wrong_artifact_type`.
 - App Shell artifact = **product-near chrome + primary surface** that already
   **loads selected Spec tokens** and aims for final-product effect under
   contract fidelity—**not** grey wireframes. Fail closed
   `shell_spec_tokens_missing` / `shell_wireframe_only`.
+- Shell renders only the orientations required by `platform_support_matrix`.
+  Every required portrait and landscape layout includes both a top bar and a
+  bottom navigation bar. The selected variants become
+  `app_shell.top_bar` / `app_shell.bottom_navigation` Widget Catalog entries.
 - **Init HTML budget (hard):** Design Baseline package at Project Definition =
   Spec Style Guide + App Shell only. Do **not** ship every
   `screen_coverage` page as init HTML. Per-screen hi-fi → task/milestone
@@ -81,9 +86,10 @@ and review.
   `ai_live_inference`. Lower Must not override higher without user confirm.
   Fail closed `screen_detail_registration_missing` /
   `screen_ui_details_source_invalid`.
-- **Lot draw (hard):** Spec seeds and Shell chrome ids Must come from
+- **Lot draw (hard):** the Spec master seed and Shell chrome ids Must come from
   `scripts/draw_visual_lots.py` (**true random** only—no classroom salt /
-  `--from`). Hand-invented `seed-*` / chrome ids → `design_spec_seed_not_drawn`.
+  `--from`). Design Spec candidate seeds derive from the recorded master seed.
+  Hand-invented `seed-*` / chrome ids → `design_spec_seed_not_drawn`.
 - **Request-more / 换新批:** re-draw with `--dedupe ledger` against the
   machine-local visual-lot ledger (`~/.granoflow/visual-lot-ledger.json` by
   default)—stronger than same-run-only. Skipping dedupe →

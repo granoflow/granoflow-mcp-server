@@ -260,9 +260,20 @@ Hard rules:
    reusable widgets into the same project `widgets` slot.
    Record a Widget Promotion Ledger and require catalog-after/App-readback SHA
    equality before Analysis closes.
+   4a. Load `ui-component-effect-matrix`. Build and lint
+   `ui_component_effect_matrix_v1` from user selection, Baseline, current
+   Catalog SHA, platform matrix, stack capability profile, and approved
+   dependencies. Resolve behavior-changing incompatibilities with the user
+   before HTML. Set `component_effect_matrix_ok: true` only after the linter
+   passes.
+   4b. Load `task-ui-skill-pipeline`. Discover host capabilities, select only
+   relevant safe providers, and lint `task_ui_skill_pipeline_v1`. A provider
+   brand may fall back; a missing authoring/audit capability may not. Set
+   `task_ui_skill_pipeline_ok: true` only after observable artifact evidence.
 5. Apply **Task Prototype Craft Gate And Option Set** from
    `granoflow-project-definition/project-artifact-workflows`:
    - Craft Gate (intent / **Baseline fit** / **confirmed chrome lock** / craft /
+     **skill pipeline** / **component-effect matrix** /
      **user-visible copy boundary** / confirm surface) must pass before
      `visualConfirmed=true`
      else `task_prototype_craft_incomplete` /
@@ -314,6 +325,9 @@ Hard rules:
    interactive waits on the Contrast Gallery (option batch); unattended shows
    the single-link notice, continues, and includes every link in the
    run-closing Prototype Link Digest.
+   The Gallery shows selected Widgets, platform adaptations, effects,
+   fallbacks, and visible differences, but never internal provider/skill
+   bookkeeping.
 7. Obtain visual confirmation for the **chosen** package hash (interactive
    user accept, or unattended auto-accept only when explicitly unattended),
    upload to the task `ui_prototype` slot with `visualConfirmed=true`, and
@@ -659,8 +673,10 @@ and completed Widget Promotion Ledger stay in Analysis.
 Set `analysis_status=awaiting_confirmation` before final review. Only explicit
 user authorization sets `analysis_status=confirmed`; a qualifying current
 unattended instruction is explicit authorization, while Agent self-confirmation
-is not. Then run the mandatory MCP-bundled Analysis Grill. It checks source discipline, decision-changing
-unknowns, Outcome/Evidence/Scope/Risk/Decision consistency, concrete examples,
+is not. Then run the mandatory MCP-bundled Analysis Grill. It checks source
+discipline, atomic source-fact and ordered journey-step preservation,
+necessary implications versus product expansion, decision-changing unknowns,
+Outcome/Evidence/Scope/Risk/Decision consistency, concrete examples,
 false-success paths, whether Planning recommendation is justified, Analysis
 Deliverables completeness (including confirmed `ui_prototype` when UI applies),
 and—when the task depends on DB / JSON / constants or capability-critical
@@ -742,6 +758,12 @@ revise-design conclusions block `passed`). Record only whether a credential or
 secret is available and authorized; never copy its value into Task Work, logs,
 or chat. Missing or unverified readiness sets `blocked` or
 `revisions_required`, not `passed`.
+
+For software tasks, validate `granoflow_test_route_traceability_v1` against the
+current Project Work before `passed`. Every journey step's declared
+`required_test_layers` needs a route. Service paths cannot close human paths,
+test doubles cannot close OS capability, and feature/journey E2E evidence cannot
+claim full-project delivery. Use `lint_test_route_traceability.py`.
 
 Analysis-confirmed content remains intact. A material Planning change replaces
 the current unfinished `execution` slot and repeats Planning confirmation; it

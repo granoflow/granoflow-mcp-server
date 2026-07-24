@@ -66,7 +66,7 @@ campaign_id: <stable id>
 project_id: <id>
 campaign_drive: agent_auto
 execution_mode: interactive | unattended # project mode; does not weaken auto-drive
-interaction_fidelity: service_path # only valid value for this skill
+interaction_fidelity: service_path # component_path|hybrid when background UI is in scope
 integration_test_device_recommendation: local_machine
 integration_test_device: local_machine | simulator_or_emulator | physical_device | remote_farm | other
 suite_entrypoints: [] # commands or paths before orchestration
@@ -104,7 +104,7 @@ Presence fails closed as `integration_campaign_vision_not_allowed`.
 ```text
 open milestone(round N)
   -> orchestrate suite (inventory + Suite Plan; may rewrite tests)
-  -> run orchestrated suite under agent_auto + service_path
+  -> run orchestrated suite under agent_auto + declared integration fidelity
   -> on failure: triage failure_class; choose fix_schedule (inline | deferred_batch | hybrid)
   -> fix product_code and/or test_harness (and orchestration) as classified
   -> re-test affected cases; do not claim green without evidence
@@ -139,14 +139,17 @@ Read `integration-suite-orchestration.md`. Before the first run of a round:
    `acceptance_outcome_layer_overclaim` /
    `acceptance_outcome_user_path_overclaim`.
 4. Label `requires` / `produces` / `mutates` / `destroys` and entry style
-   (`service_path` default; rare `ui_probe` needs justification).
+   (`service_path` default; `ui_probe` needs justification and is required for
+   a linked visible background activity).
 5. Emit a Campaign Suite Plan with `test_layer: integration` and a
    dependency-respecting `order`.
 6. **May rewrite or merge test code** so the plan can run without per-case
    seed/rebuild thrash—while still honoring seed_corpus paths. Record test
    edits in the eventual change report.
 
-Default `interaction_fidelity: service_path`. UI `human_path` →
+Default `interaction_fidelity: service_path`; use `component_path` or `hybrid`
+for a real component/state owner around controlled external events. UI
+`human_path` →
 `integration_campaign_fidelity_wrong_layer`.
 
 ## Failure Triage

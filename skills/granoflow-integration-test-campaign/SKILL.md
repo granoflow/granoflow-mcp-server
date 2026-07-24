@@ -111,13 +111,19 @@ after every successful step. Lint structured artifacts with
    - Do not reuse a feature milestone as the round container.
    - Board is display-only during the IT loop (no acknowledgement question).
 3. **Orchestrate the suite** — Inventory IT; load and apply Project Work
-   special requirements; load
+   special requirements and, when present, journey-step traceability; load
    `granoflow-agent-workflow/acceptance-outcome-contract` and emit an
    Acceptance Outcome matrix (`domain_io` closeable only;
    `user_path_claim: service_layers_only`); label requires/produces; emit
    Suite Plan with `test_layer: integration`, dependency-respecting order, and
-   `special_requirements_*` fields; **rewrite/merge tests as needed** for
-   minimal shared-session `service_path` without violating seed corpora.
+   `special_requirements_*` fields. For traced Project Work, set
+   `test_route_traceability_loaded: true` and map each case through
+   `journey_step_ids`; service-path cases may cover only steps that declare
+   `integration` in `required_test_layers`. A visible background activity uses
+   `component_path` (or a hybrid suite), mounts the real component/state owner,
+   injects two controlled external events, acts on a protected control between
+   them, and proves exit. **Rewrite/merge tests as needed** for minimal
+   shared-session paths without violating seed corpora.
    Running before orchestration fails closed as
    `integration_campaign_suite_unorchestrated`.
    Success criteria:
@@ -196,7 +202,12 @@ after every successful step. Lint structured artifacts with
 
 ## Success Criteria
 
-- Suite orchestrated (`test_layer: integration` + `service_path`) before run.
+- Suite orchestrated (`test_layer: integration` +
+  `service_path|component_path|hybrid`) before run.
+- Traced Project Work integration steps map to Suite Plan cases; service paths
+  never claim UI-only or E2E-only journey steps.
+- DAG/shared-session minimization removes repeated setup and teardown only; it
+  never converts service/component evidence into a user-path claim.
 - Acceptance Outcome matrix present; IT closes only `domain_io` with real side
   effects; deferred platform/UI/session AOs force `green_with_residuals`.
 - Agent auto-drive for the IT loop in both interaction modes.
@@ -218,7 +229,14 @@ after every successful step. Lint structured artifacts with
 - `integration_campaign_seed_corpus_substituted`
 - `integration_campaign_order_dependency_violation`
 - `integration_campaign_fidelity_wrong_layer`
+- `integration_campaign_test_routes_unloaded`
+- `integration_campaign_step_traceability_missing`
+- `integration_campaign_human_path_overclaim`
 - `integration_campaign_ui_probe_unjustified`
+- `component_path_required`
+- `post_update_interaction_test_missing`
+- `background_event_evidence_missing`
+- `activity_exit_not_proven`
 - `integration_campaign_vision_not_allowed`
 - `integration_campaign_drive_not_agent_auto`
 - `integration_campaign_failure_class_required`

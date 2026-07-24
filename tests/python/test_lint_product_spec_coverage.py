@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = (
     ROOT / "skills" / "granoflow-project-definition" / "scripts" / "lint_product_spec_coverage.py"
 )
+GRANOREADER_FIXTURE = ROOT / "tests/python/fixtures/granoreader_requirement_integrity.json"
 
 
 def load_module():
@@ -26,6 +27,151 @@ def load_module():
 
 
 MOD = load_module()
+
+
+def attach_integrity_contracts(coverage: dict) -> None:
+    ledger = {
+        "schema": "granoflow_source_fact_ledger_v1",
+        "facts": [
+            {
+                "fact_id": "F-001",
+                "statement": "User confirms an import and sees its result.",
+                "source_ref": "product://import",
+                "source_locator": "docs/product.md#import",
+                "subject": "user",
+                "action": "imports",
+                "object": "books",
+                "conditions": [],
+                "expected_outcomes": ["import result is visible"],
+                "failure_outcomes": ["failed items are visible"],
+                "platforms": ["macos"],
+                "source_kind": "user_stated",
+                "disposition": "adopted",
+            }
+        ],
+    }
+    ledger_digest = MOD.canonical_source_fact_ledger_sha256(ledger)
+    ledger["review"] = {
+        "author_id": "project-author",
+        "reviewer_id": "product-reviewer",
+        "status": "passed",
+        "evidence_refs": ["review://source-facts"],
+        "reviewed_ledger_sha256": ledger_digest,
+    }
+    ledger["ledger_sha256"] = ledger_digest
+    ledger["status"] = "passed"
+    coverage["source_fact_ledger"] = ledger
+
+    traceability = {
+        "schema": "granoflow_journey_step_traceability_v1",
+        "source_fact_ledger_sha256": ledger_digest,
+        "journeys": [
+            {
+                "journey_id": "J-001",
+                "steps": [
+                    {
+                        "step_id": "J-001-entry",
+                        "sequence": 1,
+                        "step_type": "entry",
+                        "entry_ref": "shelf import entry",
+                        "actor": "user",
+                        "action": "opens import",
+                        "interaction_surface": "in_app_ui",
+                        "platform_boundary": "none",
+                        "expected_observation": "import confirmation is visible",
+                        "source_fact_ids": ["F-001"],
+                        "required_test_layers": ["e2e"],
+                    },
+                    {
+                        "step_id": "J-001-action",
+                        "sequence": 2,
+                        "step_type": "action",
+                        "control": "confirm import button",
+                        "actor": "user",
+                        "action": "confirms import",
+                        "interaction_surface": "in_app_ui",
+                        "platform_boundary": "none",
+                        "expected_observation": "import starts",
+                        "source_fact_ids": ["F-001"],
+                        "required_test_layers": ["integration", "e2e"],
+                    },
+                    {
+                        "step_id": "J-001-outcome",
+                        "sequence": 3,
+                        "step_type": "outcome",
+                        "actor": "system",
+                        "action": "shows imported count",
+                        "interaction_surface": "in_app_ui",
+                        "platform_boundary": "none",
+                        "expected_observation": "result shows imported count",
+                        "source_fact_ids": ["F-001"],
+                        "required_test_layers": ["e2e"],
+                    },
+                    {
+                        "step_id": "J-001-failure",
+                        "sequence": 4,
+                        "step_type": "failure",
+                        "actor": "system",
+                        "action": "shows failed items",
+                        "interaction_surface": "in_app_ui",
+                        "platform_boundary": "none",
+                        "expected_observation": "failure report is visible",
+                        "source_fact_ids": ["F-001"],
+                        "required_test_layers": ["e2e"],
+                    },
+                ],
+            }
+        ],
+        "semantic_replay": {
+            "status": "passed",
+            "missing_fact_ids": [],
+            "distorted_fact_ids": [],
+            "evidence_refs": ["review://semantic-replay"],
+        },
+    }
+    trace_digest = MOD.canonical_journey_step_traceability_sha256(traceability)
+    traceability["review"] = {
+        "author_id": "project-author",
+        "reviewer_id": "semantic-reviewer",
+        "status": "passed",
+        "evidence_refs": ["review://journey-steps"],
+        "reviewed_traceability_sha256": trace_digest,
+    }
+    traceability["traceability_sha256"] = trace_digest
+    traceability["status"] = "passed"
+    coverage["journey_step_traceability"] = traceability
+
+    background_control = {
+        "schema": "granoflow_background_activity_control_v1",
+        "source_fact_ledger_sha256": ledger_digest,
+        "journey_step_traceability_sha256": trace_digest,
+        "fact_classifications": [{"fact_id": "F-001", "role": "none"}],
+        "activities": [],
+        "semantic_replay": {
+            "status": "passed",
+            "missing_fact_ids": [],
+            "unknown_fact_ids": [],
+            "evidence_refs": ["review://background-activity-classification"],
+        },
+    }
+    control_digest = MOD.canonical_background_activity_control_sha256(background_control)
+    background_control["review"] = {
+        "author_id": "project-author",
+        "reviewer_id": "interaction-reviewer",
+        "status": "passed",
+        "evidence_refs": ["review://background-activity-control"],
+        "reviewed_control_sha256": control_digest,
+    }
+    background_control["control_sha256"] = control_digest
+    background_control["status"] = "passed"
+    coverage["background_activity_control"] = background_control
+
+
+def _refresh_background_control(coverage: dict) -> None:
+    control = coverage["background_activity_control"]
+    digest = MOD.canonical_background_activity_control_sha256(control)
+    control["control_sha256"] = digest
+    control["review"]["reviewed_control_sha256"] = digest
 
 
 def ready_coverage(**overrides):
@@ -102,9 +248,17 @@ def ready_coverage(**overrides):
             "every_adopted_acceptance_has_stress_path": True,
             "no_unattended_decision_changing_thin_gap_auto_accept": True,
             "screen_detail_registration_adopted": True,
+            "source_fact_ledger_reviewed": True,
+            "every_adopted_fact_mapped": True,
+            "every_adopted_journey_step_traced": True,
+            "semantic_replay_passed": True,
+            "every_adopted_fact_background_activity_classified": True,
+            "background_activity_control_reviewed": True,
         },
     }
     base.update(overrides)
+    if base.get("status") == "ready":
+        attach_integrity_contracts(base)
     return base
 
 
@@ -228,6 +382,67 @@ class LintProductSpecCoverageTests(unittest.TestCase):
         del cov["journey_coverage"][0]["decomposition"]
         cov["journey_coverage"][0]["stress_paths"] = []
         cov["status"] = "incomplete"
+        cov.pop("source_fact_ledger")
+        cov.pop("journey_step_traceability")
+        cov.pop("background_activity_control")
+        result = MOD.lint_coverage(cov)
+        self.assertTrue(result["ok"], result)
+
+    def test_ready_requires_background_activity_classification(self) -> None:
+        cov = ready_coverage()
+        del cov["background_activity_control"]
+        result = MOD.lint_coverage(cov)
+        self.assertFalse(result["ok"])
+        self.assertIn(
+            "background_activity_fact_unclassified",
+            {hit["code"] for hit in result["hits"]},
+        )
+
+    def test_background_activity_requires_write_scope_exit_and_test_layers(self) -> None:
+        cov = ready_coverage()
+        control = cov["background_activity_control"]
+        control["fact_classifications"][0]["role"] = "background_update"
+        control["activities"] = [
+            {
+                "activity_id": "BA-sync",
+                "continues_after_user_action": True,
+                "user_visible": True,
+                "source_fact_ids": ["F-001"],
+                "journey_step_ids": ["J-001-action"],
+                "background_events": ["progress update"],
+                "allowed_background_changes": ["progress"],
+                "must_not_change": ["active panel"],
+                "controls_that_must_keep_working": ["global navigation"],
+                "ways_to_exit": [],
+                "required_test_layers": ["e2e"],
+            }
+        ]
+        _refresh_background_control(cov)
+        result = MOD.lint_coverage(cov)
+        codes = {hit["code"] for hit in result["hits"]}
+        self.assertIn("background_activity_exit_missing", codes)
+        self.assertIn("component_path_required", codes)
+
+    def test_background_activity_with_disjoint_scope_and_exit_passes(self) -> None:
+        cov = ready_coverage()
+        control = cov["background_activity_control"]
+        control["fact_classifications"][0]["role"] = "background_update"
+        control["activities"] = [
+            {
+                "activity_id": "BA-sync",
+                "continues_after_user_action": True,
+                "user_visible": True,
+                "source_fact_ids": ["F-001"],
+                "journey_step_ids": ["J-001-action"],
+                "background_events": ["progress update"],
+                "allowed_background_changes": ["progress"],
+                "must_not_change": ["active panel", "input focus"],
+                "controls_that_must_keep_working": ["global navigation"],
+                "ways_to_exit": ["cancel"],
+                "required_test_layers": ["integration", "e2e"],
+            }
+        ]
+        _refresh_background_control(cov)
         result = MOD.lint_coverage(cov)
         self.assertTrue(result["ok"], result)
 
@@ -312,6 +527,69 @@ class LintProductSpecCoverageTests(unittest.TestCase):
         )
         result = MOD.lint_coverage(cov)
         self.assertTrue(result["ok"], result)
+
+    def test_ready_legacy_document_reports_migration_gaps(self) -> None:
+        cov = ready_coverage()
+        del cov["source_fact_ledger"]
+        del cov["journey_step_traceability"]
+        result = MOD.lint_coverage(cov)
+        codes = {hit["code"] for hit in result["hits"]}
+        self.assertIn("source_fact_ledger_missing", codes)
+        self.assertIn("journey_step_traceability_missing", codes)
+
+    def test_granoreader_generic_import_loses_plus_button_and_picker(self) -> None:
+        cov = ready_coverage()
+        fixture = json.loads(GRANOREADER_FIXTURE.read_text(encoding="utf-8"))
+        fact = cov["source_fact_ledger"]["facts"][0]
+        fact.update(fixture["source_fact"])
+        ledger = cov["source_fact_ledger"]
+        digest = MOD.canonical_source_fact_ledger_sha256(ledger)
+        ledger["ledger_sha256"] = digest
+        ledger["review"]["reviewed_ledger_sha256"] = digest
+        trace = cov["journey_step_traceability"]
+        trace["source_fact_ledger_sha256"] = digest
+        for step in trace["journeys"][0]["steps"]:
+            step["source_fact_ids"] = []
+        trace_digest = MOD.canonical_journey_step_traceability_sha256(trace)
+        trace["traceability_sha256"] = trace_digest
+        trace["review"]["reviewed_traceability_sha256"] = trace_digest
+
+        result = MOD.lint_coverage(cov)
+        codes = {hit["code"] for hit in result["hits"]}
+        for expected in fixture["expected_fail_codes"][:2]:
+            self.assertIn(expected, codes)
+
+    def test_product_expansion_requires_confirmation(self) -> None:
+        cov = ready_coverage()
+        fact = cov["source_fact_ledger"]["facts"][0]
+        fact["source_kind"] = "product_expansion"
+        ledger = cov["source_fact_ledger"]
+        digest = MOD.canonical_source_fact_ledger_sha256(ledger)
+        ledger["ledger_sha256"] = digest
+        ledger["review"]["reviewed_ledger_sha256"] = digest
+        result = MOD.lint_coverage(cov)
+        self.assertIn(
+            "product_expansion_requires_user",
+            {hit["code"] for hit in result["hits"]},
+        )
+
+    def test_os_picker_requires_unit_and_e2e_plus_failure_step(self) -> None:
+        cov = ready_coverage()
+        steps = cov["journey_step_traceability"]["journeys"][0]["steps"]
+        picker = steps[1]
+        picker["interaction_surface"] = "os_chrome"
+        picker["platform_boundary"] = "plugin"
+        picker["required_test_layers"] = ["e2e"]
+        picker["failure_modes"] = ["missing_plugin", "cancel"]
+        trace = cov["journey_step_traceability"]
+        digest = MOD.canonical_journey_step_traceability_sha256(trace)
+        trace["traceability_sha256"] = digest
+        trace["review"]["reviewed_traceability_sha256"] = digest
+        result = MOD.lint_coverage(cov)
+        self.assertIn(
+            "platform_boundary_test_missing",
+            {hit["code"] for hit in result["hits"]},
+        )
 
 
 if __name__ == "__main__":

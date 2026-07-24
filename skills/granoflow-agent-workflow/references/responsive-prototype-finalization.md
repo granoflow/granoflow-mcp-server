@@ -65,10 +65,11 @@ JSON after removing only `matrix_sha256`.
 
 ## Project Definition Selection
 
-Design Spec remains an interactive triad of Style Guide boards. App Shell
-selection presents the triad in the primary layout family. After selection,
-expand only the winner to every required layout family and obtain final
-Baseline confirmation for the complete package.
+Design Spec follows the product-fitted two-round HTML contract: a
+six-dimension chooser, then three complete candidates by default or justified
+two. App Shell selection presents its triad in the primary layout family.
+After selection, expand only the winner to every required layout family and
+obtain final Baseline confirmation for the complete package.
 
 Single-layout selection may also be final confirmation only when the selected
 artifact is already complete and its hash does not change. Multi-layout
@@ -86,6 +87,11 @@ hashes and `materially_distinct_status: passed`.
 Task prototypes inherit the exact platform matrix, Baseline SHA, current
 Widget Catalog SHA, and confirmed sibling chrome vocabulary. They never draw a
 new visual seed or reopen the Design System.
+
+Before option HTML, they also require a passed
+`ui_component_effect_matrix_v1` and `task_ui_skill_pipeline_v1`. Their canonical
+SHA values become Prototype Bundle inputs; any matrix, provider-output,
+Baseline, Catalog, or platform input change invalidates the old Bundle.
 
 They also inherit the passed Logic Draft and accepted Screen Content Contract
 digests. User feedback that changes content or behavior must update those
@@ -120,6 +126,7 @@ records:
 - exact viewport, HTML, screenshot, and SHA references;
 - functional, data, state, navigation, and widget cross-layout checks;
 - Widget Promotion Ledger reference;
+- Task UI skill pipeline and component/effect matrix digests;
 - final acceptance state and canonical bundle digest.
 
 The canonical bundle digest excludes `bundle_sha256`,
@@ -203,6 +210,17 @@ This task-level loop does not replace Milestone/E2E Phase B.
 - `widget_catalog_stale`
 - `widget_promotion_readback_mismatch`
 - `widget_locked_contract_baseline_reopen_required`
+- `task_ui_skill_pipeline_required`
+- `task_ui_skill_capability_missing`
+- `task_ui_skill_invocation_unsafe`
+- `task_ui_skill_evidence_missing`
+- `ui_component_effect_matrix_required`
+- `ui_component_effect_incompatible`
+- `ui_component_effect_user_decision_required`
+- `ui_component_effect_high_cost_unjustified`
+- `ui_component_effect_fallback_missing`
+- `ui_component_effect_ranking_invalid`
+- `ui_widget_reuse_bypassed`
 - `rendered_fidelity_required`
 - `rendered_fidelity_layout_missing`
 - `rendered_fidelity_numeric_failed`

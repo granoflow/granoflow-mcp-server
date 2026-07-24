@@ -108,6 +108,7 @@ JARGON_MARKERS = (
 
 VALID_FIDELITY = frozenset({"human_path", "hybrid", "route_fast"})
 WRONG_LAYER_FIDELITY = frozenset({"service_path"})
+VALID_BACKGROUND_EVENT_EVIDENCE = frozenset({"state_change", "event_probe", "host_probe"})
 VALID_ENTRY = frozenset({"human_path", "route_shortcut"})
 VALID_CAPABILITY = frozenset({"available", "unavailable"})
 VALID_VISION_RESULT = frozenset({"not_run", "passed", "failed", "skipped"})
@@ -152,6 +153,33 @@ VALID_AO_LAYERS = frozenset(
 VALID_AO_EVIDENCE = frozenset({"real_side_effect", "host_probe", "test_double"})
 VALID_AO_STATUS = frozenset({"closed", "open", "deferred_e2e", "residual"})
 VALID_USER_PATH_CLAIM = frozenset({"service_layers_only", "full_user_path"})
+VALID_E2E_SCOPES = frozenset({"feature_e2e", "journey_e2e", "full_project_e2e"})
+HUMAN_PATH_EXECUTION_SCHEMA = "granoflow_human_path_execution_v1"
+VALID_NAVIGATION_METHODS = frozenset(
+    {
+        "app_launch",
+        "visible_control",
+        "os_control",
+        "direct_url",
+        "deep_link",
+        "direct_route",
+        "state_injection",
+    }
+)
+FULL_PROJECT_NAVIGATION_METHODS = frozenset({"app_launch", "visible_control", "os_control"})
+VALID_HUMAN_ACTIONS = frozenset(
+    {
+        "launch",
+        "tap",
+        "click",
+        "type",
+        "gesture",
+        "select",
+        "system_interaction",
+        "observe",
+    }
+)
+VALID_HUMAN_EVIDENCE = frozenset({"driver_event", "host_event"})
 
 
 def _err(code: str, detail: str) -> dict[str, str]:
@@ -1030,6 +1058,286 @@ def _adopted_journey_ids_from_project_work(project_work: Any) -> list[str]:
     return out
 
 
+def _project_journey_steps(project_work: Any) -> dict[str, dict[str, dict[str, Any]]]:
+    if not isinstance(project_work, dict):
+        return {}
+    coverage = project_work.get("product_spec_coverage")
+    if not isinstance(coverage, dict):
+        return {}
+    traceability = coverage.get("journey_step_traceability")
+    if (
+        not isinstance(traceability, dict)
+        or traceability.get("schema") != "granoflow_journey_step_traceability_v1"
+    ):
+        return {}
+    out: dict[str, dict[str, dict[str, Any]]] = {}
+    for journey in traceability.get("journeys", []):
+        if not isinstance(journey, dict) or not _nonempty_str(journey.get("journey_id")):
+            continue
+        journey_id = str(journey["journey_id"])
+        steps: dict[str, dict[str, Any]] = {}
+        for step in journey.get("steps", []):
+            if isinstance(step, dict) and _nonempty_str(step.get("step_id")):
+                steps[str(step["step_id"])] = step
+        out[journey_id] = steps
+    return out
+
+
+def _project_background_activities(project_work: Any) -> dict[str, dict[str, Any]]:
+    if not isinstance(project_work, dict):
+        return {}
+    coverage = project_work.get("product_spec_coverage")
+    if not isinstance(coverage, dict):
+        return {}
+    contract = coverage.get("background_activity_control")
+    if (
+        not isinstance(contract, dict)
+        or contract.get("schema") != "granoflow_background_activity_control_v1"
+    ):
+        return {}
+    return {
+        str(row["activity_id"]): row
+        for row in contract.get("activities", [])
+        if isinstance(row, dict) and _nonempty_str(row.get("activity_id"))
+    }
+
+
+def _lint_post_update_sequence(
+    sequence: Any,
+    *,
+    prefix: str,
+    activity: dict[str, Any],
+) -> list[dict[str, str]]:
+    if not isinstance(sequence, dict):
+        return [
+            _err(
+                "post_update_interaction_test_missing",
+                f"{prefix}: from the visible entry, observe two real background "
+                "updates with a user action between them and prove it remains effective",
+            )
+        ]
+    errors: list[dict[str, str]] = []
+    for field in ("first_background_event", "second_background_event"):
+        event = sequence.get(field)
+        if (
+            not isinstance(event, dict)
+            or not _nonempty_str(event.get("signal"))
+            or event.get("evidence_kind") not in VALID_BACKGROUND_EVENT_EVIDENCE
+            or not _nonempty_str(event.get("evidence_ref"))
+        ):
+            errors.append(
+                _err(
+                    "background_event_evidence_missing",
+                    f"{prefix}.{field}: identify an observed state/event signal and "
+                    "evidence; elapsed time or a fixed wait is not evidence",
+                )
+            )
+    action = sequence.get("protected_user_action")
+    controls = set(_as_str_list(activity.get("controls_that_must_keep_working")) or [])
+    if (
+        not isinstance(action, dict)
+        or action.get("control_ref") not in controls
+        or not _nonempty_str(action.get("evidence_ref"))
+        or not _nonempty_str(sequence.get("user_action_preserved"))
+    ):
+        errors.append(
+            _err(
+                "post_update_interaction_test_missing",
+                f"{prefix}: after the first update operate a declared protected "
+                "control, then prove the second update did not undo that action",
+            )
+        )
+    exit_actions = set(_as_str_list(activity.get("ways_to_exit")) or [])
+    if (
+        not _nonempty_str(sequence.get("exit_action"))
+        or sequence.get("exit_action") not in exit_actions
+        or not _nonempty_str(sequence.get("activity_ended"))
+    ):
+        errors.append(
+            _err(
+                "activity_exit_not_proven",
+                f"{prefix}: use a declared exit action and provide observable proof "
+                "that the activity no longer runs or updates the interface",
+            )
+        )
+    if not _nonempty_str(sequence.get("activity_started")):
+        errors.append(
+            _err(
+                "post_update_interaction_test_missing",
+                f"{prefix}.activity_started must identify visible start evidence",
+            )
+        )
+    return errors
+
+
+def _lint_human_path_execution(
+    value: Any,
+    *,
+    project_steps_by_journey: dict[str, dict[str, dict[str, Any]]],
+    cases_by_id: dict[str, dict[str, Any]],
+) -> list[dict[str, str]]:
+    if not isinstance(value, dict) or value.get("schema") != HUMAN_PATH_EXECUTION_SCHEMA:
+        return [
+            _err(
+                "e2e_campaign_human_interaction_evidence_missing",
+                "full_project_e2e requires granoflow_human_path_execution_v1",
+            )
+        ]
+    rows = value.get("rows")
+    if not isinstance(rows, list) or not rows:
+        return [
+            _err(
+                "e2e_campaign_human_interaction_evidence_missing",
+                "human_path_execution.rows must contain the ordered real user actions",
+            )
+        ]
+
+    errors: list[dict[str, str]] = []
+    observed_steps: dict[str, list[tuple[int, int]]] = {}
+    sequences: list[int] = []
+    for index, row in enumerate(rows):
+        prefix = f"human_path_execution.rows[{index}]"
+        if not isinstance(row, dict):
+            errors.append(
+                _err(
+                    "e2e_campaign_human_interaction_evidence_missing",
+                    f"{prefix} must be an object",
+                )
+            )
+            continue
+        sequence = row.get("sequence")
+        journey_id = row.get("journey_id")
+        step_id = row.get("step_id")
+        case_id = row.get("case_id")
+        action = row.get("action")
+        method = row.get("navigation_method")
+        case = cases_by_id.get(str(case_id)) if _nonempty_str(case_id) else None
+        step = (
+            project_steps_by_journey.get(str(journey_id), {}).get(str(step_id))
+            if _nonempty_str(journey_id) and _nonempty_str(step_id)
+            else None
+        )
+        if not isinstance(sequence, int) or sequence < 1:
+            errors.append(
+                _err(
+                    "e2e_campaign_interaction_order_mismatch",
+                    f"{prefix}.sequence must be a positive integer",
+                )
+            )
+        else:
+            sequences.append(sequence)
+        if case is None or case.get("entry_style") != "human_path":
+            errors.append(
+                _err(
+                    "e2e_campaign_human_interaction_evidence_missing",
+                    f"{prefix}: case_id must identify a human_path case",
+                )
+            )
+        elif step_id not in (_as_str_list(case.get("journey_step_ids")) or []):
+            errors.append(
+                _err(
+                    "e2e_campaign_human_interaction_evidence_missing",
+                    f"{prefix}: case does not claim step_id {step_id}",
+                )
+            )
+        if step is None:
+            errors.append(
+                _err(
+                    "e2e_campaign_human_interaction_evidence_missing",
+                    f"{prefix}: journey_id/step_id is not in Project Work",
+                )
+            )
+            continue
+        if method not in FULL_PROJECT_NAVIGATION_METHODS:
+            errors.append(
+                _err(
+                    "e2e_campaign_forbidden_navigation_method",
+                    f"{prefix}: full-project user steps may use only app_launch, "
+                    "visible_control, or os_control",
+                )
+            )
+        surface = step.get("interaction_surface")
+        boundary = step.get("platform_boundary")
+        if (surface in {"os_chrome", "mixed"} or boundary in {"plugin", "os"}) and (
+            method != "os_control" or row.get("evidence_kind") != "host_event"
+        ):
+            errors.append(
+                _err(
+                    "e2e_campaign_forbidden_navigation_method",
+                    f"{prefix}: OS-bound step requires os_control with host_event evidence",
+                )
+            )
+        if (
+            action not in VALID_HUMAN_ACTIONS
+            or not _nonempty_str(row.get("before_observation"))
+            or not _nonempty_str(row.get("after_observation"))
+            or row.get("evidence_kind") not in VALID_HUMAN_EVIDENCE
+            or not _nonempty_str(row.get("evidence_ref"))
+            or (action not in {"launch", "observe"} and not _nonempty_str(row.get("control_ref")))
+        ):
+            errors.append(
+                _err(
+                    "e2e_campaign_human_interaction_evidence_missing",
+                    f"{prefix}: name the visible control/action, before and after "
+                    "observations, and driver/host event evidence; screenshots alone "
+                    "do not prove the interaction",
+                )
+            )
+        project_sequence = step.get("sequence")
+        if not isinstance(project_sequence, int) or project_sequence < 1:
+            errors.append(
+                _err(
+                    "e2e_campaign_interaction_order_mismatch",
+                    f"{prefix}: Project Work step sequence must be a positive integer",
+                )
+            )
+        elif isinstance(sequence, int):
+            observed_steps.setdefault(str(journey_id), []).append((sequence, project_sequence))
+
+    if sequences != list(range(1, len(rows) + 1)):
+        errors.append(
+            _err(
+                "e2e_campaign_interaction_order_mismatch",
+                "human_path_execution rows must be in continuous execution order",
+            )
+        )
+
+    required_steps: set[str] = set()
+    observed_step_ids = {
+        str(row.get("step_id"))
+        for row in rows
+        if isinstance(row, dict) and _nonempty_str(row.get("step_id"))
+    }
+    for journey_id, steps in project_steps_by_journey.items():
+        expected = sorted(
+            (step["sequence"], step_id)
+            for step_id, step in steps.items()
+            if "e2e" in (_as_str_list(step.get("required_test_layers")) or [])
+            and isinstance(step.get("sequence"), int)
+            and step["sequence"] >= 1
+        )
+        required_steps.update(step_id for _, step_id in expected)
+        actual_project_sequences = [
+            project_sequence for _, project_sequence in sorted(observed_steps.get(journey_id, []))
+        ]
+        if actual_project_sequences != [sequence for sequence, _ in expected]:
+            errors.append(
+                _err(
+                    "e2e_campaign_interaction_order_mismatch",
+                    f"{journey_id}: interaction rows must preserve Project Work step order",
+                )
+            )
+    missing = sorted(required_steps - observed_step_ids)
+    if missing:
+        errors.append(
+            _err(
+                "e2e_campaign_human_interaction_evidence_missing",
+                "full-project E2E steps missing real interaction evidence: " + ", ".join(missing),
+            )
+        )
+    return errors
+
+
 def lint_coverage_matrix(
     data: Any,
     *,
@@ -1088,6 +1396,7 @@ def lint_coverage_matrix(
     matrix_ids: set[str] = set()
     enforce_hosts = require_host_ids or hosts_by_id is not None
     host_catalog = hosts_by_id or {}
+    project_steps_by_journey = _project_journey_steps(project_work)
 
     for index, row in enumerate(journeys):
         prefix = f"required_journeys[{index}]"
@@ -1112,6 +1421,53 @@ def lint_coverage_matrix(
             continue
         if status == "covered":
             errors.extend(lint_interaction_surface_row(row, prefix=prefix))
+            if project_steps_by_journey:
+                journey_steps = project_steps_by_journey.get(jid, {})
+                step_ids = _as_str_list(row.get("step_ids"))
+                if not step_ids:
+                    errors.append(
+                        _err(
+                            "e2e_campaign_step_traceability_missing",
+                            f"{prefix}: covered requires step_ids for traced Project Work",
+                        )
+                    )
+                    step_ids = []
+                unknown_steps = sorted(set(step_ids) - set(journey_steps))
+                if unknown_steps:
+                    errors.append(
+                        _err(
+                            "e2e_campaign_step_traceability_missing",
+                            f"{prefix}: unknown journey step ids: {unknown_steps}",
+                        )
+                    )
+                required_e2e_steps = {
+                    step_id
+                    for step_id, step in journey_steps.items()
+                    if "e2e" in (_as_str_list(step.get("required_test_layers")) or [])
+                }
+                missing_steps = sorted(required_e2e_steps - set(step_ids))
+                if missing_steps:
+                    errors.append(
+                        _err(
+                            "e2e_campaign_step_traceability_missing",
+                            f"{prefix}: e2e-required steps missing: {missing_steps}",
+                        )
+                    )
+                has_os_step = any(
+                    step_id in journey_steps
+                    and (
+                        journey_steps[step_id].get("interaction_surface") in {"os_chrome", "mixed"}
+                        or journey_steps[step_id].get("platform_boundary") in {"plugin", "os"}
+                    )
+                    for step_id in step_ids
+                )
+                if has_os_step and row.get("interaction_surface") not in {"os_chrome", "mixed"}:
+                    errors.append(
+                        _err(
+                            "e2e_campaign_os_chrome_unverified",
+                            f"{prefix}: OS-bound step requires os_chrome|mixed interaction_surface",
+                        )
+                    )
             case_list = row.get("case_ids")
             cp_list = row.get("checkpoint_ids")
             if not isinstance(case_list, list) or not case_list:
@@ -1336,6 +1692,15 @@ def lint_suite_plan(
                 f"interaction_fidelity must be one of {sorted(VALID_FIDELITY)}",
             )
         )
+    scope = data.get("e2e_scope")
+    if scope == "full_project_e2e" and fidelity != "human_path":
+        errors.append(
+            _err(
+                "e2e_campaign_full_project_requires_human_path",
+                "full_project_e2e requires interaction_fidelity=human_path; "
+                "hybrid and route_fast cannot close the complete user path",
+            )
+        )
 
     cases = data.get("cases")
     if not isinstance(cases, list) or not cases:
@@ -1343,6 +1708,55 @@ def lint_suite_plan(
         cases = []
 
     case_by_id: dict[str, dict[str, Any]] = {}
+    project_steps_by_journey = _project_journey_steps(project_work)
+    project_steps = {
+        step_id: (journey_id, step)
+        for journey_id, steps in project_steps_by_journey.items()
+        for step_id, step in steps.items()
+    }
+    claimed_step_ids: set[str] = set()
+    case_activity_ids: dict[str, list[str]] = {}
+    shortcut_bypassed_steps: dict[str, list[str]] = {}
+    background_activities = _project_background_activities(project_work)
+    required_background_activities = {
+        activity_id
+        for activity_id, activity in background_activities.items()
+        if "e2e" in (_as_str_list(activity.get("required_test_layers")) or [])
+    }
+    claimed_background_activities: set[str] = set()
+    if project_steps:
+        if data.get("test_route_traceability_loaded") is not True:
+            errors.append(
+                _err(
+                    "e2e_campaign_test_routes_unloaded",
+                    "test_route_traceability_loaded must be true for traced Project Work",
+                )
+            )
+        if scope not in VALID_E2E_SCOPES:
+            errors.append(
+                _err(
+                    "e2e_campaign_scope_invalid",
+                    f"e2e_scope must be one of {sorted(VALID_E2E_SCOPES)}",
+                )
+            )
+        elif scope != "full_project_e2e" and data.get("user_path_claim") == "full_user_path":
+            errors.append(
+                _err(
+                    "e2e_campaign_scope_overclaim",
+                    f"e2e_scope={scope} cannot claim full_user_path",
+                )
+            )
+    if (
+        required_background_activities
+        and data.get("background_activity_control_loaded") is not True
+    ):
+        errors.append(
+            _err(
+                "post_update_interaction_test_missing",
+                "background_activity_control_loaded must be true before running "
+                "visible background-activity journeys",
+            )
+        )
     for index, case in enumerate(cases):
         prefix = f"cases[{index}]"
         if not isinstance(case, dict):
@@ -1365,17 +1779,167 @@ def lint_suite_plan(
                     f"{prefix}.entry_style must be human_path|route_shortcut",
                 )
             )
-        elif (
-            entry == "route_shortcut"
-            and fidelity == "human_path"
-            and not _nonempty_str(case.get("route_shortcut_justified"))
-        ):
+        elif entry == "route_shortcut" and not _nonempty_str(case.get("route_shortcut_justified")):
             errors.append(
                 _err(
                     "e2e_campaign_route_shortcut_unjustified",
                     f"{prefix}: route_shortcut needs route_shortcut_justified",
                 )
             )
+        bypassed_step_ids = _as_str_list(case.get("bypassed_step_ids"))
+        if entry == "route_shortcut":
+            if bypassed_step_ids is None:
+                errors.append(
+                    _err(
+                        "e2e_campaign_shortcut_overclaim",
+                        f"{prefix}.bypassed_step_ids must be a string list",
+                    )
+                )
+                bypassed_step_ids = []
+            if scope in {"feature_e2e", "journey_e2e"} and not bypassed_step_ids:
+                errors.append(
+                    _err(
+                        "e2e_campaign_shortcut_overclaim",
+                        f"{prefix}: feature/journey shortcut must name bypassed_step_ids",
+                    )
+                )
+            if scope == "full_project_e2e" and bypassed_step_ids:
+                errors.append(
+                    _err(
+                        "e2e_campaign_visible_step_bypassed",
+                        f"{prefix}: full-project support shortcut cannot bypass "
+                        "a Project Work journey step",
+                    )
+                )
+            unknown_bypassed_steps = sorted(set(bypassed_step_ids) - set(project_steps))
+            if unknown_bypassed_steps:
+                errors.append(
+                    _err(
+                        "e2e_campaign_shortcut_overclaim",
+                        f"{prefix}: bypassed_step_ids must name Project Work steps; "
+                        f"unknown ids: {unknown_bypassed_steps}",
+                    )
+                )
+            shortcut_bypassed_steps[case_id] = bypassed_step_ids
+        elif bypassed_step_ids:
+            errors.append(
+                _err(
+                    "e2e_campaign_shortcut_overclaim",
+                    f"{prefix}: human_path case cannot declare bypassed_step_ids",
+                )
+            )
+        activity_ids = _as_str_list(case.get("background_activity_ids"))
+        if required_background_activities and activity_ids is None:
+            errors.append(
+                _err(
+                    "post_update_interaction_test_missing",
+                    f"{prefix}.background_activity_ids must be a string list",
+                )
+            )
+            activity_ids = []
+        case_activity_ids[case_id] = activity_ids or []
+        for activity_id in activity_ids or []:
+            activity = background_activities.get(activity_id)
+            if activity is None:
+                errors.append(
+                    _err(
+                        "post_update_interaction_test_missing",
+                        f"{prefix}: unknown background activity {activity_id}",
+                    )
+                )
+                continue
+            claimed_background_activities.add(activity_id)
+            if entry != "human_path":
+                errors.append(
+                    _err(
+                        "post_update_interaction_test_missing",
+                        f"{prefix}: background activity {activity_id} must start from "
+                        "its real visible user entry, not a route shortcut",
+                    )
+                )
+            errors.extend(
+                _lint_post_update_sequence(
+                    case.get("post_update_sequence"),
+                    prefix=prefix,
+                    activity=activity,
+                )
+            )
+        if project_steps:
+            step_ids = _as_str_list(case.get("journey_step_ids"))
+            if step_ids is None:
+                errors.append(
+                    _err(
+                        "e2e_campaign_step_traceability_missing",
+                        f"{prefix}.journey_step_ids must be a string list",
+                    )
+                )
+                step_ids = []
+            elif not step_ids and not _nonempty_str(case.get("supporting_case_reason")):
+                errors.append(
+                    _err(
+                        "e2e_campaign_step_traceability_missing",
+                        f"{prefix}: empty journey_step_ids requires supporting_case_reason",
+                    )
+                )
+            if set(step_ids) & set(bypassed_step_ids or []):
+                errors.append(
+                    _err(
+                        "e2e_campaign_visible_step_bypassed",
+                        f"{prefix}: a journey step cannot be both covered and bypassed",
+                    )
+                )
+            if scope == "full_project_e2e" and entry == "route_shortcut":
+                if step_ids or activity_ids:
+                    errors.append(
+                        _err(
+                            "e2e_campaign_route_shortcut_claims_user_path",
+                            f"{prefix}: full-project route_shortcut is support-only and "
+                            "cannot claim journey steps or background activities",
+                        )
+                    )
+                if not _nonempty_str(case.get("supporting_case_reason")):
+                    errors.append(
+                        _err(
+                            "e2e_campaign_shortcut_overclaim",
+                            f"{prefix}: support-only shortcut requires supporting_case_reason",
+                        )
+                    )
+            claimed_step_ids.update(step_ids)
+            for step_id in step_ids:
+                record = project_steps.get(step_id)
+                if record is None:
+                    errors.append(
+                        _err(
+                            "e2e_campaign_step_traceability_missing",
+                            f"{prefix}: unknown journey step {step_id}",
+                        )
+                    )
+                    continue
+                _, step = record
+                required_layers = _as_str_list(step.get("required_test_layers")) or []
+                if "e2e" not in required_layers:
+                    errors.append(
+                        _err(
+                            "e2e_campaign_step_traceability_missing",
+                            f"{prefix}: {step_id} is not declared for e2e",
+                        )
+                    )
+                if step.get("step_type") == "entry" and entry != "human_path":
+                    errors.append(
+                        _err(
+                            "e2e_campaign_visible_entry_missing",
+                            f"{prefix}: entry step {step_id} requires entry_style=human_path",
+                        )
+                    )
+                if not _nonempty_str(case.get("entry_ref")) or not _nonempty_str(
+                    case.get("observable_result")
+                ):
+                    errors.append(
+                        _err(
+                            "e2e_campaign_visible_entry_missing",
+                            f"{prefix}: entry_ref and observable_result required",
+                        )
+                    )
 
     order = data.get("order")
     if not isinstance(order, list) or not all(isinstance(x, str) for x in order):
@@ -1440,6 +2004,38 @@ def lint_suite_plan(
             )
         )
 
+    if project_steps:
+        required_e2e_steps = {
+            step_id
+            for step_id, (_, step) in project_steps.items()
+            if "e2e" in (_as_str_list(step.get("required_test_layers")) or [])
+        }
+        declared_shortcuts = {
+            step_id
+            for bypassed_step_ids in shortcut_bypassed_steps.values()
+            for step_id in bypassed_step_ids
+        }
+        if scope == "full_project_e2e":
+            declared_shortcuts = set()
+        missing_steps = sorted(required_e2e_steps - claimed_step_ids - declared_shortcuts)
+        if missing_steps:
+            errors.append(
+                _err(
+                    "e2e_campaign_step_traceability_missing",
+                    "e2e-required journey steps missing from cases: " + ", ".join(missing_steps),
+                )
+            )
+
+    missing_activities = sorted(required_background_activities - claimed_background_activities)
+    if missing_activities:
+        errors.append(
+            _err(
+                "post_update_interaction_test_missing",
+                "e2e-required background activities missing from visible user-path "
+                "cases: " + ", ".join(missing_activities),
+            )
+        )
+
     ship_bar = data.get("ship_bar")
     if ship_bar is not None and ship_bar not in VALID_SHIP_BARS:
         errors.append(
@@ -1488,6 +2084,76 @@ def lint_suite_plan(
         )
         if not nested["ok"]:
             errors.extend(nested["errors"])
+        if project_steps and data.get("e2e_scope") == "full_project_e2e":
+            rows = matrix.get("required_journeys") if isinstance(matrix, dict) else None
+            if not isinstance(rows, list) or any(
+                not isinstance(row, dict) or row.get("status") != "covered" for row in rows
+            ):
+                errors.append(
+                    _err(
+                        "e2e_campaign_scope_overclaim",
+                        "full_project_e2e requires every required journey to be covered",
+                    )
+                )
+        matrix_rows = matrix.get("required_journeys") if isinstance(matrix, dict) else []
+        covered_case_ids: set[str] = set()
+        covered_step_ids: set[str] = set()
+        if isinstance(matrix_rows, list):
+            for row in matrix_rows:
+                if not isinstance(row, dict) or row.get("status") != "covered":
+                    continue
+                covered_case_ids.update(_as_str_list(row.get("case_ids")) or [])
+                covered_step_ids.update(_as_str_list(row.get("step_ids")) or [])
+        acceptance_case_ids: set[str] = set()
+        acceptance_rows = data.get("acceptance_outcomes")
+        if isinstance(acceptance_rows, list):
+            for row in acceptance_rows:
+                if isinstance(row, dict):
+                    acceptance_case_ids.update(_as_str_list(row.get("case_ids")) or [])
+
+        if scope == "full_project_e2e":
+            claimed_user_case_ids = (
+                covered_case_ids
+                | acceptance_case_ids
+                | {case_id for case_id, activity_ids in case_activity_ids.items() if activity_ids}
+            )
+            for case_id in sorted(claimed_user_case_ids):
+                case = case_by_id.get(case_id)
+                if case is not None and case.get("entry_style") != "human_path":
+                    errors.append(
+                        _err(
+                            "e2e_campaign_route_shortcut_claims_user_path",
+                            f"{case_id}: coverage, acceptance, checkpoint-bearing journey, "
+                            "or background activity requires a human_path case",
+                        )
+                    )
+        for case_id, bypassed_steps in shortcut_bypassed_steps.items():
+            if scope == "full_project_e2e" and (
+                case_id in covered_case_ids or case_id in acceptance_case_ids
+            ):
+                errors.append(
+                    _err(
+                        "e2e_campaign_route_shortcut_claims_user_path",
+                        f"{case_id}: route_shortcut cannot close coverage or acceptance",
+                    )
+                )
+            overlap = sorted(set(bypassed_steps) & covered_step_ids)
+            if overlap:
+                errors.append(
+                    _err(
+                        "e2e_campaign_visible_step_bypassed",
+                        f"{case_id}: bypassed steps cannot be marked covered: {overlap}",
+                    )
+                )
+
+    if scope == "full_project_e2e" and project_steps_by_journey:
+        errors.extend(
+            _lint_human_path_execution(
+                data.get("human_path_execution"),
+                project_steps_by_journey=project_steps_by_journey,
+                cases_by_id=case_by_id,
+            )
+        )
 
     ok = not errors
     return {

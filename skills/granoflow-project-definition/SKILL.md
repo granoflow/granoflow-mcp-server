@@ -104,6 +104,10 @@ high-risk feasibility.
 8. Read [product-spec-flow-decomposition.md](references/product-spec-flow-decomposition.md)
    during Step 1 product-spec coverage (operation flowchart → serial gates vs
    parallel ops → page-count conclusion + stress paths; not risk labels).
+   Read [requirement-integrity-contract.md](references/requirement-integrity-contract.md)
+   in the same pass. Preserve atomic source facts, visible entry/control/action,
+   platform boundaries, and observable outcomes; run independent semantic
+   replay before `status: ready`.
 9. Apply Mode Gate: default `executionMode: interactive` unless the user
    **explicitly** declares unattended. Read
    `granoflow-agent-workflow/unattended-interaction-contract` only when
@@ -168,8 +172,12 @@ Actions:
 2. Requirement intake + **Product Spec Completeness Hard Gate**
    (`product_spec_coverage`; mandatory operation-flow / serial-gate page-count
    conclusion + stress paths + **screen detail registration** /
-   `ui_details` when sources state them; no confirm while status is not
-   `ready`).
+   `ui_details` when sources state them + source-fact ledger and journey-step
+   traceability + classification of every fact under
+   `granoflow_background_activity_control_v1`; no confirm while status is not
+   `ready`). Necessary
+   implications/domain baselines may be adopted with provenance; product
+   expansion requires user confirmation.
 3. Fill Project Work from the canonical template; preserve unknowns; no fake
    completeness. Initialization blockers must not stay `deferred_unknown`.
    When product docs name durable IT fixture/corpus rules, fill
@@ -195,8 +203,15 @@ Actions:
    `visual_baseline.applicability` to `required` or `not_applicable` with
    basis (CLI/library/no UI chrome). Unresolved →
    `visual_baseline_applicability_unresolved`.
-9. Use `grill-me` for remaining decision-changing gaps (interactive wait;
-   unattended explicit-only auto-adopt).
+9. Run the Project Work Contract Grill before `status: ready`, covering
+   semantic preservation, journey executability, necessary implications,
+   domain baselines, test-route fidelity, platform boundaries, and these direct
+   background-control questions: what keeps running, what it may change, what
+   it must never change, how the user exits, and whether a user action survives
+   the next update. Use
+   `grill-me` for remaining decision-changing gaps (interactive wait;
+   unattended explicit-only auto-adopt). Ordinary necessary implications do
+   not become user questions; product expansion does.
 10. **AI self-check** Project Work + companions (`init_ai_self_check`); record
     `passed` or fail closed `init_ai_self_check_failed`. Do **not** present
     raw YAML as the user acceptance page.
@@ -212,6 +227,8 @@ Actions:
 Success criteria:
 
 - `product_spec_coverage.status` is `ready`.
+- Source-fact and journey-step digests are current; independent semantic replay
+  reports no missing or distorted adopted facts.
 - `stack_capability_profile` locked; capability libraries or explicit none.
 - `directory_structure.roots` non-empty; modules valid.
 - `init_ai_self_check.status: passed`; Engineering Pack `status: accepted`
@@ -237,10 +254,12 @@ and source refs. Product documents win; otherwise recommend values from
 authoritative platform evidence. Interactive mode waits, while explicitly
 unattended mode records `unattended_auto_adopted`.
 
-When `required`: Design Spec round first (Mode split in
-[project-artifact-workflows.md](references/project-artifact-workflows.md)), then
-tokens for the chosen Spec. **User selects** Spec options (interactive triad
-Preview Gate).
+When `required`: Design Spec first (Mode split in
+[project-artifact-workflows.md](references/project-artifact-workflows.md) and
+[design-spec-two-round-selection.md](references/design-spec-two-round-selection.md)),
+then tokens for the chosen Spec. Interactive mode uses two polished HTML review
+rounds: a six-dimension direction chooser followed by two or three complete
+Spec candidates.
 
 Actions:
 
@@ -250,33 +269,34 @@ Actions:
 3. Invoke `skill_routing` Skills with `phase: baseline` (include `impeccable`
    when available to **compose** palettes from drawn seeds).
 4. Design Spec Mode split:
-   - **Interactive:** triad from `draw_visual_lots.py --kind spec --count 3
---record` (**true random**; never hand-invent seeds; no classroom salt)—
-     `spec_match` + two `ai_challenger_*`. Each option is a **Style Guide /
-     Design Tokens board** (Colors, Typescale, Spacing, Grid/Breakpoints,
-     Component states, Shadows&Radius)—**not** a gallery of every product
-     screen. Preview Gate: pick / **换新批** (`--dedupe ledger`) / **在某套上改**.
-     User-facing copy uses plain-language labels only—**no seed ids or internal
-     option enums**. Fail closed `design_spec_triad_required` /
-     `design_spec_seed_collision` / `design_spec_seed_not_drawn` /
-     `design_spec_wrong_artifact_type` / `design_spec_user_facing_jargon` /
-     `visual_lot_dedupe_required` / `visual_lot_exhausted`.
-   - **Unattended (explicit only):** one `spec_match` via true-random draw.
-     Link notice + ledger (plain-language title).
+   - **Interactive:** derive a product-fit envelope; author one polished HTML
+     chooser with fixed dimensions `1`–`6` and values `a`–`d`; wait for a
+     partial or complete selection code; then author a polished HTML comparison
+     with three complete Specs, or two only with
+     `insufficient_distinct_third`. Draw and record a true-random master seed,
+     derive stable candidate seeds, and validate
+     `granoflow_design_spec_selection_v2` with
+     `lint_design_spec_selection.py`. Preview Gate still supports pick /
+     **换新批** / **在某套上改**. Never show seeds or internal ids.
+   - **Unattended (explicit only):** product-fit analysis, auto-completed
+     direction code, one random-seed complete Spec, link notice, and ledger.
 5. Emit Design Tokens → `token_sources`; record `【增强实现】` /
    `implementation_notes` where schematic; record `design_spec_selection`.
 
 Success criteria:
 
-- `design_spec_selection` recorded (option id if any, seed, provenance).
+- `design_spec_selection` v2 recorded with fit evidence, both round artifacts,
+  selection code, seed provenance, and selected option.
 - `token_sources` set for the chosen Spec.
-- Spec previews are Style Guides; journey-screen HTML deferred to task/milestone
+- Spec previews are complete Style Guides with one controlled component
+  composition; journey-screen HTML remains deferred to task/milestone
   `ui_prototype` (init Baseline = Spec + Shell only).
 
 Checkpoints:
 
 - Preview Gate links shown before pick/confirm.
-- Spec lots drawn via script; triad seeds distinct in interactive mode.
+- Master lot drawn via script; derived candidate seeds and artifact SHAs are
+  reproducible and distinct in interactive mode.
 
 ### Step 3 — App Shell
 
@@ -289,6 +309,13 @@ selection, expand only the winner to every required layout family, then show
 and confirm the complete product-near Baseline package. Finally extract
 widgets.
 **User selects** Shell options (interactive triad Preview Gate).
+
+Load
+[shell-orientation-widget-contract.md](references/shell-orientation-widget-contract.md).
+Derive portrait/landscape requirements from `platform_support_matrix`. Every
+required orientation Must render both a top bar and a bottom navigation bar.
+After selection, promote those roles and all required variants to
+`widgets.yaml` and the browseable Design System HTML catalog.
 
 Actions:
 
@@ -314,6 +341,8 @@ Actions:
    `design_spec_selection`, `shell_selection`.
 6. After Baseline visual confirmation: first mandatory `widgets.yaml` extract
    (`derived_from` = that confirmed Baseline prototype).
+7. Validate `granoflow_shell_selection_v2` with
+   `lint_shell_selection.py`; unselected Shell widgets never enter the catalog.
 
 Success criteria (when `visual_baseline.applicability: required`):
 
@@ -336,6 +365,14 @@ Initialization is Done only when all hold:
 - Project Work complete, current, App-confirmed;
 - `product_spec_coverage.status` is `ready`—else
   `product_spec_coverage_incomplete`;
+- `granoflow_source_fact_ledger_v1` and
+  `granoflow_journey_step_traceability_v1` are present, digest-current, and
+  independently reviewed; every fact is also classified under
+  `granoflow_background_activity_control_v1`, with allowed state changes,
+  protected state, working controls, and exits declared for each activity—else
+  the nested `source_fact_*`, `journey_step_*`, `background_activity_*`,
+  `background_state_*`, `component_path_required`, or
+  `semantic_replay_failed` code applies;
 - `init_ai_self_check.status: passed`; Engineering Acceptance Pack accepted
   (or valid unattended adopt)—else `engineering_acceptance_pack_*` /
   `init_ai_self_check_failed`;
@@ -492,7 +529,8 @@ tools and their own authorization gates.
   Acceptance Pack (not a YAML dump).
 - Thin product docs still require `product_spec_coverage.status: ready` before
   Done, including an operation-flow / serial-gate page-count conclusion per
-  adopted journey and stress paths per acceptance. Interactive fills by
+  adopted journey, stress paths per acceptance, atomic source-fact coverage,
+  and ordered journey-step traceability. Interactive fills by
   ask→recommend→wait; unattended may auto-adopt **non-decision-changing** fills
   only and must still run the operation-flow pass — decision-changing thin-doc
   gaps fail closed `thin_product_doc_gap_requires_user`

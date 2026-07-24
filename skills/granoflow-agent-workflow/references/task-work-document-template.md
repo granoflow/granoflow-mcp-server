@@ -41,7 +41,7 @@ prototype_input_status: not_applicable | awaiting_reference | awaiting_visual_co
 
 # When required: include derivedFrom baseline prototype_id/version_id/package_sha256.
 
-prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":"<id>","prototype_id":"<id>","version_id":"<id>","version_ordinal":1,"package_attachment_id":"<id>","package_sha256":"<64 lowercase hex>","visually_confirmed":true,"derived_from_prototype_id":"<baseline id|null>","derived_from_version_id":"<id|null>","derived_from_package_sha256":"<64 hex|null>","intended_use":"<purpose>"}]
+prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":"<id>","prototype_id":"<id>","version_id":"<id>","version_ordinal":1,"package_attachment_id":"<id>","package_sha256":"<64 lowercase hex>","visually_confirmed":true,"derived_from_prototype_id":"<baseline id|null>","derived_from_version_id":"<id|null>","derived_from_package_sha256":"<64 hex|null>","skill_pipeline_sha256":"<64 hex|null>","component_effect_matrix_sha256":"<64 hex|null>","intended_use":"<purpose>"}]
 
 analysis_logic_draft:
 schema: granoflow_analysis_logic_draft_v1
@@ -101,12 +101,91 @@ reviewed_traceability_sha256: null
 status: pending | passed
 traceability_sha256: null
 
+test_route_traceability:
+schema: granoflow_test_route_traceability_v1
+source_fact_ledger_sha256: null
+journey_step_traceability_sha256: null
+background_activity_control_sha256: null
+rows:
+
+- route_id: TR-001
+  journey_id: null
+  step_ids: []
+  source_fact_ids: []
+  requirement_refs: []
+  acceptance_refs: []
+  test_layer: unit | integration | e2e
+  path_kind: service_path | component_path | human_path | os_capability
+  background_activity_id: null
+  test_path: null
+  assertions: []
+  evidence_refs: []
+  doubles_policy: allowed | forbidden | real_only | none
+  covered_failure_modes: []
+  entry_ref: null # required for e2e
+  observable_result: null # required for e2e
+  host_ids: [] # required for e2e; selected verification hosts only
+  e2e_scope: feature_e2e | journey_e2e | full_project_e2e
+  navigation_method: app_launch | visible_control | os_control | direct_url | deep_link | direct_route | state_injection
+  bypassed_step_ids: []
+  human_interactions: # one ordered row per covered E2E step
+  - step_id: null
+    navigation_method: app_launch | visible_control | os_control
+    control_ref: null # required except launch/observe
+    action: launch | tap | click | type | gesture | select | system_interaction | observe
+    before_observation: null
+    after_observation: null
+    evidence_kind: driver_event | host_event
+    evidence_ref: null # screenshot alone is insufficient
+    post_update_sequence: # required when background_activity_id is set
+    activity_started: null
+    first_background_event:
+    signal: null
+    evidence_kind: state_change | event_probe | host_probe
+    evidence_ref: null
+    protected_user_action:
+    control_ref: null
+    evidence_ref: null
+    second_background_event:
+    signal: null
+    evidence_kind: state_change | event_probe | host_probe
+    evidence_ref: null
+    user_action_preserved: null
+    exit_action: null
+    activity_ended: null
+    status: pending | covered
+    review:
+    author_id: null
+    reviewer_id: null
+    status: pending | passed
+    evidence_refs: []
+    reviewed_traceability_sha256: null
+    status: pending | passed
+    traceability_sha256: null
+
 contract_grill:
 schema: granoflow_contract_grill_v1
 content_contract_sha256: null
 traceability_sha256: null
 mode: interactive | unattended
 questions: []
+
+# Generated questions must answer, in plain language:
+
+# - What keeps running or automatically updating after the user's action?
+
+# - What state may each update change?
+
+# - Which page, panel, input, selection, focus, and navigation must it never change?
+
+# - How does the user exit, and what proves the activity really ended?
+
+# - Did a test act between two observed updates and prove the action was not undone?
+
+# - Where does the app start, and what visible control/action proves every journey step?
+
+# - Did any URL, deep link, direct route, or state injection bypass a step that is claimed covered?
+
 coverage_axes:
 requirements: false
 fields: false
@@ -115,6 +194,16 @@ states: false
 navigation: false
 permissions: false
 data_sources: false
+semantic_preservation: false
+journey_executability: false
+necessary_implications: false
+domain_baseline: false
+test_route_fidelity: false
+platform_boundaries: false
+background_activity_control: false
+post_update_user_control: false
+human_path_continuity: false
+shortcut_non_interference: false
 open_blockers: []
 authorization_effect: none
 status: pending | passed
@@ -125,6 +214,32 @@ matrix_sha256: null
 primary_layout_family: null
 required_layout_family_ids: []
 source_project_work_sha256: null
+
+task_ui_skill_pipeline:
+schema: task_ui_skill_pipeline_v1
+platform_ids: []
+stack_kinds: []
+advanced_motion_required: false
+input_shas:
+baseline: null
+widget_catalog: null
+platform_matrix: null
+component_effect_matrix: null
+capabilities: [] # fixed capability ids; each applicable row records selected_provider + evidence
+status: pending | passed
+
+ui_component_effect_matrix:
+schema: ui_component_effect_matrix_v1
+input_shas:
+user_selection: null
+baseline: null
+widget_catalog: null
+platform_matrix: null
+stack_capability: null
+approved_dependencies: null
+required_layouts: []
+candidates: []
+status: pending | passed
 
 # Interactive: mainstream-reference-first candidate pool (≥5; brainstorm
 
@@ -164,6 +279,8 @@ fidelity_ok: false
 real_domain_copy: false
 required_states_covered: false
 enhancement_notes_ok: false
+task_ui_skill_pipeline_ok: false
+component_effect_matrix_ok: false
 user_visible_copy_boundary_ok: false # must be true before visualConfirmed; see user-visible-copy-boundary.md
 expression_brainstorm_ok: false # must be true before dual visualConfirmed; lint_prototype_expression_brainstorm.py + prototype-expression-brainstorm.md
 baseline_fit_ok: false # must be true before visualConfirmed; see prototype-baseline-fit.md
@@ -177,6 +294,8 @@ screen_content_contract_sha256: null
 platform_matrix_sha256: null
 baseline_package_sha256: null
 widget_catalog_input_sha256: null
+task_ui_skill_pipeline_sha256: null
+ui_component_effect_matrix_sha256: null
 primary_layout_family: null
 option_count_decision: two
 option_count_reason_code: null
@@ -766,6 +885,13 @@ document will be uploaded but will still require either a separate execution
 command or a separately valid delegated `executionAuthorization` grant.
 Then run the Execution Readiness Grill, covering at least:
 
+- whether source facts and ordered journey steps remain intact;
+- whether necessary implications/domain baselines are evidence-backed and any
+  product expansion has user confirmation;
+- whether `granoflow_test_route_traceability_v1` binds every declared
+  `required_test_layers` row to the correct service, human, or OS path;
+- whether service paths/test doubles are prevented from closing human/OS
+  outcomes and E2E scope is labeled feature, journey, or full project;
 - whether the steps are sufficient to complete the stated Outcome;
 - whether prerequisites and upstream outputs are actually ready;
 - whether required authorization has been granted for the planned actions;

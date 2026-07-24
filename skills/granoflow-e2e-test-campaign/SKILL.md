@@ -18,7 +18,10 @@ fixes until green (or green_with_external_residuals).
 Start gate: `integration_gate` is `complete` (multi-milestone path after full
 unit + portfolio IT) **or** `waived_single_milestone` (exactly one feature
 milestone; Layer B already covered IT). **E2E coverage is always full-project**
-(never narrowed to "what we touched"). Detail: `e2e-test-campaign-contract`.
+(never narrowed to "what we touched"), so formal campaign artifacts set
+`e2e_scope: full_project_e2e`. Task-local or diagnostic evidence may be labeled
+`feature_e2e` or `journey_e2e`, but those labels never satisfy this campaign or
+`full_user_path`. Detail: `e2e-test-campaign-contract`.
 
 After campaign start, the E2E loop is **agent auto-drive** for both
 `interactive` and `unattended` project modes: do not ask ordinary phase
@@ -155,8 +158,9 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
    `product_spec_coverage.journey_coverage` adopted rows, acceptance /
    acceptance_coverage, `quality_gates.e2e_tests` / special requirements),
    Design Baseline screens when present, and user-stories sources. Emit
-   `granoflow_e2e_coverage_matrix_v1` with `host_ids` when a host matrix
-   applies. Missing load → `e2e_campaign_coverage_unloaded`. Incomplete without
+   `granoflow_e2e_coverage_matrix_v1` with `step_ids` from
+   `journey_step_traceability` and `host_ids` when a host matrix applies.
+   Missing load → `e2e_campaign_coverage_unloaded`. Incomplete without
    residual → `e2e_campaign_coverage_incomplete`.
    Success criteria:
    - `granoflow_e2e_coverage_matrix_v1` emitted with every adopted journey
@@ -181,6 +185,20 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
      (`e2e_campaign_headless_ui_forbidden`).
    - Inventory-only without authoring fails closed before green claim.
 5. **Orchestrate Suite Plan** — Minimal shared session; `test_layer: e2e`;
+   `e2e_scope: full_project_e2e`; `test_route_traceability_loaded: true` when
+   Project Work has traced steps; every case records `journey_step_ids`,
+   `entry_ref`, and `observable_result`;
+   `interaction_fidelity: human_path`; emit
+   `granoflow_human_path_execution_v1` in actual execution order so every
+   E2E-required step names the visible control/action, before/after observation,
+   and driver/host event evidence; URL/deep-link/direct-route/state-injection
+   shortcuts cannot close journey, acceptance, checkpoint, OS, or background
+   claims;
+   when Project Work declares a visible background activity, set
+   `background_activity_control_loaded: true`, link it from a real
+   `human_path` case, observe two background events with a protected user
+   action between them, prove the action remains effective, then exit and prove
+   the activity stopped;
    `display_mode: visible_window` (default); `coverage_loaded: true` + embedded
    `coverage_matrix`; load
    `granoflow-agent-workflow/acceptance-outcome-contract` and emit Acceptance
@@ -247,6 +265,8 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
 - Coverage matrix loaded from Project Work (+ listed sources); every adopted
   journey covered or explicitly deferred with residual (`deferred_manual` when
   automation is too hard, with a Closing Summary hand-test reminder).
+- Formal campaign scope is `full_project_e2e`; feature/journey evidence is
+  labeled distinctly and cannot claim full project or `full_user_path`.
 - Acceptance Outcome matrix present; closed rows use real side effects / host
   probes (not test doubles); `full_user_path` only when all in-scope AOs closed.
 - Missing journeys authored as UI human_path tests before green claim—or marked
@@ -269,6 +289,13 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
 - `e2e_campaign_suite_unorchestrated`
 - `e2e_campaign_fidelity_invalid`
 - `e2e_campaign_route_shortcut_unjustified`
+- `e2e_campaign_full_project_requires_human_path`
+- `e2e_campaign_route_shortcut_claims_user_path`
+- `e2e_campaign_visible_step_bypassed`
+- `e2e_campaign_human_interaction_evidence_missing`
+- `e2e_campaign_interaction_order_mismatch`
+- `e2e_campaign_forbidden_navigation_method`
+- `e2e_campaign_shortcut_overclaim`
 - `e2e_campaign_screenshot_capability_unknown`
 - `e2e_campaign_screenshot_checkpoint_missing`
 - `e2e_campaign_screenshot_path_not_temp`
@@ -277,6 +304,14 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
 - `e2e_campaign_window_required`
 - `e2e_campaign_interaction_surface_missing`
 - `e2e_campaign_os_chrome_unverified`
+- `e2e_campaign_test_routes_unloaded`
+- `e2e_campaign_step_traceability_missing`
+- `e2e_campaign_visible_entry_missing`
+- `post_update_interaction_test_missing`
+- `background_event_evidence_missing`
+- `activity_exit_not_proven`
+- `e2e_campaign_scope_invalid`
+- `e2e_campaign_scope_overclaim`
 - `e2e_campaign_evidence_not_shown`
 - `e2e_prototype_task_inventory_unloaded`
 - `e2e_prototype_task_review_missing`

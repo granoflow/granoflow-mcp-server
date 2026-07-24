@@ -137,11 +137,12 @@ Pure Web/CLI/library projects set `applicability: not_applicable` with basis.
 The design-system branch is the deliberate exception to field-by-field
 questioning for fonts/Skills menus—not to Mode Gate or random seeds.
 
-- **Interactive:** Design Spec **Triad** then Shell **Triad**. Spec triad:
-  three lots from `draw_visual_lots.py --kind spec` (**true random**; never
-  hand-invent seeds; no classroom salt)—one faithful match + two AI
-  challengers. Spec artifact = Style Guide / Tokens board (not full-page
-  journey galleries). Shell triad: lots from
+- **Interactive:** Design Spec uses the two-round HTML contract in
+  `design-spec-two-round-selection.md`, then Shell remains a **Triad**. First
+  analyze product fit, show the six-dimension HTML chooser, accept a
+  `1a2b...` code, then show three complete HTML Specs by default (two only with
+  a recorded insufficient-distinct-third reason). One true-random master seed
+  is recorded and candidate seeds are reproducibly derived. Shell lots come from
   `draw_visual_lots.py --kind shell` (chrome deck); all options **embed the
   selected Spec tokens** and present product-near chrome + primary surfaces
   (not grey wireframes); only chrome/structure may diverge—no independent

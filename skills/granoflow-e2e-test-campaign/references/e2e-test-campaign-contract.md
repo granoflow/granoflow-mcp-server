@@ -101,7 +101,8 @@ campaign_id: <stable id>
 project_id: <id>
 campaign_drive: agent_auto
 execution_mode: interactive | unattended
-interaction_fidelity: human_path # default; hybrid allowed
+interaction_fidelity: human_path # required for full_project_e2e
+e2e_scope: full_project_e2e # feature/journey evidence cannot close this campaign
 display_mode: visible_window # default when omitted; headless forbidden
 integration_gate: complete | incomplete | waived_single_milestone # incomplete blocks run
 screenshot_capability: available | unavailable
@@ -221,6 +222,13 @@ but before user gate, ask for final prototype acceptance instead
 - `e2e_campaign_suite_unorchestrated`
 - `e2e_campaign_fidelity_invalid`
 - `e2e_campaign_route_shortcut_unjustified`
+- `e2e_campaign_full_project_requires_human_path`
+- `e2e_campaign_route_shortcut_claims_user_path`
+- `e2e_campaign_visible_step_bypassed`
+- `e2e_campaign_human_interaction_evidence_missing`
+- `e2e_campaign_interaction_order_mismatch`
+- `e2e_campaign_forbidden_navigation_method`
+- `e2e_campaign_shortcut_overclaim`
 - `e2e_campaign_screenshot_capability_unknown`
 - `e2e_campaign_screenshot_checkpoint_missing`
 - `e2e_campaign_screenshot_path_not_temp`

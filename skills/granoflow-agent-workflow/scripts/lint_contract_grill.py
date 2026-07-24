@@ -19,6 +19,16 @@ REQUIRED_AXES = {
     "navigation",
     "permissions",
     "data_sources",
+    "semantic_preservation",
+    "journey_executability",
+    "necessary_implications",
+    "domain_baseline",
+    "test_route_fidelity",
+    "platform_boundaries",
+    "background_activity_control",
+    "post_update_user_control",
+    "human_path_continuity",
+    "shortcut_non_interference",
 }
 
 
@@ -136,6 +146,63 @@ def validate_contract_grill(
             )
     missing_axes = sorted(REQUIRED_AXES - observed_axes)
     checks = grill.get("coverage_axes")
+    if (
+        "background_activity_control" in missing_axes
+        or not isinstance(checks, dict)
+        or checks.get("background_activity_control") is not True
+    ):
+        errors.append(
+            {
+                "code": "background_state_write_scope_missing",
+                "detail": (
+                    "Name every function that keeps running or updates itself, "
+                    "what its background events may change, what they must not "
+                    "change, and how the user exits."
+                ),
+            }
+        )
+    if (
+        "post_update_user_control" in missing_axes
+        or not isinstance(checks, dict)
+        or checks.get("post_update_user_control") is not True
+    ):
+        errors.append(
+            {
+                "code": "post_update_interaction_test_missing",
+                "detail": (
+                    "Prove a user action remains effective between two observable "
+                    "background updates, then exit and prove the activity ended."
+                ),
+            }
+        )
+    if (
+        "human_path_continuity" in missing_axes
+        or not isinstance(checks, dict)
+        or checks.get("human_path_continuity") is not True
+    ):
+        errors.append(
+            {
+                "code": "e2e_campaign_human_interaction_evidence_missing",
+                "detail": (
+                    "State where the app starts and, for every user-visible journey "
+                    "step, name the visible control, user action, and observed result."
+                ),
+            }
+        )
+    if (
+        "shortcut_non_interference" in missing_axes
+        or not isinstance(checks, dict)
+        or checks.get("shortcut_non_interference") is not True
+    ):
+        errors.append(
+            {
+                "code": "e2e_campaign_shortcut_overclaim",
+                "detail": (
+                    "Declare every URL, deep link, direct route, or state injection, "
+                    "the steps it bypasses, and prove none is claimed as covered."
+                ),
+            }
+        )
     if (
         missing_axes
         or not isinstance(checks, dict)

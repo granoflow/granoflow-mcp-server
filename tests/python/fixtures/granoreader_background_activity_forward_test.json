@@ -1,0 +1,34 @@
+{
+  "schema": "granoflow_background_activity_forward_test_v1",
+  "source": {
+    "product": "GranoReader",
+    "facts": [
+      "听书启动后，播放会继续运行并自动更新阅读位置。",
+      "用户在播放期间仍需使用当前页面的面板、选择和导航。",
+      "已观察到一次位置更新后，用户刚打开的面板被关闭，停止入口也无法操作。"
+    ]
+  },
+  "expected_generalization": {
+    "activity_role": "background_update",
+    "allowed_background_changes": ["playback_progress", "reading_position"],
+    "must_not_change": ["active_panel", "input_focus", "user_selection", "navigation_state"],
+    "controls_that_must_keep_working": ["representative_shared_control", "exit_control"],
+    "required_test_layers": ["integration", "e2e"],
+    "test_sequence": [
+      "activity_started",
+      "first_background_event",
+      "protected_user_action",
+      "second_background_event",
+      "user_action_preserved",
+      "exit_action",
+      "activity_ended"
+    ]
+  },
+  "forbidden_rule_special_cases": ["tts", "audiobook", "bottom_navigation"],
+  "expected_fail_codes": [
+    "background_event_overwrites_user_state",
+    "component_path_required",
+    "post_update_interaction_test_missing",
+    "activity_exit_not_proven"
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "schema": "granoflow_human_path_forward_test_v1",
+  "journey_id": "J-import",
+  "case_id": "bookshelf_import",
+  "steps": [
+    {
+      "step_id": "J-import-entry",
+      "sequence": 1,
+      "step_type": "entry",
+      "interaction_surface": "in_app_ui",
+      "platform_boundary": "none"
+    },
+    {
+      "step_id": "J-import-plus",
+      "sequence": 2,
+      "step_type": "action",
+      "interaction_surface": "in_app_ui",
+      "platform_boundary": "none"
+    },
+    {
+      "step_id": "J-import-picker",
+      "sequence": 3,
+      "step_type": "system_response",
+      "interaction_surface": "os_chrome",
+      "platform_boundary": "plugin"
+    },
+    {
+      "step_id": "J-import-select",
+      "sequence": 4,
+      "step_type": "action",
+      "interaction_surface": "os_chrome",
+      "platform_boundary": "os"
+    },
+    {
+      "step_id": "J-import-preview",
+      "sequence": 5,
+      "step_type": "system_response",
+      "interaction_surface": "in_app_ui",
+      "platform_boundary": "none"
+    },
+    {
+      "step_id": "J-import-confirm",
+      "sequence": 6,
+      "step_type": "action",
+      "interaction_surface": "in_app_ui",
+      "platform_boundary": "none"
+    },
+    {
+      "step_id": "J-import-result",
+      "sequence": 7,
+      "step_type": "outcome",
+      "interaction_surface": "in_app_ui",
+      "platform_boundary": "none"
+    }
+  ],
+  "interactions": [
+    {
+      "sequence": 1,
+      "step_id": "J-import-entry",
+      "navigation_method": "app_launch",
+      "control_ref": null,
+      "action": "launch",
+      "before_observation": "application is not running",
+      "after_observation": "bookshelf is visible",
+      "evidence_kind": "driver_event",
+      "evidence_ref": "driver://bookshelf-launch"
+    },
+    {
+      "sequence": 2,
+      "step_id": "J-import-plus",
+      "navigation_method": "visible_control",
+      "control_ref": "bookshelf plus button",
+      "action": "click",
+      "before_observation": "bookshelf plus button is visible",
+      "after_observation": "system folder picker begins opening",
+      "evidence_kind": "driver_event",
+      "evidence_ref": "driver://bookshelf-plus-click"
+    },
+    {
+      "sequence": 3,
+      "step_id": "J-import-picker",
+      "navigation_method": "os_control",
+      "control_ref": "system folder picker",
+      "action": "observe",
+      "before_observation": "application requested a folder",
+      "after_observation": "native folder picker is visible",
+      "evidence_kind": "host_event",
+      "evidence_ref": "host://native-picker-visible"
+    },
+    {
+      "sequence": 4,
+      "step_id": "J-import-select",
+      "navigation_method": "os_control",
+      "control_ref": "folder row and choose button",
+      "action": "system_interaction",
+      "before_observation": "native folder picker is visible",
+      "after_observation": "selected folder is returned to the app",
+      "evidence_kind": "host_event",
+      "evidence_ref": "host://folder-selected"
+    },
+    {
+      "sequence": 5,
+      "step_id": "J-import-preview",
+      "navigation_method": "visible_control",
+      "control_ref": null,
+      "action": "observe",
+      "before_observation": "folder selection completed",
+      "after_observation": "import preview is visible",
+      "evidence_kind": "driver_event",
+      "evidence_ref": "driver://import-preview-visible"
+    },
+    {
+      "sequence": 6,
+      "step_id": "J-import-confirm",
+      "navigation_method": "visible_control",
+      "control_ref": "import button",
+      "action": "click",
+      "before_observation": "import preview is visible",
+      "after_observation": "import progress completes",
+      "evidence_kind": "driver_event",
+      "evidence_ref": "driver://import-confirm-click"
+    },
+    {
+      "sequence": 7,
+      "step_id": "J-import-result",
+      "navigation_method": "visible_control",
+      "control_ref": null,
+      "action": "observe",
+      "before_observation": "import completed",
+      "after_observation": "imported book is visible on the bookshelf",
+      "evidence_kind": "driver_event",
+      "evidence_ref": "driver://book-on-shelf"
+    }
+  ]
+}

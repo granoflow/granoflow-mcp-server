@@ -158,13 +158,14 @@ task `ui_prototype`):
    ledger entry with clickable links so the user can audit all prototypes in
    one place. Omitting the digest fails closed as
    `prototype_link_digest_required`.
-5. Interactive mode (default when unattended was not declared) remains: Design
-   Spec triad of Style Guide boards (lots from `draw_visual_lots.py`;
-   wrong shape → `design_spec_wrong_artifact_type`) then Shell triad of
+5. Interactive mode (default when unattended was not declared) uses the
+   product-fitted two-round Design Spec HTML contract: six-dimension chooser,
+   user selection code, then three complete Style Guide candidates by default
+   or justified two. After the selected Spec is locked, run the Shell triad of
    Spec-embedded product-near chrome variants (tokens missing / wireframe-only
    → `shell_spec_tokens_missing` / `shell_wireframe_only`), stop after each
-   triad batch for pick / **换新批** (`--dedupe ledger`) / **在某套上改**
-   (`prototype_preview_review_required` / `design_spec_triad_required` /
+   review batch for pick / **换新批** (`--dedupe ledger`) / **在某套上改**
+   (`prototype_preview_review_required` /
    `shell_triad_required` / `shell_spec_mismatch` / seed-collision /
    `design_spec_seed_not_drawn` / `visual_lot_dedupe_required` /
    `design_spec_user_facing_jargon` codes if skipped or rules violated).
