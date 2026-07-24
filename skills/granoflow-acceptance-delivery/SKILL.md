@@ -82,11 +82,13 @@ Success criteria:
 
 - Closeout has a labeled **单任务完成验收 (Layer A)** section.
 - IT authored, not executed, in the feature task.
+- Owned `feature_completeness_matrix` rows updated (`implemented` + `test_ref`).
 - Child `done` does **not** claim the milestone accepted.
 
 Checkpoints:
 
 - `acceptance_layers_fused` if merged with Layer B into one unlabeled blob.
+- `functional_residual_forbidden` if stubs / “后续版本” parked as residuals.
 - Preview→confirm→write for App mutations.
 
 Artifacts:
@@ -97,24 +99,29 @@ Artifacts:
 Rules:
 
 - No milestone claim from child `done` alone.
+- No functional residual (SoT in `task-and-milestone-acceptance-layers`).
 
 ### 2. Layer B — milestone IT (milestone delivery ends here)
 
 Accept the milestone with **user-invisible**, **milestone-scoped** integration
-tests only. No user-visible E2E for milestone accept.
+tests only **and** `feature_completeness_matrix.status: green`. No user-visible
+E2E for milestone accept.
 
 Actions:
 
-- Before implement: IT sufficiency + Suite Plan for all in-scope tasks.
+- Before implement: IT sufficiency + Suite Plan for all in-scope tasks; matrix
+  at least `ready`.
 - Orchestrate a minimal order (e.g. add → browse → list → delete).
 - Run under `campaign_drive: agent_auto` (reuse IT campaign mechanics) to green
-  or residual.
-- After green: Experience from issues → **任务回顾** (preview→confirm→write).
+  or **allowed** residual.
+- After suite green: matrix must be `green`; Experience from issues → **任务回顾**
+  (preview→confirm→write).
 - Load `milestone-integration-acceptance`.
 
 Success criteria:
 
-- Suite green or residual recorded.
+- Suite green or allowed residual recorded.
+- Matrix `green`.
 - Experience + 任务回顾 writeback done for covered tasks.
 - Milestone closeout does **not** require E2E.
 
@@ -123,6 +130,8 @@ Checkpoints:
 - `milestone_it_preflight_missing` / `milestone_it_coverage_insufficient` /
   `milestone_it_suite_unorchestrated` / `milestone_it_experience_unrecorded` /
   `milestone_it_task_review_unrecorded` when skipped.
+- `feature_completeness_matrix_missing` / `_incomplete` /
+  `functional_residual_forbidden` / `feature_completeness_overclaim_green`.
 - Co-present Layer A then Layer B as separate labeled sections.
 
 Artifacts:
@@ -167,6 +176,8 @@ Checkpoints:
 - `full_delivery_pre_e2e_skip_invalid` if `e2e_direct` with count ≠ 1.
 - `full_delivery_e2e_not_full_project` if E2E is narrowed to “what we touched”.
 - `full_delivery_milestone_e2e_required` if E2E is demanded to close a milestone.
+- `feature_completeness_matrix_*` / `functional_residual_forbidden` if any
+  feature milestone matrix is not green or functional stubs remain.
 
 Artifacts:
 
@@ -188,9 +199,12 @@ Rules:
 ## Hard Rules
 
 1. Layer A and Layer B stay two labeled sections (`acceptance_layers_fused`).
-2. Milestone delivery = user-invisible milestone IT only (no E2E).
-3. Layer B: preflight + Suite Plan; Experience + 任务回顾 after green.
-4. Final delivery may start after any Layer B green.
+2. Milestone delivery = user-invisible milestone IT only (no E2E) **plus**
+   `feature_completeness_matrix.status: green`.
+3. Layer B: preflight + Suite Plan; Experience + 任务回顾 after green; matrix
+   green; no functional residuals.
+4. Final delivery may start after any Layer B green; completing it requires all
+   feature-milestone matrices green.
 5. Path by project feature-milestone count (`e2e_direct` vs `full_unit_and_it`).
 6. E2E is always full-project.
 7. Preview→confirm→write for Experience / 任务回顾 / App-writing closeouts.
@@ -198,6 +212,9 @@ Rules:
    rendered fidelity rows for every required layout family. Missing captures,
    threshold failures, failed AI visual review, or unapproved native
    differences block Delivery.
+9. Functional stubs / “后续版本” deferral copy fail closed as
+   `functional_residual_forbidden` (SoT:
+   `granoflow-agent-workflow/task-and-milestone-acceptance-layers`).
 
 ## References
 

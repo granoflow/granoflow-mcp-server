@@ -9,7 +9,10 @@ Append to the base Delivery when `profiles` contains `software_development`:
   delivered, allowed touchpoints actually used, and protected surfaces checked;
 - every unplanned UI, code, API, schema, dependency, or architecture delta,
   classified as an authorized scope change, necessary execution deviation, or
-  residual that prevents clean acceptance; and
+  **allowed** residual (`blocked_external` / pixel-manual / external-device
+  handoff) that prevents clean acceptance—**not** unfinished SoT features,
+  stub delivery surfaces, or “后续版本” deferral copy (`functional_residual_forbidden`);
+  and
 - actual file/method budget differences from the Plan, as supporting evidence
   rather than a substitute for semantic scope reconciliation;
 - actual final file and function/method sizes, soft/hard results, responsibility
@@ -123,3 +126,15 @@ needs_split` blocks Delivery. Any kept divergence requires
   `third_party_capability_overclaim`,
   `third_party_capability_platform_missing`, or
   `third_party_capability_ship_bar_excluded` when violated.
+- Feature completeness matrix (`task-and-milestone-acceptance-layers.md`): when
+  the task is under a software milestone that owns a
+  `feature_completeness_matrix`, Delivery **Must** update every row owned by
+  this task to `impl_status: implemented` with non-empty `test_ref` and
+  `result: green` (or `blocked_external` only for allowed residual classes).
+  `delivery_status: delivered_with_residuals` is allowed **only** for those
+  residual classes—not for stubs / deferred SoT behaviors. Lint with
+  `scripts/lint_feature_completeness_matrix.py`. Fail as
+  `feature_completeness_matrix_missing`,
+  `feature_completeness_matrix_incomplete`,
+  `functional_residual_forbidden`, or
+  `feature_completeness_overclaim_green` when violated.

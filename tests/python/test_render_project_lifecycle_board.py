@@ -83,6 +83,18 @@ class RenderBoardTests(unittest.TestCase):
         self.assertIn("下一步", result["markdown"])
         self.assertEqual(result["earliest_incomplete"], "milestone_analysis")
 
+    def test_pipeline_order_label_rendered(self) -> None:
+        board = base_board(mode="interactive")
+        board["pipeline_order"] = {
+            "mode": "breadth_first",
+            "decided_at": "2026-07-25T00:00:00Z",
+            "decided_by": "user",
+        }
+        result = MOD.validate_and_render(board)
+        self.assertTrue(result["ok"], result)
+        self.assertIn("先全部分析", result["markdown"])
+        self.assertIn("breadth_first", result["markdown"])
+
     def test_unattended_requires_display_only(self) -> None:
         board = base_board(mode="unattended")
         board["board_confirmation"] = "required"

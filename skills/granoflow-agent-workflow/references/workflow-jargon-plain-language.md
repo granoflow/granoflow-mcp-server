@@ -85,6 +85,9 @@ Localize the gloss to the conversation language. Tokens stay English.
 | 回轨 / re-entry                                         | 实施中途又改了早期需求：先写回真源、把阶段退回到 Analysis/Plan，再往下做，而不是口头改完继续写代码          | 看进度板「回轨」和下一步；可以说「按回轨继续」或指出还要改哪里              |
 | `entry_kind`                                            | 本回合挂哪条流水线入口：新项目 / 新里程碑 / 零散任务 / 继续 / 中途回改                                      | 一般不用你报这个词；看进度板下一步即可                                      |
 | `midstream_change`                                      | 已经在 Plan/实施/交付中，又确认改了早期需求或验收                                                           | 等 AI 写回并回轨后，按「下一步」回到 Analysis/Plan                          |
+| `pipeline_order` / 多里程碑作业顺序                     | 多个里程碑时：先把分析都做完，还是做一个里程碑的分析→计划→实施闭环再做下一个                                | 被问到时直接答「先全部分析」或「做一个完整闭环再做下一个」                  |
+| `breadth_first`                                         | 先完成全部里程碑的分析（含原型），再计划，再实施                                                            | 选「先全部分析」即可                                                        |
+| `depth_first`                                           | 当前里程碑分析→计划→实施（含集成验收）做完，再分析下一个                                                    | 选「做一个完整闭环再做下一个」即可                                          |
 
 Agents **May** extend the table for peer tokens with the same phrase shape.
 Do not invent synonyms that hide the real gate (e.g. do not say “随便改吧”

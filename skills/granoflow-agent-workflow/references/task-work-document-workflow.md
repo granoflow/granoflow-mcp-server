@@ -596,10 +596,21 @@ Analysis owns the accepted problem framing **and**, for UI-changing tasks, the
 confirmed high-fidelity prototype. Prototypes are **not** a separate lifecycle
 stage and **Must not** be deferred into Planning.
 
-Orchestration may be per-milestone (Analysis → Plan → Implement) or
-project-wide (finish all Analyses including prototypes, then Plan batches, then
-Implement batches). Either way: **Planning Must not start for a task while that
-task's Analysis deliverables are incomplete.**
+Orchestration follows Project Work `pipeline_order` (see
+`project-lifecycle-progress-board` **Pipeline Order Gate**):
+
+- `depth_first` — per-milestone Analysis → Plan → Implement, then the next
+  milestone;
+- `breadth_first` — finish all feature-milestone Analyses (including
+  prototypes), then Plan batches, then Implement batches;
+- `unset` — when the host is about to enter Plan for a milestone and at least
+  one other feature milestone still has Analysis `not_started`, **stop** and
+  ask (interactive) or fail closed `pipeline_order_unresolved` (unattended).
+  Do not invent a default.
+
+Either way: **Planning Must not start for a task while that task's Analysis
+deliverables are incomplete**, and Must not start while `pipeline_order` blocks
+Plan entry.
 
 ### Required for every task
 
@@ -657,6 +668,11 @@ Rules:
 3. Unattended mode may auto-accept solvable prototype craft when the
    unattended contract allows, but Must still list remaining deliverables and
    Must not skip the table.
+4. When any HTML prototype was authored or updated this Analysis turn, emit
+   clickable absolute `file://` links (ledger + 小结) per
+   `project-artifact-workflows` / `unattended-interaction-contract`. Relative
+   paths fail closed as `prototype_link_not_absolute` /
+   `prototype_link_incomplete`.
 
 ## Analysis Confirmation
 

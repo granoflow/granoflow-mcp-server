@@ -70,6 +70,9 @@ task_plan:
       responsibility: null # frozen one-line duty
       screen_ids: []
       acceptance_ids: []
+      # Must cover ≥1 feature_completeness_matrix row (Milestone Work). Empty-shell
+      # tasks fail closed as feature_completeness_matrix_incomplete.
+      feature_completeness_row_ids: [] # e.g. [FCM-001]
       depends_on: []
       reopen_policy: forbidden_without_milestone_task_plan_reopen
   checklist:
@@ -79,3 +82,5 @@ task_plan:
     traces_or_discovered_set: false
     every_in_scope_key_page_referenced: false
     every_pw_ui_detail_dispositioned: false
+    every_task_covers_feature_completeness_row: false
+    feature_completeness_matrix_ready: false
