@@ -100,8 +100,26 @@ Applies to **every** discrete HTML prototype the host authors in this workflow:
   units;
 - every task/milestone `ui_prototype` package.
 
-MCP does not render HTML. The host must expose a **clickable** preview link
-(file URL, local static server, or host sidebar/browser open path).
+MCP does not render HTML. The host must expose a **clickable** preview link.
+Preferred form: absolute filesystem path + `file://` URL (same bar as Plan /
+Engineering Acceptance Preview Gate). Local static server or host
+sidebar/browser open is allowed **in addition**, never instead of leaving the
+absolute `file://` path in chat/ledger.
+
+Ledger entry shape (interactive and unattended):
+
+```yaml
+prototype_link_ledger:
+  - title: <plain language>
+    absolute_path: </resolved/absolute/path.html>
+    file_url: file:///resolved/absolute/path.html
+    entity: <project|milestone|task id or label>
+    sha_or_pending: <hex|pending>
+```
+
+Relative paths, bare filenames, or prose-only “see temp/…” fail closed as
+`prototype_link_not_absolute` / `prototype_link_incomplete`. User-visible links
+Must be Markdown `[title](file:///absolute/path/...)`.
 
 ### Mode Gate
 
@@ -112,7 +130,8 @@ unattended. Never infer unattended from prototype authoring alone.
 
 When each prototype becomes previewable:
 
-1. Emit the clickable preview link (and a one-line what-to-review hint).
+1. Emit the clickable absolute `file://` preview link (and a one-line
+   what-to-review hint); append the ledger entry above.
 2. **Stop** and wait for the user's visual review decision (accept / revise /
    reject) before packaging with `visualConfirmed=true`, importing Baseline,
    starting the next prototype, or continuing UI implementation.
@@ -125,24 +144,30 @@ Skipping the wait fails closed as `prototype_preview_review_required`.
 
 When each prototype becomes previewable:
 
-1. Emit the same clickable preview link as a **non-blocking notice** (does not
-   consume the unattended interaction budget; do not wait).
+1. Emit the same clickable absolute `file://` preview link as a **non-blocking
+   notice** (does not consume the unattended interaction budget; do not wait).
 2. Auto-continue solvable packaging/import/next work per
    `unattended-interaction-contract` (Baseline may still use
    `auto_accept_recommendation` only under explicit unattended).
-3. Append `{ title, path_or_url, entity, sha_or_pending }` to the run's
-   `prototype_link_ledger`.
+3. Append a complete ledger entry (`title`, `absolute_path`, `file_url`,
+   `entity`, `sha_or_pending`) to the run's `prototype_link_ledger`.
+
+At **every Analysis turn end** that authored or updated prototypes: emit a
+short Prototype Link 小结 with those absolute `file://` links, and persist the
+ledger (Milestone Work, run continuity, or `temp/`).
 
 At **run close** (Project Definition Done, milestone/task batch complete, or
 `complete_with_residuals`):
 
 1. Emit a mandatory **Prototype Link Digest** listing every ledger entry with
-   clickable links in one place for human audit.
+   clickable absolute `file://` links in one place for human audit.
 2. Do not omit links that were already shown mid-run.
 3. The digest is the unattended closing review surface; it does not reopen
    mid-run waits. Park outstanding visual taste follow-ups in the Residual
    Report when the user must still judge aesthetics offline.
 4. Omitting the digest fails closed as `prototype_link_digest_required`.
+   Incomplete absolute links fail closed as `prototype_link_not_absolute` /
+   `prototype_link_incomplete`.
 
 ### Option-set exception (interactive choice batches)
 

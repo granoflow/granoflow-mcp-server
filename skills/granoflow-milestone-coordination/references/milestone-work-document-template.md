@@ -54,7 +54,7 @@ Frontend / UI milestones: keep Current Truth pointing at the confirmed project
 Design Baseline (exact ids/SHA) and contract fidelity; do not upload a second
 milestone design authority.
 
-```markdown
+````markdown
 # Milestone Work: <milestone title>
 
 document_type: milestone_work
@@ -104,6 +104,36 @@ copy the complete product ledger.
 | -------------- | ------------------- | ---------------------- | ---------------- | -------------- | ------- |
 | R-001          | <stable reference>  | <bounded outcome>      | <task id or TBD> | <ids>          | pending |
 
+## Feature Completeness Matrix (machine-readable — owned slice)
+
+Persist on Milestone Work front YAML / machine block (not a second product
+ledger). Schema SoT:
+`granoflow-agent-workflow/task-and-milestone-acceptance-layers`.
+
+```yaml
+feature_completeness_matrix:
+  schema: granoflow_feature_completeness_matrix_v1
+  status: draft # draft | ready | green | blocked
+  fail_closed_code: feature_completeness_matrix_incomplete
+  rows:
+    - id: FCM-001
+      sot_ref: R-001 # Project Work R-* / detail / acceptance id
+      task_local_key: T1
+      task_id: null # App id after create_one
+      impl_status: pending # pending | implemented | blocked_external
+      test_ref: null # path or case id after implement
+      result: pending # pending | green | blocked_external
+```
+````
+
+- `decompose_required` / `task_plan.status: passed`: matrix at least `ready`
+  (every row has `sot_ref` + `task_local_key`; every `tasks[]` covers ≥1 row).
+- Layer A task finish: owned rows → `implemented` + non-empty `test_ref` →
+  `result: green` (or allowed `blocked_external` only).
+- `acceptance_status: passed` / Layer B green: matrix `status: green`.
+- Functional stubs / “后续版本” deferral copy → `functional_residual_forbidden`.
+- Lint: `granoflow-agent-workflow/scripts/lint_feature_completeness_matrix.py`.
+
 ## Scope And Non-goals
 
 <Fixed boundary, explicitly excluded outcomes, and what belongs in a later milestone.>
@@ -150,7 +180,11 @@ user-visible pages.
 - `task_plan.status: passed` ⇔ `decomposition_status: passed` for UI
   portfolios. Changing ownership/split → `reopened` / `draft`; Task Analysis
   Must not silently reopen (`forbidden_without_milestone_task_plan_reopen`).
-- Lint: `granoflow-agent-workflow/scripts/lint_task_screen_portfolio.py`.
+- Software milestones: `feature_completeness_matrix.status` at least `ready`
+  before `task_plan.status: passed` (`feature_completeness_matrix_incomplete`
+  otherwise).
+- Lint: `granoflow-agent-workflow/scripts/lint_task_screen_portfolio.py` and
+  `lint_feature_completeness_matrix.py`.
 
 ## Task Portfolio
 
@@ -195,7 +229,8 @@ outputs exist, status may be `pending_task_analysis`—never a fake complete mat
 ## Replanning And Stop Conditions
 
 <What remains task-local, what changes the portfolio, what reopens the charter, what becomes follow-up, and what stops the milestone. Include the no-progress threshold, required strategy change, interaction-wait transition, attempt-history bound, recovery fingerprint, and proof that other independent tasks continue.>
-```
+
+````
 
 The initial charter draft may omit `decompose_required` and
 `execute_preflight_required` bodies or mark them
@@ -210,7 +245,7 @@ during final acceptance:
 - Scope differences:
 - Residuals and follow-ups:
 - Final App/API readback:
-```
+````
 
 ## Field Semantics
 
@@ -231,6 +266,9 @@ during final acceptance:
   and user-visible journeys. It cannot be derived only from child states.
 - `acceptance_status` records the final milestone-level judgment. Use `partial`
   when evidence is incomplete; do not relabel partial completion as passed.
+  For software milestones, `passed` requires
+  `feature_completeness_matrix.status: green` (IT suite green alone is not
+  enough).
 - The external capability matrix is exhaustive for the confirmed milestone at
   execute preflight. Missing rows block persistent execution;
   `interaction_required` is an explicit resumable state, not inferred consent or

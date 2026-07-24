@@ -30,8 +30,9 @@ Also load `task-and-milestone-acceptance-layers`.
 | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | Integration tests (`service_path` / real I/O) that cover **this milestone’s** features and child Outcomes | UI click E2E, screenshot/vision campaigns                       |
 | Orchestrated order (e.g. add → browse → list → delete)                                                    | Ad-hoc single-test runs that skip the Suite Plan                |
-| Agent-driven run to green (or recorded external residual)                                                 | Asking the user to “确认里程碑验收” as the acceptance mechanism |
+| Agent-driven run to green (or recorded **allowed** residual)                                              | Asking the user to “确认里程碑验收” as the acceptance mechanism |
 | Post-green writeback: Experience (from issues) + 任务回顾                                                 | Treating child `done` alone as milestone accepted               |
+| Milestone `feature_completeness_matrix.status: green`                                                     | Suite green while matrix rows stay `pending` / stubbed          |
 
 User-visible Closing Summary / Residual Report may **notify** results; they do
 **not** replace the IT suite as the acceptance decision.
@@ -80,7 +81,13 @@ milestone_it_acceptance:
   suite_plan_path: <path>
   suite_order: [<case_id>...]
   simplify_notes: <how steps were reduced>
+  feature_completeness_matrix_status: ready | green | blocked
 ```
+
+7. Confirm Milestone Work `feature_completeness_matrix` is at least `ready`
+   (owned SoT rows mapped to tasks). Missing matrix →
+   `feature_completeness_matrix_missing`. Incomplete mapping →
+   `feature_completeness_matrix_incomplete`.
 
 Fail closed `milestone_it_preflight_missing` if execution starts without
 `preflight_status: passed`.
@@ -97,11 +104,16 @@ runs them via the Milestone IT Suite Plan.
    / `environment_external`); fix per campaign rules; **capture each material
    issue as an Experience candidate** (user-experience asset)—see Writeback.
 4. Suite green → set milestone `integration_readiness_status` evidence from IT
-   results; Layer B acceptance for software = **IT suite passed** for this
-   milestone scope (plus explicit residuals if any external blockers remain).
+   results; also require `feature_completeness_matrix.status: green` (lint with
+   `scripts/lint_feature_completeness_matrix.py`). Layer B acceptance for
+   software = **IT suite passed** **and** matrix green for this milestone
+   scope (plus **allowed** residuals only: `blocked_external` / pixel manual /
+   external-device handoff). Functional stubs or “后续版本” deferral copy →
+   `functional_residual_forbidden` / `feature_completeness_overclaim_green`.
 5. Do **not** require the user to confirm “里程碑验收通过” for the IT decision.
    User confirmation remains only for true external/manual blockers or for
    archiving/closure actions that the App still gates separately.
+6. Do **not** set `acceptance_status: passed` while matrix is not `green`.
 
 ## Writeback After IT (hard)
 
@@ -155,6 +167,7 @@ When finishing tasks and Layer B in one turn:
 - Suite plan: …
 - Order: add → browse → list → delete → …
 - Result: green / residual
+- Feature completeness matrix: green
 - Experience / 任务回顾: links or pending confirmations
 ```
 
@@ -162,15 +175,19 @@ Fusing into one “全部完成” list → `acceptance_layers_fused`.
 
 ## Fail-Closed Codes
 
-| Code                                  | When                                                                   |
-| ------------------------------------- | ---------------------------------------------------------------------- |
-| `milestone_it_preflight_missing`      | Implement wave without passed IT preflight                             |
-| `milestone_it_coverage_insufficient`  | Suite cannot验收 all in-scope tasks                                    |
-| `milestone_it_suite_unorchestrated`   | Ran IT without Suite Plan / order                                      |
-| `milestone_it_scope_expanded`         | Suite pulled unrelated milestone features without documented exception |
-| `milestone_it_experience_unrecorded`  | Material IT issues not captured as Experience candidates/apply path    |
-| `milestone_it_task_review_unrecorded` | Suite green but 任务回顾 not written for covered tasks                 |
-| `acceptance_layers_fused`             | Layer A/B fused in user-facing closeout                                |
+| Code                                     | When                                                                   |
+| ---------------------------------------- | ---------------------------------------------------------------------- |
+| `milestone_it_preflight_missing`         | Implement wave without passed IT preflight                             |
+| `milestone_it_coverage_insufficient`     | Suite cannot验收 all in-scope tasks                                    |
+| `milestone_it_suite_unorchestrated`      | Ran IT without Suite Plan / order                                      |
+| `milestone_it_scope_expanded`            | Suite pulled unrelated milestone features without documented exception |
+| `milestone_it_experience_unrecorded`     | Material IT issues not captured as Experience candidates/apply path    |
+| `milestone_it_task_review_unrecorded`    | Suite green but 任务回顾 not written for covered tasks                 |
+| `feature_completeness_matrix_missing`    | Software milestone lacks matrix at Layer B preflight/close             |
+| `feature_completeness_matrix_incomplete` | Matrix not ready/green for claimed Layer B                             |
+| `functional_residual_forbidden`          | Feature stub/deferral labeled as Layer B residual                      |
+| `feature_completeness_overclaim_green`   | Suite green claimed while matrix rows incomplete                       |
+| `acceptance_layers_fused`                | Layer A/B fused in user-facing closeout                                |
 
 ## Must Not
 
@@ -180,3 +197,6 @@ Fusing into one “全部完成” list → `acceptance_layers_fused`.
 - Leave IT lessons only in chat after a green suite.
 - Use project-wide IT round milestones as a way to skip per-feature-milestone
   Layer B when this reference applies.
+- Mark Layer B / `acceptance_status: passed` while
+  `feature_completeness_matrix` is not `green`.
+- Accept functional stubs or “后续版本” UI as Layer B residuals.

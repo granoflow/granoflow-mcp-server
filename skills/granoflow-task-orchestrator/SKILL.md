@@ -132,7 +132,7 @@ Actions:
   `ui_prototype` before Analysis confirmation; missing prototype fails closed
   as `ui_prototype_required` / `analysis_deliverables_incomplete` and keeps the
   task in Analysis (Planning Must not start).
-- plan consumes a finalized Analysis, creates Plan and nodes, runs Readiness Grill, and stops execution-ready. UI-changing tasks cannot pass Readiness without a visually confirmed `ui_prototype` (`derivedFrom` Design Baseline when present). Software tasks that will edit code cannot pass Readiness without a complete `Structural Change Forecast` (`structural_forecast_status: present_in_plan`); otherwise `structural_forecast_missing`.
+- plan consumes a finalized Analysis, creates Plan and nodes, runs Readiness Grill, and stops execution-ready. Before Plan entry on a multi-milestone project, apply `project-lifecycle-progress-board` **Pipeline Order Gate**: if peer feature milestones still have Analysis `not_started` and Project Work `pipeline_order.mode` is unset, interactive asks 「多里程碑时，先全部分析，还是做一个完整闭环再做下一个？」; unattended requires a pre-declared mode or fails closed `pipeline_order_unresolved`. UI-changing tasks cannot pass Readiness without a visually confirmed `ui_prototype` (`derivedFrom` Design Baseline when present). Software tasks that will edit code cannot pass Readiness without a complete `Structural Change Forecast` (`structural_forecast_status: present_in_plan`); otherwise `structural_forecast_missing`.
 - run composes create or resolve, one App-owned execution snapshot, Analysis,
   Grill, Plan, Readiness Grill, safe execution, verification, Delivery, node
   completion, and done-state readback. Reconcile spoken requirements against
@@ -153,7 +153,7 @@ Actions:
   the project excludes it, AI selects one available supported host. Only the
   selected host enters execution nodes. Non-selected platforms remain
   development-only and require an external-device handoff with `tested: false`.
-- finish_audit verifies already-produced evidence, writes Delivery, and closes only through the correct completion owner.
+- finish_audit verifies already-produced evidence, writes Delivery, and closes only through the correct completion owner. For software milestone children: before finish, update owned `feature_completeness_matrix` rows (`implemented` + non-empty `test_ref` → `result: green`, or allowed `blocked_external` only); refuse finish when Delivery residuals park unfinished SoT features, stub UI, or “后续版本” deferral copy (`functional_residual_forbidden` / `feature_completeness_matrix_incomplete` / `feature_completeness_overclaim_green` per `task-and-milestone-acceptance-layers`).
   Success criteria:
 - Each phase has exactly one owner and the requested stopping point is respected.
 - An end-to-end request does not stop merely because a phase transition was reached.

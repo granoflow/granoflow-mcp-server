@@ -76,12 +76,16 @@ Read `references/milestone-collaboration-workflow.md` and, for UI portfolios,
 `references/milestone-task-plan-template.yaml` plus
 `granoflow-agent-workflow/screen-task-portfolio-coverage`. Complete
 `decompose_required` sections: structured `task_plan`, portfolio table,
-handoffs, decomposition rules, and acceptance coverage. Reach
-`task_plan.status: passed` before App create when user-visible pages apply. If
-required child tasks are **missing as App entities**, stop and hand off to
-`granoflow-task-authoring` (or `granoflow-portfolio-orchestrator`)—do not
-silently invent incomplete tasks here. Prefer tasks that already exist from
-authoring.
+handoffs, decomposition rules, acceptance coverage, and software
+`feature_completeness_matrix` (owned slice of Project Work
+`product_spec_coverage`; see
+`granoflow-agent-workflow/task-and-milestone-acceptance-layers`). Reach
+`task_plan.status: passed` **and** matrix `status: ready` before App create
+when user-visible / software feature pages apply. Every `tasks[]` row must
+cover ≥1 matrix row. If required child tasks are **missing as App entities**,
+stop and hand off to `granoflow-task-authoring` (or
+`granoflow-portfolio-orchestrator`)—do not silently invent incomplete tasks
+here. Prefer tasks that already exist from authoring.
 
 For every new or reopened requirement-driven/software Milestone, also load
 `granoflow-agent-workflow/milestone-ai-review`. Upgrade a continued v1 plan to
@@ -96,6 +100,8 @@ When requirement-driven, also read
 Checkpoints:
 
 - UI: `task_plan` passed (refined screens + split probes + task summaries) before create handoff.
+- Software: `feature_completeness_matrix` ready; lint
+  `lint_feature_completeness_matrix.py` (`feature_completeness_matrix_*`).
 - Missing required child App entities → hand off to task authoring; do not silently invent tasks.
 - Prefer tasks that already exist from authoring.
 
@@ -110,9 +116,20 @@ Analysis done while any in-scope UI child still lists the prototype as missing;
 emit the remaining-deliverables list from
 `task-work-document-workflow` § Analysis Deliverables. The coordinator then
 fills `execute_preflight_required` in Milestone Work by aggregating Analysis
-outputs. Then continue readiness, execution, Delivery, and local acceptance via
+outputs.
+
+**Before entering Plan** for this milestone, load
+`granoflow-agent-workflow/project-lifecycle-progress-board` **Pipeline Order
+Gate**. If other feature milestones still have Analysis `not_started` and
+Project Work `pipeline_order.mode` is unset: interactive → ask
+「多里程碑时，先全部分析，还是做一个完整闭环再做下一个？」and write back
+`breadth_first` / `depth_first`; unattended → require pre-declared mode or fail
+closed `pipeline_order_unresolved`. Do not start Plan while blocked.
+
+Then continue readiness, execution, Delivery, and local acceptance via
 the single-task Agent Workflow and
-`granoflow-agent-workflow/parallel-task-execution`.
+`granoflow-agent-workflow/parallel-task-execution`, respecting the chosen
+`pipeline_order`.
 
 When execution may outlive one Agent turn, use
 `granoflow_persistent_milestone_runner_skill`. Before the first non-dry run,
@@ -123,6 +140,8 @@ Checkpoints:
 
 - UI-changing children: confirmed `ui_prototype` is an Analysis deliverable;
   refuse milestone Analysis-complete claims and Planning entry until present.
+- Plan entry requires resolved `pipeline_order` when peer Analysis is still
+  `not_started` (`pipeline_order_unresolved` otherwise).
 - Before first non-dry run require complete `execute_preflight_required` and confirmed authorization manifest.
 
 ### 5. Reconcile And Replan
@@ -149,29 +168,34 @@ Checkpoints:
 
 Actions:
 
-- Before implement: IT sufficiency + Suite Plan for all in-scope tasks.
+- Before implement: IT sufficiency + Suite Plan for all in-scope tasks;
+  matrix at least `ready`.
 - After Layer A: run **milestone-scoped** IT; orchestrate
   (add/browse/list before delete).
-- After green: Experience from issues → **任务回顾** (preview→confirm→write).
+- After suite green: require `feature_completeness_matrix.status: green`
+  (functional stubs / “后续版本” → `functional_residual_forbidden`); Experience
+  from issues → **任务回顾** (preview→confirm→write).
 - Load `milestone-integration-acceptance` +
   `task-and-milestone-acceptance-layers`.
 
 Success criteria:
 
-- Preflight passed; suite scoped to this milestone; green or residual.
-- Experience + 任务回顾 writeback done.
+- Preflight passed; suite scoped to this milestone; green or **allowed** residual.
+- Matrix `green`; Experience + 任务回顾 writeback done.
 
 Checkpoints:
 
 - Child `done` ≠ Layer B.
+- Suite green ≠ Layer B without matrix green.
 - Co-present Layer A then Layer B (`acceptance_layers_fused` if fused).
 
 ### 7. Accept And Close + optional最终交付
 
 Actions:
 
-- Present Outcome, Layer B evidence, residuals, follow-ups.
-- Milestone accept: no E2E required.
+- Present Outcome, Layer B evidence, matrix status, residuals, follow-ups.
+- Milestone accept: no E2E required; `acceptance_status: passed` needs matrix
+  `green`.
 - May offer最终交付 after any Layer B green via
   `granoflow_acceptance_delivery_skill` / `full-delivery-acceptance`:
   `project_feature_milestone_count` 1 → `e2e_direct` full-project E2E;
@@ -181,7 +205,7 @@ Actions:
 
 Success criteria:
 
-- Milestone close evidenced by Layer B (not E2E).
+- Milestone close evidenced by Layer B + matrix green (not E2E).
 - If最终交付 offered: `session_delivery` with correct `pre_e2e_path`.
 
 Checkpoints:

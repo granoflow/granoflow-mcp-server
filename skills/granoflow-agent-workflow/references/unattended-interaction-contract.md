@@ -138,13 +138,33 @@ When filling `product_spec_coverage` under explicit unattended:
 4. Unattended Baseline visual `auto_accept_recommendation` never waives these
    gates.
 
+### Pipeline order under unattended
+
+Multi-milestone Plan entry requires Project Work `pipeline_order.mode` already
+set to `breadth_first` or `depth_first` (grant text or Project Work write;
+`decided_by: unattended_grant`). Do not mid-run ask
+「多里程碑时，先全部分析，还是做一个完整闭环再做下一个？」. Missing mode when
+peer milestones still have Analysis `not_started` → fail closed
+`pipeline_order_unresolved`, refuse Plan, list in Residual Report. Never silent
+default to `depth_first`.
+
 ### Prototype links under unattended
 
 Whenever HTML prototypes are authored (Design Baseline screens/Shell units or
 task `ui_prototype`):
 
-1. After **each** prototype becomes previewable, emit a clickable preview link
-   as a non-blocking notice and append it to `prototype_link_ledger`.
+1. After **each** prototype becomes previewable, emit a **clickable** preview
+   link as a non-blocking notice and append it to `prototype_link_ledger`.
+   Each ledger entry **Must** include:
+   - `title` (plain-language label);
+   - `absolute_path` (resolved filesystem path);
+   - `file_url` (`file://…` via absolute path, same bar as Plan Acceptance
+     HTML links — e.g. `Path.resolve(...).as_uri()`);
+   - `entity` / `sha_or_pending` as applicable.
+     Relative paths, bare filenames, or prose-only location hints fail closed as
+     `prototype_link_not_absolute` / `prototype_link_incomplete`. Chat notices
+     and digests Must use Markdown links of the form
+     `[title](file:///absolute/path/...)`.
 2. Do not wait mid-run for visual taste confirmation.
 3. Project Definition Design Spec / Shell under unattended: author **one**
    faithful `spec_match` **Style Guide / Design Tokens board** (not a
@@ -154,11 +174,15 @@ task `ui_prototype`):
    triads or AI challengers. Journey/critical screens beyond the Shell’s primary
    surface belong in the Baseline package after Spec+Shell. After Baseline
    confirm, write `widgets.yaml` from that confirmed Baseline prototype.
-4. At run close, emit a mandatory **Prototype Link Digest** that lists every
-   ledger entry with clickable links so the user can audit all prototypes in
-   one place. Omitting the digest fails closed as
+4. At **every Analysis turn end** that authored or updated prototypes, emit a
+   short Prototype Link 小结 listing those absolute `file://` links (in
+   addition to mid-run notices). Persist the ledger on Milestone Work, run
+   continuity, or `temp/` so links survive chat truncation.
+5. At run close, emit a mandatory **Prototype Link Digest** that lists every
+   ledger entry with clickable absolute `file://` links so the user can audit
+   all prototypes in one place. Omitting the digest fails closed as
    `prototype_link_digest_required`.
-5. Interactive mode (default when unattended was not declared) uses the
+6. Interactive mode (default when unattended was not declared) uses the
    product-fitted two-round Design Spec HTML contract: six-dimension chooser,
    user selection code, then three complete Style Guide candidates by default
    or justified two. After the selected Spec is locked, run the Shell triad of
@@ -170,8 +194,9 @@ task `ui_prototype`):
    `design_spec_seed_not_drawn` / `visual_lot_dedupe_required` /
    `design_spec_user_facing_jargon` codes if skipped or rules violated).
    User-facing Preview Gate copy stays plain language (no `seed-*` / internal
-   option enums).
-6. Task / milestone `ui_prototype`: inherit locked Spec + Shell; **no** random
+   option enums). Absolute `file://` links remain mandatory in interactive mode
+   too.
+7. Task / milestone `ui_prototype`: inherit locked Spec + Shell; **no** random
    visual seed (`task_prototype_seed_forbidden`); reuse `widgets.yaml` when the
    same role exists (`widget_reuse_required`); pass Craft Gate before confirm
    else `task_prototype_craft_incomplete` (including Baseline fit →
@@ -370,30 +395,48 @@ externally impossible but other ready work exists:
 
 When no solvable ready work remains, set
 `interaction_decision: complete_with_residuals` and emit the
-**Unattended Residual Report**:
+**Unattended Residual Report**.
+
+**Hard residual filter** (see `task-and-milestone-acceptance-layers.md`):
+
+- Allowed leftovers: host/OS `blocked_external`, pixel/Baseline manual visual,
+  external-device handoff (`tested: false`), true publish/device/card gates the
+  grant cannot satisfy.
+- **Forbidden** leftovers: unfinished SoT features, stub delivery surfaces,
+  user-visible “后续版本提供” / “将在后续版本” deferral copy, matrix rows left
+  `pending` while claiming task/milestone done. Those are **still solvable** —
+  keep implementing and testing, or fail closed as
+  `functional_residual_forbidden` / `feature_completeness_matrix_incomplete`.
+  Do **not** use `complete_with_residuals` to declare the declared feature
+  scope complete while they remain.
 
 ```markdown
 ## Unattended Residual Report
 
 - Scope: <declared unattended scope>
 - Completed: <count / summary refs>
-- Prototype Link Digest: <clickable links for every HTML prototype authored;
-  required when any prototype was produced>
+- Feature completeness: <per-milestone matrix status; all in-scope green or
+  only allowed blocked_external rows>
+- Prototype Link Digest: <clickable absolute file:// links for every HTML
+  prototype authored; required when any prototype was produced;
+  relative-only paths are not enough>
 - Plan Acceptance Link Digest: <clickable HTML/Markdown pack links authored this
   run; required when any Plan acceptance HTML was produced>
 - Acceptance layers (when any task/milestone closed this run):
   - Layer A 单任务完成: <per-task Delivery / acceptance_report refs>
-  - Layer B 里程碑集成验收: <Suite Plan order / IT green|residual / Experience / 任务回顾>
+  - Layer B 里程碑集成验收: <Suite Plan order / IT green|residual / matrix / Experience / 任务回顾>
   - Do not fuse into one unlabeled “all done” list (`acceptance_layers_fused`)
-- Deferred / not executed:
+- Deferred / not executed (allowed classes only):
   1. <title> — <blocker_class> — <why external> — <resume_condition>
   2. ...
-- Explicit statement: these items were **not** executed in this unattended run.
+- Explicit statement: these items were **not** executed in this unattended run;
+  no functional stubs were parked as residuals.
 ```
 
 A run with residuals is a successful unattended completion of everything
 solvable—not a fake all-green project. Never claim deferred publish/device/card
-work as done.
+work as done. Never claim feature completeness while SoT behaviors remain
+stubbed.
 
 ## Waiting Behavior (narrow)
 

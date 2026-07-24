@@ -279,6 +279,15 @@ def validate_and_render(board: dict[str, Any]) -> dict[str, Any]:
     ]
     if entry_kind:
         lines.append(f"- 入口：`{entry_kind}`")
+    pipeline_order = board.get("pipeline_order")
+    if isinstance(pipeline_order, dict) and pipeline_order.get("mode"):
+        po_mode = pipeline_order.get("mode")
+        po_label = {
+            "unset": "未选择（进 Plan 前需确认）",
+            "breadth_first": "先全部分析",
+            "depth_first": "做一个完整闭环再做下一个",
+        }.get(str(po_mode), str(po_mode))
+        lines.append(f"- 多里程碑顺序：{po_label} (`{po_mode}`)")
     lines.extend(
         [
             "",

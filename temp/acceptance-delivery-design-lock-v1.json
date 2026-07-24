@@ -155,6 +155,23 @@
         "skills/granoflow-integration-test-campaign/references/integration-test-campaign-contract.md"
       ],
       "must_contain": ["does **not**", "Layer B"]
+    },
+    {
+      "id": "C-FEATURE-COMPLETENESS-MATRIX",
+      "kind": "must",
+      "text": "Software milestones keep feature_completeness_matrix (owned slice of product_spec_coverage); Layer A/B and final delivery fail closed on missing/incomplete matrix, functional residual, or overclaim green.",
+      "source": "user thread (functional residual / stub deferral)",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/task-and-milestone-acceptance-layers.md",
+        "skills/granoflow-agent-workflow/references/milestone-integration-acceptance.md",
+        "skills/granoflow-agent-workflow/references/full-delivery-acceptance.md"
+      ],
+      "must_contain": [
+        "feature_completeness_matrix",
+        "functional_residual_forbidden",
+        "feature_completeness_overclaim_green",
+        "feature_completeness_matrix_incomplete"
+      ]
     }
   ],
   "workflow": [

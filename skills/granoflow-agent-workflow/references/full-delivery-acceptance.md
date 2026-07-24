@@ -33,6 +33,17 @@ Layer B is green—including when only one milestone was finished in this run /
 day. Do **not** treat a single finished milestone as “session already delivered,
 never mention最终交付”.
 
+Before claiming **最终交付 complete** / `project_complete`, every **feature**
+milestone in the project **Must** have
+`feature_completeness_matrix.status: green` (owned-slice ledger on Milestone
+Work; see `task-and-milestone-acceptance-layers`). Row-level
+`blocked_external` is allowed only for host/OS / pixel-manual / external-device
+handoff—not for stubs or “后续版本” deferral copy. Run a gap scan over Delivery
+/ notes / user-visible copy for functional deferral phrases; hits fail closed as
+`functional_residual_forbidden`. Overclaiming green while any feature matrix is
+incomplete → `feature_completeness_overclaim_green` /
+`feature_completeness_matrix_incomplete`.
+
 Interactive: advise or ask whether to run最终交付 now (list other milestones when
 the project has more than one). Unattended: emit recommendation on the board /
 Residual Report; start only when the durable grant covers campaign stages or the
@@ -135,14 +146,18 @@ User-facing labels: **完整交付 / 最终交付测试**. Stage ids stay
 
 ## Fail-Closed Codes
 
-| Code                                   | When                                                           |
-| -------------------------------------- | -------------------------------------------------------------- |
-| `full_delivery_pre_e2e_skip_invalid`   | `e2e_direct` when count ≠ 1, or skipped unit/IT when count ≥ 2 |
-| `full_delivery_e2e_not_full_project`   | E2E not full-project                                           |
-| `full_delivery_unit_suite_incomplete`  | Path B without green full unit suite                           |
-| `full_delivery_order_violation`        | Path B steps out of order                                      |
-| `full_delivery_session_fields_missing` | Invalid / incomplete `session_delivery` when present           |
-| `full_delivery_milestone_e2e_required` | Agent required user-visible E2E to close a milestone           |
+| Code                                     | When                                                           |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `full_delivery_pre_e2e_skip_invalid`     | `e2e_direct` when count ≠ 1, or skipped unit/IT when count ≥ 2 |
+| `full_delivery_e2e_not_full_project`     | E2E not full-project                                           |
+| `full_delivery_unit_suite_incomplete`    | Path B without green full unit suite                           |
+| `full_delivery_order_violation`          | Path B steps out of order                                      |
+| `full_delivery_session_fields_missing`   | Invalid / incomplete `session_delivery` when present           |
+| `full_delivery_milestone_e2e_required`   | Agent required user-visible E2E to close a milestone           |
+| `feature_completeness_matrix_missing`    | Feature milestone lacks matrix at final-delivery close         |
+| `feature_completeness_matrix_incomplete` | Feature milestone matrix not green at final-delivery close     |
+| `functional_residual_forbidden`          | Functional stub/deferral copy treated as allowed residual      |
+| `feature_completeness_overclaim_green`   | Final delivery claimed complete while matrix rows incomplete   |
 
 ## Must Not
 
@@ -151,3 +166,5 @@ User-facing labels: **完整交付 / 最终交付测试**. Stage ids stay
 - Use `e2e_direct` on multi-milestone projects.
 - Narrow E2E to “what we changed”.
 - Fuse Layer A / Layer B / 最终交付 into one unlabeled “全部完成” list.
+- Claim final delivery / `project_complete` while any feature milestone matrix
+  is not `green`, or while user-visible SoT behaviors remain stubbed.

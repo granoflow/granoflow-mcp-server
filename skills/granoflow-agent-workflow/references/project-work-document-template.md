@@ -212,6 +212,15 @@ agent_preferences:
       - secrets
       - destructive_git_history
 
+# Multi-milestone Analysis/Plan/Implement order. Ask gate fires when entering
+# Plan while peer milestones still have Analysis not_started. See
+# project-lifecycle-progress-board Pipeline Order Gate.
+# User-facing ask (interactive): 多里程碑时，先全部分析，还是做一个完整闭环再做下一个？
+pipeline_order:
+  mode: unset # unset | breadth_first | depth_first
+  decided_at: null
+  decided_by: null # user | unattended_grant
+
 requirement:
   original_request: null
   problem: null
