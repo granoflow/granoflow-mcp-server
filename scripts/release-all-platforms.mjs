@@ -11,8 +11,12 @@ const __dirname = dirname(__filename);
 const cwd = resolve(__dirname, "..");
 
 function run(command, { inherit = false } = {}) {
-  const output = execSync(`bash -lc ${JSON.stringify(command)}`, {
+  // Use non-login bash so the parent PATH (e.g. pyenv Python 3.11+) is kept.
+  // `bash -lc` resets to system Python 3.9 and breaks `int | float` syntax in
+  // skill scripts during release:preflight.
+  const output = execSync(`bash -c ${JSON.stringify(command)}`, {
     cwd,
+    env: process.env,
     stdio: inherit ? "inherit" : ["ignore", "pipe", "pipe"],
     encoding: "utf8",
   });
