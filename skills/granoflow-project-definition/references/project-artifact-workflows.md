@@ -6,6 +6,28 @@ Preview Gate**, Spec/Shell Mode split, Widget Catalog, and **Task Prototype
 Craft Gate And Option Set**. Fail-closed checklist:
 `hard-constraints.md`.
 
+Also load `granoflow-agent-workflow/responsive-prototype-finalization`. It owns
+the platform matrix, required layout families, final Prototype Bundle, Widget
+Promotion Ledger, and rendered fidelity. This file does not duplicate those
+contracts.
+
+## Companion roles (see Project Work map)
+
+Authority and slots align with the **Companion attachments** table in
+`granoflow-agent-workflow/project-work-document-template`:
+
+| Artifact                                                           | Role                                                                  |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Design Baseline + tokens                                           | Project visual/IA **current** authority (when applicability required) |
+| `widgets.yaml`                                                     | Reusable widget contracts after Baseline confirm (UI path)            |
+| Task/milestone `ui_prototype`                                      | Task-level clickable UI authority (`derivedFrom` Baseline SHA)        |
+| `data-model.md` / `data-contracts.yaml` / `constants-catalog.yaml` | Data/constants current shapes (not embedded in Project Work body)     |
+| Engineering Acceptance Pack (host MD→HTML)                         | Step 1 **user browse-confirm** surface; YAML is AI self-check only    |
+| Project Work                                                       | Product/acceptance **current** truth and admission                    |
+| `project_snapshot.yaml` / `project_rules.yaml`                     | Code status quo / durable boundaries—not product SoT                  |
+
+Do not invent a parallel product ledger inside Baseline HTML or widgets.yaml.
+
 ## Design-first, product-truth, and high-risk feasibility
 
 **Default order stays design-first.** Confirmed product docs and previewable UI
@@ -190,7 +212,8 @@ soon as UI change is detected—not only when the user asks.
 1. Read the confirmed project Design Baseline first
    (`granoflow_project_design_baseline_read` with exact ids/SHA). Accept against
    contract fidelity (契约级一致): Shell IA, tokens, main-path regions, and
-   locked widgets Must match; pixel/motion 1:1 is not required.
+   locked widgets Must match. At reference viewports, also target the Project
+   fidelity policy's pixel-level high-fidelity bar.
 2. Declare `derivedFrom` the baseline `prototypeId`, `versionId`, and
    `packageSha256` in Task Work / attachment metadata (document-level gate in
    this release). Missing `derivedFrom` on a UI-changing task fails closed.
@@ -198,24 +221,28 @@ soon as UI change is detected—not only when the user asks.
    locked Spec + Shell. Fail closed `task_prototype_seed_forbidden`.
 4. Load project `widgets.yaml`; reuse widgets with the same role before
    inventing new chrome/controls (`widget_reuse_required` if skipped).
-5. Author options under **Task Prototype Craft Gate And Option Set** (below).
-6. Apply the **Prototype Preview Gate** for the option batch (interactive: all
+5. Build and lint `ui_component_effect_matrix_v1`, then discover and lint the
+   host-owned `task_ui_skill_pipeline_v1`. Do not author HTML while either
+   record is pending, unsafe, stale, or missing evidence.
+6. Author options under **Task Prototype Craft Gate And Option Set** (below).
+7. Apply the **Prototype Preview Gate** for the option batch (interactive: all
    links + one wait; unattended: single option notice + ledger).
-7. Visual confirmation (interactive user accept of the chosen option, or
+8. Visual confirmation (interactive user accept of the chosen option, or
    unattended auto-accept when explicitly authorized) authorizes only packaging
    that exact source hash. It is not implementation acceptance or execution
    authorization. Craft Gate must pass before `visualConfirmed=true`—else
-   `task_prototype_craft_incomplete`. After confirmation, extract any
-   new/changed reusable widgets into the same project `widgets` slot.
-8. Build a deterministic ZIP: root `index.html`, relative paths only, sorted
+   `task_prototype_craft_incomplete`. After confirmation, complete the Widget
+   Promotion Ledger, extract new/changed reusable widgets into the same project
+   `widgets` slot, and require App SHA readback before Analysis closes.
+9. Build a deterministic ZIP: root `index.html`, relative paths only, sorted
    entries, normalized timestamps, no symlinks, no path traversal, and all
    required static resources included. Use
    `scripts/package_prototype.py SOURCE OUTPUT` (or `--dry-run` before writing)
    unless the host already provides an equivalent deterministic packager.
-9. Call `granoflow_logical_attachment_replace` with `visualConfirmed=true` to
-   replace the target entity's `ui_prototype` logical slot and retain App-owned
-   SHA/manifest evidence.
-10. Record `【增强实现】` / `implementation_notes` where the HTML is schematic
+10. Call `granoflow_logical_attachment_replace` with `visualConfirmed=true` to
+    replace the target entity's `ui_prototype` logical slot and retain App-owned
+    SHA/manifest evidence.
+11. Record `【增强实现】` / `implementation_notes` where the HTML is schematic
     and the target stack will use richer third-party widgets, listing Must
     invariants that remain unchanged.
 
@@ -302,7 +329,13 @@ Every option in the batch Must pass all of:
    `user_visible_copy_boundary_unread` /
    `user_visible_copy_boundary_violation` (also keeps
    `task_prototype_craft_incomplete`).
-6. **Expression candidates (hard for interactive dual/triple):** load
+6. **Capability and feasibility evidence:** require passed
+   `task_ui_skill_pipeline_v1` and `ui_component_effect_matrix_v1`, bound to
+   the current Baseline, Widget Catalog, platform matrix, stack capability,
+   approved dependencies, and option HTML inputs. Fail closed on missing
+   capability, unsafe invocation, incompatible selection, unjustified
+   high-cost effects, missing fallback, ranking drift, or Widget reuse bypass.
+7. **Expression candidates (hard for interactive dual/triple):** load
    `prototype-expression-brainstorm`, run mainstream-reference-first (≥5;
    backfill only when mainstream `<5`), promote parity-safe A/B, lint with
    `lint_prototype_expression_brainstorm.py`, set
@@ -310,13 +343,14 @@ Every option in the batch Must pass all of:
    (no “escape Spec” options). Fail closed `prototype_option_brainstorm_*` /
    `prototype_option_mainstream_skip` / `prototype_option_scope_mode_invalid` /
    `prototype_option_function_split` / `prototype_option_data_divergence`.
-7. **Confirm surface:** interactive shows Baseline-fit digest (Spec id + Shell
+8. **Confirm surface:** interactive shows Baseline-fit digest (Spec id + Shell
    chrome variant + sha short) + **confirmed-chrome-lock digest** (family id +
    authority SHA shorts + vocabulary) when applicable + candidate digest +
    craft checklist + **per-page/per-task** Contrast Gallery before wait;
    unattended records the same checklist into the run digest for the single
    option. Do **not** ask for `visualConfirmed` while `baseline_fit_ok`,
    `confirmed_chrome_lock_ok` (when applicable),
+   `task_ui_skill_pipeline_ok`, `component_effect_matrix_ok`,
    `user_visible_copy_boundary_ok`, or (interactive dual)
    `expression_brainstorm_ok` is false.
 
@@ -355,11 +389,12 @@ Fail closed: `prototype_option_brainstorm_missing` /
 `prototype_option_backfill_unjustified` /
 `prototype_option_brainstorm_digest_required`.
 
-#### Interactive option set (default dual; conditional third)
+#### Interactive option set (AI chooses two or three)
 
-**Default (hard):** after the candidate protocol, author exactly **two**
-complete **page expressions** for each UI-changing task (or each distinct
-screen the task owns). Both share the locked Design System and pass
+**Default (hard):** after the candidate protocol, author two complete page
+expressions. AI may author three only with a permitted
+`option_count_reason_code` and three materially distinct, feasible,
+parity-safe expressions. All options share the locked Design System and pass
 **functional parity**:
 
 | Label    | Role                                                                                                                                           |
@@ -449,6 +484,10 @@ closing digest includes the craft checklist summary.
 
 ## Project Design Baseline Package
 
+Applies when `visual_baseline.applicability: required`. When
+`not_applicable`, skip Spec / Shell / Baseline package / `widgets.yaml` for
+initialization Done (CLI / library / no UI chrome) and record basis.
+
 The project Design Baseline is not the mutable `ui_prototype` logical slot. It
 is a versioned App-owned Prototype linked to the project and referenced exactly
 from Project Work. It is the authoritative visual/IA reference for later
@@ -463,21 +502,29 @@ A complete initialization package **must** include:
 4. Portrait App Shell (or an explicit responsive Shell that covers both modes
    with documented breakpoints).
 
-Missing App Shell fails Done and fails visual confirmation for initialization.
+When applicability is `required`, Missing App Shell fails Done and fails visual
+confirmation for initialization.
 
 ### Design Spec then Shell (mode-split rounds)
 
 Project Definition **must not** jump to an unlabeled locked Baseline+Shell.
-Run Design Spec first, then Shell. **Design Spec** may explore with random
-visual seeds (`impeccable` / matching `skill_routing` Skills).
+Run Design Spec first, then Shell. Interactive Design Spec follows
+[design-spec-two-round-selection.md](design-spec-two-round-selection.md):
+product-fitted direction choices first, then complete Spec candidates.
+**Design Spec** may explore with random visual seeds (`impeccable` / matching
+`skill_routing` Skills).
 **From Shell onward, design style converges**: every Shell candidate Must
 perfectly fit the **already selected** Design Spec (tokens, typography, color
 roles, IA Musts). Do not invent a second visual system at Shell time.
+Shell orientation and mandatory Widget roles follow
+[shell-orientation-widget-contract.md](shell-orientation-widget-contract.md).
 
 #### What a Design Spec artifact is (hard)
 
-A Design Spec option is a **Style Guide / Design Tokens board**, not a product
-screen mockup set. The HTML preview Must read like a design-system sheet:
+A complete Design Spec candidate is a **Style Guide / Design Tokens board**,
+not a product-screen mockup set. The HTML preview Must read like a
+design-system sheet. One controlled product-component composition is required
+for contextual judgment, but it may not become a journey gallery:
 
 | Required panels         | Purpose                                                                                                                                                                                                                           |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -499,17 +546,23 @@ Shadows&Radius). Real product copy for labels is required; no lorem ipsum.
 - Treating Spec preview as an app walkthrough / phone gallery of all screens;
 - Shipping Spec as marketing landing grids instead of token/component boards.
 
-Journey/screen high-fidelity belongs in **App Shell + Baseline package** (and
-later task `ui_prototype`), always **fitted to** the selected Spec tokens.
-`product_spec_coverage.screen_coverage` still gates Baseline completeness—not
-the Spec artifact shape.
+**Init HTML budget (hard):** Design Baseline at Project Definition =
+**selected Spec Style Guide + App Shell** (portrait/landscape chrome + at
+least one Spec-styled primary surface). Do **not** complete every
+`screen_coverage` journey/critical screen as full-page HTML during Spec/Shell
+rounds. Per-screen high-fidelity belongs in task/milestone `ui_prototype`
+(Analysis), always **fitted to** the selected Spec tokens + Shell chrome.
+`product_spec_coverage.screen_coverage` (+ `ui_details`) gates the **product
+contract inventory**; it does **not** require an init-time HTML gallery.
+Any page that **is** packaged into Baseline Must still map to a coverage row
+(or Spec/Shell artifact roles).
 
 #### Mode split (hard)
 
-| Mode                           | Design Spec                                                                                                                                                                                                                                                                                                                                                                                    | Shell                                                                                                                                                                                                                                                            |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Interactive (default)**      | Mainstream-first ≥5→**promote 3**, then **Triad**: exactly three options from `draw_visual_lots.py --kind spec` (**true random**, `--record`)—one `spec_match` (faithful to user requirements) + two `ai_challenger_*`. Hand-invented seeds → `design_spec_seed_not_drawn`. User picks one, **换新批** (`--dedupe ledger` against machine-local history), or **在某套上改** (in-place revise). | After Spec selection: mainstream-first ≥5→**promote 3**, then **Triad** from `draw_visual_lots.py --kind shell` (chrome deck, `--record`); all reuse the selected Spec—one `shell_match` + two chrome challengers. Same pick / 换新批(强去重) / 在某套上改 gate. |
-| **Unattended (explicit only)** | **Single** Design Spec: faithful `spec_match` only, true-random draw + `--record`. No challengers, no triad wait. Emit link notice + ledger.                                                                                                                                                                                                                                                   | **Single** Shell: faithful `shell_match` only, derived from that Spec—**no independent palette seed**. Emit link notice + ledger. Auto-accept package when explicitly unattended.                                                                                |
+| Mode                           | Design Spec                                                                                                                                                                                                                                                                                       | Shell                                                                                                                                                                                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Interactive (default)**      | Product-fit envelope → polished HTML direction chooser (`1`–`6`, each `a`–`d`) → user selection code → polished HTML comparison with three complete Specs, or two only when a distinct suitable third is unavailable. One true-random master lot is recorded; stable candidate seeds are derived. | After Spec selection: mainstream-first ≥5→**promote 3**, then **Triad** from `draw_visual_lots.py --kind shell` (chrome deck, `--record`); all reuse the selected Spec—one `shell_match` + two chrome challengers. Same pick / 换新批(强去重) / 在某套上改 gate. |
+| **Unattended (explicit only)** | **Single** Design Spec: faithful `spec_match` only, true-random draw + `--record`. No challengers, no triad wait. Emit link notice + ledger.                                                                                                                                                      | **Single** Shell: faithful `shell_match` only, derived from that Spec—**no independent palette seed**. Emit link notice + ledger. Auto-accept package when explicitly unattended.                                                                                |
 
 Contract-fidelity Musts (journeys, IA, acceptance behavior, primary nav, Shell
 modes) stay intact on every option. Spec-round challengers may vary craft
@@ -520,49 +573,28 @@ density, nav structure, and breakpoint expression **inside** the selected Spec.
 
 **Interactive**
 
-1. Load `prototype-expression-brainstorm`; run mainstream-reference-first
-   Style Guide candidates that each cover full Spec Musts (backfill only when
-   mainstream `<5`); **promote exactly 3** (never task-style AB-only). Lint
-   `lint_prototype_expression_brainstorm.py`. Record digest +
-   `expression_brainstorm` beside `design_spec_selection`.
-2. Produce exactly those three Design Spec options as **Style Guide / Design
-   Tokens boards** (see “What a Design Spec artifact is”). All three share the
-   same product IA Musts and token _roles_; they differ by seed-driven craft
-   (palette, type pairing, density/spacing expression)—not by inventing new
-   primary navigation (`prototype_option_function_split` if a board omits Must
-   token roles).
-3. Draw lots with `scripts/draw_visual_lots.py --kind spec --count 3 --record`
-   (**true random** only). Do **not** invent `seed-*` ids and do **not** pass
-   classroom salt / `--from` (`visual_lot_classroom_salt_forbidden`). Reusing a
-   seed inside the triad fails closed as `design_spec_seed_collision`. Skipping
-   the script → `design_spec_seed_not_drawn`. Compose palettes from drawn seeds
-   (invoke `impeccable` / `palette.mjs --id <drawn>` when available).
-   Brainstorm does **not** replace lot draw.
-4. Label: `spec_match` | `ai_challenger_a` | `ai_challenger_b` with contrast
-   rationale on challengers (valid axes include color strategy, typography
-   pairing, spacing density, component emphasis—not full-page IA rewrites).
-5. Option-set Preview Gate: brainstorm digest + three Style Guide links; wait
-   for pick / **换新批** / **在某套上改**. **User-visible labels must be plain
-   language** (no `seed-*`, no `spec_match` / `ai_challenger_*` in the table or
-   hub). Record internal option id + seed only in Project Work / ledger
-   (`design_spec_user_facing_jargon` if leaked to the user).
-   - 换新批: `draw_visual_lots.py --kind spec --count 3 --dedupe ledger --record`
-     (machine-local `~/.granoflow/visual-lot-ledger.json` by default). Skipping
-     dedupe → `visual_lot_dedupe_required`. Exhausted pool →
-     `visual_lot_exhausted`.
-   - 在某套上改: revise that Style Guide in place; do not re-draw its seed
-     unless the user asks for a new visual direction.
-6. Record selection under
-   `engineering.theme_and_design_system.design_spec_selection` (option id,
-   seed, provenance: `user_selected`, plus brainstorm digest reference).
+1. Follow
+   [design-spec-two-round-selection.md](design-spec-two-round-selection.md)
+   without collapsing either HTML review round.
+2. Load `prototype-expression-brainstorm` and product evidence to establish the
+   product-fit envelope. Candidate exploration does not replace the lot draw.
+3. Draw and record one true-random master Spec lot. Do not hand-invent a seed or
+   pass classroom salt / `--from`.
+4. Author the Round 1 chooser, wait for the user's selection code, and record
+   both the input and canonical completed code.
+5. Author three complete Specs by default. Two are allowed only with
+   `insufficient_distinct_third`; all candidates cover full Spec Musts and each
+   pair records three materially different secondary axes.
+6. Validate `granoflow_design_spec_selection_v2` with
+   `lint_design_spec_selection.py`, then run the option-set Preview Gate for
+   pick / **换新批** / **在某套上改**.
+7. Record the selected option, derived seed, artifact SHA, token source, and
+   provenance under `engineering.theme_and_design_system`.
 
-Fail closed `design_spec_triad_required` if fewer than three distinct-seed
-options were offered before selection. Fail closed
-`prototype_option_promote_count_mismatch` if Spec was offered as dual-only.
-Fail closed `design_spec_wrong_artifact_type` if an option is a full-screen
-journey gallery instead of a Style Guide / Tokens board. Fail closed
-`design_spec_user_facing_jargon` if Preview Gate copy exposes seeds or internal
-option enums to the user.
+Fail closed on invalid fit, direction choices, selection code, candidate count,
+HTML quality, material difference, or reproducibility records. Continue to
+fail closed `design_spec_wrong_artifact_type` for journey galleries and
+`design_spec_user_facing_jargon` for leaked agent bookkeeping.
 
 **Unattended (explicit only)**
 
@@ -589,7 +621,7 @@ already **embeds the selected Design Spec**—not a grey wireframe of nav alone.
 | **Declare provenance**       | Each Shell HTML/`meta` records `fitted_to_design_spec_option_id`, Spec `seed`, and token source path/SHA when available.                                                                                                                                                   |
 | **Portrait + landscape**     | Show both modes (or one responsive frame with documented breakpoints) with primary navigation chrome.                                                                                                                                                                      |
 | **Product-near surfaces**    | Render at least one primary in-Shell surface (e.g. bookshelf / home) using Spec tokens and **real product copy**—covers, titles, progress, empty/error cues as applicable. Aim for **as close as practical to final product effect** under contract fidelity (契约级一致). |
-| **Chrome is the triad axis** | Across the three interactive options, only nav structure / density / chrome expression may diverge. Tokens and type system stay identical.                                                                                                                                 |
+| **Chrome is the triad axis** | Across the three interactive options, top bar and bottom navigation are both mandatory in every required orientation. Their internal hierarchy / density / responsive expression may diverge; tokens and type system stay identical.                                       |
 
 **Forbidden as App Shell content** (fail closed):
 
@@ -616,8 +648,8 @@ wireframe deck.
    Spec (backfill only when mainstream `<5`); **promote exactly 3** (never
    task-style AB-only). Lint `lint_prototype_expression_brainstorm.py`.
    Record digest beside `shell_selection`.
-2. Produce exactly those three Shell options (landscape + portrait) that
-   **each** embed the **selected** Design Spec tokens and meet “What an App
+2. Produce exactly three Shell options in the platform matrix's primary layout
+   family. Each embeds the selected Design Spec tokens and meets “What an App
    Shell artifact is”.
 3. Draw chrome lots with
    `scripts/draw_visual_lots.py --kind shell --count 3 --record` (deck in
@@ -637,6 +669,13 @@ wireframe deck.
      unless the user asks.
 6. Record `shell_selection` with `user_selected` and the Spec selection id/SHA
    it was fitted to.
+7. Expand only the selected Shell to every platform/orientation required by
+   `platform_support_matrix`. Every layout includes `app_shell.top_bar` and
+   `app_shell.bottom_navigation`. Show all final variants, confirm one Baseline
+   package digest, then import/read back.
+8. Validate `granoflow_shell_selection_v2`, then project the selected Shell's
+   two roles and all variants into `widgets.yaml` and the browseable Design
+   System HTML catalog. Never promote widgets from unselected Shell options.
 
 Fail closed `shell_triad_required` if the interactive Shell triad is skipped.
 Fail closed `prototype_option_promote_count_mismatch` if Shell was offered as
@@ -681,13 +720,17 @@ Catalog extract** (see below) from that confirmed Baseline prototype.
    bar (`shell_spec_mismatch` / `shell_spec_tokens_missing` /
    `shell_wireframe_only` if not). Shell is where landscape/portrait chrome,
    primary navigation, and Spec-styled primary surfaces appear—not Round A.
-7. When merging Spec+Shell into the Baseline package, extend to high-fidelity
-   journey/critical screens that map 1:1 (or documented many-to-one) onto
-   adopted `product_spec_coverage.screen_coverage` rows with
-   `baseline_required: true`. Unmapped Baseline screens fail closed as
-   `product_spec_coverage_incomplete`. Screens Must consume locked Spec tokens.
-   Prefer evolving the chosen Shell’s product-near surfaces rather than
-   redrawing from a disconnected wireframe.
+7. When merging Spec+Shell into the Baseline package, ship **Spec Style Guide +
+   App Shell only** (`visual_baseline.init_deliverables:
+design_spec_and_shell_only`). Do **not** author a full journey-screen HTML
+   gallery at init. Journey/critical screens stay listed in
+   `product_spec_coverage.screen_coverage` (with `ui_details` when sources
+   state them). Any extra HTML page that **is** included Must map to a
+   coverage row—unmapped pages fail closed as
+   `product_spec_coverage_incomplete`. Shell primary surfaces Must consume
+   locked Spec tokens. Prefer evolving the chosen Shell’s product-near
+   surfaces rather than redrawing from a disconnected wireframe. Per-screen
+   hi-fi HTML is authored later as task/milestone `ui_prototype`.
 8. Add `implementation_notes` / `【增强实现】` where HTML is schematic.
 9. Package the chosen Spec+Shell with `scripts/package_prototype.py`.
 10. Call `granoflow_project_design_baseline_import`; then
@@ -710,8 +753,8 @@ Catalog extract** (see below) from that confirmed Baseline prototype.
 
 Downstream prototypes and code Must preserve Shell mode, primary navigation IA,
 token roles, main-journey layout regions, and **locked widgets** from
-`widgets.yaml`. They Should stay visually close. They Won't be judged on pixel
-or spring-feel parity.
+`widgets.yaml`. At reference viewports they must pass the configured numeric
+and AI visual fidelity gates; other sizes preserve responsive mapping.
 
 **Task / milestone `ui_prototype` (hard):**
 
@@ -778,6 +821,9 @@ composition, reuse policy, and anchors into those prototypes.
    task/milestone `ui_prototype` that introduces or changes a reusable
    chrome/control/pattern.
 3. Do not invent widgets from unconfirmed drafts.
+4. Every incremental extract requires a Widget Promotion Ledger with catalog
+   before/after SHA and matching App readback. A `task_local` decision requires
+   rationale; a locked contract change requires Baseline reopen.
 
 ### Example shape (Baseline prototype as source)
 
@@ -815,6 +861,8 @@ Hosts authoring any UI prototype after the first catalog write Must:
 3. Add new rows only for new roles; lock them after that prototype is
    confirmed.
 4. Never replace a locked widget's visual system via task-local random seed.
+5. Record variants with `layout_family_id` and `platform_ids`; do not fork one
+   role into unrelated platform catalogs.
 
 ## Capability-Critical Dependencies
 
@@ -907,8 +955,10 @@ or completion, verify:
   `visual_confirmation`;
 - referenced screen/menu/state ids exist in the baseline or are marked
   planned;
-- App Shell landscape and portrait coverage is present for initialization Done;
-- `widgets.yaml` exists after Baseline confirmation with registry SHA readback;
+- App Shell landscape and portrait coverage is present for initialization Done
+  when `visual_baseline.applicability: required`;
+- `widgets.yaml` exists after Baseline confirmation with registry SHA readback
+  when applicability is `required`;
 - data entities used by workflows exist in `data-model.md`;
 - workflow acceptance and failure paths map to Project Work acceptance ids;
 - implementation evidence does not claim completion beyond confirmed artifacts;

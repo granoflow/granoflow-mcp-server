@@ -51,6 +51,8 @@ reorganize and expand confirmed description content into execution details, but
 must preserve its facts and boundaries. A title, filename, path, or “已完成”
 label alone is only a lead; it is not enough evidence to invent a failure
 scenario, implementation detail, or acceptance result.
+After creation, every AI/MCP field mutation routes through
+`task-description-update-contract` to decide whether this summary remains true.
 
 Examples:
 
@@ -201,19 +203,16 @@ a persisted field, ask the user questions, or trigger full analysis.
 
 ## Deadline Selection For Milestone Tasks
 
-A task placed in a milestone must have `dueAt`. Read the selected milestone's
-deadline before writing, then preserve an explicit user date or infer the most
-appropriate date from the conversation. The usual choices are today for urgent
-or already-started work, tomorrow for a near-term next action without same-day
-urgency, and the milestone deadline when no earlier signal exists or the task is
-itself a milestone deliverable. Strong context may justify another date.
+A task placed in a milestone must have `dueAt`. Preserve an explicit
+fact-supported date when it does not exceed the selected milestone deadline.
+When omitted, the shared MCP task-write runtime reads and copies the milestone
+deadline before writing.
 
-Use the caller's local end of day for a date-only inference. Do not assign every
-task the same default, do not place a task after the milestone deadline, and do
-not silently clamp an explicit conflicting date. If the milestone deadline is
-missing, invalid, already passed, or earlier than the user's requested task
-date, leave the quick path and report the conflict so the user can change the
-task date, milestone deadline, or placement.
+Use the caller's local end of day for a date-only explicit inference. Do not
+place a task after the milestone deadline or silently clamp a conflicting date.
+If the milestone cannot be read, its deadline is missing or invalid, or the
+explicit task date is later, the runtime fails before write so the user can
+change the task date, milestone deadline, or placement.
 
 ## Pre-Write Recall Gate
 

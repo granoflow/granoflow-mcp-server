@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { installToolTestLifecycle, parseToolText, collectHandlers } from "./tools-test-harness.js";
+import {
+  collectHandlers,
+  installToolTestLifecycle,
+  parseToolText,
+  startTaskReadbackServer,
+  taskDescriptionImpactReview,
+} from "./tools-test-harness.js";
 
 installToolTestLifecycle();
 
 describe("tools-finish-review", () => {
   it("previews finishing a task as a multi-step dry-run", async () => {
+    await startTaskReadbackServer();
     const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_finish")?.({
@@ -23,6 +30,7 @@ describe("tools-finish-review", () => {
         },
       ],
       endedAt: "2026-07-02T10:15:00.000",
+      descriptionImpactReview: taskDescriptionImpactReview("completion_only"),
       dryRun: true,
     });
 
@@ -75,11 +83,13 @@ describe("tools-finish-review", () => {
   });
 
   it("requires project and milestone ids before importing review data", async () => {
+    await startTaskReadbackServer();
     const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_finish")?.({
       taskId: "task-1",
       taskReview: "Worth keeping.",
+      descriptionImpactReview: taskDescriptionImpactReview("completion_only"),
       dryRun: true,
     });
 

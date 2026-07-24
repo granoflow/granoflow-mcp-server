@@ -50,11 +50,12 @@ JARGON_MARKERS = (
     "test_harness",
 )
 
-# Integration layer: cross-module real I/O / shared session. UI human_path belongs
-# to granoflow-e2e-test-campaign, not this skill.
-VALID_FIDELITY = frozenset({"service_path"})
-WRONG_LAYER_FIDELITY = frozenset({"human_path", "hybrid", "route_fast"})
+# Integration may mount a real component and state owner around controlled
+# adapters. A real human_path still belongs to granoflow-e2e-test-campaign.
+VALID_FIDELITY = frozenset({"service_path", "component_path", "hybrid"})
+WRONG_LAYER_FIDELITY = frozenset({"human_path", "route_fast"})
 VALID_ENTRY = frozenset({"service_path", "ui_probe"})
+VALID_BACKGROUND_EVENT_EVIDENCE = frozenset({"state_change", "event_probe", "host_probe"})
 VALID_FAILURE_CLASS = frozenset(
     {
         "product_code",
@@ -361,6 +362,115 @@ def _required_special_requirement_ids(rows: list[dict[str, Any]]) -> list[str]:
     return required
 
 
+def _project_journey_steps(project_work: Any) -> dict[str, dict[str, Any]]:
+    if not isinstance(project_work, dict):
+        return {}
+    coverage = project_work.get("product_spec_coverage")
+    if not isinstance(coverage, dict):
+        return {}
+    traceability = coverage.get("journey_step_traceability")
+    if (
+        not isinstance(traceability, dict)
+        or traceability.get("schema") != "granoflow_journey_step_traceability_v1"
+    ):
+        return {}
+    steps: dict[str, dict[str, Any]] = {}
+    for journey in traceability.get("journeys", []):
+        if not isinstance(journey, dict):
+            continue
+        for step in journey.get("steps", []):
+            if isinstance(step, dict) and _nonempty_str(step.get("step_id")):
+                steps[str(step["step_id"])] = step
+    return steps
+
+
+def _project_background_activities(project_work: Any) -> dict[str, dict[str, Any]]:
+    if not isinstance(project_work, dict):
+        return {}
+    coverage = project_work.get("product_spec_coverage")
+    if not isinstance(coverage, dict):
+        return {}
+    contract = coverage.get("background_activity_control")
+    if (
+        not isinstance(contract, dict)
+        or contract.get("schema") != "granoflow_background_activity_control_v1"
+    ):
+        return {}
+    return {
+        str(row["activity_id"]): row
+        for row in contract.get("activities", [])
+        if isinstance(row, dict) and _nonempty_str(row.get("activity_id"))
+    }
+
+
+def _lint_post_update_sequence(
+    sequence: Any,
+    *,
+    prefix: str,
+    activity: dict[str, Any],
+) -> list[dict[str, str]]:
+    if not isinstance(sequence, dict):
+        return [
+            _err(
+                "post_update_interaction_test_missing",
+                f"{prefix}: start the activity, observe two background updates with a "
+                "user control action between them, then prove the action still holds",
+            )
+        ]
+    errors: list[dict[str, str]] = []
+    for field in ("first_background_event", "second_background_event"):
+        event = sequence.get(field)
+        if (
+            not isinstance(event, dict)
+            or not _nonempty_str(event.get("signal"))
+            or event.get("evidence_kind") not in VALID_BACKGROUND_EVENT_EVIDENCE
+            or not _nonempty_str(event.get("evidence_ref"))
+        ):
+            errors.append(
+                _err(
+                    "background_event_evidence_missing",
+                    f"{prefix}.{field}: name an observed state/event signal and its "
+                    "evidence; a fixed wait is not background-event evidence",
+                )
+            )
+    action = sequence.get("protected_user_action")
+    controls = set(_as_str_list(activity.get("controls_that_must_keep_working")) or [])
+    if (
+        not isinstance(action, dict)
+        or action.get("control_ref") not in controls
+        or not _nonempty_str(action.get("evidence_ref"))
+        or not _nonempty_str(sequence.get("user_action_preserved"))
+    ):
+        errors.append(
+            _err(
+                "post_update_interaction_test_missing",
+                f"{prefix}: operate one declared protected control after the first "
+                "update and prove the next update did not undo it",
+            )
+        )
+    exit_actions = set(_as_str_list(activity.get("ways_to_exit")) or [])
+    if (
+        not _nonempty_str(sequence.get("exit_action"))
+        or sequence.get("exit_action") not in exit_actions
+        or not _nonempty_str(sequence.get("activity_ended"))
+    ):
+        errors.append(
+            _err(
+                "activity_exit_not_proven",
+                f"{prefix}: invoke a declared exit action and provide observable proof "
+                "that the activity stopped",
+            )
+        )
+    if not _nonempty_str(sequence.get("activity_started")):
+        errors.append(
+            _err(
+                "post_update_interaction_test_missing",
+                f"{prefix}.activity_started must identify observable start evidence",
+            )
+        )
+    return errors
+
+
 def lint_suite_plan(
     data: Any,
     *,
@@ -477,8 +587,8 @@ def lint_suite_plan(
         errors.append(
             _err(
                 "integration_campaign_fidelity_wrong_layer",
-                "human_path|hybrid|route_fast belong to e2e_campaign; "
-                "integration suite must use interaction_fidelity=service_path",
+                "human_path|route_fast belong to e2e_campaign; integration suite must "
+                "use service_path|component_path|hybrid",
             )
         )
     elif fidelity not in VALID_FIDELITY:
@@ -510,6 +620,38 @@ def lint_suite_plan(
 
     case_by_id: dict[str, dict[str, Any]] = {}
     produces_index: dict[str, list[str]] = {}
+    project_steps = _project_journey_steps(project_work)
+    claimed_step_ids: set[str] = set()
+    required_integration_steps = {
+        step_id
+        for step_id, step in project_steps.items()
+        if "integration" in (_as_str_list(step.get("required_test_layers")) or [])
+    }
+    background_activities = _project_background_activities(project_work)
+    required_background_activities = {
+        activity_id
+        for activity_id, activity in background_activities.items()
+        if "integration" in (_as_str_list(activity.get("required_test_layers")) or [])
+    }
+    claimed_background_activities: set[str] = set()
+    if required_integration_steps and data.get("test_route_traceability_loaded") is not True:
+        errors.append(
+            _err(
+                "integration_campaign_test_routes_unloaded",
+                "test_route_traceability_loaded must be true for traced Project Work",
+            )
+        )
+    if (
+        required_background_activities
+        and data.get("background_activity_control_loaded") is not True
+    ):
+        errors.append(
+            _err(
+                "component_path_required",
+                "background_activity_control_loaded must be true before testing a "
+                "visible background activity with its real component and state owner",
+            )
+        )
     for index, case in enumerate(cases):
         prefix = f"cases[{index}]"
         if not isinstance(case, dict):
@@ -572,6 +714,79 @@ def lint_suite_plan(
                     f"{prefix}: ui_probe requires ui_probe_justified",
                 )
             )
+        activity_ids = _as_str_list(case.get("background_activity_ids"))
+        if required_background_activities and activity_ids is None:
+            errors.append(
+                _err(
+                    "component_path_required",
+                    f"{prefix}.background_activity_ids must be a string list",
+                )
+            )
+            activity_ids = []
+        for activity_id in activity_ids or []:
+            activity = background_activities.get(activity_id)
+            if activity is None:
+                errors.append(
+                    _err(
+                        "component_path_required",
+                        f"{prefix}: unknown background activity {activity_id}",
+                    )
+                )
+                continue
+            claimed_background_activities.add(activity_id)
+            if fidelity not in {"component_path", "hybrid"} or entry != "ui_probe":
+                errors.append(
+                    _err(
+                        "component_path_required",
+                        f"{prefix}: background activity {activity_id} must mount the "
+                        "real component/state owner with controlled external events",
+                    )
+                )
+            errors.extend(
+                _lint_post_update_sequence(
+                    case.get("post_update_sequence"),
+                    prefix=prefix,
+                    activity=activity,
+                )
+            )
+        if required_integration_steps:
+            step_ids = _as_str_list(case.get("journey_step_ids"))
+            if step_ids is None:
+                errors.append(
+                    _err(
+                        "integration_campaign_step_traceability_missing",
+                        f"{prefix}.journey_step_ids must be a string list",
+                    )
+                )
+                step_ids = []
+            elif not step_ids and not _nonempty_str(case.get("supporting_case_reason")):
+                errors.append(
+                    _err(
+                        "integration_campaign_step_traceability_missing",
+                        f"{prefix}: empty journey_step_ids requires supporting_case_reason",
+                    )
+                )
+            else:
+                claimed_step_ids.update(step_ids)
+                for step_id in step_ids:
+                    step = project_steps.get(step_id)
+                    if step is None:
+                        errors.append(
+                            _err(
+                                "integration_campaign_step_traceability_missing",
+                                f"{prefix}: unknown journey step {step_id}",
+                            )
+                        )
+                        continue
+                    required_layers = _as_str_list(step.get("required_test_layers")) or []
+                    if "integration" not in required_layers:
+                        errors.append(
+                            _err(
+                                "integration_campaign_human_path_overclaim",
+                                f"{prefix}: service path cannot claim non-integration "
+                                f"journey step {step_id}",
+                            )
+                        )
 
     order = data.get("order")
     if not isinstance(order, list) or not all(isinstance(x, str) for x in order):
@@ -609,6 +824,27 @@ def lint_suite_plan(
                             f"{case_id} requires {token} but no producer runs earlier",
                         )
                     )
+
+    if required_integration_steps:
+        missing_steps = sorted(required_integration_steps - claimed_step_ids)
+        if missing_steps:
+            errors.append(
+                _err(
+                    "integration_campaign_step_traceability_missing",
+                    "integration-required journey steps missing from cases: "
+                    + ", ".join(missing_steps),
+                )
+            )
+
+    missing_activities = sorted(required_background_activities - claimed_background_activities)
+    if missing_activities:
+        errors.append(
+            _err(
+                "component_path_required",
+                "integration-required background activities missing from component "
+                "cases: " + ", ".join(missing_activities),
+            )
+        )
 
     ok = not errors
     return {
@@ -788,8 +1024,8 @@ def lint_campaign_state(data: Any) -> dict[str, Any]:
         errors.append(
             _err(
                 "integration_campaign_fidelity_wrong_layer",
-                "campaign state interaction_fidelity must be service_path for "
-                "integration_campaign (UI human_path is e2e_campaign)",
+                "campaign state interaction_fidelity must be "
+                "service_path|component_path|hybrid for integration_campaign",
             )
         )
     elif fidelity not in VALID_FIDELITY:

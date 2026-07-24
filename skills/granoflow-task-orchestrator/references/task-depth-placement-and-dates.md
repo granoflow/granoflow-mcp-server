@@ -63,7 +63,8 @@ Apply the first supported fact:
 2. real dependency date;
 3. today for active blocking work already being executed;
 4. tomorrow for one concrete near action without same-day urgency;
-5. active milestone deadline for a milestone deliverable;
+5. active milestone deadline, inherited by the shared MCP task-write runtime
+   when no earlier fact is supplied;
 6. no `dueAt` when no timing fact exists.
 
 Never infer urgency from the surrounding task when the new item is merely a

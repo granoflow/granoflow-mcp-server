@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import unittest
 from pathlib import Path
 
@@ -11,6 +12,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = (
     ROOT / "skills" / "granoflow-e2e-test-campaign" / "scripts" / "lint_e2e_campaign_artifacts.py"
 )
+GRANOREADER_FIXTURE = ROOT / "tests/python/fixtures/granoreader_requirement_integrity.json"
+GRANOREADER_HUMAN_PATH_FIXTURE = ROOT / "tests/python/fixtures/granoreader_human_path_e2e.json"
 
 
 def load_module():
@@ -126,10 +129,7 @@ def ok_suite_plan() -> dict:
             {
                 "id": "checkout",
                 "path": "e2e/checkout_test.dart",
-                "entry_style": "route_shortcut",
-                "route_shortcut_justified": (
-                    "deep link to checkout after session seeded in prior case"
-                ),
+                "entry_style": "human_path",
             },
         ],
         "order": ["launch_home", "checkout"],
@@ -140,6 +140,234 @@ def ok_suite_plan() -> dict:
     }
     plan.update(ok_acceptance_outcomes())
     return plan
+
+
+def traced_project_work(*, os_picker: bool = False) -> dict:
+    home_step = {
+        "step_id": "J-home-entry",
+        "sequence": 1,
+        "step_type": "entry",
+        "required_test_layers": ["e2e"],
+        "interaction_surface": "in_app_ui",
+        "platform_boundary": "none",
+    }
+    if os_picker:
+        home_step.update(
+            {
+                "interaction_surface": "os_chrome",
+                "platform_boundary": "plugin",
+            }
+        )
+    return {
+        "product": {"primary_user_journeys": ["J-home", "J-checkout"]},
+        "product_spec_coverage": {
+            "journey_coverage": [
+                {"journey_id": "J-home", "disposition": "adopted"},
+                {"journey_id": "J-checkout", "disposition": "adopted"},
+            ],
+            "journey_step_traceability": {
+                "schema": "granoflow_journey_step_traceability_v1",
+                "journeys": [
+                    {"journey_id": "J-home", "steps": [home_step]},
+                    {
+                        "journey_id": "J-checkout",
+                        "steps": [
+                            {
+                                "step_id": "J-checkout-action",
+                                "sequence": 1,
+                                "step_type": "action",
+                                "required_test_layers": ["e2e"],
+                                "interaction_surface": "in_app_ui",
+                                "platform_boundary": "none",
+                            }
+                        ],
+                    },
+                ],
+            },
+        },
+    }
+
+
+def background_project_work() -> dict:
+    project = traced_project_work()
+    project["product_spec_coverage"]["background_activity_control"] = {
+        "schema": "granoflow_background_activity_control_v1",
+        "activities": [
+            {
+                "activity_id": "BA-refresh",
+                "controls_that_must_keep_working": ["details_panel", "stop"],
+                "ways_to_exit": ["stop"],
+                "required_test_layers": ["integration", "e2e"],
+            }
+        ],
+    }
+    return project
+
+
+def post_update_sequence() -> dict:
+    return {
+        "activity_started": "visible activity indicator became active",
+        "first_background_event": {
+            "signal": "visible progress advanced",
+            "evidence_kind": "state_change",
+            "evidence_ref": "screen:first-progress",
+        },
+        "protected_user_action": {
+            "control_ref": "details_panel",
+            "evidence_ref": "screen:details-open",
+        },
+        "second_background_event": {
+            "signal": "visible progress advanced again",
+            "evidence_kind": "event_probe",
+            "evidence_ref": "screen:second-progress",
+        },
+        "user_action_preserved": "details panel remains open and operable",
+        "exit_action": "stop",
+        "activity_ended": "indicator became idle and no later update arrived",
+    }
+
+
+def attach_traced_routes(plan: dict) -> None:
+    plan["test_route_traceability_loaded"] = True
+    plan["e2e_scope"] = "full_project_e2e"
+    plan["cases"][0].update(
+        {
+            "journey_step_ids": ["J-home-entry"],
+            "entry_ref": "app launch and home entry",
+            "observable_result": "home is visible",
+        }
+    )
+    plan["cases"][1].update(
+        {
+            "journey_step_ids": ["J-checkout-action"],
+            "entry_ref": "checkout entry",
+            "observable_result": "checkout result is visible",
+        }
+    )
+    plan["coverage_matrix"]["required_journeys"][0]["step_ids"] = ["J-home-entry"]
+    plan["coverage_matrix"]["required_journeys"][1]["step_ids"] = ["J-checkout-action"]
+    plan["human_path_execution"] = {
+        "schema": "granoflow_human_path_execution_v1",
+        "rows": [
+            {
+                "sequence": 1,
+                "case_id": "launch_home",
+                "journey_id": "J-home",
+                "step_id": "J-home-entry",
+                "navigation_method": "app_launch",
+                "control_ref": None,
+                "action": "launch",
+                "before_observation": "application is not running",
+                "after_observation": "home window is visible",
+                "evidence_kind": "driver_event",
+                "evidence_ref": "driver://app-launch",
+            },
+            {
+                "sequence": 2,
+                "case_id": "checkout",
+                "journey_id": "J-checkout",
+                "step_id": "J-checkout-action",
+                "navigation_method": "visible_control",
+                "control_ref": "checkout button",
+                "action": "click",
+                "before_observation": "cart is visible",
+                "after_observation": "checkout result is visible",
+                "evidence_kind": "driver_event",
+                "evidence_ref": "driver://checkout-click",
+            },
+        ],
+    }
+
+
+def granoreader_human_path_plan() -> tuple[dict, dict]:
+    fixture = json.loads(GRANOREADER_HUMAN_PATH_FIXTURE.read_text(encoding="utf-8"))
+    journey_id = fixture["journey_id"]
+    case_id = fixture["case_id"]
+    steps = [{**step, "required_test_layers": ["e2e"]} for step in fixture["steps"]]
+    project = {
+        "product": {"primary_user_journeys": [journey_id]},
+        "product_spec_coverage": {
+            "journey_coverage": [{"journey_id": journey_id, "disposition": "adopted"}],
+            "journey_step_traceability": {
+                "schema": "granoflow_journey_step_traceability_v1",
+                "journeys": [{"journey_id": journey_id, "steps": steps}],
+            },
+        },
+    }
+    step_ids = [step["step_id"] for step in steps]
+    plan = {
+        "schema": "granoflow_e2e_suite_plan_v1",
+        "contract_loaded": True,
+        "orchestration_loaded": True,
+        "coverage_loaded": True,
+        "test_route_traceability_loaded": True,
+        "e2e_scope": "full_project_e2e",
+        "test_layer": "e2e",
+        "interaction_fidelity": "human_path",
+        "display_mode": "visible_window",
+        "run_command": "flutter drive -d macos --target=integration_test/import_test.dart",
+        "acceptance_outcomes_loaded": True,
+        "user_path_claim": "full_user_path",
+        "acceptance_outcomes": [
+            {
+                "id": "AO-import",
+                "statement": "user imports a folder through the native picker",
+                "layer": "ui_human_path",
+                "evidence_kind": "real_side_effect",
+                "status": "closed",
+                "case_ids": [case_id],
+            }
+        ],
+        "cases": [
+            {
+                "id": case_id,
+                "path": "integration_test/bookshelf_import_test.dart",
+                "entry_style": "human_path",
+                "journey_step_ids": step_ids,
+                "entry_ref": "launch app and open bookshelf",
+                "observable_result": "imported book is visible on shelf",
+            }
+        ],
+        "order": [case_id],
+        "checkpoints": [{"step_id": "bookshelf_after_import", "capture": "screenshot"}],
+        "coverage_matrix": {
+            "schema": "granoflow_e2e_coverage_matrix_v1",
+            "sources_loaded": [
+                "project_work.product.primary_user_journeys",
+                "project_work.acceptance.conditions",
+            ],
+            "required_journeys": [
+                {
+                    "journey_id": journey_id,
+                    "title": "bookshelf folder import",
+                    "acceptance_ids": ["AO-import"],
+                    "step_ids": step_ids,
+                    "case_ids": [case_id],
+                    "checkpoint_ids": ["bookshelf_after_import"],
+                    "status": "covered",
+                    "interaction_surface": "mixed",
+                    "os_chrome_verification": "real_interaction",
+                    "residual_code": None,
+                }
+            ],
+            "authoring": {
+                "tests_written_or_updated": True,
+                "paths": ["integration_test/bookshelf_import_test.dart"],
+            },
+        },
+        "human_path_execution": {
+            "schema": "granoflow_human_path_execution_v1",
+            "rows": [
+                {
+                    **row,
+                    "case_id": case_id,
+                    "journey_id": journey_id,
+                }
+                for row in fixture["interactions"]
+            ],
+        },
+    }
+    return plan, project
 
 
 def ok_campaign_state() -> dict:
@@ -312,13 +540,272 @@ class LintSuitePlanTests(unittest.TestCase):
         result = MOD.lint_suite_plan(ok_suite_plan())
         self.assertTrue(result["ok"], result)
 
+    def test_traced_full_project_e2e_preserves_visible_steps(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertTrue(result["ok"], result)
+
+    def test_granoreader_native_folder_import_full_human_path_passes(self) -> None:
+        plan, project = granoreader_human_path_plan()
+        result = MOD.lint_suite_plan(plan, project_work=project)
+        self.assertTrue(result["ok"], result)
+
+    def test_injected_picker_cannot_close_full_project_os_step(self) -> None:
+        plan, project = granoreader_human_path_plan()
+        picker = plan["human_path_execution"]["rows"][2]
+        picker["navigation_method"] = "state_injection"
+        picker["evidence_kind"] = "driver_event"
+        picker["evidence_ref"] = "driver://injected-folder-path"
+        result = MOD.lint_suite_plan(plan, project_work=project)
+        self.assertIn(
+            "e2e_campaign_forbidden_navigation_method",
+            {error["code"] for error in result["errors"]},
+        )
+
+    def test_background_activity_real_user_sequence_ok(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["background_activity_control_loaded"] = True
+        for case in plan["cases"]:
+            case["background_activity_ids"] = []
+        plan["cases"][0]["background_activity_ids"] = ["BA-refresh"]
+        plan["cases"][0]["post_update_sequence"] = post_update_sequence()
+        result = MOD.lint_suite_plan(plan, project_work=background_project_work())
+        self.assertTrue(result["ok"], result)
+
+    def test_background_activity_route_shortcut_fails(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["background_activity_control_loaded"] = True
+        for case in plan["cases"]:
+            case["background_activity_ids"] = []
+        activity_case = plan["cases"][1]
+        activity_case["entry_style"] = "route_shortcut"
+        activity_case["route_shortcut_justified"] = "direct route to activity"
+        activity_case["bypassed_step_ids"] = []
+        activity_case["background_activity_ids"] = ["BA-refresh"]
+        activity_case["post_update_sequence"] = post_update_sequence()
+        result = MOD.lint_suite_plan(plan, project_work=background_project_work())
+        self.assertIn(
+            "post_update_interaction_test_missing",
+            {e["code"] for e in result["errors"]},
+        )
+
+    def test_fixed_wait_is_not_background_event_evidence(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["background_activity_control_loaded"] = True
+        for case in plan["cases"]:
+            case["background_activity_ids"] = []
+        plan["cases"][0]["background_activity_ids"] = ["BA-refresh"]
+        plan["cases"][0]["post_update_sequence"] = post_update_sequence()
+        plan["cases"][0]["post_update_sequence"]["second_background_event"]["evidence_kind"] = (
+            "fixed_wait"
+        )
+        result = MOD.lint_suite_plan(plan, project_work=background_project_work())
+        self.assertIn(
+            "background_event_evidence_missing",
+            {e["code"] for e in result["errors"]},
+        )
+
+    def test_activity_exit_callback_without_end_proof_fails(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["background_activity_control_loaded"] = True
+        for case in plan["cases"]:
+            case["background_activity_ids"] = []
+        plan["cases"][0]["background_activity_ids"] = ["BA-refresh"]
+        plan["cases"][0]["post_update_sequence"] = post_update_sequence()
+        plan["cases"][0]["post_update_sequence"]["activity_ended"] = ""
+        result = MOD.lint_suite_plan(plan, project_work=background_project_work())
+        self.assertIn("activity_exit_not_proven", {e["code"] for e in result["errors"]})
+
+    def test_feature_e2e_cannot_claim_full_user_path(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["e2e_scope"] = "feature_e2e"
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertIn(
+            "e2e_campaign_scope_overclaim",
+            {error["code"] for error in result["errors"]},
+        )
+
+    def test_encryption_only_e2e_cannot_claim_full_project(self) -> None:
+        fixture = json.loads(GRANOREADER_FIXTURE.read_text(encoding="utf-8"))
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["cases"][1]["journey_step_ids"] = ["J-home-entry"]
+        plan["coverage_matrix"]["required_journeys"][1]["status"] = "deferred_manual"
+        plan["coverage_matrix"]["required_journeys"][1]["residual_code"] = (
+            "e2e_campaign_manual_test_required"
+        )
+        plan["coverage_matrix"]["required_journeys"][1]["feature"] = "结账"
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        codes = {error["code"] for error in result["errors"]}
+        self.assertIn("e2e_campaign_step_traceability_missing", codes)
+        self.assertIn(fixture["expected_fail_codes"][3], codes)
+
+    def test_os_picker_requires_real_os_chrome_coverage(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        result = MOD.lint_suite_plan(
+            plan,
+            project_work=traced_project_work(os_picker=True),
+        )
+        self.assertIn(
+            "e2e_campaign_os_chrome_unverified",
+            {error["code"] for error in result["errors"]},
+        )
+
     def test_route_shortcut_without_justification_fails(self) -> None:
         plan = ok_suite_plan()
-        plan["cases"][1].pop("route_shortcut_justified")
+        plan["cases"][1]["entry_style"] = "route_shortcut"
+        plan["cases"][1]["bypassed_step_ids"] = ["J-checkout-entry"]
         result = MOD.lint_suite_plan(plan)
         self.assertFalse(result["ok"])
         codes = {e["code"] for e in result["errors"]}
         self.assertIn("e2e_campaign_route_shortcut_unjustified", codes)
+
+    def test_full_project_rejects_hybrid_and_route_fast(self) -> None:
+        for fidelity in ("hybrid", "route_fast"):
+            with self.subTest(fidelity=fidelity):
+                plan = ok_suite_plan()
+                attach_traced_routes(plan)
+                plan["interaction_fidelity"] = fidelity
+                result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+                self.assertIn(
+                    "e2e_campaign_full_project_requires_human_path",
+                    {error["code"] for error in result["errors"]},
+                )
+
+    def test_direct_url_and_screenshot_cannot_fake_full_project_green(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        row = plan["human_path_execution"]["rows"][1]
+        row["navigation_method"] = "direct_url"
+        row["evidence_kind"] = "screenshot"
+        row["evidence_ref"] = "temp/e2e/checkout.png"
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        codes = {error["code"] for error in result["errors"]}
+        self.assertIn("e2e_campaign_forbidden_navigation_method", codes)
+        self.assertIn("e2e_campaign_human_interaction_evidence_missing", codes)
+
+    def test_full_project_shortcut_cannot_claim_journey_or_acceptance(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        case = plan["cases"][1]
+        case["entry_style"] = "route_shortcut"
+        case["route_shortcut_justified"] = "deep link to checkout"
+        case["bypassed_step_ids"] = []
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        codes = {error["code"] for error in result["errors"]}
+        self.assertIn("e2e_campaign_route_shortcut_claims_user_path", codes)
+
+    def test_full_project_requires_every_step_interaction_evidence(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["human_path_execution"]["rows"].pop()
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertIn(
+            "e2e_campaign_human_interaction_evidence_missing",
+            {error["code"] for error in result["errors"]},
+        )
+
+    def test_full_project_rejects_interaction_order_mismatch(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["human_path_execution"]["rows"][0]["sequence"] = 2
+        plan["human_path_execution"]["rows"][1]["sequence"] = 1
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertIn(
+            "e2e_campaign_interaction_order_mismatch",
+            {error["code"] for error in result["errors"]},
+        )
+
+    def test_full_project_support_shortcut_can_only_prepare_non_product_state(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["cases"].append(
+            {
+                "id": "reset_environment",
+                "path": "e2e/support/reset_environment.dart",
+                "entry_style": "route_shortcut",
+                "route_shortcut_justified": "reset test-owned fixture before app launch",
+                "bypassed_step_ids": [],
+                "journey_step_ids": [],
+                "supporting_case_reason": "non-product environment reset",
+            }
+        )
+        plan["order"] = ["reset_environment", "launch_home", "checkout"]
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertTrue(result["ok"], result)
+
+    def test_feature_deep_link_may_cover_only_post_entry_steps(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["e2e_scope"] = "feature_e2e"
+        plan["user_path_claim"] = "service_layers_only"
+        plan["cases"] = [plan["cases"][1]]
+        plan["order"] = ["checkout"]
+        plan["checkpoints"] = [plan["checkpoints"][1]]
+        case = plan["cases"][0]
+        case["entry_style"] = "route_shortcut"
+        case["route_shortcut_justified"] = "deep link to the feature under test"
+        case["bypassed_step_ids"] = ["J-home-entry"]
+        home_coverage = plan["coverage_matrix"]["required_journeys"][0]
+        home_coverage.update(
+            {
+                "case_ids": [],
+                "checkpoint_ids": [],
+                "step_ids": [],
+                "status": "out_of_scope",
+                "residual_code": "feature_shortcut_bypass",
+            }
+        )
+        home_acceptance = plan["acceptance_outcomes"][0]
+        home_acceptance.update(
+            {
+                "status": "residual",
+                "residual_code": "feature_shortcut_bypass",
+                "case_ids": [],
+            }
+        )
+        plan.pop("human_path_execution")
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertTrue(result["ok"], result)
+
+    def test_feature_shortcut_must_name_real_project_steps(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["e2e_scope"] = "feature_e2e"
+        plan["user_path_claim"] = "service_layers_only"
+        case = plan["cases"][1]
+        case["entry_style"] = "route_shortcut"
+        case["route_shortcut_justified"] = "deep link to the feature under test"
+        case["bypassed_step_ids"] = ["J-does-not-exist"]
+        plan.pop("human_path_execution")
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertIn(
+            "e2e_campaign_shortcut_overclaim",
+            {error["code"] for error in result["errors"]},
+        )
+
+    def test_feature_shortcut_cannot_mark_bypassed_step_covered(self) -> None:
+        plan = ok_suite_plan()
+        attach_traced_routes(plan)
+        plan["e2e_scope"] = "feature_e2e"
+        plan["user_path_claim"] = "service_layers_only"
+        case = plan["cases"][1]
+        case["entry_style"] = "route_shortcut"
+        case["route_shortcut_justified"] = "deep link to checkout"
+        case["bypassed_step_ids"] = ["J-home-entry"]
+        plan.pop("human_path_execution")
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertIn(
+            "e2e_campaign_visible_step_bypassed",
+            {error["code"] for error in result["errors"]},
+        )
 
     def test_coverage_unloaded_fails(self) -> None:
         plan = ok_suite_plan()
@@ -393,6 +880,12 @@ class LintCampaignStateTests(unittest.TestCase):
         self.assertFalse(result["ok"])
         codes = {e["code"] for e in result["errors"]}
         self.assertIn("e2e_campaign_integration_gate_incomplete", codes)
+
+    def test_integration_gate_waived_single_milestone_ok(self) -> None:
+        state = ok_campaign_state()
+        state["integration_gate"] = "waived_single_milestone"
+        result = MOD.lint_campaign_state(state)
+        self.assertTrue(result["ok"], result)
 
     def test_vision_skipped_needs_residual(self) -> None:
         state = ok_campaign_state()
@@ -790,12 +1283,47 @@ class LintClosingSummaryTests(unittest.TestCase):
 
 
 def ok_host_matrix(*hosts: dict) -> dict:
+    normalized_hosts = []
+    for host in hosts:
+        normalized_hosts.append(
+            {
+                "provider": (
+                    "current_platform"
+                    if host.get("kind") in {"desktop", "browser"}
+                    else "official_virtual"
+                ),
+                "e2e_capable": host.get("status") == "available",
+                **host,
+            }
+        )
+    current = next(
+        (host for host in normalized_hosts if host["provider"] == "current_platform"),
+        None,
+    )
+    fallback = next(
+        (host for host in normalized_hosts if host.get("status") == "available"),
+        None,
+    )
+    selected = current or fallback
+    source = "current_platform_default" if current else "ai_fallback"
+    selected_ids = [selected["id"]] if selected else []
     return {
         "schema": "granoflow_verification_host_matrix_v1",
         "derived_from": ["scope.supported_platforms"],
         "concurrency": "parallel_when_capable",
         "primary_form_factors": [],
-        "hosts": list(hosts),
+        "project_platforms": sorted(
+            {platform for host in normalized_hosts for platform in host.get("platforms", [])}
+        ),
+        "hosts": normalized_hosts,
+        "selection": {
+            "mode": "interactive",
+            "source": source,
+            "current_platform": "macos",
+            "current_host_id": current["id"] if current else "macos_desktop",
+            "project_includes_current_platform": bool(current),
+            "selected_host_ids": selected_ids,
+        },
         "assignment_policy": "journey_at_least_one_capable_host",
     }
 
@@ -809,9 +1337,82 @@ class HostMatrixAndShipBarTests(unittest.TestCase):
         self.assertNotIn("simulator", kinds)
         self.assertNotIn("emulator", kinds)
 
-    def test_l2_multi_platform_requires_desktop_sim_emu(self) -> None:
+    def test_l2_multi_platform_lists_candidate_kinds_without_making_them_mandatory(self) -> None:
         kinds = MOD.derive_required_host_kinds(["ios", "android", "macos"])
         self.assertEqual(kinds, {"simulator", "emulator", "desktop"})
+
+    def test_virtual_capability_does_not_expand_default_test_scope(self) -> None:
+        matrix = ok_host_matrix(
+            {
+                "id": "desktop_native",
+                "kind": "desktop",
+                "platforms": ["macos"],
+                "status": "available",
+            },
+            {
+                "id": "ios_simulator",
+                "kind": "simulator",
+                "platforms": ["ios"],
+                "status": "available",
+            },
+        )
+        result = MOD.lint_host_matrix(matrix, platforms=["macos", "ios"])
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(
+            matrix["selection"]["selected_host_ids"],
+            ["desktop_native"],
+        )
+
+    def test_unattended_mobile_only_allows_one_ai_selected_virtual_host(self) -> None:
+        matrix = ok_host_matrix(
+            {
+                "id": "ios_simulator",
+                "kind": "simulator",
+                "platforms": ["ios"],
+                "status": "available",
+            }
+        )
+        matrix["selection"] = {
+            "mode": "unattended",
+            "source": "ai_fallback",
+            "current_platform": "macos",
+            "current_host_id": "macos_desktop",
+            "project_includes_current_platform": False,
+            "selected_host_ids": ["ios_simulator"],
+        }
+        result = MOD.lint_host_matrix(matrix, platforms=["ios"])
+        self.assertTrue(result["ok"], result)
+
+    def test_nonselected_platform_needs_acknowledged_untested_handoff(self) -> None:
+        matrix = ok_host_matrix(
+            {
+                "id": "desktop_native",
+                "kind": "desktop",
+                "platforms": ["macos"],
+                "status": "available",
+            },
+            {
+                "id": "ios_simulator",
+                "kind": "simulator",
+                "platforms": ["ios"],
+                "status": "available",
+            },
+        )
+        errors = MOD.lint_external_device_handoffs(matrix, [], outcome="green")
+        self.assertIn("external_device_handoff_missing", {row["code"] for row in errors})
+        errors = MOD.lint_external_device_handoffs(
+            matrix,
+            [
+                {
+                    "platform": "ios",
+                    "tested": False,
+                    "handoff": "user_external_device_test",
+                    "acknowledgement": "acknowledged",
+                }
+            ],
+            outcome="green",
+        )
+        self.assertEqual(errors, [])
 
     def test_l9_omitted_ship_bar_defaults_market_smoke(self) -> None:
         self.assertEqual(MOD.normalize_ship_bar(None), "market_smoke")
@@ -890,7 +1491,7 @@ class HostMatrixAndShipBarTests(unittest.TestCase):
         result = MOD.lint_suite_plan(plan)
         self.assertTrue(result["ok"], result)
 
-    def test_l6_unavailable_host_without_residual_fails(self) -> None:
+    def test_l6_unavailable_capability_only_host_needs_no_residual(self) -> None:
         matrix = ok_host_matrix(
             {
                 "id": "ios_simulator",
@@ -900,36 +1501,9 @@ class HostMatrixAndShipBarTests(unittest.TestCase):
             }
         )
         errors = MOD.lint_host_availability_residuals(matrix, residuals=[], outcome=None)
-        codes = {e["code"] for e in errors}
-        self.assertIn("e2e_campaign_host_unavailable", codes)
+        self.assertEqual(errors, [])
 
-    def test_l7_unavailable_host_with_residual_allows_green_with_residuals(self) -> None:
-        summary = ok_closing_summary()
-        summary["outcome"] = "green_with_residuals"
-        summary["host_matrix"] = ok_host_matrix(
-            {
-                "id": "ios_simulator",
-                "kind": "simulator",
-                "platforms": ["ios"],
-                "status": "unavailable",
-            }
-        )
-        summary["residuals"] = [
-            {
-                "code": "e2e_campaign_host_unavailable",
-                "detail": "iOS simulator not installed",
-            }
-        ]
-        summary["plain"]["leftovers"] = "本机没有 iOS 模拟器，相关检查先记下，其余主流程已通过。"
-        # Keep markdown leftovers section consistent enough for residual unexplained gate
-        summary["markdown_body"] = summary["markdown_body"].replace(
-            "没有未完成事项。",
-            "本机没有 iOS 模拟器，相关检查先记下。",
-        )
-        result = MOD.lint_closing_summary(summary)
-        self.assertTrue(result["ok"], result)
-
-    def test_l6_unavailable_host_green_outcome_fails(self) -> None:
+    def test_l7_unavailable_capability_only_host_allows_green(self) -> None:
         summary = ok_closing_summary()
         summary["outcome"] = "green"
         summary["host_matrix"] = ok_host_matrix(
@@ -940,16 +1514,33 @@ class HostMatrixAndShipBarTests(unittest.TestCase):
                 "status": "unavailable",
             }
         )
-        summary["residuals"] = [{"code": "e2e_campaign_host_unavailable", "detail": "missing sim"}]
-        summary["plain"]["leftovers"] = "缺少 iOS 模拟器。"
-        summary["markdown_body"] = summary["markdown_body"].replace(
-            "没有未完成事项。",
-            "缺少 iOS 模拟器。",
-        )
+        summary["external_device_handoffs"] = [
+            {
+                "platform": "ios",
+                "tested": False,
+                "handoff": "user_external_device_test",
+                "acknowledgement": "acknowledged",
+            }
+        ]
         result = MOD.lint_closing_summary(summary)
+        self.assertTrue(result["ok"], result)
+
+    def test_selected_host_must_be_available(self) -> None:
+        summary = ok_closing_summary()
+        summary["outcome"] = "green"
+        summary["host_matrix"] = ok_host_matrix(
+            {
+                "id": "ios_simulator",
+                "kind": "simulator",
+                "platforms": ["ios"],
+                "status": "unavailable",
+            }
+        )
+        summary["host_matrix"]["selection"]["selected_host_ids"] = ["ios_simulator"]
+        result = MOD.lint_host_matrix(summary["host_matrix"], platforms=["ios"])
         self.assertFalse(result["ok"])
         codes = {e["code"] for e in result["errors"]}
-        self.assertIn("e2e_campaign_host_unavailable", codes)
+        self.assertIn("verification_host_selection_unavailable", codes)
 
     def test_platforms_imply_matrix_missing_on_suite(self) -> None:
         plan = ok_suite_plan()

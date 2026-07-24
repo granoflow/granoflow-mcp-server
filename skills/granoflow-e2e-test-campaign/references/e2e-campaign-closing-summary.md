@@ -48,6 +48,12 @@ Also follow `project-interaction-style.md`: durable records are
 5. **Embed or reference evidence pack** (`evidence_pack` or `evidence_pack_ref`).
 6. **`plain.next_step`** may suggest 「项目收尾」 only after
    `user_final_acceptance: true`.
+   6b. **No bare green with open hard coverage.** If the coverage matrix still has
+   unfinished **hard acceptance rows** (see `e2e-user-flow-coverage`) or
+   `prototype_task_reviews.ai_loop_status` is not `complete` /
+   `not_applicable`, do **not** report bare `green` and do **not** suggest
+   project close. Use `green_with_residuals` / blocked outcomes with leftovers,
+   or keep the campaign incomplete.
 7. **Manual-test leftovers.** When any residual uses
    `e2e_campaign_manual_test_required` / `e2e_campaign_automation_too_hard`
    (or short aliases), `outcome` **Must** be `green_with_residuals` (or
@@ -56,6 +62,13 @@ Also follow `project-interaction-style.md`: durable records are
    that named feature. Silent skips are forbidden. Do **not** use manual
    leftovers to waive Phase B AI fails—those go through remediation + next
    round.
+
+`prototype_task_reviews` proves prototype fidelity; it is not the retrospective
+Task Review field. When E2E remediation exposes a material wrong assumption,
+failed method, or reusable correction, append it through the agent workflow's
+`implementation-learning-ledger` reference and revise the affected completed
+task's Deferred Task Review after green. A clean first-pass E2E run creates no
+retrospective requirement.
 
 ## Required Artifact
 

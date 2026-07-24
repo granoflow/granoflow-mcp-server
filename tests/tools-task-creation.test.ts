@@ -35,6 +35,27 @@ describe("tools-task-creation", () => {
   });
 
   it("previews structured task creation through the Local HTTP API", async () => {
+    const port = await startServer((request, response) => {
+      response.setHeader("content-type", "application/json");
+      if (request.url === "/v1/milestones/milestone-1") {
+        response.end(
+          JSON.stringify({
+            ok: true,
+            data: {
+              entity: {
+                id: "milestone-1",
+                projectId: "project-1",
+                dueAt: "2026-07-06T23:59:59.000",
+              },
+            },
+          }),
+        );
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ ok: false }));
+    });
+    process.env.GRANOFLOW_API_BASE_URL = `http://127.0.0.1:${port}`;
     const { handlers } = collectHandlers();
 
     const result = await handlers.get("granoflow_task_create_structured")?.({
@@ -60,6 +81,11 @@ describe("tools-task-creation", () => {
         body: {
           projectId: "project-1",
           remindAt: "2026-07-05T10:05:00.000",
+          dueAt: "2026-07-06T23:59:59.000",
+        },
+        deadlineResolution: {
+          source: "inherited_milestone",
+          effectiveDueAt: "2026-07-06T23:59:59.000",
         },
       },
     });

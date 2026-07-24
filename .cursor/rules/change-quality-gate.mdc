@@ -1,0 +1,29 @@
+---
+description: Mainstream quality gates by change type — no fake Excel test cases for prose.
+alwaysApply: true
+---
+
+# Change Quality Gate
+
+Prefer conventional engineering checks over ritual “natural-language Excel”
+test tables. Do not invent tests that only freeze wording.
+
+## By change type
+
+| Change | Quality bar |
+| ------ | ----------- |
+| Skill / reference **prose** (roles, policy, workflow copy) | List files + intent → edit → `npm run check`. No `toContain` on markdown. Optional human skim. |
+| Skill **scripts** / lint helpers | Real I/O + exit codes under `tests/python/` (or project equivalent). |
+| TypeScript / MCP tool behavior | Vitest (or project suite): `ok`, codes, schema, structured fields — not skill body phrases. |
+| Agent follows long skill text | LLM evals if/when the repo has them — **not** required in CI today. |
+
+## Forbidden
+
+- Fake acceptance matrices that only restate documentation sentences.
+- Locking `SKILL.md` / `references/**` prose with snapshot/`toContain` tests (see `skill-testing.mdc`).
+
+## Still do
+
+- Analyze and confirm approach before large edits when the user wants planning.
+- Name files to touch and the outcome for each todo.
+- For **behavioral** code: prefer tests that exercise real inputs/outputs; run the gate after edits; use timeouts and non-interactive flags.

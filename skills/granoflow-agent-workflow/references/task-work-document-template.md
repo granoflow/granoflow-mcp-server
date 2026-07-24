@@ -6,6 +6,18 @@ separate new Task Analysis or Task Plan files. A task may have at most two activ
 `document_type: task_work` attachments: one actual execution document and, only
 when needed, one post-completion revision.
 
+## Role: task history + task-local contract
+
+Task Work is the **history and execution contract for one task**—Analysis,
+Planning, gates, and writeback evidence for that unit of work. It is **not** the
+project-wide latest product truth.
+
+- Cross-task product, journey, acceptance, or verification-mandate changes must
+  update **Project Work** (current) in the same discussion batch; keep
+  `discussion_writeback` / traceability / Verification Plan here as history.
+- Do not maintain a parallel “current product rules” section that disagrees with
+  Project Work.
+
 ```markdown
 # Task Work: <task title>
 
@@ -29,7 +41,205 @@ prototype_input_status: not_applicable | awaiting_reference | awaiting_visual_co
 
 # When required: include derivedFrom baseline prototype_id/version_id/package_sha256.
 
-prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":"<id>","prototype_id":"<id>","version_id":"<id>","version_ordinal":1,"package_attachment_id":"<id>","package_sha256":"<64 lowercase hex>","visually_confirmed":true,"derived_from_prototype_id":"<baseline id|null>","derived_from_version_id":"<id|null>","derived_from_package_sha256":"<64 hex|null>","intended_use":"<purpose>"}]
+prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":"<id>","prototype_id":"<id>","version_id":"<id>","version_ordinal":1,"package_attachment_id":"<id>","package_sha256":"<64 lowercase hex>","visually_confirmed":true,"derived_from_prototype_id":"<baseline id|null>","derived_from_version_id":"<id|null>","derived_from_package_sha256":"<64 hex|null>","skill_pipeline_sha256":"<64 hex|null>","component_effect_matrix_sha256":"<64 hex|null>","intended_use":"<purpose>"}]
+
+analysis_logic_draft:
+schema: granoflow_analysis_logic_draft_v1
+task_id: null
+system_type: existing | greenfield
+source_refs: []
+existing_system_evidence: []
+greenfield_basis: null
+domain_entities: []
+data_disposition: not_applicable | unchanged | extend | breaking
+data_disposition_basis: null
+workflows: []
+state_model: []
+permissions: []
+platform_constraints: []
+feasibility_findings: []
+open_blockers: []
+review:
+author_id: null
+reviewer_id: null
+status: pending
+evidence_refs: []
+reviewed_draft_sha256: null
+status: pending | prototype_ready
+draft_sha256: null
+
+screen_content_contract:
+schema: granoflow_screen_content_contract_v1
+task_id: null
+logic_draft_sha256: null
+requirement_refs: []
+acceptance_refs: []
+screens: []
+cross_screen_checks:
+data: false
+states: false
+navigation: false
+permissions: false
+out_of_scope: []
+page_definition_brief_ref: null
+page_definition_brief_sha256: null
+confirmation_status: pending | user_confirmed | unattended_auto_adopted
+accepted_by: null | user | unattended_grant
+authorization_effect: none
+content_contract_sha256: null
+
+requirement_contract_traceability:
+schema: granoflow_requirement_contract_traceability_v1
+content_contract_sha256: null
+rows: []
+review:
+author_id: null
+reviewer_id: null
+status: pending
+evidence_refs: []
+reviewed_traceability_sha256: null
+status: pending | passed
+traceability_sha256: null
+
+test_route_traceability:
+schema: granoflow_test_route_traceability_v1
+source_fact_ledger_sha256: null
+journey_step_traceability_sha256: null
+background_activity_control_sha256: null
+rows:
+
+- route_id: TR-001
+  journey_id: null
+  step_ids: []
+  source_fact_ids: []
+  requirement_refs: []
+  acceptance_refs: []
+  test_layer: unit | integration | e2e
+  path_kind: service_path | component_path | human_path | os_capability
+  background_activity_id: null
+  test_path: null
+  assertions: []
+  evidence_refs: []
+  doubles_policy: allowed | forbidden | real_only | none
+  covered_failure_modes: []
+  entry_ref: null # required for e2e
+  observable_result: null # required for e2e
+  host_ids: [] # required for e2e; selected verification hosts only
+  e2e_scope: feature_e2e | journey_e2e | full_project_e2e
+  navigation_method: app_launch | visible_control | os_control | direct_url | deep_link | direct_route | state_injection
+  bypassed_step_ids: []
+  human_interactions: # one ordered row per covered E2E step
+  - step_id: null
+    navigation_method: app_launch | visible_control | os_control
+    control_ref: null # required except launch/observe
+    action: launch | tap | click | type | gesture | select | system_interaction | observe
+    before_observation: null
+    after_observation: null
+    evidence_kind: driver_event | host_event
+    evidence_ref: null # screenshot alone is insufficient
+    post_update_sequence: # required when background_activity_id is set
+    activity_started: null
+    first_background_event:
+    signal: null
+    evidence_kind: state_change | event_probe | host_probe
+    evidence_ref: null
+    protected_user_action:
+    control_ref: null
+    evidence_ref: null
+    second_background_event:
+    signal: null
+    evidence_kind: state_change | event_probe | host_probe
+    evidence_ref: null
+    user_action_preserved: null
+    exit_action: null
+    activity_ended: null
+    status: pending | covered
+    review:
+    author_id: null
+    reviewer_id: null
+    status: pending | passed
+    evidence_refs: []
+    reviewed_traceability_sha256: null
+    status: pending | passed
+    traceability_sha256: null
+
+contract_grill:
+schema: granoflow_contract_grill_v1
+content_contract_sha256: null
+traceability_sha256: null
+mode: interactive | unattended
+questions: []
+
+# Generated questions must answer, in plain language:
+
+# - What keeps running or automatically updating after the user's action?
+
+# - What state may each update change?
+
+# - Which page, panel, input, selection, focus, and navigation must it never change?
+
+# - How does the user exit, and what proves the activity really ended?
+
+# - Did a test act between two observed updates and prove the action was not undone?
+
+# - Where does the app start, and what visible control/action proves every journey step?
+
+# - Did any URL, deep link, direct route, or state injection bypass a step that is claimed covered?
+
+coverage_axes:
+requirements: false
+fields: false
+actions: false
+states: false
+navigation: false
+permissions: false
+data_sources: false
+semantic_preservation: false
+journey_executability: false
+necessary_implications: false
+domain_baseline: false
+test_route_fidelity: false
+platform_boundaries: false
+background_activity_control: false
+post_update_user_control: false
+human_path_continuity: false
+shortcut_non_interference: false
+open_blockers: []
+authorization_effect: none
+status: pending | passed
+grill_sha256: null
+
+platform_contract:
+matrix_sha256: null
+primary_layout_family: null
+required_layout_family_ids: []
+source_project_work_sha256: null
+
+task_ui_skill_pipeline:
+schema: task_ui_skill_pipeline_v1
+platform_ids: []
+stack_kinds: []
+advanced_motion_required: false
+input_shas:
+baseline: null
+widget_catalog: null
+platform_matrix: null
+component_effect_matrix: null
+capabilities: [] # fixed capability ids; each applicable row records selected_provider + evidence
+status: pending | passed
+
+ui_component_effect_matrix:
+schema: ui_component_effect_matrix_v1
+input_shas:
+user_selection: null
+baseline: null
+widget_catalog: null
+platform_matrix: null
+stack_capability: null
+approved_dependencies: null
+required_layouts: []
+candidates: []
+status: pending | passed
 
 # Interactive: mainstream-reference-first candidate pool (≥5; brainstorm
 
@@ -54,7 +264,9 @@ prototype_inputs: [] | [{"source_entity_type":"task|project","source_entity_id":
 # scripts/lint_prototype_expression_brainstorm.py
 
 prototype_option_set:
-mode: interactive_dual | interactive_dual_plus_industry_third | unattended_single
+mode: interactive_adaptive | unattended_single
+option_count_decision: two | three
+option_count_reason_code: null # three_viable_patterns | cross_form_factor_tradeoff | high_risk_interaction_choice
 design_system_locked: null # confirmed Spec/Baseline option id (required when dual)
 expression_brainstorm: null # { status, layer, source_strategy: mainstream_first, scope_mode: same_category|capability_match, scope_mode_rationale, mainstream_references[], brainstorm_backfill[], brainstorm_backfill_reason, candidate_count, promote_count, candidates[], selected, selection_rationale, parity_check, loaded_reference_sha256 }
 options: [] # [{ id: expr_a|expr_b|industry_peer_c, contrast_axes: [], rationale: null|string }]
@@ -67,11 +279,124 @@ fidelity_ok: false
 real_domain_copy: false
 required_states_covered: false
 enhancement_notes_ok: false
+task_ui_skill_pipeline_ok: false
+component_effect_matrix_ok: false
 user_visible_copy_boundary_ok: false # must be true before visualConfirmed; see user-visible-copy-boundary.md
 expression_brainstorm_ok: false # must be true before dual visualConfirmed; lint_prototype_expression_brainstorm.py + prototype-expression-brainstorm.md
 baseline_fit_ok: false # must be true before visualConfirmed; see prototype-baseline-fit.md
 confirmed_chrome_lock_ok: false # true|not_applicable; see prototype-confirmed-chrome-lock.md when siblings are visualConfirmed
 craft_status: incomplete | ready # incomplete => task_prototype_craft_incomplete
+
+responsive_prototype_bundle:
+schema: granoflow_responsive_prototype_bundle_v2
+analysis_logic_draft_sha256: null
+screen_content_contract_sha256: null
+platform_matrix_sha256: null
+baseline_package_sha256: null
+widget_catalog_input_sha256: null
+task_ui_skill_pipeline_sha256: null
+ui_component_effect_matrix_sha256: null
+primary_layout_family: null
+option_count_decision: two
+option_count_reason_code: null
+selection_round:
+layout_family_id: null
+options: []
+selected_option_id: null
+variants: []
+cross_layout_checks:
+functional: false
+data: false
+states: false
+navigation: false
+widgets: false
+cross_layout_consistency_status: pending
+widget_promotion_ref: null
+final_acceptance_status: pending
+accepted_by: null
+authorization_effect: none
+bundle_sha256: null
+
+contract_prototype_semantic_review:
+schema: granoflow_contract_prototype_semantic_review_v1
+content_contract_sha256: null
+traceability_sha256: null
+prototype_bundle_sha256: null
+required_layout_family_ids: []
+rows: []
+deterministic_browser: { status: pending, evidence_refs: [] }
+open_blockers: []
+ai_semantic_review:
+reviewer_id: null
+status: pending
+evidence_refs: []
+reviewed_semantic_sha256: null
+visual_quality_review:
+provider: null
+mode: review_only
+mutation_authorization: none
+status: pending
+evidence_refs: []
+final_verifier:
+verifier_id: null
+status: pending
+evidence_refs: []
+verified_semantic_sha256: null
+authorization_effect: none
+status: pending | passed
+semantic_review_sha256: null
+
+analysis_technical_package:
+schema: granoflow_analysis_technical_package_v1
+logic_draft_sha256: null
+content_contract_sha256: null
+platform_matrix_sha256: null
+prototype_bundle_sha256: null
+contract_prototype_semantic_review_sha256: null
+logical_data_model: []
+schema_impact: { disposition: null, summary: null, existing_schema_refs: [] }
+operation_flows: []
+state_model: []
+permission_model: []
+ui_data_bindings: []
+platform_behavior: []
+technical_risks: []
+reconciliation: { status: pending, rows: [] }
+behavior_summary_ref: null
+behavior_summary_sha256: null
+review:
+author_id: null
+reviewer_id: null
+status: pending
+evidence_refs: []
+reviewed_technical_package_sha256: null
+final_verifier:
+verifier_id: null
+status: pending
+evidence_refs: []
+verified_technical_package_sha256: null
+final_acceptance_status: pending | user_confirmed | unattended_auto_adopted
+accepted_by: null | user | unattended_grant
+authorization_effect: none
+status: pending | passed
+technical_package_sha256: null
+
+widget_promotion:
+schema: granoflow_widget_promotion_v1
+source_prototype_bundle_sha256: null
+catalog_before_sha256: null
+decisions: []
+catalog_after_sha256: null
+app_readback_sha256: null
+baseline_reopened: false
+status: pending
+
+rendered_prototype_fidelity:
+schema: granoflow_rendered_prototype_fidelity_v1
+prototype_bundle_sha256: null
+status: pending
+authorization_effect: none
+rows: []
 
 # When chrome_lock.status=applicable, list confirmed sibling package SHAs.
 
@@ -140,7 +465,7 @@ prototype_widget_reuse: null | { schema, contract_loaded, catalog_sha256, status
 
 # Plan-time prototype vs Task Work truth. Lint: --kind plan_truth
 
-prototype_plan_truth: null | { schema, contract_loaded, prototype_is_source_of_truth: true, status: not_applicable|aligned|conflict, conflicts: [], user_notified, user_resolution, task_work_updated, project_work_updated }
+prototype_plan_truth: null | { schema, contract_loaded, prototype_is_source_of_truth: true, screen_content_contract_sha256: null|"<64 hex>", status: not_applicable|aligned|conflict, conflicts: [], user_notified, user_resolution, task_work_updated, project_work_updated }
 
 # Prototype Implementation Fidelity (UI tasks). Phase A BEFORE unit tests.
 
@@ -152,12 +477,28 @@ prototype_plan_truth: null | { schema, contract_loaded, prototype_is_source_of_t
 
 prototype_impl_compare: null | { status: not_applicable|matched|diverged, method: code_review_guess, declaration_emitted: true|false, questions: {ux_better, visual_better, tech_stack_blocked}, decision: keep_implementation|revise_to_prototype|not_applicable, decision_rationale: string, diffs: [] }
 
+# Runtime semantic proof for runnable UI tasks. Full protocol remains in
+
+# implementation-contract-semantic-replay.md.
+
+implementation_contract_semantic_replay: null | { applicability: required|not_applicable, replay_sha256: null|"<64 hex>", implementation_snapshot_sha256: null|"<64 hex>", evidence_refs: [], status: pending|passed|not_applicable }
+
+# Implementation Design Fidelity (Plan/pack authority). See
+
+# implementation-design-fidelity.md. Delivery requires complete ledger when
+
+# code/schema/workflows changed. Keep divergence ⇒ better_rationale + design writeback.
+
+impl_design_fidelity: null | { schema: granoflow_impl_design_fidelity_v1, contract_loaded: true, status: not_applicable|pending|complete, declaration_emitted: true|false, decision: matched_all|revise_to_design|keep_with_design_writeback|not_applicable, better_rationale: string, axes: { data_structures, flowcharts, uml_diagrams, modular_split }, diffs: [], design_writeback: { status, slots_updated, content_sha256 } }
+
 unit_test_sufficiency: not_applicable | unassessed | sufficient | insufficient
 integration_test_requirement: not_applicable | not_required | required
 integration_tests_added_count: 0 | 1 | 2
 integration_test_execution: not_applicable | not_run_manual_only | awaiting_campaign_execution | executed_forbidden
-integration_test_device_recommendation: not_applicable | local_machine
-integration_test_device: not_applicable | unselected | local_machine | simulator_or_emulator | physical_device | remote_farm | other
+execution_host_matrix: null # granoflow_verification_host_matrix_v1 capability inventory + selection
+integration_test_device_recommendation: not_applicable | current_platform | ai_fallback
+integration_test_device: not_applicable | current_platform | simulator_or_emulator | third_party_virtual_machine | physical_device | remote_farm | other
+external_device_handoffs: [] # [{ platform, tested: false, handoff: user_external_device_test, acknowledgement: pending|acknowledged }]
 
 # Project Work engineering.quality_gates.integration_test_special_requirements
 
@@ -189,6 +530,13 @@ integration_test_special_requirements_applied: [] # ITR-* ids applied in authore
 # destroys: []
 
 analysis_status: draft | awaiting_confirmation | confirmed
+
+# Analysis Deliverables (task-work-document-workflow): UI tasks Must have
+
+# confirmed ui_prototype before confirmed; emit remaining-deliverables list
+
+# every Analysis turn. Fail closed: analysis_deliverables_incomplete.
+
 analysis_grill_status: not_run | passed | revisions_required | blocked
 decision: proceed | needs_input | user_action | split | redefine | defer | abandon | completion_audit
 planning_status: not_assessed | not_required | draft | awaiting_confirmation | confirmed
@@ -537,6 +885,13 @@ document will be uploaded but will still require either a separate execution
 command or a separately valid delegated `executionAuthorization` grant.
 Then run the Execution Readiness Grill, covering at least:
 
+- whether source facts and ordered journey steps remain intact;
+- whether necessary implications/domain baselines are evidence-backed and any
+  product expansion has user confirmation;
+- whether `granoflow_test_route_traceability_v1` binds every declared
+  `required_test_layers` row to the correct service, human, or OS path;
+- whether service paths/test doubles are prevented from closing human/OS
+  outcomes and E2E scope is labeled feature, journey, or full project;
 - whether the steps are sufficient to complete the stated Outcome;
 - whether prerequisites and upstream outputs are actually ready;
 - whether required authorization has been granted for the planned actions;
@@ -579,9 +934,11 @@ upload plus content/hash readback.
 Set `readiness_grill_status: passed` only when no execution-blocking unknown is
 left. For UI-changing tasks, also require `prototype_requirement: required`,
 `prototype_input_status: ready`, and a visually confirmed `ui_prototype`
-readback (`derivedFrom` the project Design Baseline when one exists). Otherwise
-keep Readiness `blocked` / `ui_prototype_required`. For software tasks that will
-edit code, also require a complete `Structural Change Forecast` and
+readback (`derivedFrom` the project Design Baseline when one exists)—these are
+**Analysis Deliverables** first; never reach Planning or Readiness while they
+are missing (`analysis_deliverables_incomplete` / `ui_prototype_required`).
+Otherwise keep Readiness `blocked` / `ui_prototype_required`. For software tasks
+that will edit code, also require a complete `Structural Change Forecast` and
 `structural_forecast_status: present_in_plan`; otherwise keep Readiness
 `blocked` / `structural_forecast_missing`. Also require the Plan to name the
 project-context check against `project_snapshot.yaml` /

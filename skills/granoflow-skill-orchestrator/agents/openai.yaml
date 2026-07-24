@@ -1,0 +1,4 @@
+interface:
+  display_name: Granoflow Skill Orchestrator
+  short_description: Audit bundled MCP skills and recommend polish/validate/steward actions—report first, human confirm before any rewrite.
+  default_prompt: Run the MCP skill orchestrate audit, open the Markdown report, summarize recommendation buckets, and wait for my confirmation before any skill-polish or edits.

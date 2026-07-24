@@ -22,39 +22,43 @@ Skipping the load and claiming project progress fails closed as
 Also load `unattended-interaction-contract.md` when
 `interaction_mode: unattended`.
 
+Also load `pipeline-attachment-and-reentry` on project-bound turns to classify
+`entry_kind` and apply stage rewind after confirmed midstream changes.
+
 ## Pipeline Stages (hard order)
 
 Hosts **Must** treat the following stages as the canonical project path.
 Do not invent parallel “shortcut” completions that skip earlier stages.
 
-| #   | Stage id               | Meaning                                                                                                                                                                                                                                                                                                                                  | Primary owners                                                                                 |
-| --- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| 1   | `project_init`         | Project Definition Done (Project Work + Design Baseline when required)                                                                                                                                                                                                                                                                   | `granoflow-project-definition`                                                                 |
-| 2   | `milestones_created`   | Planned milestones exist; portfolio tasks authored                                                                                                                                                                                                                                                                                       | `granoflow-portfolio-orchestrator`, `granoflow-milestone-workflow`, `granoflow-task-authoring` |
-| 3   | `milestone_analysis`   | **Per active milestone**: every in-scope child has confirmed Analysis                                                                                                                                                                                                                                                                    | `granoflow-task-orchestrator` + agent-workflow Analysis                                        |
-| 4   | `milestone_plan`       | **Per active milestone**: every in-scope child has Plan Design Gate / execution-ready Plan **and** one milestone Plan acceptance pack shown (interactive: user-accepted)                                                                                                                                                                 | Plan Design Gate + `milestone-plan-acceptance-pack` + Readiness                                |
-| 5   | `milestone_implement`  | Code + unit tests + **authored** integration tests (task-local: do not run IT here), aligned to the accepted `milestone-plan-acceptance-pack`                                                                                                                                                                                            | task-orchestrator `run` / agent-workflow execution + acceptance pack                           |
-| 6   | `integration_campaign` | App compiles; **orchestrate** standard IT into a minimal **service_path** suite (cross-module real I/O; UI clicks not required); Acceptance Outcomes close `domain_io` only (platform/UI/session deferred); AI **auto-drives** until green; **plain-language Closing Summary**; change report if edits. Next stage is E2E, not closeout. | `granoflow-integration-test-campaign` + local build                                            |
-| 7   | `e2e_campaign`         | After IT green: from Project Work (+ Design Baseline / user stories) build coverage matrix + Acceptance Outcomes for user-required real results; **author** missing UI journeys; host probes (window / secure storage); auto-fix bugs; screenshots under `temp/` shown to user; Closing Summary as final test deliverable                | `granoflow-e2e-test-campaign` + host capture                                                   |
-| 8   | `project_complete`     | Required milestones accepted; residuals closed or explicitly deferred                                                                                                                                                                                                                                                                    | milestone-coordination accept + project closeout                                               |
+| #   | Stage id               | Meaning                                                                                                                                                                           | Primary owners                                                                                 |
+| --- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 1   | `project_init`         | Project Definition Done (Project Work + Engineering pack; Design Baseline when `visual_baseline` required)                                                                        | `granoflow-project-definition`                                                                 |
+| 2   | `milestones_created`   | Planned milestones exist; portfolio tasks authored                                                                                                                                | `granoflow-portfolio-orchestrator`, `granoflow-milestone-workflow`, `granoflow-task-authoring` |
+| 3   | `milestone_analysis`   | **Per active milestone**: every in-scope child has confirmed Analysis                                                                                                             | `granoflow-task-orchestrator` + agent-workflow Analysis                                        |
+| 4   | `milestone_plan`       | **Per active milestone**: every in-scope child has Plan Design Gate / execution-ready Plan **and** one milestone Plan acceptance pack shown (interactive: user-accepted)          | Plan Design Gate + `milestone-plan-acceptance-pack` + Readiness                                |
+| 5   | `milestone_implement`  | **IT preflight** then **Layer A** per child; per-milestone **Layer B** = milestone-scoped IT suite (user-invisible) + Experience + 任务回顾 (`milestone-integration-acceptance`). | task-orchestrator + `milestone-integration-acceptance`                                         |
+| 6   | `integration_campaign` | **最终交付 · 项目级 IT**（多里程碑路径：全量单测后编排全部不可见 IT）。单功能里程碑项目可 **waive** 本阶段，直进全面 E2E。不替代 Layer B。见 `full-delivery-acceptance`。         | `full-delivery-acceptance` + `granoflow-integration-test-campaign`                             |
+| 7   | `e2e_campaign`         | **最终交付 · 全面 E2E**（始终全项目覆盖，防改一处坏别处）：覆盖矩阵、可见窗、截图、Closing Summary。                                                                              | `full-delivery-acceptance` + `granoflow-e2e-test-campaign`                                     |
+| 8   | `project_complete`     | Required milestones accepted; **最终交付** green (or explicit residual); residuals closed or deferred                                                                             | milestone-coordination accept + project closeout                                               |
 
 Rules:
 
 1. Stages advance **milestone-by-milestone** for 3–5 (First Ship before refine
    when Project Work sequencing says so).
-2. Stage 6 is **not** implied by every child `done`. Require compile +
-   **orchestrated** integration suite evidence (or an explicit campaign
-   residual). Inside stage 6, `campaign_drive: agent_auto` applies for both
-   `interactive` and `unattended`—do not pause for ordinary “run next / fix
-   this?” confirms; the board stays display-only for the IT loop.
-3. Stage 7 requires stage 6 complete (or green_with_external_residuals). Inside
-   stage 7, same agent_auto / display-only board rules. Claiming
-   `project_complete` while skipping E2E without an explicit E2E residual fails
+2. Stages 6–7 are **最终交付测试** (`full-delivery-acceptance`). Milestone
+   delivery stops at Layer B (no E2E). Final delivery **May** start after any
+   Layer B green (including a single milestone finished today). Path:
+   - project has **1** feature milestone → waive stage 6 / skip portfolio unit+IT
+     → **full-project** E2E
+   - project has **≥2** → full unit → stage 6 IT → **full-project** E2E
+     Inside campaigns, `campaign_drive: agent_auto`; board display-only.
+3. Stage 7 requires stage 6 `done` **or** valid single-milestone waiver
+   (`pre_e2e_path: e2e_direct` / `integration_gate: waived_single_milestone`).
+   Claiming `project_complete` while skipping最终交付 without residual fails
    closed as `project_lifecycle_stage_skip`.
-4. Ordinary feature tasks still obey task-local IT policy (add ≤2
-   **service_path** integration tests, do not run them inside the feature task;
-   recommend `requires`/`produces` metadata). Running integration belongs to
-   stage 6; running E2E belongs to stage 7.
+4. Ordinary feature tasks still obey task-local IT policy. Per-milestone IT =
+   Layer B in stage 5; project-wide IT/E2E only in最终交付 (with the 1-milestone
+   waiver above).
 
 ## Interaction Modes
 
@@ -117,6 +121,22 @@ project_lifecycle_board:
       plan: not_started | in_progress | done | blocked
       implement: not_started | in_progress | done | blocked
       note: <optional>
+  session_delivery: # see full-delivery-acceptance
+    schema: granoflow_session_delivery_v1
+    milestones_touched_count: <int>
+    milestones_touched: [<key-or-id>]
+    project_feature_milestone_count: <int>
+    pre_e2e_path: e2e_direct | full_unit_and_it | not_selected
+    status: offer_or_ask | in_progress | complete | not_applicable
+    prompt_full_delivery: true | false
+    other_milestones: []
+    recommendation: <plain language>
+  entry_kind: new_project | new_milestones | scattered_task | pipeline_continue | midstream_change # optional; recommended
+  reentry: # optional; when entry_kind is midstream_change or after rewind
+    from_stage: <stage id>
+    reason: <plain language>
+    change_class: task_local | portfolio_change | charter_change | follow_up
+    writeback_status: written_and_read_back | pending | not_applicable
   next_action:
     stage_id: <stage id>
     summary: <one imperative sentence>
@@ -125,6 +145,11 @@ project_lifecycle_board:
   blockers: [] # {id, summary, blocker_class}
   loaded_reference_sha256: <sha from granoflow_bundled_skill_reference>
 ```
+
+Optional `entry_kind` / `reentry` are tolerated by the render script. When
+`reentry` is present, render a short 「回轨」 section. After confirmed early
+requirement changes, recompute stages per `pipeline-attachment-and-reentry`
+before setting `next_action` (do not leave later stages falsely `done`).
 
 `board_confirmation`:
 
@@ -170,7 +195,13 @@ board acknowledgement.
 
 ## Recommended Next-Action Rules
 
-Compute `next_action` from the **first** incomplete stage in order:
+If this turn is `midstream_change` (or rewind just applied), set `next_action`
+from the **rewound** first incomplete stage and say in plain language that the
+confirmed change was written back and work returns to Analysis/Plan/etc. See
+`pipeline-attachment-and-reentry`.
+
+Otherwise compute `next_action` from the **first** incomplete stage in order,
+then apply **最终交付** rules from `full-delivery-acceptance`:
 
 1. `project_init` incomplete → continue Project Definition
 2. milestones missing → portfolio / milestone-workflow
@@ -183,9 +214,12 @@ Compute `next_action` from the **first** incomplete stage in order:
    or unattended implement also keep an active durable run plan per
    `long-task-run-continuity.md` (optional collaborative planning surface when
    the host exposes one—never require a vendor mode name)
-6. implement done for required milestones, suite not green → integration
-   campaign (orchestrate → auto-drive → triage/fix/re-test → change report)
-7. else → project complete / accept residuals
+6. After Layer B green, **May** offer最终交付 even if only one milestone
+   finished this run. When entering:
+   - `project_feature_milestone_count == 1` → `pre_e2e_path: e2e_direct`;
+     waive/skip stage 6; `next_action.stage_id: e2e_campaign` (full-project E2E)
+   - count ≥ 2 → `full_unit_and_it`; next is stage 6 then stage 7
+7. Final delivery green (or residuals) → `project_complete` / accept residuals
 
 Within stages 3–5, prefer the **earliest sequenced** milestone that is not done.
 
@@ -198,6 +232,8 @@ Within stages 3–5, prefer the **earliest sequenced** milestone that is not don
 - Portfolio Ready is stage `milestones_created`, not project complete.
 - Child task `done` alone does not set `integration_campaign`,
   `e2e_campaign`, or `project_complete` to `done`.
+- Single-milestone `e2e_direct` waives portfolio IT only; it does **not** mark
+  `e2e_campaign` or `project_complete` as `done`.
 
 ## Fail-Closed Codes
 
@@ -209,6 +245,10 @@ Within stages 3–5, prefer the **earliest sequenced** milestone that is not don
 | `project_lifecycle_board_confirm_in_unattended` | Unattended asked user to confirm the board   |
 | `project_lifecycle_stage_skip`                  | Later stage claimed without earlier evidence |
 | `project_lifecycle_board_incomplete_stages`     | Board omits one of the eight stage ids       |
+| `full_delivery_*`                               | See `full-delivery-acceptance`               |
+| `pipeline_entry_unclassified`                   | See `pipeline-attachment-and-reentry`        |
+| `pipeline_reentry_skipped`                      | See `pipeline-attachment-and-reentry`        |
+| `pipeline_stage_not_rewound`                    | See `pipeline-attachment-and-reentry`        |
 
 ## Admission Test
 
@@ -220,3 +260,5 @@ Within stages 3–5, prefer the **earliest sequenced** milestone that is not don
    phrase (e.g. 「可以说『开始实施』」).
 4. If unattended: is the board display-only with no confirm prompt?
 5. Does the next stage match the first incomplete pipeline step?
+6. If midstream change was confirmed: were writeback + stage rewind applied
+   (`pipeline_reentry_skipped` / `pipeline_stage_not_rewound` otherwise)?

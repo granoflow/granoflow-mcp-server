@@ -53,9 +53,15 @@ Actions:
 - Read the current user imperative together with the active task, recent discussion, supplied evidence, current work relation, and target candidates.
 - Use an explicit shortcut as a route override; otherwise classify semantically.
 - Prefer capture for incidental side thoughts and finish_audit when evidence shows the work is already complete.
+- If the work is already in Plan / Implement / delivery and the user confirms a
+  change to early requirements, acceptance, or prototype: classify pipeline
+  `entry_kind: midstream_change` (see `pipeline-attachment-and-reentry`). Delegate
+  writeback + change-impact fan-out and stage rewind **before** analyze/plan;
+  **never** route directly to `run`.
   Success criteria:
 - The selected route explains why this is capture, enrichment, Analysis, Plan, run, or completion audit.
 - A side thought cannot derail the active task.
+- Confirmed midstream early-requirement changes do not skip re-entry.
   Checkpoints:
 - Ask only when multiple existing targets would make a write unsafe; otherwise choose the safest useful route.
   Artifacts:
@@ -64,6 +70,9 @@ Actions:
 - fallback reason
   Rules:
 - Low information falls toward capture or Analysis, never directly toward execution.
+- Midstream confirmed early changes → writeback then analyze/plan; `run` is
+  forbidden until rewind and board `next_action` say otherwise
+  (`pipeline_reentry_skipped` if skipped).
 
 ### 2. Build the right-depth task record
 
@@ -95,7 +104,7 @@ Apply one deterministic deadline ladder without turning every task into urgent w
 
 Actions:
 
-- Use explicit date first, then a real dependency date, today for active blocking work, tomorrow for a concrete near action, and the active milestone deadline for a milestone deliverable.
+- Use an explicit or fact-supported earlier date when present. Otherwise a milestone-bound task inherits the active milestone deadline in the shared MCP task-write runtime.
 - Leave dueAt empty for side thoughts, someday/later work, inbox items with no timing signal, and weakly understood tasks.
 - Never place a task after its milestone deadline without a separately resolved schedule change.
   Success criteria:
@@ -116,9 +125,34 @@ Compose the existing task owners through the requested stopping point.
 Actions:
 
 - capture stops after create and id readback; enrich stops after a context-rich task readback.
-- analyze runs Analysis plus bundled Grill and stops at the confirmed or decision-blocked Analysis state. UI-changing tasks must set `prototype_requirement: required` and should obtain a confirmed `ui_prototype` before Analysis confirmation when possible.
+- analyze runs Analysis plus bundled Grill and stops at the confirmed or
+  decision-blocked Analysis state. End every Analysis turn with an explicit
+  **Analysis Deliverables** table (done / pending / missing). UI-changing tasks
+  must set `prototype_requirement: required` and Must obtain a confirmed
+  `ui_prototype` before Analysis confirmation; missing prototype fails closed
+  as `ui_prototype_required` / `analysis_deliverables_incomplete` and keeps the
+  task in Analysis (Planning Must not start).
 - plan consumes a finalized Analysis, creates Plan and nodes, runs Readiness Grill, and stops execution-ready. UI-changing tasks cannot pass Readiness without a visually confirmed `ui_prototype` (`derivedFrom` Design Baseline when present). Software tasks that will edit code cannot pass Readiness without a complete `Structural Change Forecast` (`structural_forecast_status: present_in_plan`); otherwise `structural_forecast_missing`.
-- run composes create or resolve, Analysis, Grill, Plan, Readiness Grill, safe execution, verification, Delivery, node completion, and done-state readback. Never execute a UI-changing task while `ui_prototype_required` applies. Before the first software edit: run project-context Hard Gate (`project_snapshot.yaml` / `project_rules.yaml`); on conflict, interactive users confirm, unattended runs emit `revise_code` or `revise_context_yaml` explicitly; then show the structural forecast notice and stamp `notice_emitted`. Refuse edits with `project_context_check_missing`, `project_context_decision_not_emitted`, or `structural_forecast_not_shown`. Delivery/close requires `reconciled` plus `acceptance_report` or fail closed. For software: copy-only / 文字验证 tasks take **no** automated tests (`copy_change_tests_forbidden`). Otherwise judge unit-test sufficiency; add at most 2 integration tests only when insufficient; honor Project Work `integration_test_special_requirements` when adding IT; **do not execute** those integration tests (`integration_test_executed_by_agent` if the Agent runs them); recommend the user's **local machine** for the device and let the user confirm or choose (`integration_test_device_unselected` if still unselected when tests were added).
+- run composes create or resolve, one App-owned execution snapshot, Analysis,
+  Grill, Plan, Readiness Grill, safe execution, verification, Delivery, node
+  completion, and done-state readback. Reconcile spoken requirements against
+  Project Work and Task Work before planning. Never execute a UI-changing task
+  while `ui_prototype_required` applies. Before the first software edit: run
+  project-context Hard Gate (`project_snapshot.yaml` / `project_rules.yaml`);
+  on conflict, interactive users confirm, unattended runs emit `revise_code` or
+  `revise_context_yaml` explicitly; then show the structural forecast notice
+  and stamp `notice_emitted`. Refuse edits with
+  `project_context_check_missing`, `project_context_decision_not_emitted`, or
+  `structural_forecast_not_shown`. Delivery/close requires `reconciled` plus
+  `acceptance_report` or fail closed. For software: copy-only / 文字验证 tasks
+  take **no** automated tests (`copy_change_tests_forbidden`). Otherwise judge
+  unit-test sufficiency; add at most 2 integration tests only when insufficient
+  and honor Project Work `integration_test_special_requirements`. Device/host
+  inventory is capability information, not mandatory scope: interactive
+  no-selection and unattended default to the current development platform; if
+  the project excludes it, AI selects one available supported host. Only the
+  selected host enters execution nodes. Non-selected platforms remain
+  development-only and require an external-device handoff with `tested: false`.
 - finish_audit verifies already-produced evidence, writes Delivery, and closes only through the correct completion owner.
   Success criteria:
 - Each phase has exactly one owner and the requested stopping point is respected.

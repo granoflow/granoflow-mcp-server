@@ -36,8 +36,33 @@ in_scope_task_ids: [] # tasks whose Plan Gate content feeds this pack
 source_plan_paths: [] # Task Work Plan paths or attachment logical ids
 accepted_at: "" # ISO8601 when status=accepted
 accepted_by: "" # user | unattended_grant
+ai_decomposition_review_ref: ""
+ai_decomposition_plan_sha256: ""
+platform_matrix_sha256: ""
+responsive_prototype_bundles: [] # [{ task_id, bundle_sha256, layout_family_ids, final_acceptance_status }]
+analysis_technical_packages: [] # [{ task_id, technical_package_sha256, behavior_summary_sha256, review_status, final_acceptance_status }]
+contract_prototype_semantic_reviews: [] # [{ task_id, semantic_review_sha256, traceability_sha256, required_layout_family_ids, status }]
+grill_finalizer_status: pending # pending | passed | failed
+grill_me_status: pending # pending | shared_understanding_confirmed | recommendations_auto_adopted
+final_acceptance_status: pending # pending | user_accepted | unattended_auto_adopted
+accepted_plan_sha256: ""
+authorization_effect: none
+html_render:
+  status: skipped_markdown_only # ready | tools_missing | error | skipped_markdown_only
+  html_path: null
+  html_file_url: null # file://…html when status=ready
+  markdown_path: "" # absolute path to this pack
+  markdown_file_url: "" # file://…md (always for clickable SoT)
+  link_emitted: false # true only after Plan Acceptance Link block shown
+  tool_probe:
+    pandoc: false
+    mmdc: false
+    diagram_lua: false
+    plantuml: false
+  note: "" # when tools_missing: remind local convert is token-free
 # After acceptance: Execution/Delivery Must keep this file as the primary
 # milestone alignment reference (see milestone-plan-acceptance-pack.md).
+# HTML preview: markdown-html-acceptance-render.md + render_markdown_acceptance_html.py
 ---
 ```
 

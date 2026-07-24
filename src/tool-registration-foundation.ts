@@ -24,6 +24,8 @@ type FoundationDependencies = {
   readProjectDefinitionSkill: SkillReader;
   readIntegrationTestCampaignSkill: SkillReader;
   readE2eTestCampaignSkill: SkillReader;
+  readAcceptanceDeliverySkill: SkillReader;
+  readSkillOrchestratorSkill: SkillReader;
   bundledSkillResources: BundledSkillResources;
   apiTool: (options: ApiRequestOptions) => Promise<ToolResult>;
   getSetupStatus: () => Promise<unknown>;
@@ -107,6 +109,13 @@ export function registerWorkflowSkillTools(
     "skills/granoflow-gfmcp-runner/SKILL.md",
     deps.readGfmcpRunnerSkill,
     "granoflow-gfmcp-runner",
+  );
+  read(
+    "granoflow_skill_orchestrator_skill",
+    "Read the bundled Granoflow Skill Orchestrator skill. Call when auditing or optimizing bundled MCP skills with the skill-polish family: default is a read-only report and human confirmation before any polish/validate apply. Not a product task orchestrator.",
+    "skills/granoflow-skill-orchestrator/SKILL.md",
+    deps.readSkillOrchestratorSkill,
+    "granoflow-skill-orchestrator",
   );
 }
 
@@ -198,6 +207,13 @@ export function registerAuthorizationAndProjectSkillTools(
     "skills/granoflow-e2e-test-campaign/SKILL.md",
     deps.readE2eTestCampaignSkill,
     "granoflow-e2e-test-campaign",
+  );
+  read(
+    "granoflow_acceptance_delivery_skill",
+    "Read the bundled Granoflow Acceptance And Final Delivery skill. Route Layer A/B milestone acceptance (user-invisible milestone IT) and最终交付 paths: 1 feature milestone → e2e_direct full-project E2E; ≥2 → full unit + project IT + full-project E2E. Thin router over agent-workflow references and IT/E2E campaigns.",
+    "skills/granoflow-acceptance-delivery/SKILL.md",
+    deps.readAcceptanceDeliverySkill,
+    "granoflow-acceptance-delivery",
   );
 }
 

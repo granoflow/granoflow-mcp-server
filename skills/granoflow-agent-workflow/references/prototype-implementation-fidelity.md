@@ -1,9 +1,19 @@
 # Prototype Implementation Fidelity
 
+## Runtime Semantic Boundary
+
+Rendered and Phase A fidelity remain visual gates. After a runnable UI build,
+load `implementation-contract-semantic-replay` to prove Content Contract
+elements and behavior in the actual App. Screenshot artifacts may be shared,
+but neither gate may infer or copy the other's status.
+
 Single owner for comparing a task's **current implementation design** to its
 confirmed HTML `ui_prototype` **before unit tests**, recording divergences, and
 requiring **task-complete** E2E visual review (screenshot + prototype link +
 three-question decision) for every finalized task-level prototype—no omissions.
+
+`responsive-prototype-finalization` owns the additional runnable-UI,
+pre-Delivery rendered fidelity loop across every required layout family.
 
 Load via MCP:
 
@@ -27,6 +37,17 @@ UI change).
 
 - `prototype_requirement: not_required`; or
 - the task has no UI / no prototype authority.
+
+## Authority SHA (implement and compare)
+
+- Implementation and fidelity compares use the App **readback**
+  `prototypeId` / `versionId` / `packageSha256` for the task `ui_prototype`
+  current slot—not a stale Task Work filename or chat link.
+- If Task Work refs disagree with App `current`, complete discussion writeback
+  and rewrite Task Work refs before Readiness, first UI edit, or Phase A/B
+  (`stale_reference_after_discussion`).
+- Project Work holds only the **current** Design Baseline pointer; task packages
+  stay on task slots.
 
 ## Phase A — Implement (before unit tests)
 
@@ -88,6 +109,29 @@ where `keep` is forbidden until user final acceptance.
 
 Human intervention is **not** required for Phase A, but the declaration **is**.
 
+## Rendered fidelity — runnable UI before Task Delivery
+
+After the UI can be rendered, capture every final Prototype Bundle layout at
+its exact reference viewport and DPR. Require both the Project fidelity
+policy's numeric threshold and AI visual review to pass. Disposition every
+region diff; platform-native exceptions require platform-contract evidence and
+explicit approval. Run `lint_rendered_prototype_fidelity.py`. This gate happens
+before Task Delivery and does not replace Phase B.
+
+When `decision: keep_implementation` and the divergence changes
+**product-visible** truth (behavior, chrome/entry, journeys—not form-factor
+carve-out alone): update **Project Work** current acceptance/coverage (and
+product docs when `product_truth_changing`) in the same batch, or record an
+explicit non-promotion residual on Delivery. Task Work alone is not enough.
+
+### Delivery checklist (software UI tasks)
+
+Before marking Delivery complete when Phase A applies:
+
+- `prototype_impl_compare.declaration_emitted: true` with required questions;
+- authority SHA matches App readback current;
+- product-truth `keep` paths show Project writeback or explicit non-promotion.
+
 ### Fail-closed (Phase A)
 
 | Code                                                | When                                                        |
@@ -108,10 +152,12 @@ agent **Must** treat **every finalized / confirmed** task-level prototype as the
 ### Hard loop (agent_auto — no user confirm mid-loop)
 
 1. **Inventory** every project task that has a finalized / confirmed task-level
-   `ui_prototype` (or equivalent HTML authority). Sources: Granoflow task list +
-   `ui_prototype` attachments / prototype import readbacks / Delivery
-   `prototype_inputs`. Empty inventory is allowed only when truly none exist—
-   and must still be declared (`required_task_ids: []`).
+   `ui_prototype` (or equivalent HTML authority). Prefer App enumeration of
+   `ui_prototype` current slots; otherwise build a complete manual inventory
+   from task list + attachment readbacks + Delivery `prototype_inputs`. Record
+   `inventory_basis: app_enumeration | manual_inventory` on the evidence pack.
+   Do **not** silently sample. Empty inventory is allowed only when truly none
+   exist—and must still be declared (`required_task_ids: []`).
 2. For **each** inventoried `task_id`, emit a **user-visible compare row** that
    **Must** include all of:
    - clickable `prototype_link` (opens in embedded or external browser)
@@ -187,7 +233,9 @@ Rules:
   `prototype_task_reviews.inventory_loaded: true` fails closed as
   `e2e_prototype_task_inventory_unloaded`.
 - Phase A `matched` does **not** waive Phase B—still capture, show, and judge.
-- Form-factor / orientation-only gaps → `decision: matched`, never keep.
+- Form-factor / orientation-only differences count as matched only when they
+  follow the accepted responsive mapping and fidelity policy; otherwise revise
+  and recapture.
 - `ai_loop_status: complete` requires every review `ai_pass: true` and
   `decision: matched`. Campaign green / 「项目收尾」 requires AI loop complete
   **and** user final acceptance.

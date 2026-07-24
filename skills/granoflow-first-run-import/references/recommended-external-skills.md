@@ -23,6 +23,7 @@ Granoflow recommends installing its complete Product Builder capability pack:
 - Apple Design: applies Apple platform interaction and visual conventions when relevant.
 - GSAP Skills: implements complex web motion correctly when the project requires it.
 - Baoyu Skills: creates visual communication assets such as covers, infographics, slides, and comics.
+- PRD Review: reviews product requirement documents and catches gaps in scope, edge cases, and assumptions.
 
 Install the complete recommended capability pack?
 
@@ -43,10 +44,14 @@ the Granoflow prompt.
 | `apple-design`       | Apple Design       | Host-visible Apple Design Skill      | `emilkowalski/skills`                 |
 | `gsap-skills`        | GSAP Skills        | Host-visible GSAP Skills collection  | `greensock/gsap-skills`               |
 | `baoyu-skills`       | Baoyu Skills       | Host-visible Baoyu Skills collection | `JimLiu/baoyu-skills`                 |
+| `prd-review-skill`   | PRD Review         | Host-visible PRD Review collection   | `yihannangua/prd-review-skill`        |
 
 The registry identifies recommended collections; it is not an installer or a
 copy of any external catalog. If the host has no trusted installation mapping
 for an item, do not guess. Report that capability as not ready.
+
+For PRD review, `prd-review-skill` is the installation collection id and
+`prd-review` is the runtime skill id used by workflow routing.
 
 `taste-skill` is intentionally excluded because gstack owns design exploration
 and shotgun-style variation. `superpowers` is intentionally excluded because

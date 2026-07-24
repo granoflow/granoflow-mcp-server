@@ -7,8 +7,10 @@ description: Run a standard integration-test campaign—orchestrate a minimal sh
 
 Use this Skill when the user **requires running** standard integration tests as a
 campaign (for example: `Run integration test campaign`, `开始集成测试战役`,
-`无人值守跑集成测试直到全绿`), or when the project reaches lifecycle stage
-`integration_campaign`.
+`无人值守跑集成测试直到全绿`, `开始最终交付`), or when最终交付 uses
+`pre_e2e_path: full_unit_and_it` and enters stage `integration_campaign` per
+`full-delivery-acceptance` (after full unit suite). Skip this Skill when
+`pre_e2e_path: e2e_direct` (exactly one feature milestone).
 
 This stage is **not** end-to-end UI testing. Real taps, screenshots, and vision
 belong to `granoflow-e2e-test-campaign` / stage `e2e_campaign` **after** this
@@ -48,6 +50,14 @@ Start integration testing until green
 - `#integration-campaign`
 - `#integration-test`
 - `#集成测试`
+- `#最终交付`
+
+## Relationship To Final Delivery
+
+When path selection is unclear, call `granoflow_acceptance_delivery_skill`
+first, then load `granoflow-agent-workflow` / `full-delivery-acceptance`. This
+Skill is the IT leg of `pre_e2e_path: full_unit_and_it` only. It **does not**
+replace per-milestone Layer B (`milestone-integration-acceptance`).
 
 ## Progress Board
 
@@ -101,13 +111,19 @@ after every successful step. Lint structured artifacts with
    - Do not reuse a feature milestone as the round container.
    - Board is display-only during the IT loop (no acknowledgement question).
 3. **Orchestrate the suite** — Inventory IT; load and apply Project Work
-   special requirements; load
+   special requirements and, when present, journey-step traceability; load
    `granoflow-agent-workflow/acceptance-outcome-contract` and emit an
    Acceptance Outcome matrix (`domain_io` closeable only;
    `user_path_claim: service_layers_only`); label requires/produces; emit
    Suite Plan with `test_layer: integration`, dependency-respecting order, and
-   `special_requirements_*` fields; **rewrite/merge tests as needed** for
-   minimal shared-session `service_path` without violating seed corpora.
+   `special_requirements_*` fields. For traced Project Work, set
+   `test_route_traceability_loaded: true` and map each case through
+   `journey_step_ids`; service-path cases may cover only steps that declare
+   `integration` in `required_test_layers`. A visible background activity uses
+   `component_path` (or a hybrid suite), mounts the real component/state owner,
+   injects two controlled external events, acts on a protected control between
+   them, and proves exit. **Rewrite/merge tests as needed** for minimal
+   shared-session paths without violating seed corpora.
    Running before orchestration fails closed as
    `integration_campaign_suite_unorchestrated`.
    Success criteria:
@@ -186,7 +202,12 @@ after every successful step. Lint structured artifacts with
 
 ## Success Criteria
 
-- Suite orchestrated (`test_layer: integration` + `service_path`) before run.
+- Suite orchestrated (`test_layer: integration` +
+  `service_path|component_path|hybrid`) before run.
+- Traced Project Work integration steps map to Suite Plan cases; service paths
+  never claim UI-only or E2E-only journey steps.
+- DAG/shared-session minimization removes repeated setup and teardown only; it
+  never converts service/component evidence into a user-path claim.
 - Acceptance Outcome matrix present; IT closes only `domain_io` with real side
   effects; deferred platform/UI/session AOs force `green_with_residuals`.
 - Agent auto-drive for the IT loop in both interaction modes.
@@ -208,7 +229,14 @@ after every successful step. Lint structured artifacts with
 - `integration_campaign_seed_corpus_substituted`
 - `integration_campaign_order_dependency_violation`
 - `integration_campaign_fidelity_wrong_layer`
+- `integration_campaign_test_routes_unloaded`
+- `integration_campaign_step_traceability_missing`
+- `integration_campaign_human_path_overclaim`
 - `integration_campaign_ui_probe_unjustified`
+- `component_path_required`
+- `post_update_interaction_test_missing`
+- `background_event_evidence_missing`
+- `activity_exit_not_proven`
 - `integration_campaign_vision_not_allowed`
 - `integration_campaign_drive_not_agent_auto`
 - `integration_campaign_failure_class_required`

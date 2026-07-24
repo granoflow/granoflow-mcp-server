@@ -41,7 +41,10 @@ Append to the base Delivery when `profiles` contains `software_development`:
   Delivery must show Phase A `prototype_impl_compare` ran **before unit
   tests** (`method: code_review_guess`, `declaration_emitted: true`, three
   questions answered, closed `diffs` when diverged) per
-  `prototype-implementation-fidelity.md`. Fail as
+  `prototype-implementation-fidelity.md`. Compare authority is App readback
+  SHA. If Phase A `decision: keep_implementation` changes product-visible
+  truth (not form-factor-only), Delivery must show Project Work writeback (or
+  an explicit non-promotion residual). Fail as
   `prototype_impl_compare_unread`, `prototype_impl_compare_undeclared`,
   `prototype_impl_compare_three_questions_incomplete`,
   `prototype_diff_ledger_incomplete`, `prototype_impl_compare_wrong_method`,
@@ -74,6 +77,28 @@ Append to the base Delivery when `profiles` contains `software_development`:
   `milestone_plan_acceptance_pack_not_used`,
   `milestone_plan_acceptance_pack_drift`, or
   `milestone_plan_acceptance_pack_delivery_unreconciled` when violated.
+- Implementation Contract Semantic Replay
+  (`implementation-contract-semantic-replay.md`): a new, reopened, or modified
+  runnable UI task must bind current Analysis and implementation snapshot SHA
+  values; cover every required contract element/runtime target; pass
+  deterministic runtime, independent AI review, and Final Verifier; and retain
+  `authorization_effect: none`. Fail closed with `implementation_contract_*`;
+  `grill-me`, visual review, or rendered fidelity cannot substitute for it.
+- Implementation Design Fidelity (`implementation-design-fidelity.md`): for
+  software code/schema/workflow edits, Delivery **Must** show a complete
+  `impl_design_fidelity` ledger (Plan/pack authority—not Analysis drafts):
+  data_structures / flowcharts / uml_diagrams axes + `modular_split` (methods/
+  classes/files by function). `declaration_emitted: true`. `modular_split:
+needs_split` blocks Delivery. Any kept divergence requires
+  `better_rationale` **and** same-batch design writeback (Task Work Plan,
+  milestone pack `v<n+1>` when affected, project data attachments) with
+  readback—unattended may choose `keep_with_design_writeback`. Lint with
+  `scripts/lint_implementation_design_fidelity.py`. Fail as
+  `impl_design_fidelity_unread`, `impl_design_fidelity_incomplete`,
+  `impl_design_fidelity_undeclared`, `impl_design_axis_unresolved`,
+  `impl_design_modular_split_unresolved`,
+  `impl_design_better_rationale_missing`, `impl_design_writeback_missing`,
+  `impl_design_fidelity_report_missing`, or `impl_design_fidelity_lint_failed`.
 - Code signing strategy (`code-signing-strategy.md`): when the task edited
   entitlements, `CODE_SIGN_*` / Team / provisioning, keystore, Authenticode, or
   fixed a signing/entitlement build failure, Delivery **Must** include a

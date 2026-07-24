@@ -49,15 +49,13 @@ inspired by it.
 
 1. Read the locked Shell selection (`shell_selection` / chrome variant id, e.g.
    icons+labels rail/tabbar) and project `widgets.yaml`.
-2. Screens that sit **inside** primary navigation Must reuse Shell widgets for
-   the same role (`shell.primary_nav_*`, brand strip, etc.)—
-   `widget_reuse_required` if skipped without rationale.
-3. Screens that are **fullscreen / immersive** (e.g. reader) May omit primary
-   nav **only when** Baseline/Shell/product docs already declare that
-   exception. They Must still use:
-   - the same Spec tokens; and
-   - the Shell’s **chrome language** for overlays (icon+label vs text-only,
-     glass-on-chrome-only, control radius/type roles, selected/primary tint).
+2. Every required portrait and landscape layout Must reuse
+   `app_shell.top_bar` and `app_shell.bottom_navigation`, including the
+   matching platform/orientation variants. `widget_reuse_required` applies if
+   either role is skipped.
+3. Fullscreen or immersive content remains inside those locked Shell roles.
+   Content may become full-bleed between the bars, but may not remove or replace
+   them at Task level.
 4. Inventing a second chrome dialect (text-only top actions while Shell is
    icons+labels; new glass body treatments; foreign component chrome) fails
    closed `prototype_shell_chrome_mismatch`.
@@ -90,15 +88,15 @@ Run
 on each option HTML (pass `--baseline-tokens` when a Baseline tokens CSS/JSON
 path is available). Require `ok: true`.
 
-## Immersive / no-primary-nav screens
+## Immersive screens
 
-When product + Shell say the screen has no primary nav:
+Immersive content still preserves the mandatory Shell Widgets:
 
-| Allowed                                                 | Forbidden                                              |
-| ------------------------------------------------------- | ------------------------------------------------------ |
-| Full-bleed content using Spec reader/surface tokens     | Dropping Spec fonts/colors for a “cleaner” mock        |
-| Transient overlays using Shell chrome language          | Text-only action chrome when Shell locked icons+labels |
-| Glass/blur on overlay chrome only (if Spec/Shell allow) | Full-bleed glass body fighting reading surfaces        |
+| Allowed                                                | Forbidden                                          |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| Full-bleed content between locked top/bottom bars      | Removing either mandatory Shell role               |
+| Spec reader/surface tokens and Shell overlay language  | Introducing unrelated Task-local navigation chrome |
+| Glass/blur on overlay chrome only when already allowed | Full-bleed glass body fighting reading surfaces    |
 
 Document the no-primary-nav exception under the option’s reviewer thesis
 (`data-reviewer-only`), not as product copy.
@@ -148,7 +146,8 @@ Any of the above keeps `baseline_fit_ok: false` and
 2. Does every option HTML embed/link the **same** locked Spec tokens with
    `data-baseline-tokens="locked"`?
 3. Does chrome match Shell language (or a documented immersive exception)?
-4. Would a reviewer who knows the Shell say “this is the same app,” not “a
+4. Are both mandatory Shell Widget roles present for every required layout?
+5. Would a reviewer who knows the Shell say “this is the same app,” not “a
    cousin mock”?
 
 If any answer is no, revise before wait-for-confirm.

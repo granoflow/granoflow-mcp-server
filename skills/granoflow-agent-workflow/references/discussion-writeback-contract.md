@@ -9,6 +9,12 @@ Plan or Execution.
 **Owner:** keep App-owned artifacts current so Plan / Readiness / Execution
 always resolve the same truth the user just approved.
 
+**Truth layers:** Project Work is the project's **current** product/acceptance
+truth. Task Work records **history** and task-local contracts for this
+discussion. Product-truth, journey/screen/acceptance, or verification-mandate
+changes **Must** update Project Work (and related product docs when
+`product_truth_changing`) in the same batch—never Task Work alone.
+
 MCP stays thin: write through existing App tools (`logical_attachment_replace`,
 `task_prototype_import`, `task_attachment_*`, Project Work confirm, etc.). Do
 not invent a second store.
@@ -64,13 +70,13 @@ same batch before claiming the decision is done. Discover those slots via
 
 ## Timing
 
-| Moment                                        | Requirement                                                                        |
-| --------------------------------------------- | ---------------------------------------------------------------------------------- |
-| User accepts a material change mid-discussion | Writeback before the next phase gate or before ending the turn’s decision batch    |
-| Before Analysis confirmation                  | Confirmed prototypes/product truths already on App if UI/product changed           |
-| Before Plan confirmation / Readiness `passed` | Task Work + `ui_prototype` (if UI) match App readback                              |
-| Before Execution (non-dry-run)                | Same; export/`executionAdmission` must not see stale refs                          |
-| Unattended (explicit only)                    | Same writebacks with notices; never skip App write because interaction_budget is 0 |
+| Moment                                        | Requirement                                                                                                         |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| User accepts a material change mid-discussion | Writeback before the next phase gate or before ending the turn’s decision batch                                     |
+| Before Analysis confirmation                  | Confirmed prototypes/product truths already on App if UI/product changed; emit Analysis Deliverables remaining list |
+| Before Plan confirmation / Readiness `passed` | Task Work + `ui_prototype` (if UI) match App readback                                                               |
+| Before Execution (non-dry-run)                | Same; export/`executionAdmission` must not see stale refs                                                           |
+| Unattended (explicit only)                    | Same writebacks with notices; never skip App write because interaction_budget is 0                                  |
 
 Interactive: user confirmation of the **content** authorizes the writeback of
 that content. Do not wait for a second “may I upload?” when the user already

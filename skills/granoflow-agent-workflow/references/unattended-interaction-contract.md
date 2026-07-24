@@ -15,7 +15,7 @@ declaration is the authorization boundary for the run:
    can complete without a human-held secret, physical presence, third-party
    human approval, or out-of-band channel is treated as granted. Execute it
    directly (phase confirms, local tools, recommended defaults, local gates,
-   Delivery, campaign suite runs on the declared device, project-context
+   Delivery, campaign suite runs on the selected device, project-context
    `revise_code` / `revise_context_yaml` decisions, etc.). Do not invent a
    mid-run confirmation for solvable work.
 2. **Externally impossible work is deferred—not a whole-run stop.** If evidence
@@ -33,6 +33,26 @@ declaration is the authorization boundary for the run:
 Inventing credentials, impersonating the user, or marking external work done
 without evidence remains forbidden.
 
+### Device capability is not unattended test scope
+
+Inventory the current platform, official simulators/emulators, and already
+installed third-party VMs with a proven E2E path. This is a capability list,
+not a mandatory matrix. In unattended mode:
+
+1. if the project supports the current development platform, select only that
+   platform for integration/E2E execution;
+2. if it does not, select exactly one already-available supported host,
+   preferring the project primary platform, then an official virtual device,
+   then an installed E2E-capable third-party VM;
+3. never install a third-party VM stack or image;
+4. keep all non-selected supported platforms development-only and record an
+   external-device handoff with `tested: false`.
+
+The final Residual Report may ask the user to test those platforms. A later
+reply equivalent to “知道了 / 了解 / 我会测试” acknowledges and completes that
+handoff, but does not change `tested: false` or authorize a green platform
+claim.
+
 ## Observable Invariant
 
 After a valid unattended request starts one bounded run, use:
@@ -46,6 +66,17 @@ deferred_external_work: []
 # each deferred row: id, title, blocker_class, evidence, resume_condition
 question_batch_size: 0
 ```
+
+## Milestone Final Grill
+
+For Milestone final acceptance, unattended mode does not skip `grill-me`.
+Process one question at a time: state the question, the AI recommendation, and
+the reason, then auto-adopt that recommendation without waiting. Record
+`grill_me_status: recommendations_auto_adopted`,
+`final_acceptance_status: unattended_auto_adopted`, and
+`accepted_by: unattended_grant`. Never label the result user-accepted. The
+accepted digest must equal the reviewed plan digest, and
+`authorization_effect` remains `none`.
 
 `interaction_budget: 0` counts every user-facing request for confirmation,
 choice, permission, information, or approval. Status notices, evidence reports,
@@ -127,13 +158,14 @@ task `ui_prototype`):
    ledger entry with clickable links so the user can audit all prototypes in
    one place. Omitting the digest fails closed as
    `prototype_link_digest_required`.
-5. Interactive mode (default when unattended was not declared) remains: Design
-   Spec triad of Style Guide boards (lots from `draw_visual_lots.py`;
-   wrong shape → `design_spec_wrong_artifact_type`) then Shell triad of
+5. Interactive mode (default when unattended was not declared) uses the
+   product-fitted two-round Design Spec HTML contract: six-dimension chooser,
+   user selection code, then three complete Style Guide candidates by default
+   or justified two. After the selected Spec is locked, run the Shell triad of
    Spec-embedded product-near chrome variants (tokens missing / wireframe-only
    → `shell_spec_tokens_missing` / `shell_wireframe_only`), stop after each
-   triad batch for pick / **换新批** (`--dedupe ledger`) / **在某套上改**
-   (`prototype_preview_review_required` / `design_spec_triad_required` /
+   review batch for pick / **换新批** (`--dedupe ledger`) / **在某套上改**
+   (`prototype_preview_review_required` /
    `shell_triad_required` / `shell_spec_mismatch` / seed-collision /
    `design_spec_seed_not_drawn` / `visual_lot_dedupe_required` /
    `design_spec_user_facing_jargon` codes if skipped or rules violated).
@@ -213,11 +245,13 @@ Treat as authorized and execute when the environment can do it now:
   project-context hard gates;
 - local Git checkpoint/commit when the project/git preference and grant allow
   local history writes;
-- integration-test and E2E **campaign** suite runs on the campaign device
-  (stages `integration_campaign` and `e2e_campaign` use
-  `campaign_drive: agent_auto` in interactive and unattended alike—orchestrate,
-  run, triage, fix, re-test without ordinary confirm questions; E2E also
-  captures/shows screenshots under `temp/` when the host can);
+- integration-test and E2E **campaign** suite runs on the campaign device when
+  **最终交付** was entered (`full-delivery-acceptance`; stages
+  `integration_campaign` and `e2e_campaign` use `campaign_drive: agent_auto` in
+  interactive and unattended alike—orchestrate, run, triage, fix, re-test
+  without ordinary confirm questions; E2E also captures/shows screenshots under
+  `temp/` when the host can). Single feature-milestone projects may waive
+  portfolio IT and run full-project E2E directly;
 - adopting recommendations and `revise_code` / `revise_context_yaml` decisions
   with emitted notices.
 
@@ -345,6 +379,12 @@ When no solvable ready work remains, set
 - Completed: <count / summary refs>
 - Prototype Link Digest: <clickable links for every HTML prototype authored;
   required when any prototype was produced>
+- Plan Acceptance Link Digest: <clickable HTML/Markdown pack links authored this
+  run; required when any Plan acceptance HTML was produced>
+- Acceptance layers (when any task/milestone closed this run):
+  - Layer A 单任务完成: <per-task Delivery / acceptance_report refs>
+  - Layer B 里程碑集成验收: <Suite Plan order / IT green|residual / Experience / 任务回顾>
+  - Do not fuse into one unlabeled “all done” list (`acceptance_layers_fused`)
 - Deferred / not executed:
   1. <title> — <blocker_class> — <why external> — <resume_condition>
   2. ...
@@ -367,3 +407,37 @@ may the run stop with a single blocker notice; still list what could not start.
 A failed test, incomplete draft, unfamiliar code, ordinary implementation
 choice, or preference for reassurance is not external-impossible—retry,
 diagnose, replan, or use the best evidence-backed local option.
+
+## Responsive Prototype Finalization
+
+For UI Project Definition and Task Analysis, unattended mode does not skip the
+platform, option-selection, layout-expansion, or final Bundle checkpoints.
+State each recommendation and its evidence, then auto-adopt it without waiting.
+
+- Record platform and Bundle acceptance as `unattended_auto_adopted`.
+- Record `accepted_by: unattended_grant`; never write `user_confirmed`.
+- Expand the selected primary-layout option to every required layout family.
+- Complete Widget Catalog writeback and App SHA readback before Analysis closes.
+- Preserve `authorization_effect: none`; prototype acceptance never authorizes
+  implementation.
+
+## Task Analysis Product And Technical Finalization
+
+Unattended UI Analysis still runs the complete
+`task-analysis-finalization` sequence:
+
+- review the internal Logic Draft with a logically independent reviewer;
+- state and auto-adopt the Page Definition Brief as
+  `unattended_auto_adopted` / `unattended_grant`;
+- run every Contract Grill axis question-by-question, stating the recommendation
+  and reason before auto-adopting it;
+- bind every option and layout to the same Content Contract digest;
+- produce deterministic DOM, state, screenshot, and interaction evidence for
+  the Contract-to-Prototype Semantic Review;
+- independently review and verify the Analysis Technical Package;
+- present the final layouts and behavior summary, then auto-adopt the
+  recommendation without claiming user acceptance;
+- complete Widget Catalog writeback and App SHA readback before Analysis
+  closes.
+
+Every acceptance record keeps `authorization_effect: none`.

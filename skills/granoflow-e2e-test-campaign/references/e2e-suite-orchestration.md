@@ -26,6 +26,9 @@ Skipping orchestration fails closed as `e2e_campaign_suite_unorchestrated`.
    settings).
 4. **Human path** — Real UI affordances; not service_path-only IT.
 5. **Checkpoints** — Non-empty screenshot steps for every covered journey.
+6. **Background control** — For every visible activity, interact after its
+   first observed update, observe another update, prove the interaction still
+   holds, then exit and prove updates stopped.
 
 ## Inventory + Authoring
 
@@ -45,6 +48,9 @@ schema: granoflow_e2e_suite_plan_v1
 contract_loaded: true
 orchestration_loaded: true
 coverage_loaded: true
+test_route_traceability_loaded: true # when Project Work has traced steps
+background_activity_control_loaded: true # when Project Work has activities
+e2e_scope: full_project_e2e # feature_e2e|journey_e2e are not final delivery
 display_mode: visible_window # default when omitted; headless forbidden
 run_command: flutter drive ... # or headed Playwright / visible host driver
 # covered journeys in coverage_matrix need interaction_surface
@@ -64,8 +70,32 @@ host_matrix: # granoflow_verification_host_matrix_v1; see e2e-host-capabilities
   hosts: []
 test_layer: e2e
 interaction_fidelity: human_path
-cases: []
+cases:
+  - id: null
+    path: null
+    entry_style: human_path
+    journey_step_ids: []
+    background_activity_ids: []
+    post_update_sequence: null # start, two observed events, protected action, exit proof
+    supporting_case_reason: null # only for setup/cleanup cases with no journey step
+    entry_ref: null
+    observable_result: null
+    bypassed_step_ids: [] # non-empty only for feature/journey shortcut cases
 order: []
+human_path_execution: # required for full_project_e2e
+  schema: granoflow_human_path_execution_v1
+  rows:
+    - sequence: 1
+      case_id: null
+      journey_id: null
+      step_id: null
+      navigation_method: app_launch | visible_control | os_control
+      control_ref: null
+      action: launch | tap | click | type | gesture | select | system_interaction | observe
+      before_observation: null
+      after_observation: null
+      evidence_kind: driver_event | host_event
+      evidence_ref: null
 checkpoints: # required non-empty
   - step_id: home_loaded
     capture: screenshot
@@ -95,17 +125,37 @@ hosts are `available`.
 and headless browsers fail closed as `e2e_campaign_headless_ui_forbidden` when
 any journey is `covered`.
 
+`full_project_e2e` is stricter: `interaction_fidelity` must be `human_path`, and
+every covered journey/acceptance/background case must be `entry_style:
+human_path`. URL, deep link, direct route, and state injection cannot close a
+step. `human_path_execution` preserves every required step in Project Work
+order with driver/host event evidence.
+
+For a linked background activity, `entry_style` must be `human_path`.
+`post_update_sequence` must contain observable evidence for the first and
+second background events, a protected user action between them, proof that the
+second event did not undo the action, and proof that a declared exit stopped
+the activity. A timer sleep or fixed wait alone cannot prove an event.
+
 ### Entry style
 
-| Value            | Policy                                                        |
-| ---------------- | ------------------------------------------------------------- |
-| `human_path`     | **Default.** Navigate like a user.                            |
-| `route_shortcut` | Needs `route_shortcut_justified` under `human_path` fidelity. |
+| Value            | Policy                                                |
+| ---------------- | ----------------------------------------------------- |
+| `human_path`     | **Default.** Navigate like a user.                    |
+| `route_shortcut` | Needs justification and explicit `bypassed_step_ids`. |
+
+In `full_project_e2e`, a route shortcut is support-only: no journey steps,
+background activities, coverage, acceptance, or checkpoints; it may only reset
+test-owned environment state or clean up. In feature/journey E2E, it may enter
+the target feature, but bypassed steps stay uncovered/residual and the suite
+cannot claim `full_user_path`.
 
 ## Minimal-Path Ordering
 
 DAG from `produces` → `requires` when tokens are present; otherwise keep
-journey order that matches daily use. Prefer one shared app session.
+journey order that matches daily use. Prefer one shared app session. Minimize
+repeated launch, fixture creation, and cleanup—not visible controls, navigation,
+menus, or OS surfaces in the accepted journey.
 
 ## Rewriting Tests
 

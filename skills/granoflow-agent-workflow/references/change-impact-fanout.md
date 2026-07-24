@@ -141,6 +141,22 @@ closing the batch.
 - Complements review-card **shared-note impact** and experience
   **delete/unlink impact**: reuse those previews when the change touches
   notes/cards/experience; still record dispositions in this ledger.
+- A platform version, support status, layout-family, orientation, or desktop
+  window-constraint change must fan out to the Design Baseline, Milestone
+  review, affected Task Prototype Bundles, Widget Promotion inputs, rendered
+  fidelity evidence, and Acceptance Packs. Their prior digests are stale until
+  regenerated and read back.
+- A presentation-only color, spacing, typography, or layout adjustment reopens
+  the Prototype Bundle and visual evidence, but not product behavior.
+- A field, action, state, navigation, permission, or data-source change reopens
+  the Screen Content Contract, requirement traceability, Contract Grill,
+  Bundle, semantic review, Analysis Technical Package, Planning, and dependent
+  acceptance artifacts.
+- A domain relationship, core workflow, or data-disposition change also
+  reopens the Analysis Logic Draft. Accepted prototype feedback must update the
+  earliest affected contract before HTML regeneration.
+- A presentation-only HTML change keeps the Content Contract but invalidates
+  prior semantic DOM/screenshot evidence and must be recaptured.
 - Does **not** claim semantic completeness. It claims: no silent skip of
   scanned hits; no phase advance on an open ledger.
 - Fail codes here are in addition to `discussion_writeback_pending`,

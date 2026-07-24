@@ -1,0 +1,210 @@
+{
+  "schema": "shared.skill_authoring.design.v1",
+  "status": {
+    "preview_generated": true,
+    "confirmed": true,
+    "confirmed_at": "2026-07-23T04:40:00+00:00",
+    "note": "Confirmed in chat thread (acceptance layers + final delivery). Polish must not drop these constraints. Do not run generative skill_polish.py overwrite on mature granoflow skills—manual polish + preservation tests only."
+  },
+  "skill": {
+    "name": "granoflow-acceptance-delivery",
+    "display_name": "Granoflow Acceptance And Final Delivery",
+    "summary": "Cross-cutting contracts for Layer A/B milestone acceptance and final delivery (unit/IT/E2E paths). Owned as references under granoflow-agent-workflow plus IT/E2E campaign Skills.",
+    "purpose": "Keep milestone delivery at user-invisible IT; offer final delivery after Layer B; path by project feature-milestone count; E2E always full-project.",
+    "keywords": ["#最终交付", "#milestone-it", "#full-delivery"],
+    "triggers": [
+      "Milestone Layer B / 里程碑集成验收",
+      "开始最终交付 / 开始完整交付 / 交付测试"
+    ],
+    "user_examples": ["开始最终交付", "里程碑集成验收怎么跑"]
+  },
+  "authoring": {
+    "preview_required": true,
+    "confirm_required": true,
+    "write_mode": "confirmed_only"
+  },
+  "constraints": [
+    {
+      "id": "C-LAYER-SPLIT",
+      "kind": "must",
+      "text": "Task Layer A and milestone Layer B stay two labeled sections; never fuse into one unlabeled all-done blob (acceptance_layers_fused).",
+      "source": "user thread",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/task-and-milestone-acceptance-layers.md"
+      ],
+      "must_contain": ["acceptance_layers_fused", "Layer A", "Layer B"]
+    },
+    {
+      "id": "C-MILESTONE-IT-ONLY",
+      "kind": "must",
+      "text": "Milestone delivery ends at user-invisible milestone-scoped integration tests; no user-visible E2E required to accept a milestone.",
+      "source": "user thread",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/milestone-integration-acceptance.md",
+        "skills/granoflow-agent-workflow/references/full-delivery-acceptance.md"
+      ],
+      "must_contain": ["user-invisible", "Must Not", "E2E"]
+    },
+    {
+      "id": "C-IT-PREFLIGHT-ORCH",
+      "kind": "must",
+      "text": "Before milestone implement: IT sufficiency + Suite Plan; orchestrate minimal order (e.g. add/browse/list before delete).",
+      "source": "user thread",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/milestone-integration-acceptance.md"
+      ],
+      "must_contain": [
+        "milestone_it_preflight_missing",
+        "Suite Plan",
+        "add",
+        "delete"
+      ]
+    },
+    {
+      "id": "C-IT-EXPERIENCE-REVIEW",
+      "kind": "must",
+      "text": "After Layer B IT green: record Experience from issues; write 任务回顾 for covered tasks.",
+      "source": "user thread",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/milestone-integration-acceptance.md"
+      ],
+      "must_contain": [
+        "Experience",
+        "任务回顾",
+        "milestone_it_experience_unrecorded",
+        "milestone_it_task_review_unrecorded"
+      ]
+    },
+    {
+      "id": "C-FINAL-AFTER-ANY-LAYER-B",
+      "kind": "must",
+      "text": "Final delivery May be offered after any feature milestone Layer B green, including when only one milestone finished this run/day.",
+      "source": "user thread",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/full-delivery-acceptance.md"
+      ],
+      "must_contain": ["any", "Layer B", "one milestone"]
+    },
+    {
+      "id": "C-E2E-DIRECT-ONE",
+      "kind": "must",
+      "text": "Exactly one project feature milestone → pre_e2e_path e2e_direct: skip portfolio unit + integration_campaign; integration_gate waived_single_milestone; then full-project E2E.",
+      "source": "user thread",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/full-delivery-acceptance.md",
+        "skills/granoflow-e2e-test-campaign/references/e2e-test-campaign-contract.md",
+        "skills/granoflow-agent-workflow/scripts/render_project_lifecycle_board.py"
+      ],
+      "must_contain": ["e2e_direct", "waived_single_milestone", "project_feature_milestone_count"]
+    },
+    {
+      "id": "C-MULTI-UNIT-IT-E2E",
+      "kind": "must",
+      "text": "Two or more feature milestones → full_unit_and_it: full unit suite → all user-invisible project IT → full-project E2E.",
+      "source": "user thread",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/full-delivery-acceptance.md"
+      ],
+      "must_contain": ["full_unit_and_it", "Full unit"]
+    },
+    {
+      "id": "C-E2E-ALWAYS-FULL",
+      "kind": "must",
+      "text": "E2E is always full-project; narrowing to touched screens fails closed (full_delivery_e2e_not_full_project).",
+      "source": "user thread",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/full-delivery-acceptance.md"
+      ],
+      "must_contain": ["full_delivery_e2e_not_full_project", "full-project"]
+    },
+    {
+      "id": "C-E2E-DELIVERABLES",
+      "kind": "must",
+      "text": "E2E success requires orchestrated suite green, Phase B AI loop complete, user_final_acceptance, evidence pack, Closing Summary, visible window; screenshots under temp/.",
+      "source": "user thread + e2e contract",
+      "preserve_in": [
+        "skills/granoflow-e2e-test-campaign/references/e2e-test-campaign-contract.md",
+        "skills/granoflow-e2e-test-campaign/references/e2e-evidence-pack.md",
+        "skills/granoflow-e2e-test-campaign/references/e2e-campaign-closing-summary.md"
+      ],
+      "must_contain": [
+        "user_final_acceptance",
+        "visible_window",
+        "granoflow_e2e_evidence_pack_v1",
+        "granoflow_e2e_campaign_closing_summary_v1"
+      ]
+    },
+    {
+      "id": "C-PREVIEW-GATE",
+      "kind": "must",
+      "text": "Meaningful App writes (Experience / 任务回顾 / campaign closeouts that write App state) keep preview → confirm → write.",
+      "source": "polish checklist",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/SKILL.md",
+        "skills/granoflow-milestone-coordination/SKILL.md"
+      ],
+      "must_contain": ["Preview"]
+    },
+    {
+      "id": "C-NO-PORTFOLIO-REPLACE-LAYER-B",
+      "kind": "must",
+      "text": "Project-wide integration_campaign / final delivery does not replace per-feature-milestone Layer B.",
+      "source": "user thread",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/milestone-integration-acceptance.md",
+        "skills/granoflow-integration-test-campaign/references/integration-test-campaign-contract.md"
+      ],
+      "must_contain": ["does **not**", "Layer B"]
+    }
+  ],
+  "workflow": [
+    {
+      "id": "1",
+      "title": "Layer A task closeout",
+      "goal": "Finish child task with Delivery / acceptance_report; author IT but do not run suite.",
+      "actions": ["Load task-and-milestone-acceptance-layers"],
+      "success_criteria": ["Layer A labeled", "IT authored not executed in feature task"],
+      "checkpoints": ["acceptance_layers_fused if fused with B"],
+      "artifacts": ["Delivery", "acceptance_report"],
+      "rules": ["No milestone claim from child done alone"]
+    },
+    {
+      "id": "2",
+      "title": "Layer B milestone IT",
+      "goal": "Preflight + orchestrated milestone-scoped IT to green; Experience + 任务回顾.",
+      "actions": ["Load milestone-integration-acceptance"],
+      "success_criteria": ["Suite green or residual", "Experience/回顾 writeback"],
+      "checkpoints": ["No E2E for milestone accept"],
+      "artifacts": ["Milestone IT Suite Plan", "Experience", "任务回顾"],
+      "rules": ["User-invisible only"]
+    },
+    {
+      "id": "3",
+      "title": "Final delivery",
+      "goal": "Offer/enter final delivery; path by project_feature_milestone_count; E2E always full-project.",
+      "actions": ["Load full-delivery-acceptance"],
+      "success_criteria": ["Correct pre_e2e_path", "Full-project E2E when run"],
+      "checkpoints": ["1 → e2e_direct; ≥2 → full_unit_and_it"],
+      "artifacts": ["session_delivery", "Evidence Pack", "Closing Summary"],
+      "rules": ["May start after any Layer B green"]
+    }
+  ],
+  "resources": {
+    "references": [
+      {
+        "path": "skills/granoflow-agent-workflow/references/full-delivery-acceptance.md",
+        "when": "offering or entering final delivery"
+      },
+      {
+        "path": "skills/granoflow-agent-workflow/references/milestone-integration-acceptance.md",
+        "when": "closing Layer B"
+      },
+      {
+        "path": "skills/granoflow-agent-workflow/references/task-and-milestone-acceptance-layers.md",
+        "when": "co-presenting Layer A/B"
+      }
+    ],
+    "scripts": [],
+    "assets": []
+  }
+}

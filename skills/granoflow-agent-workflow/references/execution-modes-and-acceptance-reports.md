@@ -78,6 +78,12 @@ is needed. Missing report after code changes fails closed as
 - code changes;
 - database/schema changes or an explicit no-change statement;
 - workflow changes;
+- Implementation Design Fidelity (`implementation-design-fidelity.md`): axis
+  table for data_structures / flowcharts / uml_diagrams / modular_split against
+  Plan/pack authority; decision; `better_rationale` and design-writeback
+  paths/SHAs when any divergence was kept—omit only when
+  `impl_design_fidelity.status: not_applicable` (else
+  `impl_design_fidelity_report_missing`);
 - the planned-versus-actual minimum-change budget, including required changes,
   allowed touchpoints used, protected surfaces checked, and every unplanned
   delta with its authorization or residual status;

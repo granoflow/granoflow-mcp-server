@@ -1,0 +1,63 @@
+{
+  "schema": "shared.skill_authoring.design.v1",
+  "status": {
+    "preview_generated": true,
+    "confirmed": true,
+    "confirmed_at": "2026-07-23T05:03:00+00:00",
+    "note": "Confirmed via plan pipeline_attach_reentry. Preserve entry classification, open-QA writeback, and stage rewind fail-closed codes."
+  },
+  "skill": {
+    "name": "pipeline-attachment-and-reentry",
+    "display_name": "Pipeline Attachment And Re-entry",
+    "summary": "Unify new project / new milestones / scattered task / continue / midstream change attachment and stage rewind onto the lifecycle board.",
+    "purpose": "Keep digressions and mid-pipeline requirement changes from skipping writeback or leaving later stages falsely done.",
+    "keywords": ["#回轨", "#entry_kind", "#midstream_change"],
+    "triggers": [
+      "实施中途改早期需求",
+      "进度 / 下一步 / 继续流水线",
+      "零散任务挂到项目"
+    ]
+  },
+  "authoring": {
+    "preview_required": true,
+    "confirm_required": true,
+    "write_mode": "confirmed_only"
+  },
+  "constraints": [
+    {
+      "id": "C-ENTRY-KIND",
+      "kind": "must",
+      "text": "Every project-bound attach turn classifies exactly one entry_kind.",
+      "source": "plan pipeline_attach_reentry",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/pipeline-attachment-and-reentry.md"
+      ],
+      "must_contain": ["entry_kind", "new_project", "new_milestones", "scattered_task", "pipeline_continue", "midstream_change"]
+    },
+    {
+      "id": "C-REENTRY-FAIL-CLOSED",
+      "kind": "must",
+      "text": "Confirmed midstream_change without writeback/rewind/board fails closed.",
+      "source": "plan pipeline_attach_reentry",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/pipeline-attachment-and-reentry.md",
+        "skills/granoflow-agent-workflow/SKILL.md"
+      ],
+      "must_contain": [
+        "pipeline_reentry_skipped",
+        "pipeline_entry_unclassified",
+        "pipeline_stage_not_rewound"
+      ]
+    },
+    {
+      "id": "C-STAGE-REWIND",
+      "kind": "must",
+      "text": "Early requirement changes during Plan/Implement must rewind stages; no oral patch then keep coding.",
+      "source": "plan pipeline_attach_reentry",
+      "preserve_in": [
+        "skills/granoflow-agent-workflow/references/pipeline-attachment-and-reentry.md"
+      ],
+      "must_contain": ["Stage Rewind", "task_local", "portfolio_change", "charter_change", "orally"]
+    }
+  ]
+}

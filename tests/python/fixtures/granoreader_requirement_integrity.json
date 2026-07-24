@@ -1,0 +1,45 @@
+{
+  "scenario_id": "granoreader-bookshelf-native-folder-import",
+  "source_fact": {
+    "fact_id": "F-folder-picker",
+    "statement": "On the bookshelf, clicking + opens the system folder picker.",
+    "source_ref": "product://bookshelf-import",
+    "source_locator": "docs/product.md#bookshelf-plus",
+    "subject": "user",
+    "action": "clicks the plus button",
+    "object": "system folder picker",
+    "conditions": ["bookshelf is visible"],
+    "expected_outcomes": ["native folder picker is visible"],
+    "failure_outcomes": [
+      "missing plugin uses the supported fallback",
+      "picker cancellation leaves the shelf unchanged"
+    ],
+    "platforms": ["macos"],
+    "source_kind": "user_stated",
+    "disposition": "adopted"
+  },
+  "lossy_conversion": {
+    "operation_flow": "Select EPUB, preview, import, show result",
+    "omitted_details": [
+      "bookshelf + control",
+      "native folder picker",
+      "plugin fallback",
+      "picker cancellation"
+    ],
+    "evidence_claim": "service-layer file path injection counted as macOS E2E"
+  },
+  "required_route": [
+    "bookshelf +",
+    "native folder picker",
+    "folder selection",
+    "import preview",
+    "import action",
+    "book visible on shelf"
+  ],
+  "expected_fail_codes": [
+    "journey_step_source_missing",
+    "source_fact_unmapped",
+    "test_route_human_path_overclaim",
+    "e2e_campaign_scope_overclaim"
+  ]
+}

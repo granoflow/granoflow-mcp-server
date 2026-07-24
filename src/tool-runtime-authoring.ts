@@ -1,5 +1,10 @@
 import { requestGranoflowApi, type ApiRequestOptions, type ApiResult } from "./api.js";
 import {
+  reviewTaskDescriptionImpact,
+  verifyTaskDescriptionImpact,
+  type DescriptionImpactWriteOptions,
+} from "./tool-runtime-task-description-impact.js";
+import {
   applyCompletionSourceToBody,
   completionSourceTagSlug,
   ensureSourceTags,
@@ -7,7 +12,7 @@ import {
   readSourceTagCatalog,
   type CompletionSource,
 } from "./source-tags.js";
-import { compactRecord, isObject, jsonTextResult } from "./tool-runtime-core.js";
+import { compactRecord, extractEntity, isObject, jsonTextResult } from "./tool-runtime-core.js";
 import type { TaskAuthoringQualityIssue } from "./tool-runtime-core.js";
 import type { GranoflowRecord } from "./tools.js";
 
@@ -192,8 +197,6 @@ export async function defaultMilestoneDueAt(
   }
 
   const candidate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const daysUntilNextSaturday = (6 - candidate.getDay() + 7) % 7 || 7;
-  candidate.setDate(candidate.getDate() + daysUntilNextSaturday);
 
   const latestProjectDueDate = extractItems(milestonesResult)
     .filter((milestone) => milestone.projectId === projectId)
@@ -202,10 +205,106 @@ export async function defaultMilestoneDueAt(
     .sort()
     .at(-1);
 
-  while (latestProjectDueDate && localDateKey(candidate) <= latestProjectDueDate) {
-    candidate.setDate(candidate.getDate() + 7);
+  if (latestProjectDueDate && localDateKey(candidate) <= latestProjectDueDate) {
+    const [year, month, day] = latestProjectDueDate.split("-").map(Number);
+    candidate.setFullYear(year, month - 1, day);
+    candidate.setDate(candidate.getDate() + 1);
   }
   return { dueAt: `${localDateKey(candidate)}T23:59:59.000` };
+}
+
+type TaskDeadlineResolution = {
+  milestoneId: string;
+  requestedDueAt: string | null;
+  milestoneDueAt: string;
+  effectiveDueAt: string;
+  source: "explicit" | "inherited_milestone";
+};
+
+function deadlineTimestamp(value: unknown): number | null {
+  if (typeof value !== "string" || validDateKey(value) === null) return null;
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+export async function resolveMilestoneTaskDeadline(
+  body: Record<string, unknown>,
+): Promise<
+  | { ok: true; body: Record<string, unknown>; resolution?: TaskDeadlineResolution }
+  | { ok: false; error: ApiResult }
+> {
+  if (typeof body.milestoneId !== "string" || !body.milestoneId.trim()) {
+    return { ok: true, body };
+  }
+  const milestoneId = body.milestoneId.trim();
+  const milestoneResult = await requestGranoflowApi({
+    method: "GET",
+    path: `/v1/milestones/${encodeURIComponent(milestoneId)}`,
+  });
+  if (!milestoneResult.ok) {
+    return {
+      ok: false,
+      error: {
+        ...milestoneResult,
+        code: "milestone_task_due_at_inheritance_failed",
+        error: { message: "Cannot read the selected milestone deadline before task write." },
+      },
+    };
+  }
+  const milestone = extractEntity(milestoneResult);
+  const milestoneDueAt = typeof milestone?.dueAt === "string" ? milestone.dueAt.trim() : "";
+  const milestoneTimestamp = deadlineTimestamp(milestoneDueAt);
+  if (milestoneTimestamp === null) {
+    return {
+      ok: false,
+      error: {
+        ...milestoneResult,
+        ok: false,
+        code: "milestone_task_due_at_inheritance_failed",
+        data: { milestoneId, milestoneDueAt: milestone?.dueAt ?? null },
+        error: { message: "The selected milestone has no valid deadline to inherit." },
+      },
+    };
+  }
+  const requestedDueAt =
+    typeof body.dueAt === "string" && body.dueAt.trim() ? body.dueAt.trim() : null;
+  const requestedTimestamp = requestedDueAt === null ? null : deadlineTimestamp(requestedDueAt);
+  if (requestedDueAt !== null && requestedTimestamp === null) {
+    return {
+      ok: false,
+      error: {
+        ...milestoneResult,
+        ok: false,
+        code: "milestone_task_due_at_invalid",
+        data: { milestoneId, requestedDueAt, milestoneDueAt },
+        error: { message: "The explicit task deadline is invalid." },
+      },
+    };
+  }
+  if (requestedTimestamp !== null && requestedTimestamp > milestoneTimestamp) {
+    return {
+      ok: false,
+      error: {
+        ...milestoneResult,
+        ok: false,
+        code: "milestone_task_due_at_after_milestone",
+        data: { milestoneId, requestedDueAt, milestoneDueAt },
+        error: { message: "The task deadline cannot be later than its milestone deadline." },
+      },
+    };
+  }
+  const effectiveDueAt = requestedDueAt ?? milestoneDueAt;
+  return {
+    ok: true,
+    body: { ...body, dueAt: effectiveDueAt },
+    resolution: {
+      milestoneId,
+      requestedDueAt,
+      milestoneDueAt,
+      effectiveDueAt,
+      source: requestedDueAt === null ? "inherited_milestone" : "explicit",
+    },
+  };
 }
 
 type TagFilterNotice = {
@@ -317,11 +416,71 @@ export async function apiToolForTaskWrite(
   options: ApiRequestOptions,
   body: Record<string, unknown>,
   completionSource?: CompletionSource,
+  descriptionImpact?: DescriptionImpactWriteOptions,
 ) {
-  const withSource = await applyCompletionSourceToBody(body, completionSource);
+  const deadline = await resolveMilestoneTaskDeadline(body);
+  if (!deadline.ok) return jsonTextResult(deadline.error);
+  const resolvedBody = deadline.body;
+  const impactGate = descriptionImpact
+    ? await reviewTaskDescriptionImpact(
+        descriptionImpact,
+        resolvedBody,
+        validateTaskAuthoringQuality,
+      )
+    : null;
+  if (impactGate && !impactGate.ok) return jsonTextResult(impactGate);
+  const withSource = await applyCompletionSourceToBody(resolvedBody, completionSource);
   const { body: filteredBody, tagFilter } = await applyTaskBodyTagFilter(withSource);
   const result = await requestGranoflowApi({ ...options, body: filteredBody });
-  return jsonTextResult(tagFilter ? withTagFilterMetadata(result, tagFilter) : result);
+  if (impactGate?.ok && result.ok && options.dryRun !== true) {
+    const verification = await verifyTaskDescriptionImpact(
+      descriptionImpact!.taskId,
+      impactGate,
+      filteredBody,
+      descriptionImpact!.verifyFields !== false,
+    );
+    if (!verification.ok) return jsonTextResult(verification);
+    const data = isObject(result.data) ? result.data : { result: result.data };
+    return jsonTextResult({
+      ...result,
+      data: {
+        ...data,
+        descriptionImpact: verification.data,
+        ...(deadline.resolution ? { deadlineResolution: deadline.resolution } : {}),
+      },
+      ...(tagFilter ? { tagFilter } : {}),
+    });
+  }
+  if (impactGate?.ok) {
+    const data = isObject(result.data) ? result.data : { result: result.data };
+    return jsonTextResult({
+      ...result,
+      data: {
+        ...data,
+        descriptionImpact: {
+          changedFields: impactGate.changedFields,
+          decision: impactGate.review.decision,
+          reasonCode: impactGate.review.reasonCode,
+          reviewedDescriptionSha256: impactGate.currentDescriptionSha256,
+          readbackStatus: "preview_only",
+        },
+        ...(deadline.resolution ? { deadlineResolution: deadline.resolution } : {}),
+      },
+      ...(tagFilter ? { tagFilter } : {}),
+    });
+  }
+  const resultWithDeadline = deadline.resolution
+    ? {
+        ...result,
+        data: {
+          ...(isObject(result.data) ? result.data : { result: result.data }),
+          deadlineResolution: deadline.resolution,
+        },
+      }
+    : result;
+  return jsonTextResult(
+    tagFilter ? withTagFilterMetadata(resultWithDeadline, tagFilter) : resultWithDeadline,
+  );
 }
 
 export function parseCompletionSource(value: unknown): CompletionSource | undefined {

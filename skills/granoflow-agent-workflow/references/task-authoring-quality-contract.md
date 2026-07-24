@@ -9,6 +9,8 @@ second version of these rules.
 
 Human title-only quick capture in the App remains unchanged. This contract
 governs tasks authored by AI agents and automation through Granoflow tools.
+Existing-task mutations are owned by `task-description-update-contract`; do
+not copy update classification or completion-freeze rules into this file.
 
 ## Required Title And Description
 
@@ -135,8 +137,8 @@ task's `ui_prototype` logical slot with visual confirmation, and read it back.
 Later discussion changes Must re-import and rewrite Task Work refs per
 `discussion-writeback-contract` + `change-impact-fanout` (never leave the new
 truth only in chat/`temp`; close sibling impact ledger in the same batch)
-**before Analysis confirmation when possible, and always before execution
-Readiness / claiming the UI change is accepted**.
+**before Analysis confirmation**. Confirmed `ui_prototype` is an Analysis
+deliverable; Planning Must not start while it is missing.
 Fail closed on Design System reopen
 (`prototype_option_design_system_reopened`), prose-only near-duplicates
 (`prototype_option_near_duplicate`), missing gallery

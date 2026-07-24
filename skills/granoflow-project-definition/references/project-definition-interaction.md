@@ -35,8 +35,9 @@ project`, `定义这个项目`, document completeness, urgency, or the presence 
 ### Interactive mode (default)
 
 For every decision batch that would set or lock a Project Work field, dependency
-row, data-surface declaration, `skill_routing` / design profile, Project Work
-confirm, or Design Baseline + App Shell visual confirmation:
+row, data-surface declaration, `skill_routing` / design profile, directory /
+module locks, Engineering Acceptance Pack accept, or Design Baseline + App Shell
+visual confirmation:
 
 1. **Ask** the decision in plain language (what is being decided and why it
    matters).
@@ -48,8 +49,9 @@ confirm, or Design Baseline + App Shell visual confirmation:
 **Must not** in interactive mode:
 
 - adopt `recommended_value` without an explicit user response to that batch;
-- call `granoflow_project_work_confirm` without the user’s confirm decision for
-  that Project Work content;
+- call `granoflow_project_work_confirm` without **Engineering Acceptance Pack**
+  browse accept (or valid unattended adopt)—do **not** treat a YAML read-
+  through as user acceptance;
 - apply Design Baseline / App Shell `auto_accept_recommendation`;
 - use “safe assumption”, soft preference, or structural-budget defaults as a
   reason to skip the ask → recommend → wait loop.
@@ -135,11 +137,12 @@ Pure Web/CLI/library projects set `applicability: not_applicable` with basis.
 The design-system branch is the deliberate exception to field-by-field
 questioning for fonts/Skills menus—not to Mode Gate or random seeds.
 
-- **Interactive:** Design Spec **Triad** then Shell **Triad**. Spec triad:
-  three lots from `draw_visual_lots.py --kind spec` (**true random**; never
-  hand-invent seeds; no classroom salt)—one faithful match + two AI
-  challengers. Spec artifact = Style Guide / Tokens board (not full-page
-  journey galleries). Shell triad: lots from
+- **Interactive:** Design Spec uses the two-round HTML contract in
+  `design-spec-two-round-selection.md`, then Shell remains a **Triad**. First
+  analyze product fit, show the six-dimension HTML chooser, accept a
+  `1a2b...` code, then show three complete HTML Specs by default (two only with
+  a recorded insufficient-distinct-third reason). One true-random master seed
+  is recorded and candidate seeds are reproducibly derived. Shell lots come from
   `draw_visual_lots.py --kind shell` (chrome deck); all options **embed the
   selected Spec tokens** and present product-near chrome + primary surfaces
   (not grey wireframes); only chrome/structure may diverge—no independent
@@ -265,37 +268,51 @@ contract before initialization Done. See
 
 During Step 1, after source intake and before Project Work confirm:
 
-1. Build `journey_coverage` and `screen_coverage` from docs; list every silence
-   that blocks a primary journey, Baseline screen, critical state, or
-   acceptance condition as a decision-changing gap.
-2. For every **adopted** journey: **draw the operation flowchart**, mark
+1. Build `journey_coverage` and **key-page** `screen_coverage` from docs
+   (`screen_inventory.inventory_role: key_pages_from_sources`,
+   `completeness: not_portfolio_complete`). These are not tasks and do not
+   promise full milestone page coverage. List every silence that blocks a
+   primary journey, key-page inventory, critical state, or acceptance
+   condition as a decision-changing gap.
+2. For every **adopted** key screen: when product docs or user stories state
+   durable UI details, register them under `ui_details[]` with
+   `source` / `source_ref` (`from_product_doc` / `from_user_story` /
+   `inferred` / `user_confirmed`). Adopt
+   `screen_detail_registration` (design-truth priority +
+   `init_html_policy: design_spec_and_shell_only`). Do not invent layout as
+   `from_product_doc`.
+3. For every **adopted** journey: **draw the operation flowchart**, mark
    **serial gates** vs parallel ops + final confirm, then record conclusion
    `split` / `keep_cohesive` / `needs_user_decision` and sync
    `screen_ids` / `screen_coverage` when splitting. Attach a beginner-walkable
    `stress_path` per linked acceptance. Do not use risk labels for page count.
-3. Interactive: ask → recommend → wait until every required row is adopted or
+4. Interactive: ask → recommend → wait until every required row is adopted or
    explicitly `out_of_scope` with rationale; wait on decision-changing thin-doc
    gaps and on `needs_user_decision` decomposition conclusions.
-4. Unattended (explicit only): may recommend and auto-adopt
+5. Unattended (explicit only): may recommend and auto-adopt
    **non-decision-changing** missing rows with `agent_recommendation_adopted`;
    must still run the decomposition pass and record a conclusion; must **not**
    silent-auto-accept decision-changing thin-doc gaps → fail closed
    `thin_product_doc_gap_requires_user`. Never invent journeys as `user_stated`.
-5. Set `product_spec_coverage.status: ready` only when the checklist is all
-   true (including decomposition + stress-path flags). Otherwise fail closed
-   `product_spec_coverage_incomplete` (or nested decomposition/stress codes)
-   and do not confirm Project Work for automation.
-6. Step 2 Baseline screens Must map 1:1 (or documented many-to-one) onto
-   `screen_coverage` rows with `baseline_required: true`, including screens
-   adopted via a `split` conclusion.
-7. If product docs or the user state durable **integration-test fixture /
+6. Set `product_spec_coverage.status: ready` only when the checklist is all
+   true (including decomposition + stress-path +
+   `screen_detail_registration_adopted` flags). Otherwise fail closed
+   `product_spec_coverage_incomplete` (or nested decomposition/stress /
+   `screen_detail_registration_*` codes) and do not confirm Project Work for
+   automation.
+7. Steps 2–3 init Baseline package = **Spec Style Guide + App Shell only**.
+   Do not author every key page as full-page HTML at init. Any HTML page that
+   **is** packaged Must map onto a key-page `screen_coverage` row (or
+   Spec/Shell roles). Per-screen hi-fi HTML is task `ui_prototype`; refined
+   screens and task summaries are Milestone Work `task_plan`.
+8. If product docs or the user state durable **integration-test fixture /
    corpus** rules (fixed seed files, “not app seed”, forbidden substitutes),
    record them under
    `engineering.quality_gates.integration_test_special_requirements` per
    `granoflow-agent-workflow/integration-test-special-requirements`. Empty
    list is valid when no special IT constraints exist. Interactive: ask →
    recommend → wait before inventing corpus paths.
-8. Default app signing goal: omit
+9. Default app signing goal: omit
    `engineering.quality_gates.default_signing_goal` or set `local_dev_run`
    unless the product already requires store / notarized distribution
    (`distribute_store` / `distribute_direct`). Agents follow
@@ -340,6 +357,48 @@ YAML attachments. Never leave "probably no DB" implied.
   contract attachments as user-accepted.
 - Unattended (explicit only): adopt and continue.
 
+## Directory Structure And Modules Batch
+
+During Step 1, after stack / libraries / data persistence and before AI
+self-check, recommend a **skeleton** `engineering.directory_structure` and
+`architecture.modules`:
+
+- non-empty `roots` (path + purpose + owner module);
+- ownership / naming rules;
+- keep `forbidden_catch_all_names` (utils/helpers/managers/coordinators)
+  unless the user explicitly grants an exception;
+- at least one module with non-null `id` and `responsibility`.
+
+Do **not** invent every leaf file. Empty roots or no valid module →
+`directory_structure_unselected` (blocks pack emit and App confirm).
+
+Also set `visual_baseline.applicability` to `required` or `not_applicable`
+with basis (align with product type / app-icon Web-CLI-library口径). Unresolved
+→ `visual_baseline_applicability_unresolved`.
+
+- Interactive: ask → recommend → wait.
+- Unattended (explicit only): adopt and continue.
+
+## AI Self-Check And Engineering Acceptance Pack
+
+Before `granoflow_project_work_confirm`:
+
+1. Load `granoflow-agent-workflow/engineering-acceptance-pack` and
+   `markdown-html-acceptance-render`.
+2. Run **AI self-check** only (record `init_ai_self_check`). Never dump full
+   Project Work YAML as the user acceptance page. Fail →
+   `init_ai_self_check_failed`.
+3. Project an Engineering Acceptance Pack from YAML / companions
+   (`temp/engineering-acceptance-<projectKey>-v<n>.md`). Required sections:
+   `frameworks_and_libs`, `directory_structure`, `visual_baseline_plan`.
+4. Interactive: render MD→HTML (preferred), emit Engineering Acceptance Link,
+   **wait** for browse accept / revise. Unattended: links + digest; Mode Gate
+   adopt only.
+5. On accept/adopt, record `engineering_acceptance_pack` fields, then
+   `granoflow_project_work_confirm` with App hash readback.
+
+Confirm without pack accept → `engineering_acceptance_pack_unconfirmed`.
+
 ## Engineering Baseline
 
 For a software project, read the bundled
@@ -362,10 +421,12 @@ status, and real gate commands in Project Work. Never label a recorded policy
 `recorded_pending_enforcement` when the current action cannot write the repo.
 
 When the user has not overridden them, recommend official or mainstream rules
-for lint, format, type/static checks, tests, directory ownership, dependency
-admission, theme tokens, l10n, constants/configuration, error taxonomy,
-observability, security/privacy, accessibility, performance, refactoring,
-build/release, migration, backup, sync, and rollback. Record the exact source
-and keep unresolved defaults blocked when no reliable standard exists. In
+for lint, format, type/static checks, tests, dependency admission, theme
+tokens, l10n, constants/configuration, error taxonomy, observability,
+security/privacy, accessibility, performance, refactoring, build/release,
+migration, backup, sync, and rollback. **Directory ownership** is owned by the
+Directory Structure And Modules Batch above (and projected into the Engineering
+Acceptance Pack)—do not treat it as an optional soft reminder. Record the exact
+source and keep unresolved defaults blocked when no reliable standard exists. In
 interactive mode, include these rule recommendations in a decision batch and
 wait; in unattended mode, adopt them.

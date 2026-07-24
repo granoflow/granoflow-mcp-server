@@ -5,6 +5,29 @@ contract. A project may attach and update this document from the first partial
 discussion. Partial content is useful evidence and must never be padded with
 invented answers.
 
+## Role: current project truth
+
+Project Work holds the project's **latest current** product and admission
+contract—not a change-log narrative and not a full copy of user product docs.
+
+- **Update in place** when product truth, acceptance, boundaries, or quality
+  rules change; bump `document.document_version` on material change.
+- Put process history in Task Work / Delivery / `change_control.amendment_history`
+  pointers—not as growing prose in the Project Work body.
+- User product documents and user stories are **evidence** under
+  `requirement_intake.source_documents`. Extract dispositioned `R-*` /
+  `product_spec_coverage` / `acceptance` rows; **do not paste** full product
+  manuals or user-story books into this YAML.
+
+### Layered fill (do not flatten)
+
+| Layer                              | Typical sections                                                                                           | Rule                                                         |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Charter / current product contract | `identity`, `requirement`, `requirement_intake`, `scope`, `product`, `product_spec_coverage`, `acceptance` | Keep as adjudicated current truth with provenance            |
+| Engineering locks                  | `repositories`, `engineering.*` (stack, deps, data attachments, theme, quality gates)                      | Lock early; change via reopen/confirm when material          |
+| Automation admission               | `automation`, `action_requirements`, `readiness`, `confirmation`                                           | Gate automatic actions; never invent grants                  |
+| Companion artifacts                | `artifacts` + named attachments below                                                                      | Current slots with SHA readback; not a second product ledger |
+
 The attachment gate and the automation gate are deliberately different:
 
 - `attachment` may be `ready` while the document is `partial`;
@@ -19,19 +42,66 @@ The attachment gate and the automation gate are deliberately different:
   readback truth. MCP remains a thin interface and must fail closed while that
   app-owned capability is unavailable.
 
-Project Work is a living project contract, not a one-time setup form. At task
-completion, milestone review, release preparation, and before a commit that
-changes behavior or a quality gate, compare the implementation and gate output
-with this document. If the current state, boundary, rationale, commands,
-acceptance evidence, or quality rules changed, update the same Project Work
-attachment, increment its document version when the change is material, and
+Project Work is a living **current** project contract, not a one-time setup
+form. At task completion, milestone review, release preparation, and before a
+commit that changes behavior or a quality gate, compare the implementation and
+gate output with this document. If the current state, boundary, rationale,
+commands, acceptance evidence, or quality rules changed, update the same Project
+Work attachment, increment its document version when the change is material, and
 obtain the required App-owned validation/readback before relying on it again.
 Never restore code to satisfy a stale Project Work rule without first checking
 whether the rule itself is obsolete. A mismatch must be reported as a document
 refresh or conflict, not silently resolved by reverting the implementation.
 
+### Mid-flight verification upgrades
+
+When discussion discovers a high-risk or error-prone point, or the user states
+an extra test mandate: after user confirmation, update
+`acceptance.conditions` and `acceptance_coverage` on **this** document (current
+truth). Prefer `required_evidence` entries such as `integration_test`,
+`e2e_or_manual`, and `screenshot_checkpoint`; set `manual_acceptance_required`
+when E2E automation is too hard. Record the discovery and writeback on the
+triggering Task Work (history). Do not leave the mandate only in chat.
+
+### Design Baseline pointer
+
+`engineering.theme_and_design_system.prototype_template` holds the **current**
+confirmed Design Baseline ids/SHA only. Do not dump per-task prototype history
+into Project Work; task `ui_prototype` slots own task-level packages.
+
 Store secret availability or a private reference only. Never store tokens,
 passwords, OTPs, recovery codes, auth URLs, or credential values.
+
+## Companion attachments (not a fourth product Work)
+
+These App-owned attachments support engineering and verification. They are
+**not** a second product journey/acceptance ledger—that stays in Project Work
+above. Task Work / Delivery hold history and evidence.
+
+| Attachment                         | Purpose                                         | Effect on development                                           |
+| ---------------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
+| `project_snapshot.yaml`            | Code/module status quo, next step, blockers     | Hard Gate before first software edit (`project_context_*`)      |
+| `project_rules.yaml`               | Durable boundaries, prefs, `interaction_style`  | Same Hard Gate; not product acceptance SoT                      |
+| Design Baseline (App package)      | Project visual/IA authority + token refs        | Definition Done when `visual_baseline.applicability: required`  |
+| Design Tokens (`token_sources`)    | Color/type/spacing                              | Contract-fidelity basis                                         |
+| `widgets.yaml`                     | Reusable widget **contracts** (not full HTML)   | Mandatory after Baseline confirm (UI path); reuse or `widget_*` |
+| Task/milestone `ui_prototype`      | Task UI authority (clickable HTML package)      | Ready before Readiness; Phase A/B fidelity                      |
+| `data-model.md`                    | Entities/tables when DB applies                 | Update in same task as schema changes or `data_artifact_stale`  |
+| `data-contracts.yaml`              | JSON/structured file shapes                     | Same                                                            |
+| `constants-catalog.yaml`           | Shared constants catalog                        | Same                                                            |
+| `workflows.md`                     | Flow diagrams + notes                           | Consistency with data-model / acceptance                        |
+| Engineering Acceptance Pack (host) | Step 1 **user browse-confirm** MD→HTML surface  | Blocks `granoflow_project_work_confirm` until accepted/adopted  |
+| Task Delivery / acceptance reports | Actual outcomes and evidence                    | Completion path                                                 |
+| IT/E2E campaign artifacts          | Suite plans, coverage, evidence packs, closings | Stages 6–7; incomplete hard rows block bare green               |
+
+**Acceptance division (Project Definition):** Project Work YAML is **AI
+self-checked** (never the user-facing acceptance page). The Engineering
+Acceptance Pack is **user browse-and-confirm**. Design Spec / Shell HTML are
+**user selection** when `visual_baseline.applicability: required`. See
+`engineering-acceptance-pack.md`.
+
+See also `project-context-attachments.md` and project-definition
+`project-artifact-workflows.md`.
 
 ```yaml
 schema: granoflow_project_work_v1
@@ -200,6 +270,77 @@ scope:
   compatibility_commitments: []
   delivery_surfaces: []
 
+platform_support_matrix:
+  schema: granoflow_platform_support_v1
+  confirmation_status: pending # pending | user_confirmed | unattended_auto_adopted
+  accepted_by: null # user | unattended_grant
+  primary_layout_family: null
+  layout_families:
+    - id: mobile_portrait
+      orientation: portrait # portrait | landscape | adaptive
+      reference_viewport: { width: 390, height: 844, dpr: 3 }
+  platforms:
+    - id: ios
+      support_status: not_supported # supported | not_supported | deferred
+      rationale: null
+      min_os_version: null
+      target_sdk_version: null
+      target_sdk_not_applicable_reason: null
+      required_test_versions: []
+      device_classes: []
+      architectures: []
+      layout_family_ids: []
+      orientations: []
+      source_refs: []
+    - id: android
+      support_status: not_supported
+      rationale: null
+      min_os_version: null
+      min_api_level: null
+      target_sdk_version: null
+      target_sdk_not_applicable_reason: null
+      required_test_versions: []
+      device_classes: []
+      architectures: []
+      layout_family_ids: []
+      orientations: []
+      source_refs: []
+    - id: macos
+      support_status: not_supported
+      rationale: null
+      min_os_version: null
+      target_sdk_version: null
+      target_sdk_not_applicable_reason: null
+      required_test_versions: []
+      device_classes: []
+      architectures: []
+      layout_family_ids: []
+      orientations: []
+      window_constraints: null
+      source_refs: []
+    - id: windows
+      support_status: not_supported
+      rationale: null
+      min_os_version: null
+      target_sdk_version: null
+      target_sdk_not_applicable_reason: null
+      required_test_versions: []
+      device_classes: []
+      architectures: []
+      layout_family_ids: []
+      orientations: []
+      window_constraints: null
+      source_refs: []
+  matrix_sha256: null
+
+fidelity_policy:
+  schema: granoflow_fidelity_policy_v1
+  reference_layout_family_ids: []
+  numeric_metric: null
+  threshold_by_layout_family: {}
+  ai_visual_review_required: true
+  platform_native_exception_policy: require_platform_contract_and_approval
+
 product:
   primary_user_journeys: []
   critical_states: []
@@ -239,6 +380,39 @@ product_spec_coverage:
       flow_decomposition: always_run_pass_and_record_conclusion
     never_invent_as_user_stated: true
     deferred_unknown_forbidden_for_initialization_blockers: true
+  # Atomic source facts; do not compress named controls or OS boundaries into
+  # generic feature prose. See granoflow-project-definition/
+  # requirement-integrity-contract.
+  source_fact_ledger:
+    schema: granoflow_source_fact_ledger_v1
+    facts:
+      - fact_id: F-001
+        statement: null
+        source_ref: null
+        source_locator: null
+        subject: null
+        action: null
+        object: null
+        conditions: []
+        expected_outcomes: []
+        failure_outcomes: []
+        platforms: []
+        # user_stated | necessary_implication | domain_baseline | product_expansion
+        source_kind: user_stated
+        disposition: adopted | out_of_scope | conflict
+        rationale: null # required for necessary_implication/domain_baseline
+        evidence_refs: []
+        confirmation_ref: null # required for adopted product_expansion
+        mapped_acceptance_ids: []
+        explicit_non_goal_ref: null # required for out_of_scope/conflict
+    review:
+      author_id: null
+      reviewer_id: null
+      status: pending | passed
+      evidence_refs: []
+      reviewed_ledger_sha256: null
+    status: pending | passed
+    ledger_sha256: null
   # Every primary journey the product must support (from docs or gap-fill).
   journey_coverage:
     - journey_id: J-001
@@ -279,7 +453,81 @@ product_spec_coverage:
           intermediate: []
           success_exit: null
           failure_exit: null
-  # Every user-visible screen / critical state Baseline must show.
+  # Ordered, atomic execution of every adopted journey. Test layers are
+  # step-specific; do not force unit+integration+e2e on ordinary steps.
+  journey_step_traceability:
+    schema: granoflow_journey_step_traceability_v1
+    source_fact_ledger_sha256: null
+    journeys:
+      - journey_id: J-001
+        steps:
+          - step_id: J-001-entry
+            sequence: 1
+            step_type: entry | action | system_response | outcome | failure
+            entry_ref: null # required for entry
+            control: null # required for visible action
+            actor: null
+            action: null
+            interaction_surface: in_app_ui | os_chrome | mixed | service_path
+            platform_boundary: none | plugin | os
+            expected_observation: null
+            source_fact_ids: []
+            required_test_layers: [] # unit | integration | e2e
+            failure_modes: [] # required for plugin/os boundary
+    semantic_replay:
+      status: pending | passed
+      missing_fact_ids: []
+      distorted_fact_ids: []
+      evidence_refs: []
+    review:
+      author_id: null
+      reviewer_id: null
+      status: pending | passed
+      evidence_refs: []
+      reviewed_traceability_sha256: null
+    status: pending | passed
+    traceability_sha256: null
+  # Classify every adopted fact. Keep activities empty only when all facts are
+  # `none`. A visible activity must retain user control across later updates.
+  background_activity_control:
+    schema: granoflow_background_activity_control_v1
+    source_fact_ledger_sha256: null
+    journey_step_traceability_sha256: null
+    fact_classifications:
+      - fact_id: F-001
+        role: none | starts_activity | background_update | protected_control | exit_action
+        background_activity_ids: []
+    activities:
+      - activity_id: BA-001
+        continues_after_user_action: true
+        background_events: []
+        allowed_background_changes: []
+        must_not_change: []
+        controls_that_must_keep_working: []
+        ways_to_exit: []
+        source_fact_ids: []
+        journey_step_ids: []
+        required_test_layers: [] # integration + e2e for visible activities
+    semantic_replay:
+      status: pending | passed
+      missing_fact_ids: []
+      distorted_fact_ids: []
+      evidence_refs: []
+    review:
+      author_id: null
+      reviewer_id: null
+      status: pending | passed
+      evidence_refs: []
+      reviewed_traceability_sha256: null
+    status: pending | passed
+    traceability_sha256: null
+  # Key pages inventory from product docs / stories (Init). NOT tasks.
+  # Does NOT promise full milestone page coverage. Refined screens + task
+  # binding live in Milestone Work task_plan (screen-task-portfolio-coverage).
+  # Listing here does NOT require init-time full-page HTML.
+  screen_inventory:
+    inventory_role: key_pages_from_sources
+    completeness: not_portfolio_complete
   screen_coverage:
     - screen_id: S-001
       title: null
@@ -291,6 +539,31 @@ product_spec_coverage:
       source_refs: []
       provenance: null
       disposition: adopted | needs_clarification | out_of_scope
+      # Register durable UI details when product docs / stories state them.
+      # Empty when sources are silent. Never invent as from_product_doc.
+      ui_details:
+        - detail_id: null
+          statement: null
+          # user_confirmed | from_product_doc | from_user_story | inferred
+          source: null
+          source_ref: null
+  # Hard gate before status: ready. See requirement-intake-and-traceability.
+  screen_detail_registration:
+    status: adopted | incomplete
+    fail_closed_code: screen_detail_registration_missing
+    # High → low. Lower ranks Must not override higher without user_confirmed.
+    design_truth_priority:
+      - user_confirmed
+      - from_product_doc
+      - from_user_story
+      - inferred
+      - ai_live_inference
+    # Init ships Spec Style Guide + App Shell HTML only—not every S-* page.
+    init_html_policy: design_spec_and_shell_only
+    # Per-screen hi-fi HTML: task Analysis ui_prototype.
+    per_screen_hifi_phase: task_analysis_ui_prototype
+    # Refined screens + task summaries: Milestone Work task_plan (not PW).
+    refined_screen_and_task_plan_phase: milestone_task_plan
   # Explicit gap fills when product docs were silent or too thin.
   gap_fills:
     - gap_id: G-001
@@ -311,6 +584,13 @@ product_spec_coverage:
     every_adopted_acceptance_has_stress_path: false
     every_baseline_required_screen_listed: false
     every_screen_has_requirement_and_acceptance: false
+    source_fact_ledger_reviewed: false
+    every_adopted_fact_mapped: false
+    every_adopted_journey_step_traced: false
+    every_adopted_fact_background_activity_classified: false
+    background_activity_control_reviewed: false
+    semantic_replay_passed: false
+    screen_detail_registration_adopted: false
     no_open_decision_changing_gaps: false
     no_conflicting_undisposed_requirements: false
     thin_doc_gap_fills_recorded: false
@@ -390,8 +670,12 @@ engineering:
     external_seams: []
     internal_seams: []
 
+  # Software Project Definition: roots Must be non-empty and architecture.modules
+  # Must include at least one row with id + responsibility before AI self-check /
+  # Engineering Acceptance Pack emit. Empty roots => directory_structure_unselected.
+  # Lock skeleton only (roots, ownership, naming)—not every leaf file.
   directory_structure:
-    roots: []
+    roots: [] # [{ path, purpose, owner_module }]
     ownership_rules: []
     naming_rules: []
     generated_paths: []
@@ -495,6 +779,29 @@ engineering:
     # fails closed as data_artifact_stale.
     code_must_match_data_attachments: true
 
+  review_routing:
+    control_plane: granoflow
+    gstack_autoplan: explicit_only
+    stages:
+      project_definition:
+        required_capabilities: [prd-review]
+        conditional_capabilities: [office-hours, ceo-reviewer]
+      milestone_decomposition:
+        required_capabilities: [prd-review, engineering-reviewer]
+        conditional_capabilities: [ceo-reviewer, design-reviewer, cso]
+      analysis:
+        conditional_capabilities: [prd-review, investigate, cso]
+      planning:
+        required_capabilities: [engineering-reviewer]
+        conditional_capabilities: [design-reviewer, cso]
+      delivery:
+        required_capabilities: [code-review, qa]
+        conditional_capabilities: [design-review, benchmark, cso, canary]
+    provider_policy:
+      method: preferred_method
+      unavailable: native_fallback_with_evidence
+      authorization_effect: none
+
   theme_and_design_system:
     owner: null
     # Paths to companion Design Tokens (DTCG-oriented JSON or equivalent).
@@ -504,8 +811,10 @@ engineering:
     # Visual truth stays in confirmed prototypes; catalog records reusable
     # chrome/control/pattern contracts + derived_from Baseline/task prototypes.
     # First mandatory write after Baseline confirm; incremental after later
-    # confirmed prototypes. Missing after Baseline confirm =>
-    # widget_catalog_required.
+    # confirmed prototypes. Every promotion also refreshes a browseable Design
+    # System HTML catalog generated from widgets.yaml. Task-local widgets stay
+    # local; token-contract changes reopen Baseline. Missing after Baseline
+    # confirm => widget_catalog_required.
     widgets_attachment: null
     # Documented fields below (stack_capability_profile, acceptance_fidelity,
     # implementation_notes) are preserved by unknown_fields:preserve when the
@@ -536,12 +845,11 @@ engineering:
     shared_component_policy: null
     page_local_override_policy: prohibited_by_default
     design_profile:
-      # Stable project-level lock. Interactive: Design Spec triad of Style
-      # Guide / Design Tokens boards (distinct random seeds; not full journey
-      # screen galleries) then Shell triad fitted to selected Spec (chrome
-      # variants only). Unattended: one random-seed Style Guide spec_match +
-      # one Spec-fitted shell_match. Journey screens enter Baseline after
-      # Spec+Shell. From Shell onward style converges. Never a Skills menu.
+      # Stable project-level lock. Interactive: product-fit HTML direction
+      # chooser, then 3 complete HTML Specs by default (justified 2 allowed),
+      # then a Shell triad fitted to the selected Spec. Unattended: one
+      # product-fitted random-seed Spec + one Spec-fitted Shell. Journey screens
+      # enter later. From Shell onward style converges. Never a Skills menu.
       id: null
       version: 1
       # proposed | locked | reopened
@@ -567,20 +875,74 @@ engineering:
       safe_choices: []
       deliberate_risks: []
       source_evidence: []
-    # After Spec/Shell rounds (see project-artifact-workflows Mode split).
+    # Decide in Step 1 (before Engineering Acceptance Pack). Unresolved =>
+    # visual_baseline_applicability_unresolved. When not_applicable, skip
+    # Spec/Shell/widgets for initialization Done (CLI/library/no UI chrome).
+    visual_baseline:
+      # required | not_applicable
+      applicability: null
+      basis: null
+      # When required: init package = Design Spec Style Guide + App Shell only.
+      # Do not require every screen_coverage row as HTML at initialization.
+      init_deliverables: design_spec_and_shell_only
+    # After the two Design Spec HTML rounds (or unattended single).
+    # Exact v2 contract: design-spec-two-round-selection.md.
     design_spec_selection:
-      mode: interactive_triad | unattended_single
-      selected_option_id: null # spec_match | ai_challenger_a | ai_challenger_b | null when single
+      schema: granoflow_design_spec_selection_v2
+      mode: interactive_two_round | unattended_single
+      product_fit_envelope:
+        status: pending | passed
+        input_sha256: null
+        source_refs: []
+        allowed_directions: []
+        excluded_directions: []
+        accessibility_requirements: []
+        rationale: null
+      generation:
+        algorithm: hmac-sha256
+        algorithm_version: 1
+        master_seed: null
+        product_fit_sha256: null
+      direction_round:
+        artifact_ref: null
+        artifact_sha256: null
+        quality_status: pending | passed
+        asset_policy: html_css_inline_svg_only
+        dimensions: [] # fixed 1..6, each options a..d
+        selection_code_input: null
+        selection_code_canonical: null
+        completed_selections: []
+      spec_round:
+        candidate_count: null # interactive 3, or 2 with reason; unattended 1
+        reduction_reason_code: null # insufficient_distinct_third
+        comparison_artifact_ref: null
+        comparison_artifact_sha256: null
+        quality_status: pending | passed
+        asset_policy: html_css_inline_svg_only
+        candidates: []
+        pairwise_differences: []
+      selected_option_id: null
       seed: null
-      candidates: [] # interactive: three entries with distinct seeds
+      candidates: [] # compatibility mirror of spec_round.candidates
       provenance: user_selected | unattended_spec_match_random_seed | null
     shell_selection:
+      schema: granoflow_shell_selection_v2
       mode: interactive_triad | unattended_single
       selected_option_id: null
       # chrome-variant id when interactive; not an independent palette seed
       chrome_variant_id: null
       fitted_to_design_spec_option_id: null
+      # Derived from platform_support_matrix. Each platform lists portrait,
+      # landscape, or both. Every candidate covers every listed orientation.
+      required_layout_families: []
       candidates: []
+      # Selected Shell only. Includes app_shell.top_bar and
+      # app_shell.bottom_navigation, with platform/orientation variants and
+      # exact derived_from Shell artifact SHA.
+      widget_catalog_projection:
+        status: pending | passed
+        source_shell_artifact_sha256: null
+        widgets: []
       provenance: user_selected | unattended_shell_match_fitted_to_spec | null
     skill_routing:
       profile_id: granoflow_product_design_v1
@@ -595,7 +957,8 @@ engineering:
       capabilities: []
     prototype_template:
       # App-owned Design Baseline exact reference. Never resolve "latest".
-      # Package must include Design Tokens refs + landscape/portrait App Shell.
+      # Package includes Design Tokens refs + every required layout family
+      # from platform_support_matrix; do not force unsupported orientations.
       # Authority for later milestone/task prototypes and code acceptance.
       prototype_id: null
       version_id: null
@@ -1215,12 +1578,42 @@ readiness:
   external_capability_readiness: not_run
   recovery_readiness: not_run
 
+# AI-only checklist before Engineering Acceptance Pack emit. Never present
+# raw YAML as the user's acceptance page. Failed/pending blocks pack emit and
+# granoflow_project_work_confirm => init_ai_self_check_failed.
+init_ai_self_check:
+  status: pending # pending | passed | failed
+  checked_at: null
+  findings: []
+
+# Host-local Step 1 browse-confirm pack (temp/engineering-acceptance-…-vN.md).
+# Not an App logical slot in this release. status accepted (or unattended
+# adopt) required before granoflow_project_work_confirm.
+# See engineering-acceptance-pack.md.
+engineering_acceptance_pack:
+  status: absent # absent | draft | pending_acceptance | accepted | superseded | not_applicable
+  path: null
+  version: null
+  content_sha256: null
+  accepted_at: null
+  accepted_by: null # user | unattended_grant
+  html_render:
+    status: null # ready | tools_missing | error | skipped_markdown_only
+    html_path: null
+    html_file_url: null
+    markdown_path: null
+    markdown_file_url: null
+    link_emitted: false
+
 confirmation:
   user_confirmed: false
   confirmed_document_version: null
   confirmed_at: null
   confirmed_by: null
   app_confirmation_metadata_owner: granoflow_app
+  # User-facing confirm for Step 1 is the Engineering Acceptance Pack, not a
+  # YAML read-through. App confirm still records hash metadata here.
+  engineering_pack_accepted_before_app_confirm: true
 
 completion:
   status: not_started
@@ -1260,22 +1653,43 @@ completion:
    require `product_spec_coverage.status: ready`. Thin or uneven product docs
    do not waive this. Missing journeys, Baseline-required screens, acceptance
    links, open decision-changing gaps, missing **flow decomposition** pass /
-   conclusion, or incomplete **stress paths** fail closed as
+   conclusion, incomplete **stress paths**, or missing
+   **screen_detail_registration** fail closed as
    `product_spec_coverage_incomplete` (see nested codes in
-   `product-spec-flow-decomposition`). Decomposition is **operation-flow
+   `product-spec-flow-decomposition` and
+   `screen_detail_registration_missing` /
+   `screen_ui_details_source_invalid`). Decomposition is **operation-flow
    driven**: draw the user-operation flowchart, detect serial gates vs
    parallel ops + final confirm, then conclude `split` / `keep_cohesive` /
    `needs_user_decision` — do **not** use risk labels to force multi-screen.
-   Interactive: ask → recommend → wait for missing required rows and for
-   decision-changing thin-doc gaps. Unattended (explicit only): may auto-adopt
-   **non-decision-changing** fills with `agent_recommendation_adopted`; must
-   still run the decomposition pass; decision-changing thin-doc gaps fail
-   closed `thin_product_doc_gap_requires_user` — never silent-complete an
+   While listing screens, register durable `ui_details` when product docs /
+   user stories state them (provenance via design-truth priority). Init HTML
+   remains Spec + Shell only. Interactive: ask → recommend → wait for missing
+   required rows and for decision-changing thin-doc gaps. Unattended (explicit
+   only): may auto-adopt **non-decision-changing** fills with
+   `agent_recommendation_adopted`; must still run the decomposition pass;
+   decision-changing thin-doc gaps fail closed
+   `thin_product_doc_gap_requires_user` — never silent-complete an
    underspecified product. Never relabel invented content as `user_stated`.
    `deferred_unknown` is forbidden for initialization blockers listed under
    `product_spec_coverage.checklist`.
 8. Secret values never enter this document. Authorization and external
    capability rows record disposition and availability references only.
+9. **Engineering Acceptance Pack Hard Gate** (software Project Definition):
+   before `granoflow_project_work_confirm`, `init_ai_self_check.status` must be
+   `passed`, `directory_structure.roots` non-empty with at least one valid
+   `architecture.modules` row, `visual_baseline.applicability` resolved, and
+   `engineering_acceptance_pack.status` `accepted` (interactive) or validly
+   auto-adopted (unattended). Fail closed
+   `init_ai_self_check_failed` /
+   `directory_structure_unselected` /
+   `visual_baseline_applicability_unresolved` /
+   `engineering_acceptance_pack_unconfirmed` /
+   `engineering_acceptance_pack_missing`. YAML is AI-self-checked; the pack is
+   the user browse-confirm surface (`engineering-acceptance-pack.md`).
+10. When `visual_baseline.applicability: not_applicable`, initialization Done
+    does **not** require Design Spec / Shell / `widgets.yaml`. When
+    `required`, Missing Shell still fails Done.
 
 ## Current Capability Boundary
 

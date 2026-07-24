@@ -15,7 +15,22 @@ the feature task, device chosen by the user (recommend local machine). When
 those cases are authored, **recommend** recording `requires` / `produces` (and
 optional `mutates` / `destroys`) so later orchestration can build a minimal path.
 
-This campaign contract is the **execution** path for stage
+## Relationship To Per-Milestone Layer B
+
+**Feature-milestone acceptance (Layer B)** is owned by
+`granoflow-agent-workflow/milestone-integration-acceptance`: milestone-scoped
+suite, preflight before implement, user-invisible IT decision, then Experience +
+任务回顾 writeback. Reuse this campaign’s **orchestration + agent_auto run**
+mechanics for that suite.
+
+This campaign contract’s default stage-`integration_campaign` path is the
+**IT leg of最终交付** when `pre_e2e_path: full_unit_and_it` (project has ≥2
+feature milestones): portfolio / project-wide hardening after a green **full
+unit** suite. It does **not** replace per-feature-milestone Layer B. When the
+project has exactly one feature milestone,最终交付 uses `e2e_direct` and
+**skips** this stage (`full-delivery-acceptance`).
+
+This campaign contract is also the **execution** path for stage
 `integration_campaign`: inventory and orchestrate the suite, run it under
 **agent auto-drive**, triage failures, fix product or test code, re-test until
 green, and emit a change report when anything was edited.
@@ -51,7 +66,7 @@ campaign_id: <stable id>
 project_id: <id>
 campaign_drive: agent_auto
 execution_mode: interactive | unattended # project mode; does not weaken auto-drive
-interaction_fidelity: service_path # only valid value for this skill
+interaction_fidelity: service_path # component_path|hybrid when background UI is in scope
 integration_test_device_recommendation: local_machine
 integration_test_device: local_machine | simulator_or_emulator | physical_device | remote_farm | other
 suite_entrypoints: [] # commands or paths before orchestration
@@ -89,7 +104,7 @@ Presence fails closed as `integration_campaign_vision_not_allowed`.
 ```text
 open milestone(round N)
   -> orchestrate suite (inventory + Suite Plan; may rewrite tests)
-  -> run orchestrated suite under agent_auto + service_path
+  -> run orchestrated suite under agent_auto + declared integration fidelity
   -> on failure: triage failure_class; choose fix_schedule (inline | deferred_batch | hybrid)
   -> fix product_code and/or test_harness (and orchestration) as classified
   -> re-test affected cases; do not claim green without evidence
@@ -124,14 +139,17 @@ Read `integration-suite-orchestration.md`. Before the first run of a round:
    `acceptance_outcome_layer_overclaim` /
    `acceptance_outcome_user_path_overclaim`.
 4. Label `requires` / `produces` / `mutates` / `destroys` and entry style
-   (`service_path` default; rare `ui_probe` needs justification).
+   (`service_path` default; `ui_probe` needs justification and is required for
+   a linked visible background activity).
 5. Emit a Campaign Suite Plan with `test_layer: integration` and a
    dependency-respecting `order`.
 6. **May rewrite or merge test code** so the plan can run without per-case
    seed/rebuild thrash—while still honoring seed_corpus paths. Record test
    edits in the eventual change report.
 
-Default `interaction_fidelity: service_path`. UI `human_path` →
+Default `interaction_fidelity: service_path`; use `component_path` or `hybrid`
+for a real component/state owner around controlled external events. UI
+`human_path` →
 `integration_campaign_fidelity_wrong_layer`.
 
 ## Failure Triage

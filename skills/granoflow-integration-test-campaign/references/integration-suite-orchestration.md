@@ -1,7 +1,7 @@
 # Integration Suite Orchestration
 
 How to turn task-local, disconnected integration tests into one (or a few)
-minimal-path **service_path** journeys before a campaign suite run.
+minimal-path service or real-component journeys before a campaign suite run.
 
 Load via MCP:
 
@@ -27,6 +27,9 @@ Skipping this load and claiming an orchestrated suite fails closed as
    belong to `granoflow-e2e-test-campaign`.
 3. **Editable tests** — Rewriting, merging, or splitting test code during
    orchestration is **allowed and expected** when it enables (1) and (2).
+4. **Background control** — A visible background activity mounts the real
+   component and state owner around a controllable event adapter. It is not
+   proven by calling the service alone.
 
 ## Inventory
 
@@ -68,24 +71,28 @@ Rules:
 - Push mutually exclusive teardown to the end of the journey.
 - Islands that cannot share state keep separate journeys; document why—do not
   silently drop coverage.
+- This DAG minimizes module setup only. It never upgrades service/component
+  calls into E2E evidence and never justifies skipping visible user steps.
 
 Violation → `integration_campaign_order_dependency_violation`.
 
 ## Interaction Fidelity
 
-| Value          | Policy                                                                   |
-| -------------- | ------------------------------------------------------------------------ |
-| `service_path` | **Default / only valid value for this skill.** Real I/O, shared session. |
+| Value            | Policy                                                                   |
+| ---------------- | ------------------------------------------------------------------------ |
+| `service_path`   | **Default / only valid value for this skill.** Real I/O, shared session. |
+| `component_path` | Real component plus state owner and controllable external adapter.       |
+| `hybrid`         | Suite contains both service and component paths.                         |
 
-`human_path`, `hybrid`, and `route_fast` fail closed as
+`human_path` and `route_fast` fail closed as
 `integration_campaign_fidelity_wrong_layer` (use E2E campaign).
 
 ### Entry style
 
-| Value          | Policy                                                               |
-| -------------- | -------------------------------------------------------------------- |
-| `service_path` | **Default.** Call services/repositories/domain APIs directly.        |
-| `ui_probe`     | Rare thin widget mount to assert wiring; needs `ui_probe_justified`. |
+| Value          | Policy                                                        |
+| -------------- | ------------------------------------------------------------- |
+| `service_path` | **Default.** Call services/repositories/domain APIs directly. |
+| `ui_probe`     | Real component/state mount; needs `ui_probe_justified`.       |
 
 `entry_style: human_path` or `route_shortcut` →
 `integration_campaign_fidelity_wrong_layer`.
@@ -111,6 +118,8 @@ contract_loaded: true
 orchestration_loaded: true
 special_requirements_loaded: true
 special_requirements_applied: [] # ITR-* fail_closed rows that apply to this suite
+test_route_traceability_loaded: true # required when Project Work has traced steps
+background_activity_control_loaded: true # required when Project Work has activities
 acceptance_outcomes_loaded: true
 user_path_claim: service_layers_only
 acceptance_outcomes:
@@ -122,7 +131,18 @@ acceptance_outcomes:
     case_ids: []
 test_layer: integration
 interaction_fidelity: service_path
-cases: []
+cases:
+  - id: null
+    path: null
+    entry_style: service_path
+    journey_step_ids: [] # only steps whose required_test_layers includes integration
+    background_activity_ids: []
+    post_update_sequence: null # required for each linked background activity
+    supporting_case_reason: null # required when this is setup/cleanup with no step id
+    requires: []
+    produces: []
+    mutates: []
+    destroys: []
 order: []
 ```
 

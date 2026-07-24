@@ -42,6 +42,8 @@ vision_result: not_run | passed | failed | skipped
 prototype_task_reviews:
   schema: granoflow_e2e_prototype_task_reviews_v1
   inventory_loaded: true
+  # How required_task_ids was built — required when inventory_loaded is true
+  inventory_basis: app_enumeration | manual_inventory
   required_task_ids: [] # every confirmed task prototype id; [] only if none
   ai_loop_status: not_applicable # in_progress | complete | not_applicable
   user_final_acceptance: false # true only after AI complete + user gate
@@ -78,8 +80,11 @@ At E2E campaign close, Evidence Pack **Must** include
 `prototype_task_reviews` with `inventory_loaded: true`.
 
 1. Build `required_task_ids` from **every** project task that has a finalized /
-   confirmed task-level `ui_prototype` (or equivalent HTML authority). This list
-   **is** the compare loop basis—do not limit to Phase A `diverged` rows.
+   confirmed task-level `ui_prototype` (or equivalent HTML authority). Prefer
+   App enumeration; if unavailable, use a complete `manual_inventory` and set
+   `inventory_basis` accordingly. This list **is** the compare loop basis—do
+   not limit to Phase A `diverged` rows and do not silently omit known
+   prototypes.
 2. For each `required_task_ids` entry, emit ≥1 `reviews[]` row with:
    - live `screenshot_path` under `temp/` (prototype without screenshot =
      process error)

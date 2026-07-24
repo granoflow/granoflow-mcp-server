@@ -4,6 +4,8 @@ import {
   startServer,
   parseToolText,
   collectHandlers,
+  taskDescriptionImpactReview,
+  writeTaskReadback,
 } from "./tools-test-harness.js";
 
 installToolTestLifecycle();
@@ -23,6 +25,10 @@ describe("tools-completion-gates", () => {
         );
         return;
       }
+      if (request.url === "/v1/tasks/task-1") {
+        writeTaskReadback(response);
+        return;
+      }
       response.statusCode = 500;
       response.end(JSON.stringify({ ok: false }));
     });
@@ -31,6 +37,7 @@ describe("tools-completion-gates", () => {
 
     const result = await handlers.get("granoflow_task_complete")?.({
       taskId: "task-1",
+      descriptionImpactReview: taskDescriptionImpactReview("completion_only"),
       dryRun: false,
     });
 
@@ -39,7 +46,7 @@ describe("tools-completion-gates", () => {
       code: "node_managed_completion_required",
       data: { completionOwner: "task_node_service", nodeCount: 1 },
     });
-    expect(requestedUrls).toEqual(["/v1/tasks/task-1/nodes"]);
+    expect(requestedUrls).toEqual(["/v1/tasks/task-1", "/v1/tasks/task-1/nodes"]);
   });
 
   it("fails fast when enhanced review card fields are not advertised by the app", async () => {
@@ -56,6 +63,10 @@ describe("tools-completion-gates", () => {
             },
           }),
         );
+        return;
+      }
+      if (request.url === "/v1/tasks/task-1") {
+        writeTaskReadback(response);
         return;
       }
       response.statusCode = 500;
@@ -88,6 +99,7 @@ describe("tools-completion-gates", () => {
           backLayout: ["back"],
         },
       ],
+      descriptionImpactReview: taskDescriptionImpactReview("completion_only"),
       confirmComplete: true,
       dryRun: false,
     });
@@ -99,6 +111,6 @@ describe("tools-completion-gates", () => {
         unsupportedFields: ["noteFields", "frontLayout", "backLayout"],
       },
     });
-    expect(requestedUrls).toEqual(["/v1/ai-agent/tools"]);
+    expect(requestedUrls).toEqual(["/v1/tasks/task-1", "/v1/ai-agent/tools"]);
   });
 });

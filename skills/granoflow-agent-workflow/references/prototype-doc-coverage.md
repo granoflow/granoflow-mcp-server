@@ -43,7 +43,12 @@ Before Analysis confirmation, inventory **every material user-visible UI
 surface owned by this task**—pages, dialogs/modals, sheets, popovers, toasts
 (when user-visible and task-owned), and other overlays—and map each to a
 **high-fidelity HTML prototype file** in the task `ui_prototype` package (or
-linked option batch). No omissions.
+linked option batch). No omissions. When Project Work
+`product_spec_coverage.screen_coverage[].ui_details` lists durable details for
+those surfaces, the HTML Must cover them (design-truth priority:
+`user_confirmed` > `from_product_doc` > `from_user_story` > `inferred` >
+live AI guess). Init Design Baseline Spec+Shell is **not** per-screen
+coverage.
 
 Persist on Task Work:
 
@@ -78,6 +83,28 @@ Rules:
    still missing HTML.
 5. `status: complete` only when every inventoried surface is `covered` (or
    `not_applicable` when the task truly has no UI surfaces).
+
+### Navigable prototype policy (Analysis / Baseline checklist)
+
+Authoritative prototypes are **clickable UX truth**, not a pile of isolated
+preview links. For Project Work `product_spec_coverage.screen_coverage` rows
+that are `disposition: adopted` and user-reachable, and for every task-owned
+surface in `prototype_html_coverage`:
+
+1. Prefer reaching the surface by **in-prototype navigation** from Shell / a
+   primary entry (tap list rows, tabs, buttons, back stack)—not only an
+   external deep-link that bypasses IA.
+2. An isolated HTML file opened only via an out-of-app link, with no in-shell
+   path, does **not** satisfy navigability for that surface. Mark the surface
+   incomplete until a navigable path exists (or an allowed exception applies).
+3. **Exceptions (do not force fake pages):**
+   - same-page empty / loading / inline error states of one operation;
+   - OS chrome (uninjected file dialogs, tray, system sheets)—may use an
+     in-app entry affordance; full OS chrome is verified in E2E/manual;
+   - `out_of_scope` / non-adopted screens.
+4. Design Baseline Done and task Analysis close **Must** run this checklist
+   (policy). Mechanical `reachable_from` lint is not required in this skill
+   revision.
 
 Lint:
 
@@ -158,12 +185,15 @@ prototype_doc_coverage:
 
 Rules:
 
-1. Prototype is the **source of truth** for UI/product surface description.
+1. Prototype is the **source of truth** for confirmed visual and presentation
+   details. The accepted Screen Content Contract is the source of truth for
+   fields, actions, states, navigation, permissions, and data sources.
 2. `coverage: missing` → Task Work and/or Project Work must be updated until
    covered (`prototype_doc_coverage_gap`).
-3. `coverage: conflict` → docs disagree with the prototype; rewrite docs to
-   match the prototype (`prototype_doc_conflict`). Do not “keep docs” by
-   soft-passing Analysis.
+3. `coverage: conflict` → classify the difference. Presentation-only conflicts
+   update docs to match the prototype. Product-behavior conflicts reopen and
+   update the Screen Content Contract first, then regenerate the prototype and
+   docs (`prototype_doc_conflict`). Do not soft-pass Analysis.
 4. Analysis / discussion batch **Must not** close while any row is
    `missing`/`conflict`, or while `status` is `pending` with a non-empty
    required inventory.
@@ -185,7 +215,8 @@ python3 skills/granoflow-agent-workflow/scripts/lint_prototype_doc_coverage.py \
 During Planning, **re-read** the current App prototype against Task Work. If
 they disagree:
 
-1. Treat the **prototype as source of truth**.
+1. Treat the prototype as visual source of truth and the accepted Screen
+   Content Contract as product-behavior source of truth.
 2. Emit `prototype_plan_truth` with conflicts + recommended doc updates.
 3. **Explicitly remind** the user (interactive) and list recommendation items.
 4. After the user **agrees**, update Task Work **and** Project Work (when in
@@ -197,7 +228,8 @@ they disagree:
 prototype_plan_truth:
   schema: granoflow_prototype_plan_truth_v1
   contract_loaded: true
-  prototype_is_source_of_truth: true # must be true
+  prototype_is_source_of_truth: true # visual/presentation authority
+  screen_content_contract_sha256: <required for Bundle v2 behavior authority>
   status: not_applicable | aligned | conflict
   conflicts: [] # [{ page_id, field, prototype_says, task_work_says, recommendation }]
   user_notified: true | false
@@ -247,9 +279,12 @@ Phase A makes code match the prototype.
 | `widget_reuse_required`              | Same role not reused from `widgets.yaml`; near-duplicate widget ids; `new_role` when catalog entry exists |
 | `prototype_doc_coverage_lint_failed` | Structural lint failure on any ledger kind                                                                |
 
-Analysis confirmation (`analysis_status: confirmed`, Readiness pass) **Must
+Analysis confirmation (`analysis_status: confirmed`) and Planning entry **Must
 not** proceed while any Analysis ledger above reports `pending`, gap/conflict
-rows, or lint `ok: false`.
+rows, or lint `ok: false`. That incompleteness is also an Analysis Deliverable
+failure (`analysis_deliverables_incomplete`); Readiness remains blocked as a
+later gate. Always emit the user-visible Analysis Deliverables remaining list
+from `task-work-document-workflow` when closing or pausing Analysis.
 
 ## Agent Checklist
 

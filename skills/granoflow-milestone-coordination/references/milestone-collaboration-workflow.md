@@ -15,6 +15,16 @@ set of child tasks. It owns dependencies, handoffs, integration proof, and
 milestone acceptance. It does not replace child Task Work and does not
 batch-create milestones or author task prose.
 
+**Product/acceptance current truth stays in Project Work** (including key-page
+inventory). **Composition SoT for child tasks** is Milestone Work `task_plan`
+when the milestone authors UI/software child tasks with user-visible pages:
+persist `milestone-task-plan-template.yaml` shape, reach
+`task_plan.status: passed` before App create, and forbid Analysis from
+reopening ownership/split without reopening `task_plan`. Non-UI milestones may
+stay thin (entity + Project coverage). Never treat Milestone Work as a second
+product `R-*` ledger. Parallel execution / authorization aggregation still use
+the same Milestone Work attachment when needed.
+
 ## Phase Model
 
 ```text
@@ -75,7 +85,11 @@ Do not treat permission to discuss or decompose as execution authorization.
 
 ## 3. Decomposition Check
 
-Complete `decompose_required` fields. Build the smallest sufficient portfolio.
+Complete `decompose_required` fields. For UI/software milestones with
+user-visible pages, also complete structured `task_plan` per
+`milestone-task-plan-template.yaml` and
+`granoflow-agent-workflow/screen-task-portfolio-coverage` (lint with
+`lint_task_screen_portfolio.py`). Build the smallest sufficient portfolio.
 Each child task must have one distinct responsibility and contribute evidence to
 at least one milestone acceptance ID.
 
@@ -83,17 +97,21 @@ The decomposition passes only when all checks below pass:
 
 1. **Coverage:** every mandatory acceptance ID has an accountable task or the
    controller.
-2. **Necessity:** every proposed child task changes an acceptance result, removes
+2. **Task plan (UI):** `task_plan` present; every refined screen has
+   `split_probe` + ≥1 task row; every task has frozen `responsibility` and
+   `screen_ids` when UI applies; screens trace to Project Work key pages or
+   declare `milestone_discovered`.
+3. **Necessity:** every proposed child task changes an acceptance result, removes
    a material blocker, or provides required integration evidence.
-3. **Boundary:** child responsibilities do not duplicate each other or hide a
+4. **Boundary:** child responsibilities do not duplicate each other or hide a
    second milestone.
-4. **Dependencies:** every edge names an observable output and consuming input;
+5. **Dependencies:** every edge names an observable output and consuming input;
    cycles are removed or represented as explicit human/integration gates.
-5. **Handoffs:** source of truth, compatibility contract, verification, and
+6. **Handoffs:** source of truth, compatibility contract, verification, and
    invalidation conditions are explicit.
-6. **Acceptance:** cross-task checks have owners and cannot be satisfied only by
+7. **Acceptance:** cross-task checks have owners and cannot be satisfied only by
    local task completion.
-7. **Readiness:** known accounts, inputs, environments, authorization, and manual
+8. **Readiness:** known accounts, inputs, environments, authorization, and manual
    decisions are available or recorded as blockers.
 
 Set `decomposition_status: revisions_required` when the portfolio is plausible
@@ -102,15 +120,20 @@ prevents safe decomposition. Do not create speculative tasks merely to make the
 table look complete. When required portfolio rows lack App task entities, hand
 off to `granoflow-task-authoring` (or `granoflow-portfolio-orchestrator`) instead
 of authoring full task prose inside this Skill. When the check passes, set
-`decomposition_status: passed` and `required_fields_phase: decompose_required`.
+`decomposition_status: passed`, `task_plan.status: passed` (UI), and
+`required_fields_phase: decompose_required`.
 
 ## 4. Portfolio Execution
 
 UI-changing child tasks must satisfy the Agent Workflow UI Change Prototype
-Mandate before readiness or dispatch: `prototype_requirement: required`,
+Mandate as an **Analysis deliverable**: `prototype_requirement: required`,
 confirmed `ui_prototype`, and `derivedFrom` the project Design Baseline when
-present. Missing prototypes return `ui_prototype_required` and stay out of the
-executable batch.
+present—**before** child Analysis confirmation and before readiness or dispatch.
+Missing prototypes return `ui_prototype_required` /
+`analysis_deliverables_incomplete`, keep the child in Analysis, and stay out of
+the executable batch. Do not mark portfolio Analysis complete for a milestone
+while any UI child still has pending Analysis Deliverables; surface the
+remaining list explicitly.
 
 ### Execute preflight after child Analysis
 
@@ -209,42 +232,51 @@ milestone only when it is necessary to satisfy an already-confirmed acceptance
 condition. A desirable improvement that changes the Outcome or adds a new
 acceptance condition is follow-up or a charter change.
 
-## 6. Integration Readiness Check
+## 6. Milestone IT Preflight And Layer B Acceptance
 
-Read actual Deliveries and authoritative runtime/App/API state. For every
-acceptance ID verify:
+Load `granoflow-agent-workflow/task-and-milestone-acceptance-layers` and
+`granoflow-agent-workflow/milestone-integration-acceptance`.
 
-- accountable evidence exists and is readable;
-- upstream outputs match downstream inputs;
-- shared schemas, APIs, files, UI states, or operating procedures agree;
-- required regression and failure-path checks pass;
-- the real user-visible or system-visible journey works;
-- residual work is either outside Scope or blocks readiness explicitly.
+**Layer A** = each child’s Delivery / `acceptance_report` (AI self-check).
+**Layer B** = **milestone-scoped integration tests only** (user-invisible
+acceptance). Child `done` is input to Layer B, never a substitute.
 
-Set `integration_readiness_status: passed` only when all mandatory conditions
-pass. Child task `done` states, local edits, isolated unit tests, or filenames are
-inputs to this judgment, never substitutes for it.
+### Before milestone execution
 
-## 7. Acceptance And Closure
+Before the first in-scope non-dry-run implement edit:
 
-Present a compact acceptance review:
+1. Check IT sufficiency for **all** in-scope child tasks.
+2. Author gaps into Task Work Plans as needed.
+3. Build and record a **Milestone IT Suite Plan** with dependency order
+   (e.g. add → browse → list → delete) and simplified journeys.
+4. Set `milestone_it_acceptance.preflight_status: passed` or block with
+   `milestone_it_coverage_insufficient` / `milestone_it_preflight_missing`.
 
-- confirmed Outcome and whether it became true;
-- each acceptance ID, result, and evidence;
-- cross-task integration and regression result;
-- planned versus actual Scope;
-- residuals, deferred work, and recommended destination;
-- proposed milestone completion summary.
+### After Layer A for in-scope children
 
-Manual or subjective conditions require user acceptance. Milestone closure also
-requires explicit user confirmation by default. A delegated grant may authorize
-closure only when it names the exact milestone, exact action, current charter
-version, acceptance boundary, and expiry, and no manual condition remains.
+1. Run only this milestone’s orchestrated IT suite (reuse campaign orchestration
+   mechanics; do not treat UI E2E as Layer B).
+2. Material issues → Experience authoring preview/apply (user-experience assets).
+3. Suite green → write **任务回顾** for covered tasks; set integration readiness
+   from IT evidence.
+4. Do **not** ask the user to click-confirm “里程碑验收” as the IT decision.
 
-Use the App-owned milestone context archive/closure preview before writing. On
-approval, persist the completion summary, move follow-ups, apply supported
-closure, and read back milestone state. Set `acceptance_status: passed` and
-`execution_state: completed` only after this readback.
+Same-turn closeouts **Must** show two labeled sections (Layer A then Layer B) or
+fail `acceptance_layers_fused`.
+
+## 7. Milestone Archive / Closure (App action — not Layer B)
+
+Layer B acceptance is the IT suite result. **Archiving / closing** the milestone
+record in the App (summary, follow-ups, status) still uses App-owned preview →
+confirm when the product requires it. That closure step **Must not** be confused
+with Layer B: do not re-run user click-through验收 of features as the milestone
+acceptance mechanism.
+
+On closure write: persist completion summary (including Suite Plan path, IT
+result, Experience ids, 任务回顾 refs), move follow-ups, read back milestone
+state. Set `acceptance_status: passed` and `execution_state: completed` only when
+Layer B IT is green (or residuals explicit) **and** App closure readback
+succeeds.
 
 ## Collaboration Reporting
 

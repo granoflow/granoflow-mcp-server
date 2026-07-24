@@ -1,5 +1,35 @@
 # Task Work Document Workflow
 
+## Implementation Contract Semantic Replay Routing
+
+For a new, reopened, or modified runnable UI task, load
+`implementation-contract-semantic-replay` after the runnable build and before
+Task Delivery. Task Work stores only Replay and implementation snapshot SHA
+values, evidence refs, applicability, and status. The reference owns runtime
+targets, element coverage, review, verifier, and digest rules; do not copy them
+here. Pure backend and documentation work may record an evidence-backed
+`not_applicable`. Replay never grants authorization.
+
+## Implementation Learning Routing
+
+For software implementation, read `implementation-learning-ledger.md`. Persist
+material, observable AI-discovered problems and replacement methods in the
+active `execution` slot while evidence is available. Do not store hidden
+reasoning or routine command noise. Delivery reconciles the exact ledger digest;
+Deferred Task Review consumes it only after completion.
+
+## Truth layers (must)
+
+- **Project Work** = project **current** product/acceptance truth.
+- **Task Work** = this task's **history** and task-local Analysis/Plan contract.
+- After any user-accepted **product-truth** change (journeys, screens,
+  acceptance, verification mandates, locked product behavior): write back
+  **Project Work** in the same batch (`discussion-writeback-contract`). Updating
+  only Task Work fails closed as incomplete writeback.
+- Implement and fidelity-compare against App **readback** prototype SHA; if Task
+  Work refs disagree with App `current`, rewrite refs after writeback before
+  Readiness/Execution (`stale_reference_after_discussion`).
+
 Use this owner for every new task Analysis and applicable Planning. Read
 `task-work-document-template.md` first. Load other references only after a
 specific trigger below fires.
@@ -19,6 +49,18 @@ surface product-document/user-story omissions and conflicts, and inherit stable
 Project Work requirement ids. Do not demand a separate SRS, technical design,
 data model, test plan, or Development Plan from an individual developer before
 Analysis.
+
+For requirement-driven/software work, Milestone Work must already contain a
+schema v2 task plan with a current passed AI review digest per
+`milestone-ai-review`. Analysis routes product questions to `prd-review`,
+defects to `investigate`, and high-risk work to CSO. Planning routes to an
+engineering reviewer, adding design review for UI and CSO for high risk. These
+are preferred methods with evidenced native fallback and no authorization
+effect.
+
+For UI work, also load `responsive-prototype-finalization`. Task Analysis must
+inherit the current Project platform matrix, Baseline, Widget Catalog, and
+required layout families before offering page options.
 
 The persisted task description is the user's 30-second recall summary and the
 starting source for Task Work. The Work Document is a cold-start execution
@@ -166,6 +208,27 @@ simulated product UI; internal filtering, design rationale, confidence,
 quantity, architecture, test, and acceptance language must not become product
 copy (`user_visible_copy_boundary_violation`).
 
+### Screen portfolio ownership (before UI prototype)
+
+UI-changing Analysis Assumes Milestone Work `task_plan.status: passed` already
+freezes this task's `screen_ids`, responsibility, and refined-screen
+`split_probe` (`granoflow-agent-workflow/screen-task-portfolio-coverage`).
+Project Work key pages are inventory only—not task binding.
+
+If Analysis finds orphan product pages, missing probes, or wants to change
+ownership/split:
+
+1. fail closed `milestone_task_plan_incomplete` /
+   `task_portfolio_screen_coverage_incomplete` /
+   `screen_split_probe_incomplete`;
+2. do **not** silently absorb orphan screens into this task's prototype;
+3. reopen Milestone `task_plan` (`reopened` / `draft`), amend via
+   milestone coordination / task-authoring / portfolio orchestrator, re-pass,
+   then resume Analysis.
+
+Analysis owns hi-fi + detail fill only for screens listed on this task's
+frozen `task_plan` row.
+
 ### UI Change Prototype Mandate
 
 Any task that changes UI—layout, navigation/shell, visual treatment, interaction
@@ -195,9 +258,22 @@ Hard rules:
    before inventing new chrome/controls. Skipping reuse without rationale →
    `widget_reuse_required`. After visual confirmation, extract new/changed
    reusable widgets into the same project `widgets` slot.
+   Record a Widget Promotion Ledger and require catalog-after/App-readback SHA
+   equality before Analysis closes.
+   4a. Load `ui-component-effect-matrix`. Build and lint
+   `ui_component_effect_matrix_v1` from user selection, Baseline, current
+   Catalog SHA, platform matrix, stack capability profile, and approved
+   dependencies. Resolve behavior-changing incompatibilities with the user
+   before HTML. Set `component_effect_matrix_ok: true` only after the linter
+   passes.
+   4b. Load `task-ui-skill-pipeline`. Discover host capabilities, select only
+   relevant safe providers, and lint `task_ui_skill_pipeline_v1`. A provider
+   brand may fall back; a missing authoring/audit capability may not. Set
+   `task_ui_skill_pipeline_ok: true` only after observable artifact evidence.
 5. Apply **Task Prototype Craft Gate And Option Set** from
    `granoflow-project-definition/project-artifact-workflows`:
    - Craft Gate (intent / **Baseline fit** / **confirmed chrome lock** / craft /
+     **skill pipeline** / **component-effect matrix** /
      **user-visible copy boundary** / confirm surface) must pass before
      `visualConfirmed=true`
      else `task_prototype_craft_incomplete` /
@@ -217,7 +293,8 @@ Hard rules:
      **mainstream-reference-first** candidates (`scope_mode`
      `same_category`|`capability_match`; default `capability_match` when
      unsure), brainstorm backfill **only** when mainstream `<5`, then promote
-     **two page expressions** (`expr_a` + `expr_b`) with **functional parity**
+     two page expressions by default, or three only with a permitted reason
+     code, with **functional parity**
      (same capabilities, same data fields, same required states;
      presentation-only contrast) inside the locked Design System
      (`design_system_locked`), with **≥2** whitelist contrast axes and
@@ -248,6 +325,9 @@ Hard rules:
    interactive waits on the Contrast Gallery (option batch); unattended shows
    the single-link notice, continues, and includes every link in the
    run-closing Prototype Link Digest.
+   The Gallery shows selected Widgets, platform adaptations, effects,
+   fallbacks, and visible differences, but never internal provider/skill
+   bookkeeping.
 7. Obtain visual confirmation for the **chosen** package hash (interactive
    user accept, or unattended auto-accept only when explicitly unattended),
    upload to the task `ui_prototype` slot with `visualConfirmed=true`, and
@@ -259,15 +339,35 @@ Hard rules:
    only in chat/`temp` → `discussion_writeback_pending` /
    `temp_only_artifact_forbidden` / `change_impact_*`. Later rematches Must
    import a new current package and rewrite Task Work refs in the same batch.
-8. Prefer completing the prototype **before Analysis confirmation** so the user
-   can see the change before implementation. At latest, the confirmed
-   `ui_prototype` must exist before `readiness_grill_status: passed` and before
-   any non-dry-run execution.
+   For multi-layout work, the first choice selects the primary-layout
+   expression only. Expand that winner to every required layout family, run
+   cross-layout checks, then confirm the complete responsive Prototype Bundle
+   digest. Explicit unattended mode records `unattended_auto_adopted`, never
+   user confirmation.
+8. Confirmed `ui_prototype` is an **Analysis deliverable**, not a Plan-phase
+   add-on and not a separate lifecycle stage. For UI-changing tasks, the
+   package Must exist with `visualConfirmed=true` (and `derivedFrom` the
+   Design Baseline when present) **before** `analysis_status: confirmed`.
+   Planning Must not start while that deliverable is missing. Readiness and
+   non-dry-run execution remain blocked as well, but those are later gates—
+   do not treat “before Readiness” as permission to confirm Analysis without
+   the prototype. When Project Work lists `screen_coverage[].ui_details` for
+   the touched screens, the prototype Must honor those details under
+   `screen_detail_registration.design_truth_priority` (product-doc /
+   user-story details outrank `inferred` / live AI guesses). Init Baseline
+   Spec+Shell is not a substitute for per-screen Analysis hi-fi.
 9. Missing, unconfirmed, stale, or non-`derivedFrom` prototypes return
-   `ui_prototype_required` / block Readiness. Stale Task Work refs after a
-   discussion change return `stale_reference_after_discussion`. Do not
+   `ui_prototype_required` and `analysis_deliverables_incomplete`; refuse
+   Analysis confirmation and refuse Planning entry. Stale Task Work refs after
+   a discussion change return `stale_reference_after_discussion`. Do not
    implement UI first and "backfill" a prototype after code. Missing
    interactive wait returns `prototype_preview_review_required`. Missing
+   platform matrix, required layout family, final Bundle acceptance, Widget
+   promotion readback, or current digest returns the corresponding
+   `platform_support_matrix_*`, `analysis_logic_draft_*`,
+   `screen_content_contract_*`, `requirement_contract_*`,
+   `contract_grill_*`, `responsive_prototype_*`, `contract_prototype_*`,
+   `analysis_technical_package_*`, or `widget_promotion_*` fail-closed code.
    unattended closing digest when prototypes were authored returns
    `prototype_link_digest_required`.
 10. Keep **design-first** (see
@@ -318,6 +418,10 @@ html_coverage`; no `prototype_html_coverage_gap`);
      (`method: code_review_guess` only — **not** screenshot/vision) **before**
      executing unit tests: compare implementation to the HTML prototype by code
      reading, emit an explicit declaration, answer **all three** questions
+     After the UI is runnable and before Task Delivery, run
+     `lint_rendered_prototype_fidelity.py` for every Bundle layout family.
+     Missing captures, numeric failure, AI visual failure, or unapproved native
+     exceptions block Delivery; Milestone/E2E Phase B still runs later.
      (matched or diverged), decide `keep_implementation` /
      `revise_to_prototype`, and persist `prototype_impl_compare` (+ `diffs` when
      diverged). Fail closed as `prototype_impl_compare_unread`,
@@ -486,6 +590,74 @@ For `planning_status=not_required`:
 Task impact and uncertainty determine lightness. Repository size and changed
 line count do not.
 
+## Analysis Deliverables
+
+Analysis owns the accepted problem framing **and**, for UI-changing tasks, the
+confirmed high-fidelity prototype. Prototypes are **not** a separate lifecycle
+stage and **Must not** be deferred into Planning.
+
+Orchestration may be per-milestone (Analysis → Plan → Implement) or
+project-wide (finish all Analyses including prototypes, then Plan batches, then
+Implement batches). Either way: **Planning Must not start for a task while that
+task's Analysis deliverables are incomplete.**
+
+### Required for every task
+
+| Deliverable             | Done when                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| Task Work Analysis body | Outcome, Evidence, Scope, Risk, Decision (and triggered sections) are coherent |
+| Analysis Grill          | `analysis_grill_status: passed`                                                |
+| Planning recommendation | `planning_status` path chosen: `required` or `not_required` (justified)        |
+
+### Conditionally required (UI-changing tasks)
+
+| Deliverable                                  | Done when                                                                                           |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `prototype_requirement`                      | `required` (not `not_required` / unresolved `conditional`)                                          |
+| Confirmed `ui_prototype`                     | App slot with `visualConfirmed=true`, exact package SHA, `derivedFrom` Design Baseline when present |
+| HTML / widget / doc coverage (Analysis side) | `prototype-doc-coverage` Analysis ledgers complete; no pending gaps                                 |
+| Final responsive Prototype Bundle            | Every required layout family present; cross-layout checks, acceptance, and digest pass              |
+| Widget Catalog promotion                     | Promotion ledger passed/not-applicable; App readback equals catalog-after SHA                       |
+
+### Explicitly not Analysis deliverables
+
+Do **not** mark these done to close Analysis, and do **not** claim Analysis
+complete because they exist:
+
+- Plan Design Gate / Plan confirmation / milestone Plan acceptance pack
+- Structural Change Forecast notice for first edit
+- Project context Hard Gate (`project_snapshot.yaml` / `project_rules.yaml`)
+- Implementation, Delivery, integration/E2E campaigns
+
+### User-visible remaining list (mandatory)
+
+At the end of every Analysis turn (interactive or unattended), emit a Markdown
+table listing **each** applicable deliverable with status `done` or `pending` /
+`missing`, and a one-line next action. Example shape:
+
+```markdown
+## Analysis 交付物
+
+| 交付物                          | 状态    |
+| ------------------------------- | ------- |
+| Task Work Analysis              | done    |
+| 确认 ui_prototype（UI）         | missing |
+| Analysis Grill                  | pending |
+| Planning recommendation         | pending |
+| → 未全部 done 前不得进入 Plan。 |
+```
+
+Rules:
+
+1. If any applicable row is not `done`, refuse `analysis_status: confirmed` and
+   refuse Planning entry. Fail closed as `analysis_deliverables_incomplete`
+   (and `ui_prototype_required` when the missing item is the prototype).
+2. Do not claim milestone- or portfolio-level “Analysis done” while any
+   in-scope UI child still lacks a confirmed `ui_prototype`.
+3. Unattended mode may auto-accept solvable prototype craft when the
+   unattended contract allows, but Must still list remaining deliverables and
+   Must not skip the table.
+
 ## Analysis Confirmation
 
 Ask only questions that can change Outcome, Evidence, Scope, Risk, Decision, or
@@ -493,21 +665,29 @@ whether Planning is required. For unattended completion, first read
 `unattended-interaction-contract.md`; a valid same-run instruction or durable
 grant consumes ordinary phase confirmations unless a real blocker exists.
 
+Before setting `analysis_status=awaiting_confirmation` or `confirmed`, verify
+**Analysis Deliverables** above and show the remaining-deliverables table.
+UI-changing tasks without a confirmed `ui_prototype`, final responsive Bundle,
+and completed Widget Promotion Ledger stay in Analysis.
+
 Set `analysis_status=awaiting_confirmation` before final review. Only explicit
 user authorization sets `analysis_status=confirmed`; a qualifying current
 unattended instruction is explicit authorization, while Agent self-confirmation
-is not. Then run the mandatory MCP-bundled Analysis Grill. It checks source discipline, decision-changing
-unknowns, Outcome/Evidence/Scope/Risk/Decision consistency, concrete examples,
-false-success paths, whether Planning recommendation is justified, and—when the
-task depends on DB / JSON / constants or capability-critical libraries—whether
-unreasonable project data attachments or dependency selections were challenged
-and a revision path was decided (not silently deferred into execution). Set
-`analysis_grill_status=passed` only when all material findings are resolved.
-Resolve findings by revising the relevant Analysis prose and acceptance
-contracts; do not append a Grill section or finding ledger. Material revisions
-re-evaluate Analysis under the interaction contract and require another question
-only for a real blocker. Analysis confirmation alone does not authorize Planning,
-node creation, attachment upload, or execution.
+is not. Then run the mandatory MCP-bundled Analysis Grill. It checks source
+discipline, atomic source-fact and ordered journey-step preservation,
+necessary implications versus product expansion, decision-changing unknowns,
+Outcome/Evidence/Scope/Risk/Decision consistency, concrete examples,
+false-success paths, whether Planning recommendation is justified, Analysis
+Deliverables completeness (including confirmed `ui_prototype` when UI applies),
+and—when the task depends on DB / JSON / constants or capability-critical
+libraries—whether unreasonable project data attachments or dependency selections
+were challenged and a revision path was decided (not silently deferred into
+execution). Set `analysis_grill_status=passed` only when all material findings
+are resolved. Resolve findings by revising the relevant Analysis prose and
+acceptance contracts; do not append a Grill section or finding ledger. Material
+revisions re-evaluate Analysis under the interaction contract and require another
+question only for a real blocker. Analysis confirmation alone does not authorize
+Planning, node creation, attachment upload, or execution.
 
 Before confirming Analysis, recommend one Planning outcome:
 
@@ -546,8 +726,11 @@ itself confirm Planning or authorize execution.
 Planning starts from the clean rewritten Analysis document produced after the
 Analysis Grill and adds only triggered Planning sections during discussion. It
 does not repeat a second template or candidate-Skill inventory. It may start
-only when Analysis is confirmed and
-`analysis_grill_status=passed`. Planning confirmation sets:
+only when Analysis is confirmed,
+`analysis_grill_status=passed`, and **Analysis Deliverables** are complete
+(including confirmed `ui_prototype` for UI-changing tasks). Starting Plan while
+those deliverables are incomplete fails closed as
+`analysis_deliverables_incomplete`. Planning confirmation sets:
 
 ```yaml
 analysis_status: confirmed
@@ -575,6 +758,12 @@ revise-design conclusions block `passed`). Record only whether a credential or
 secret is available and authorized; never copy its value into Task Work, logs,
 or chat. Missing or unverified readiness sets `blocked` or
 `revisions_required`, not `passed`.
+
+For software tasks, validate `granoflow_test_route_traceability_v1` against the
+current Project Work before `passed`. Every journey step's declared
+`required_test_layers` needs a route. Service paths cannot close human paths,
+test doubles cannot close OS capability, and feature/journey E2E evidence cannot
+claim full-project delivery. Use `lint_test_route_traceability.py`.
 
 Analysis-confirmed content remains intact. A material Planning change replaces
 the current unfinished `execution` slot and repeats Planning confirmation; it
@@ -732,6 +921,15 @@ managed summary. Filename or HTTP success alone is insufficient. After the
 pointer switches, reconcile the superseded attachment so the task still has at
 most two active Task Work documents.
 
+The legacy-named tool reads `filePath` only at the MCP process boundary, then
+uploads the bytes as `contentBase64`; the path is not an App sandbox dependency.
+It parses the stable header and automatically routes `task_work/execution`,
+`task_work/post_completion_revision`, and `task_delivery` to their App-owned
+logical slots. Invalid typed headers fail before any HTTP write. Binary and
+non-previewable attachments still receive an App-owned metadata receipt with
+stored-byte SHA-256 and size; absence of inline text is not absence of an
+attachment capability.
+
 The built-in post-Grill clean rewrite affects the local working copy first; App
 attachments change only through the transactional upload/readback/active-slot
 flow. Runtime progress never creates or overwrites a Work Document.
@@ -744,8 +942,8 @@ Record `prototype_requirement`, `prototype_condition_result`,
 
 - If the task changes UI: `prototype_requirement` **must** be `required`,
   `prototype_condition_result` must be `required`, and
-  `prototype_input_status` must reach `ready` (exact confirmed package) before
-  Readiness passes.
+  `prototype_input_status` must reach `ready` (exact confirmed package) **before
+  Analysis confirmation** and before Readiness passes.
 - `not_required` is allowed only when the task explicitly has **no** UI change
   (stated in Task Work). `conditional` may exist only while Detection is still
   unresolved during early draft Analysis; it cannot survive Analysis
@@ -757,12 +955,14 @@ Record `prototype_requirement`, `prototype_condition_result`,
 - Record `【增强实现】` / `implementation_notes` where HTML is schematic and the
   stack will use richer widgets.
 
-Before Readiness passes, call `granoflow_task_export` and treat the App-owned
-`executionAdmission.allowed` value as authoritative. Missing, ambiguous,
-deleted, stale, link-mismatched, unconfirmed, or hash-mismatched references
-block execution. For UI-changing tasks, also block when `ui_prototype` is
-missing, unconfirmed, or not derived from the confirmed Design Baseline
-(document-level gate: return `ui_prototype_required`). When a package changes,
+Before Analysis confirmation and before Readiness passes, call
+`granoflow_task_export` and treat the App-owned `executionAdmission.allowed`
+value as authoritative for execution admission. Missing, ambiguous, deleted,
+stale, link-mismatched, unconfirmed, or hash-mismatched references block
+execution. For UI-changing tasks, also block Analysis confirmation and Planning
+entry when `ui_prototype` is missing, unconfirmed, or not derived from the
+confirmed Design Baseline (`ui_prototype_required` /
+`analysis_deliverables_incomplete`). When a package changes,
 add the new attachment, rewrite every affected exact reference and relevant
 prose, upload and hash-read back the new Task Work, then remove the old
 attachment. Do not model this as overwrite.

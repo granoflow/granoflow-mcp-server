@@ -105,6 +105,74 @@ def ok_suite_plan() -> dict:
     return plan
 
 
+def traced_project_work() -> dict:
+    return {
+        "product_spec_coverage": {
+            "journey_step_traceability": {
+                "schema": "granoflow_journey_step_traceability_v1",
+                "journeys": [
+                    {
+                        "journey_id": "J-comments",
+                        "steps": [
+                            {
+                                "step_id": "J-comments-store",
+                                "required_test_layers": ["integration"],
+                                "interaction_surface": "service_path",
+                                "platform_boundary": "none",
+                            },
+                            {
+                                "step_id": "J-comments-button",
+                                "required_test_layers": ["e2e"],
+                                "interaction_surface": "in_app_ui",
+                                "platform_boundary": "none",
+                            },
+                        ],
+                    }
+                ],
+            }
+        }
+    }
+
+
+def background_project_work() -> dict:
+    project = traced_project_work()
+    project["product_spec_coverage"]["background_activity_control"] = {
+        "schema": "granoflow_background_activity_control_v1",
+        "activities": [
+            {
+                "activity_id": "BA-sync",
+                "controls_that_must_keep_working": ["panel", "cancel"],
+                "ways_to_exit": ["cancel"],
+                "required_test_layers": ["integration", "e2e"],
+            }
+        ],
+    }
+    return project
+
+
+def post_update_sequence() -> dict:
+    return {
+        "activity_started": "sync indicator became active",
+        "first_background_event": {
+            "signal": "progress changed to 10",
+            "evidence_kind": "state_change",
+            "evidence_ref": "probe:first-progress",
+        },
+        "protected_user_action": {
+            "control_ref": "panel",
+            "evidence_ref": "widget:panel-open",
+        },
+        "second_background_event": {
+            "signal": "progress changed to 20",
+            "evidence_kind": "event_probe",
+            "evidence_ref": "probe:second-progress",
+        },
+        "user_action_preserved": "panel remains open after second event",
+        "exit_action": "cancel",
+        "activity_ended": "event subscription ended and indicator became idle",
+    }
+
+
 def ok_change_report_changes() -> dict:
     return {
         "schema": "granoflow_integration_campaign_change_report_v1",
@@ -223,6 +291,93 @@ class LintSuitePlanTests(unittest.TestCase):
         self.assertFalse(result["ok"])
         codes = {e["code"] for e in result["errors"]}
         self.assertIn("integration_campaign_fidelity_wrong_layer", codes)
+
+    def test_traced_project_requires_integration_step_mapping(self) -> None:
+        plan = ok_suite_plan()
+        plan["test_route_traceability_loaded"] = True
+        for case in plan["cases"]:
+            case["journey_step_ids"] = ["J-comments-store"]
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertTrue(result["ok"], result)
+
+    def test_service_case_cannot_claim_ui_only_journey_step(self) -> None:
+        plan = ok_suite_plan()
+        plan["test_route_traceability_loaded"] = True
+        for case in plan["cases"]:
+            case["journey_step_ids"] = ["J-comments-store"]
+        plan["cases"][0]["journey_step_ids"] = ["J-comments-button"]
+        result = MOD.lint_suite_plan(plan, project_work=traced_project_work())
+        self.assertIn(
+            "integration_campaign_human_path_overclaim",
+            {error["code"] for error in result["errors"]},
+        )
+
+    def test_background_activity_component_sequence_ok(self) -> None:
+        plan = ok_suite_plan()
+        plan["interaction_fidelity"] = "component_path"
+        plan["test_route_traceability_loaded"] = True
+        plan["background_activity_control_loaded"] = True
+        for case in plan["cases"]:
+            case["journey_step_ids"] = ["J-comments-store"]
+            case["background_activity_ids"] = []
+        activity_case = plan["cases"][0]
+        activity_case["entry_style"] = "ui_probe"
+        activity_case["ui_probe_justified"] = (
+            "mount the real component and state owner around a controlled event adapter"
+        )
+        activity_case["background_activity_ids"] = ["BA-sync"]
+        activity_case["post_update_sequence"] = post_update_sequence()
+        result = MOD.lint_suite_plan(plan, project_work=background_project_work())
+        self.assertTrue(result["ok"], result)
+
+    def test_background_activity_service_only_fails(self) -> None:
+        plan = ok_suite_plan()
+        plan["test_route_traceability_loaded"] = True
+        plan["background_activity_control_loaded"] = True
+        for case in plan["cases"]:
+            case["journey_step_ids"] = ["J-comments-store"]
+            case["background_activity_ids"] = []
+        plan["cases"][0]["background_activity_ids"] = ["BA-sync"]
+        plan["cases"][0]["post_update_sequence"] = post_update_sequence()
+        result = MOD.lint_suite_plan(plan, project_work=background_project_work())
+        self.assertIn("component_path_required", {e["code"] for e in result["errors"]})
+
+    def test_background_activity_requires_two_observed_updates(self) -> None:
+        plan = ok_suite_plan()
+        plan["interaction_fidelity"] = "component_path"
+        plan["test_route_traceability_loaded"] = True
+        plan["background_activity_control_loaded"] = True
+        for case in plan["cases"]:
+            case["journey_step_ids"] = ["J-comments-store"]
+            case["background_activity_ids"] = []
+        activity_case = plan["cases"][0]
+        activity_case["entry_style"] = "ui_probe"
+        activity_case["ui_probe_justified"] = "real component with controlled adapter"
+        activity_case["background_activity_ids"] = ["BA-sync"]
+        activity_case["post_update_sequence"] = post_update_sequence()
+        del activity_case["post_update_sequence"]["second_background_event"]
+        result = MOD.lint_suite_plan(plan, project_work=background_project_work())
+        self.assertIn(
+            "background_event_evidence_missing",
+            {e["code"] for e in result["errors"]},
+        )
+
+    def test_background_activity_exit_callback_is_not_end_proof(self) -> None:
+        plan = ok_suite_plan()
+        plan["interaction_fidelity"] = "hybrid"
+        plan["test_route_traceability_loaded"] = True
+        plan["background_activity_control_loaded"] = True
+        for case in plan["cases"]:
+            case["journey_step_ids"] = ["J-comments-store"]
+            case["background_activity_ids"] = []
+        activity_case = plan["cases"][0]
+        activity_case["entry_style"] = "ui_probe"
+        activity_case["ui_probe_justified"] = "real component with controlled adapter"
+        activity_case["background_activity_ids"] = ["BA-sync"]
+        activity_case["post_update_sequence"] = post_update_sequence()
+        activity_case["post_update_sequence"]["activity_ended"] = ""
+        result = MOD.lint_suite_plan(plan, project_work=background_project_work())
+        self.assertIn("activity_exit_not_proven", {e["code"] for e in result["errors"]})
 
     def test_vision_fields_not_allowed(self) -> None:
         plan = ok_suite_plan()

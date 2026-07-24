@@ -34,6 +34,12 @@ owns model selection.
   stop conditions, and handoff. Ordinary `[confirm]` nodes are skipped, while
   `[action]` nodes for login, payment, publish, deployment, secrets, destructive
   changes, or external communication remain real interaction boundaries.
+  Local device capability inventory does not become a mandatory test matrix:
+  when the project supports the current development platform, unattended test
+  nodes target only that platform. When it does not, the worker deterministically
+  selects one already-available supported official simulator/emulator, falling
+  back to an installed E2E-capable third-party VM. It never installs a new VM
+  stack or image.
 - `layered_handoff` is explicit. Each worker declares one or more capability
   lanes such as `[plan]`, `[dev]`, or `[test]`. It may claim only the first
   unfinished matching node after every preceding required node is finished.
@@ -133,6 +139,9 @@ Checkpoints:
 - [must] Let a changed task or authorization manifest resume from the saved task/node entry point.
 - [must] Keep user-facing progress snapshots distinct from completion summaries.
 - [must] Produce an acceptance HTML even when integration and screenshot tests are not required.
+- [must] Keep non-selected supported platforms as `tested: false` external-device
+  handoffs. A later user reply equivalent to “知道了” acknowledges the handoff
+  and may complete acceptance, but never converts it to tested evidence.
 - [must] Preserve only key screenshots and summarize code, database, workflow, and verification changes.
 - [must_not] Never repeat an unchanged failed strategy indefinitely.
 - [must_not] Never persist tokens, passwords, OTPs, recovery codes, auth URLs, private keys, or raw worker transcripts.

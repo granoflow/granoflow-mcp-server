@@ -9,6 +9,7 @@ Request-more batches Must pass --dedupe ledger (machine-local history).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import secrets
 import sys
@@ -67,6 +68,16 @@ def used_ids(ledger: dict[str, Any], kind: str) -> set[str]:
         if entry.get("kind") == kind and isinstance(entry.get("id"), str):
             out.add(entry["id"])
     return out
+
+
+def ledger_sha256(ledger: dict[str, Any]) -> str:
+    canonical = json.dumps(
+        ledger,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def append_ledger(
@@ -180,6 +191,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--project-id", default=None)
     parser.add_argument(
+        "--request-type",
+        choices=("initial", "refresh", "revise"),
+        default="initial",
+    )
+    parser.add_argument("--batch-id", default=None)
+    parser.add_argument("--existing-id", action="append", default=[])
+    parser.add_argument("--artifact-sha256", action="append", default=[])
+    parser.add_argument(
+        "--materially-distinct-status",
+        choices=("pending", "passed", "failed"),
+        default="pending",
+    )
+    parser.add_argument("--receipt-out", type=Path)
+    parser.add_argument(
         "--from",
         dest="from_key",
         default=None,
@@ -215,17 +240,50 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(payload, ensure_ascii=False))
         return 2
 
+    if args.request_type == "refresh" and (args.dedupe != "ledger" or args.record is not True):
+        payload = {
+            "ok": False,
+            "code": "visual_lot_dedupe_required",
+            "error": "refresh requires --dedupe ledger --record",
+        }
+        print(json.dumps(payload, ensure_ascii=False))
+        return 2
+    if args.request_type == "revise" and not args.existing_id:
+        payload = {
+            "ok": False,
+            "code": "visual_lot_receipt_required",
+            "error": "revise requires one or more --existing-id values",
+        }
+        print(json.dumps(payload, ensure_ascii=False))
+        return 2
+
     dedupe = args.dedupe == "ledger"
     try:
-        ledger = load_ledger(args.ledger) if dedupe or args.record else None
-        if args.kind == "spec":
+        ledger = (
+            load_ledger(args.ledger)
+            if dedupe or args.record or args.request_type == "revise"
+            else {"schema": SCHEMA, "entries": []}
+        )
+        kind_key = "spec_seed" if args.kind == "spec" else "shell_chrome"
+        prior_ids = sorted(used_ids(ledger, kind_key))
+        prior_ledger_sha = ledger_sha256(ledger)
+        if args.request_type == "revise":
+            if not set(args.existing_id).issubset(set(prior_ids)):
+                raise VisualLotError(
+                    "visual_lot_revise_source_unknown",
+                    "revise ids must already exist in the visual lot ledger",
+                )
+            ids = list(args.existing_id)
+            lots = [{"id": lot_id} for lot_id in ids]
+            redrawn = False
+        elif args.kind == "spec":
             ids = draw_spec_seeds(
                 count=args.count,
                 ledger=ledger if dedupe else None,
                 dedupe=dedupe,
             )
             lots = [{"id": lot_id} for lot_id in ids]
-            kind_key = "spec_seed"
+            redrawn = True
         else:
             cards = draw_shell_chrome(
                 count=args.count,
@@ -234,15 +292,34 @@ def main(argv: list[str] | None = None) -> int:
             )
             lots = cards
             ids = [str(card["id"]) for card in cards]
-            kind_key = "shell_chrome"
+            redrawn = True
 
-        if args.record:
+        if args.record and args.request_type != "revise":
             append_ledger(
                 args.ledger,
                 kind=kind_key,
                 ids=ids,
                 project_id=args.project_id,
             )
+        ledger_after = (
+            load_ledger(args.ledger) if args.record and args.request_type != "revise" else ledger
+        )
+        receipt = {
+            "schema": "granoflow_visual_lot_receipt_v1",
+            "batch_id": args.batch_id or secrets.token_hex(12),
+            "request_type": args.request_type,
+            "kind": args.kind,
+            "entropy": "true_random",
+            "dedupe": args.dedupe,
+            "ids": ids,
+            "prior_ids": prior_ids if args.request_type != "revise" else ids,
+            "prior_ledger_sha256": prior_ledger_sha,
+            "ledger_after_sha256": ledger_sha256(ledger_after),
+            "recorded": bool(args.record or args.request_type == "revise"),
+            "redrawn": redrawn,
+            "artifact_sha256s": list(args.artifact_sha256),
+            "materially_distinct_status": args.materially_distinct_status,
+        }
 
         payload = {
             "ok": True,
@@ -252,7 +329,14 @@ def main(argv: list[str] | None = None) -> int:
             "lots": lots,
             "ids": ids,
             "ledger": str(args.ledger) if args.record or dedupe else None,
+            "receipt": receipt,
         }
+        if args.receipt_out:
+            args.receipt_out.parent.mkdir(parents=True, exist_ok=True)
+            args.receipt_out.write_text(
+                json.dumps({"visual_lot_receipt": receipt}, indent=2) + "\n",
+                encoding="utf-8",
+            )
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
     except VisualLotError as exc:

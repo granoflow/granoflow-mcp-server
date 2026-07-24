@@ -4,6 +4,8 @@ import {
   startServer,
   parseToolText,
   collectHandlers,
+  taskDescriptionImpactReview,
+  writeTaskReadback,
 } from "./tools-test-harness.js";
 
 installToolTestLifecycle();
@@ -31,6 +33,10 @@ describe("tools-attachment-gates", () => {
         response.end(JSON.stringify({ ok: true, data: { items: [] } }));
         return;
       }
+      if (request.url === "/v1/tasks/task-1") {
+        writeTaskReadback(response);
+        return;
+      }
       if (request.url === "/v1/tasks/task-1/attachments") {
         response.end(JSON.stringify({ ok: true, data: { items: [] } }));
         return;
@@ -43,6 +49,7 @@ describe("tools-attachment-gates", () => {
     const { handlers } = collectHandlers();
     const result = await handlers.get("granoflow_task_complete")?.({
       taskId: "task-1",
+      descriptionImpactReview: taskDescriptionImpactReview("completion_only"),
       dryRun: false,
     });
 

@@ -62,33 +62,42 @@ call `granoflow_daily_review_skill`; do not draft or write it during import.
 Follow this order. Do not redesign the workflow from scratch.
 
 1. Connect and inspect Granoflow capabilities.
-2. Offer the complete unavailable portion of the fixed capability pack as one decision.
-3. Stop after setup when the user requested initialization only.
-4. Discover import sources and record authorization when import was requested.
-5. Build a source ledger.
-6. Create a local import preview document.
-7. Propose projects and monthly milestones.
-8. Propose task candidates.
-9. Propose review-card candidates.
-10. Ask for confirmation before any data write.
-11. Import in bounded batches.
-12. Read back created or reused objects.
-13. Backfill project and milestone descriptions.
-14. Report imported, skipped, failed, and deferred items.
+2. Offer Markdown→HTML acceptance toolchain consent (Pandoc + Mermaid CLI;
+   separate from the skill pack; token-free local convert).
+3. Offer the complete unavailable portion of the fixed capability pack as one decision.
+4. Stop after setup when the user requested initialization only.
+5. Discover import sources and record authorization when import was requested.
+6. Build a source ledger.
+7. Create a local import preview document.
+8. Propose projects and monthly milestones.
+9. Propose task candidates.
+10. Propose review-card candidates.
+11. Ask for confirmation before any data write.
+12. Import in bounded batches.
+13. Read back created or reused objects.
+14. Backfill project and milestone descriptions.
+15. Report imported, skipped, failed, and deferred items.
 
 ## Phase 0: Connect And Capability Check
 
 Before source analysis:
 
 1. Call `granoflow_agent_workflow_skill`.
-2. Check that the Granoflow Local HTTP API is reachable.
+2. Check that the Granoflow Local HTTP API is reachable. If unreachable, stop
+   and tell the user to open Granoflow and enable the Local HTTP API. Do not
+   create a fake preview from chat memory.
 3. Call `granoflow_ai_agent_tools` and inspect available project, milestone,
    task, review-card, context-pack, memory-batch, and context-steward tools.
 4. Call `granoflow_source_tags_ensure` so the `AI` and `人工` completion source
    tags exist before any import write. Reuse existing tags; do not create
    near-duplicate labels.
-5. If Granoflow is unreachable, stop and tell the user to open Granoflow and
-   enable the Local HTTP API. Do not create a fake preview from chat memory.
+5. Offer the **Markdown→HTML acceptance toolchain** consent (Pandoc + Mermaid
+   CLI; PlantUML optional) per
+   `granoflow-agent-workflow/markdown-html-acceptance-render`. This is a
+   **separate** decision from the Product Builder skill pack. Explain that
+   conversion is local and **does not consume LLM tokens**. Declining is OK
+   (Markdown-only acceptance). Probe with
+   `skills/granoflow-agent-workflow/scripts/render_markdown_acceptance_html.py --probe`.
 
 Fail closed when there is no safe task or project write surface.
 

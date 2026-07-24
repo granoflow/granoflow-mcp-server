@@ -146,6 +146,22 @@ budget, and authorization. A new module, public API, schema, dependency,
 architecture boundary, or protected surface is scope drift and keeps the
 existing confirmation rules.
 
+## Directory Structure Ownership (Project Work lock)
+
+When Project Work has a confirmed `engineering.directory_structure` (software
+init Engineering Acceptance Pack accepted), later software tasks **Must** place
+new paths under declared `roots` / ownership rules.
+
+1. Structural Change Forecast entries for **new** files must cite the owning
+   root and module when Project Work locks exist.
+2. Inventing a new **top-level** root (or violating `forbidden_catch_all_names`
+   without an recorded exception) is out of bounds: revise the forecast, or
+   reopen Project Work / regenerate the Engineering Acceptance Pack—do not
+   silently scaffold a parallel layout.
+3. Leaf growth inside an existing root is allowed when the forecast states the
+   responsibility seam; do not treat empty historical `roots` as permission to
+   invent structure when locks are present.
+
 ## Delivery Reconciliation
 
 Task Delivery and the acceptance report must compare forecast with actual:

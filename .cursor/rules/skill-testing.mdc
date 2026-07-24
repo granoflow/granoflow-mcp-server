@@ -30,3 +30,8 @@ That pattern does not prove agent behavior; it only freezes wording and creates 
 ## Behavior correctness
 
 Use LLM evals (trigger + functional expectations) when validating that agents follow a skill. This repo does **not** require eval harness in CI today. Do not substitute evals with markdown `toContain` locks.
+
+## Planning / ask-mode
+
+Do **not** invent natural-language Excel “test cases” for prose-only skill edits.
+For those changes: files + intent → edit → `npm run check`. See `change-quality-gate.mdc`.

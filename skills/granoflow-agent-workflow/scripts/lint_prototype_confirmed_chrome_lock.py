@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
 
 # Core chrome markers: if an authority uses them, a candidate .sheet Must reuse.
@@ -79,24 +78,26 @@ def lint_candidate(candidate: Path, authorities: list[Path]) -> dict:
                     {
                         "code": "prototype_confirmed_chrome_lock_drift",
                         "detail": (
-                            f"authority uses .{marker} but candidate .sheet "
-                            f"frame is missing it"
+                            f"authority uses .{marker} but candidate .sheet " f"frame is missing it"
                         ),
                     }
                 )
 
     modern = any(m in auth_tokens for m in MODERN_MARKERS)
-    if modern and has_sheet:
-        if LEGACY_ACTION_RE.search(cand_text) or LEGACY_SECONDARY_RE.search(cand_text):
-            errors.append(
-                {
-                    "code": "prototype_confirmed_chrome_lock_drift",
-                    "detail": (
-                        "candidate uses legacy .btn.bp/.btn.bs while authority "
-                        "chrome uses tbtn/sheet-title-ico/pref-ico vocabulary"
-                    ),
-                }
-            )
+    if (
+        modern
+        and has_sheet
+        and (LEGACY_ACTION_RE.search(cand_text) or LEGACY_SECONDARY_RE.search(cand_text))
+    ):
+        errors.append(
+            {
+                "code": "prototype_confirmed_chrome_lock_drift",
+                "detail": (
+                    "candidate uses legacy .btn.bp/.btn.bs while authority "
+                    "chrome uses tbtn/sheet-title-ico/pref-ico vocabulary"
+                ),
+            }
+        )
 
     return {
         "ok": not errors,

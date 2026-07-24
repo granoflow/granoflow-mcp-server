@@ -20,17 +20,38 @@ as `e2e_campaign_coverage_incomplete`.
 
 ## Required Sources (Must load)
 
-| Source                  | Where                                                                            | What to extract                                                                                   |
-| ----------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Primary journeys        | Project Work `product.primary_user_journeys`                                     | Journey titles / ids                                                                              |
-| Spec journey coverage   | `product_spec_coverage.journey_coverage` where `disposition: adopted`            | `journey_id`, `acceptance_ids`, `stress_paths`                                                    |
-| Acceptance              | `acceptance.conditions` (+ `acceptance_coverage`)                                | In-scope acceptance ids (skip `manual_acceptance_required: true` only when residual explains why) |
-| Quality gates           | `engineering.quality_gates.e2e_tests` and special requirements that apply to E2E | Named E2E entrypoints / seed corpora for UI import                                                |
-| User stories            | Project Work `sources` / linked user-stories docs                                | Daily operations called out as in-scope                                                           |
-| Design Baseline screens | Project Design Baseline (when present)                                           | Baseline-required screens that users reach in adopted journeys                                    |
+| Source                  | Where                                                                            | What to extract                                                      |
+| ----------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Primary journeys        | Project Work `product.primary_user_journeys`                                     | Journey titles / ids                                                 |
+| Spec journey coverage   | `product_spec_coverage.journey_coverage` where `disposition: adopted`            | `journey_id`, `acceptance_ids`, `stress_paths`                       |
+| Acceptance              | `acceptance.conditions` (+ `acceptance_coverage`)                                | In-scope acceptance ids; see **Hard acceptance rows** below          |
+| Quality gates           | `engineering.quality_gates.e2e_tests` and special requirements that apply to E2E | Named E2E entrypoints / seed corpora for UI import                   |
+| User stories            | Project Work `sources` / linked user-stories docs                                | Soft extract of daily ops; harden only via Project `acceptance` rows |
+| Design Baseline screens | Project Design Baseline (when present)                                           | Baseline-required screens that users reach in adopted journeys       |
 
 Optional but recommended: Task Delivery paths that already authored E2E cases;
 milestone Plan acceptance packs for First Ship journeys.
+
+## Hard acceptance rows (US / user mandates)
+
+Not every user-story sentence auto-enters the matrix. **Hard rows** are Project
+Work `acceptance.conditions` (with `acceptance_coverage`) whose
+`required_evidence` includes any of:
+
+- `e2e` / `e2e_or_manual` / `e2e_test` (or equivalent e2e token), and/or
+- `screenshot` / `screenshot_checkpoint`, and/or
+- manual + screenshot when `manual_acceptance_required: true` with screenshot
+  evidence named in `required_evidence` or the condition statement.
+
+Each hard acceptance id **Must** appear on the coverage matrix (as its own row
+or via a journey row that lists that `acceptance_id`) with non-empty
+`case_ids` + `checkpoint_ids` when `status: covered`, or an explicit
+`deferred_manual` / `deferred_external` / `out_of_scope` residual. Silent omit
+→ `e2e_campaign_coverage_incomplete`.
+
+User-story docs remain a **source** for discovering candidates; elevating a
+point to a hard row means writing/updating Project `acceptance.*` (current
+truth) and recording history on the triggering Task Work.
 
 ## Acceptance Outcomes
 
@@ -68,6 +89,7 @@ required_journeys:
   - journey_id: J-001
     title: 打开书库并导入
     acceptance_ids: [A5]
+    step_ids: [J-001-entry, J-001-open-picker, J-001-imported]
     case_ids: [it-j2-import-ui]
     checkpoint_ids: [bookshelf_after_import]
     host_ids: [desktop_native] # required when suite embeds host_matrix
@@ -87,11 +109,12 @@ authoring:
 Rules:
 
 - Every adopted Project Work journey **Must** appear once.
+- For traced Project Work, every covered row lists all journey steps whose
+  `required_test_layers` includes `e2e`.
 - `status: covered` requires non-empty `case_ids` and non-empty
   `checkpoint_ids` (screenshot steps for that journey).
 - `status: covered` **Must** set `interaction_surface`:
-  - `in_app_ui` — taps/typing inside the app window (injected folder pickers with
-    `route_shortcut_justified` count as in-app)
+  - `in_app_ui` — taps/typing inside the app window
   - `os_chrome` — tray / menu bar / notification center / system share sheet /
     **uninjected** OS file dialogs
   - `mixed` — both in-app and OS chrome in one journey
@@ -99,6 +122,8 @@ Rules:
   **Must** set `os_chrome_verification: real_interaction` (real host gesture).
   If OS chrome cannot be driven reliably → `deferred_manual` + residual; never
   claim `covered` without proof (`e2e_campaign_os_chrome_unverified`).
+- An injected picker may test the app adapter in Integration or feature E2E,
+  but it cannot close an OS step in `full_project_e2e`.
 - When the Suite Plan embeds `host_matrix` (or Project Work declares
   `verification_host_matrix` / non-empty `supported_platforms` for this
   campaign), each `covered` row **Must** have non-empty `host_ids` pointing at

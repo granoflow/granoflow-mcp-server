@@ -129,6 +129,103 @@ class RenderBoardTests(unittest.TestCase):
             payload = json.loads(proc.stdout)
             self.assertTrue(payload["ok"])
 
+    def test_single_project_milestone_allows_e2e_direct(self) -> None:
+        """Project has 1 feature milestone: skip stage 6, next_action → e2e."""
+        board = base_board(mode="interactive")
+        for row in board["stages"]:
+            if row["id"] in {
+                "project_init",
+                "milestones_created",
+                "milestone_analysis",
+                "milestone_plan",
+                "milestone_implement",
+            }:
+                row["status"] = "done"
+            else:
+                row["status"] = "not_started"
+        board["session_delivery"] = {
+            "schema": "granoflow_session_delivery_v1",
+            "milestones_touched_count": 1,
+            "milestones_touched": ["M1"],
+            "project_feature_milestone_count": 1,
+            "pre_e2e_path": "e2e_direct",
+            "status": "in_progress",
+            "prompt_full_delivery": True,
+            "other_milestones": [],
+            "recommendation": "项目仅一个功能里程碑：跳过项目级 IT，直接全面 E2E。",
+        }
+        board["next_action"] = {
+            "stage_id": "e2e_campaign",
+            "summary": "开始最终交付：直接跑全项目 E2E。",
+            "owner_skill": "granoflow-e2e-test-campaign",
+            "needs_user_confirmation": False,
+        }
+        result = MOD.validate_and_render(board)
+        self.assertTrue(result["ok"], result)
+        self.assertIn("最终交付（本会话）", result["markdown"])
+        self.assertIn("e2e_direct", result["markdown"])
+
+    def test_optional_entry_kind_and_reentry_section(self) -> None:
+        """Optional entry_kind/reentry must not break existing boards; render 回轨 when set."""
+        board = base_board(mode="interactive")
+        result = MOD.validate_and_render(board)
+        self.assertTrue(result["ok"], result)
+        self.assertNotIn("### 回轨", result["markdown"])
+
+        board["entry_kind"] = "midstream_change"
+        board["reentry"] = {
+            "from_stage": "milestone_implement",
+            "change_class": "task_local",
+            "writeback_status": "written_and_read_back",
+            "reason": "用户确认改了验收口径，已写回并退回 Analysis。",
+        }
+        board["next_action"]["summary"] = "已把刚才确认的改动写回真源；下一步回到 Analysis。"
+        result = MOD.validate_and_render(board)
+        self.assertTrue(result["ok"], result)
+        self.assertIn("入口：`midstream_change`", result["markdown"])
+        self.assertIn("### 回轨", result["markdown"])
+        self.assertIn("task_local", result["markdown"])
+        self.assertIn("written_and_read_back", result["markdown"])
+
+        board["reentry"] = "not-an-object"
+        result = MOD.validate_and_render(board)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["failCode"], "project_lifecycle_board_render_failed")
+
+    def test_e2e_direct_invalid_when_multiple_milestones(self) -> None:
+        board = base_board(mode="interactive")
+        for row in board["stages"]:
+            if row["id"] in {
+                "project_init",
+                "milestones_created",
+                "milestone_analysis",
+                "milestone_plan",
+                "milestone_implement",
+            }:
+                row["status"] = "done"
+            else:
+                row["status"] = "not_started"
+        board["session_delivery"] = {
+            "schema": "granoflow_session_delivery_v1",
+            "milestones_touched_count": 1,
+            "milestones_touched": ["M1"],
+            "project_feature_milestone_count": 2,
+            "pre_e2e_path": "e2e_direct",
+            "status": "in_progress",
+            "prompt_full_delivery": True,
+            "other_milestones": [],
+            "recommendation": "bad",
+        }
+        board["next_action"] = {
+            "stage_id": "e2e_campaign",
+            "summary": "开始 E2E",
+            "owner_skill": "granoflow-e2e-test-campaign",
+            "needs_user_confirmation": False,
+        }
+        result = MOD.validate_and_render(board)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["failCode"], "full_delivery_session_fields_missing")
+
 
 if __name__ == "__main__":
     unittest.main()

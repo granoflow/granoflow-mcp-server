@@ -103,13 +103,27 @@ See `product_spec_coverage` in `project-work-document-template.md`:
 - `journey_coverage[].decomposition.parallel_ops_ok`
 - `journey_coverage[].decomposition` conclusion + screen summaries
 - `journey_coverage[].stress_paths[]` (per acceptance)
-- checklist flags for pass + conclusion + stress paths
+- `screen_coverage[].ui_details[]` (when product docs / stories state them)
+- `screen_detail_registration` (design-truth priority + init HTML budget)
+- checklist flags for pass + conclusion + stress paths +
+  `screen_detail_registration_adopted`
 
 Lint: `skills/granoflow-project-definition/scripts/lint_product_spec_coverage.py`.
 
-## Relationship To Task Prototypes
+## Relationship To Task Portfolio And Prototypes
 
-When conclusion is `split`, later task prototypes Must cover the concluded
-screens’ authorized deltas (per-page expressions inside the locked Design
-System). Collapsing a concluded multi-step flow back into one prototype frame
-without revising Project Work fails closed as `prototype_product_truth_violation`.
+Init does **not** author every concluded screen as Baseline HTML. Journey-level
+decomposition plus source scan produce the Project Work **key-page**
+`screen_coverage` inventory (`not_portfolio_complete`). **Milestone
+decompose** then applies
+`granoflow-agent-workflow/screen-task-portfolio-coverage`: Milestone Work
+`task_plan` holds refined screens, page journeys, and task summaries; every
+refined screen gets a page-as-task-scope `split_probe` and ≥1 task row before
+App create / Analysis. When journey conclusion is `split`, later task
+`ui_prototype` Must cover the concluded screens’ authorized deltas inside the
+locked Design System, using registered `ui_details` as contract. Collapsing a
+concluded multi-step flow back into one prototype frame without revising
+Project Work / milestone `task_plan` fails closed as
+`prototype_product_truth_violation`. Milestone-discovered refined screens are
+recorded in `task_plan` (trace to a key page or mark `milestone_discovered`)—
+not first invented only inside Analysis.

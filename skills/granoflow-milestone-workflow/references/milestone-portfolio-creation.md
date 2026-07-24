@@ -11,6 +11,9 @@ When creating or amending the portfolio, align with Project Work:
 - `milestone_strategy` sequencing and `project_completion_conditions`
 - `acceptance_coverage` accountable milestones
 - `requirement_coverage` primary owners at milestone layer
+- `product_spec_coverage.screen_coverage` (Project Work **key pages** only;
+  refined screens + task_plan happen in Milestone Work / task-authoring, not
+  here)
 - `active_milestone_limit` (default `1`)
 
 Each planned milestone record should include at least:
@@ -22,6 +25,8 @@ Each planned milestone record should include at least:
   order: 1
   acceptance_ids: []
   requirement_ids: []
+  # Optional planning aid; task authoring still proves screen coverage.
+  screen_ids: []
   summary: <one sentence outcome>
 ```
 
@@ -54,6 +59,8 @@ After successful create/amend, hand off to:
 
 - `granoflow-portfolio-orchestrator` if child tasks for those milestones are
   still missing; or
-- `granoflow-task-authoring` for one milestone's tasks; or
+- `granoflow-task-authoring` for one milestone's tasks (must apply
+  `screen-task-portfolio-coverage`: Milestone `task_plan` passed, split
+  probe + ≥1 task per refined screen); or
 - `granoflow-milestone-coordination` only when tasks already exist and the user
   wants charter/execution.
