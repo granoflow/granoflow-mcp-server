@@ -31,6 +31,11 @@ project has exactly one feature milestone,最终交付 uses `e2e_direct` and
 **skips** this stage (`full-delivery-acceptance`).
 
 This campaign contract is also the **execution** path for stage
+IT purpose (hard): cover **unit-unreachable boundaries** and assemble them into
+**minimal shared-session journeys** (see `integration-suite-orchestration`).
+Update Project E2E SoT `integration_campaign.cross_milestone_journey_check`
+before claiming stage done.
+
 `integration_campaign`: inventory and orchestrate the suite, run it under
 **agent auto-drive**, triage failures, fix product or test code, re-test until
 green, and emit a change report when anything was edited.

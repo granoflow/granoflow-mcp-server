@@ -20,15 +20,9 @@ VALID_SOURCES = frozenset({"mainstream", "brainstorm_backfill"})
 PROMOTE_BY_LAYER = {
     "design_spec": 3,
     "app_shell": 3,
-    "task_page_expression": 2,
+    # Task UI is serial multi-draft (prototype-serial-revision), not dual pick.
+    "task_page_expression": 1,
 }
-TASK_THREE_REASONS = frozenset(
-    {
-        "three_viable_patterns",
-        "cross_form_factor_tradeoff",
-        "high_risk_interaction_choice",
-    }
-)
 
 
 def _err(code: str, detail: str) -> dict[str, str]:
@@ -247,18 +241,6 @@ def lint_record(record: dict[str, Any]) -> dict[str, Any]:
 
     expected_promote = PROMOTE_BY_LAYER.get(layer) if layer in PROMOTE_BY_LAYER else None
     promote_count = record.get("promote_count")
-    industry_third = bool(record.get("industry_peer_third"))
-    if layer == "task_page_expression" and promote_count == 3:
-        reason = record.get("option_count_reason_code")
-        if reason in TASK_THREE_REASONS or industry_third:
-            expected_promote = 3
-        else:
-            errors.append(
-                _err(
-                    "prototype_option_promote_count_mismatch",
-                    "three task options require an allowed option_count_reason_code",
-                )
-            )
 
     if expected_promote is not None and promote_count != expected_promote:
         errors.append(

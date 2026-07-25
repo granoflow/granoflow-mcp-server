@@ -16,6 +16,11 @@ and review.
 - Never auto-accept Baseline+Shell in interactive mode.
 - Unattended only after explicit user declaration; then adopt recommendations
   except real blockers from `unattended-interaction-contract`.
+- Entering / switching into unattended: run **External Capability Inventory**
+  (secrets, payment, push/publish/deploy, destructive Git, human/device gates)
+  and batch grant / exclude / `interaction_required` **early**. Mid-run
+  discoveries go to `deferred_external_work` and are scheduled **late** without
+  blocking other solvable work (see unattended contract).
 
 ## Design-first (do not invert)
 
@@ -59,7 +64,7 @@ and review.
   draft** refreshed after each task Gate, with HTML basename + `file://` links
   and `prototype_alignment` vs confirmed prototypes.
 - Software UI pack closeout requires Markdown test lanes `unit` + `integration`
-  + `e2e` (author only; suites still run in Layer B / final-delivery campaigns).
+  - `e2e` (author only; suites still run in Layer B / final-delivery campaigns).
 - Lint: `lint_milestone_plan_acceptance_pack.py --require-links`.
 
 ## Plan cases must be implemented (no silent drop)
@@ -181,8 +186,12 @@ and review.
 - Scan user-submitted docs for an icon. If missing in interactive mode: ask
   the user to choose `user_provided` / `ai_generated` /
   `downloaded_license_clear` and wait—never silently finalize an icon.
-- Unattended with a missing icon: residual / fail closed
-  `app_icon_source_unresolved` (do not invent a source).
+- Unattended with a missing icon: **recommend and auto-adopt** a source
+  (default `ai_generated`; see gate), set
+  `user_decision_recorded: true` + `decision_authority: unattended_grant`,
+  finalize the asset, and continue. Do **not** park an interaction wait just
+  to ask which source. Residual only when generation/download is externally
+  impossible.
 - Pure Web/CLI/library → `applicability: not_applicable` with basis.
 - Lint: `lint_app_icon_source_gate.py`. Fail closed:
   `app_icon_source_gate_unread`, `app_icon_applicability_unresolved`,
@@ -211,8 +220,8 @@ and review.
   families, and source refs.
 - Shell selection uses the primary layout. Only the selected Shell expands to
   all required layout families before final Baseline confirmation.
-- Task Analysis defaults to two page expressions and permits three only with a
-  supported reason code and functional parity.
+- Task Analysis defaults to one serial page thesis refined across up to five
+  drafts (`prototype-serial-revision`), not a parallel dual pick.
 - Analysis cannot pass without a current responsive Prototype Bundle digest,
   every required layout family, final acceptance, and Widget promotion
   readback.
@@ -265,16 +274,20 @@ and review.
   that confirmed control vocabulary (title-ico / tbtn / chip selected tint /
   pref-ico)—not invent a parallel dialect that only shares Baseline tokens →
   `prototype_confirmed_chrome_lock_*`.
-- Interactive: **mainstream-reference-first** candidates (≥5; brainstorm
-  backfill only when mainstream `<5`) then promote **two page expressions**
-  (`expr_a` + `expr_b`) with **functional parity** (same capabilities, same
-  data fields, same required states; only presentation differs)—see
-  `granoflow-agent-workflow/prototype-expression-brainstorm`. Share the locked
-  Design System; mix-and-match per task/page; ≥2 whitelist contrast axes;
-  **side-by-side Contrast Gallery** with Baseline-fit + candidate digests +
-  per-axis visible-diff captions; conditional **third** `industry_peer_c`
-  only for documented industry-peer deadlock (still inside locked Design
-  System). Lint `lint_prototype_expression_brainstorm.py`.
+- Interactive and unattended: **mainstream-reference-first** candidates (≥5;
+  brainstorm backfill only when mainstream `<5`) then promote **one** serial
+  thesis (`expr_a`)—see
+  `granoflow-agent-workflow/prototype-expression-brainstorm`. Load
+  `granoflow-agent-workflow/prototype-serial-revision`: temp brief → contract
+  update → green `ui_component_effect_matrix` + `stack-realization-notes`
+  (stack deliverable surface; no default Web-only showcase) → review-only
+  gstack/preferred reviewers + grill self-QA → draft → post-review → revise
+  for blocking only; max **5** drafts; early stop on 0 blocking; drafts 4–5
+  blocking-only; each draft binds matrix + notes SHA. Interactive selection
+  surface = last **≤3** drafts with **推荐** marker; single draft =
+  confirm_or_revise (no forced multi-pick). Unattended auto-adopts final
+  green. Lint `lint_prototype_expression_brainstorm.py`,
+  `lint_stack_realization_notes.py`, and `lint_prototype_revision_ledger.py`.
 - Never re-offer Design Spec labels (`delta_match` / `ai_challenger` /
   `spec_match`) as task options after Baseline lock
   (`prototype_option_design_system_reopened`).
@@ -298,14 +311,22 @@ and review.
   `prototype_option_mainstream_skip`,
   `prototype_option_scope_mode_invalid`,
   `prototype_option_backfill_unjustified`,
-  `prototype_option_function_split`,
-  `prototype_option_data_divergence`,
-  `prototype_option_contrast_insufficient`,
-  `prototype_option_near_duplicate`,
-  `prototype_option_contrast_gallery_required`,
-  `prototype_option_diff_unlabeled`, `prototype_option_third_unjustified`.
-- Unattended: mainstream-first protocol then **one** `expr_a` only (still
-  Baseline-fitted).
+  `prototype_option_promote_count_mismatch`,
+  `prototype_serial_revision_unread`,
+  `prototype_revision_ledger_required`,
+  `prototype_revision_max_drafts`,
+  `prototype_revision_late_draft_without_blocking`,
+  `prototype_revision_blocking_residual`,
+  `prototype_revision_selection_invalid`,
+  `prototype_revision_stack_gates_incomplete`,
+  `prototype_revision_lint_failed`,
+  `stack_realization_notes_unread`,
+  `stack_realization_notes_required`,
+  `stack_realization_notes_incomplete`,
+  `stack_realization_notes_matrix_mismatch`,
+  `stack_realization_notes_coverage_incomplete`,
+  `stack_realization_notes_disposition_invalid`,
+  `stack_realization_notes_lint_failed`.
 - High-risk UI tasks: feasibility conclusion before Readiness
   (`high_risk_feasibility_unresolved`).
 

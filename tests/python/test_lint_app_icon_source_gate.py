@@ -72,11 +72,74 @@ class LintAppIconSourceGateTests(unittest.TestCase):
                     "asset_path": "assets/icon.png",
                     "license_note": None,
                     "user_decision_recorded": True,
+                    "decision_authority": "interactive_user",
                 }
             }
         }
         result = MOD.lint_app_icon(data)
         self.assertTrue(result["ok"], result)
+
+    def test_unattended_ai_generated_ok(self) -> None:
+        data = {
+            "product": {
+                "app_icon": {
+                    "applicability": "required",
+                    "applicability_basis": "ios and android App",
+                    "document_scan_status": "missing",
+                    "source_choice": "ai_generated",
+                    "asset_path": "assets/app_icon/app_icon_1024.png",
+                    "license_note": "AI-generated under unattended_grant",
+                    "user_decision_recorded": True,
+                    "decision_authority": "unattended_grant",
+                    "decision_provenance": {
+                        "mode": "unattended",
+                        "decision": "ai_generated",
+                        "decided_by": "agent_under_unattended_grant",
+                    },
+                }
+            }
+        }
+        result = MOD.lint_app_icon(data)
+        self.assertTrue(result["ok"], result)
+
+    def test_unattended_authority_without_flag_ok(self) -> None:
+        """decision_authority=unattended_grant satisfies decision recorded."""
+        data = {
+            "product": {
+                "app_icon": {
+                    "applicability": "required",
+                    "applicability_basis": "macos App",
+                    "document_scan_status": "missing",
+                    "source_choice": "ai_generated",
+                    "asset_path": "assets/icon.png",
+                    "license_note": "AI-generated under unattended_grant",
+                    "user_decision_recorded": False,
+                    "decision_authority": "unattended_grant",
+                }
+            }
+        }
+        result = MOD.lint_app_icon(data)
+        self.assertTrue(result["ok"], result)
+
+    def test_ai_generated_missing_license_note_fails(self) -> None:
+        data = {
+            "product": {
+                "app_icon": {
+                    "applicability": "required",
+                    "applicability_basis": "desktop App",
+                    "document_scan_status": "missing",
+                    "source_choice": "ai_generated",
+                    "asset_path": "assets/icon.png",
+                    "license_note": None,
+                    "user_decision_recorded": True,
+                    "decision_authority": "unattended_grant",
+                }
+            }
+        }
+        result = MOD.lint_app_icon(data)
+        self.assertFalse(result["ok"])
+        codes = {e["code"] for e in result["errors"]}
+        self.assertIn("app_icon_source_lint_failed", codes)
 
     def test_cli_subprocess(self) -> None:
         payload = {

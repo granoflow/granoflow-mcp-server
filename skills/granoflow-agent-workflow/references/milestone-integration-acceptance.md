@@ -49,10 +49,15 @@ User-visible Closing Summary / Residual Report may **notify** results; they do
    does **not** substitute for each functional milestone’s Layer B suite when
    this reference applies.
 
+**Scheme 1 timing:** Layer B runs in the milestone **Implement** wave (after
+the Plan acceptance pack is `accepted` and Layer A work proceeds)—not before
+the pack gate, and not as a substitute for project stage 6.
+
 ## Before Milestone Execution — IT Sufficiency And Orchestration Preflight
 
 **Before** starting the milestone’s implementation wave (first in-scope
-non-dry-run code execution), the coordinator **Must**:
+non-dry-run code execution), the coordinator **Must** have the milestone Plan
+acceptance pack `accepted` (Scheme 1), then:
 
 1. List every in-scope child task and its Layer A verification intent (unit vs
    authored IT).

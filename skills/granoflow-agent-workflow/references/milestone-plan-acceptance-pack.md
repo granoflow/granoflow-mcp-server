@@ -92,12 +92,12 @@ the same version.
 
 ### Living draft lifecycle
 
-| `status`             | When                                                                 |
-| -------------------- | -------------------------------------------------------------------- |
-| `draft`              | First task entered Plan; refresh after each task Gate                |
-| `pending_acceptance` | All in-scope task Gates `passed`; pack ready for Preview Gate        |
-| `accepted`           | Interactive accept or valid unattended Planning grant                |
-| `superseded`         | Replaced by `v<n+1>` after material drift                            |
+| `status`             | When                                                          |
+| -------------------- | ------------------------------------------------------------- |
+| `draft`              | First task entered Plan; refresh after each task Gate         |
+| `pending_acceptance` | All in-scope task Gates `passed`; pack ready for Preview Gate |
+| `accepted`           | Interactive accept or valid unattended Planning grant         |
+| `superseded`         | Replaced by `v<n+1>` after material drift                     |
 
 Rules for living updates:
 
@@ -105,14 +105,24 @@ Rules for living updates:
    `render_markdown_acceptance_html.py`, emit **Plan Acceptance Link** with
    clear basename + absolute `file://` for HTML (when ready) and Markdown.
 2. Record `prototype_alignment` (below) for every in-scope UI task.
-3. Lint:
+3. Lint pack structure + links:
 
 ```text
 python3 skills/granoflow-agent-workflow/scripts/lint_milestone_plan_acceptance_pack.py \
   path/to/pack.md --require-links
 ```
 
-4. Task Gate Must not claim `passed` while this task is missing from a current
+4. When `sections.test_cases.present: true`, sync Case IDs with every in-scope
+   task Plan case source (unit/integration/e2e) before closeout or Implement:
+
+```text
+python3 skills/granoflow-agent-workflow/scripts/lint_milestone_plan_pack_case_sync.py \
+  path/to/pack.md path/to/task1-cases.json [path/to/task2-cases.json ...]
+```
+
+Fail closed: `pack_case_missing_from_tasks`, `task_case_missing_from_pack`.
+
+5. Task Gate Must not claim `passed` while this task is missing from a current
    draft pack or alignment is not `aligned: true`.
 
 ### Single-File Sections (include only what exists)
@@ -121,12 +131,12 @@ The pack **May** omit a body section when `present: false` in frontmatter, but
 **Must** list every section key with `present: true|false`. When `present:
 true`, the Markdown body **Must** contain the corresponding heading and content.
 
-| Section key       | Heading (localize)   | Content                                                             |
-| ----------------- | -------------------- | ------------------------------------------------------------------- |
-| `user_copy`       | 用户文案 / User copy | Strings for `copy_locale` only; keyed by screen/task/state          |
-| `data_structures` | 表结构 / 数据结构    | Tables, JSON shapes, ER/field lists this Plan introduces or extends |
-| `flowcharts`      | 流程图               | Mermaid `flowchart` (and only flowcharts) aggregated from tasks     |
-| `uml_diagrams`    | UML 图               | State / sequence / class / ER sketches that were authored in Plan   |
+| Section key       | Heading (localize)   | Content                                                                 |
+| ----------------- | -------------------- | ----------------------------------------------------------------------- |
+| `user_copy`       | 用户文案 / User copy | Strings for `copy_locale` only; keyed by screen/task/state              |
+| `data_structures` | 表结构 / 数据结构    | Tables, JSON shapes, ER/field lists this Plan introduces or extends     |
+| `flowcharts`      | 流程图               | Mermaid `flowchart` (and only flowcharts) aggregated from tasks         |
+| `uml_diagrams`    | UML 图               | State / sequence / class / ER sketches that were authored in Plan       |
 | `test_cases`      | 测试用例             | Aggregated verification tables with **lane** `unit`/`integration`/`e2e` |
 
 Rules:
@@ -240,31 +250,63 @@ Rules:
    appear in the pack. Task Work supplies how to execute; the pack supplies
    what the user already accepted.
 3. **Delivery** for software tasks in that milestone **Must** reconcile against
-   pack sections that are `present: true`:
-   - tick pack test-case rows (or cite the same Case IDs from Task Work) with
-     `passed` / `failed` / `blocked_by_dependency`;
-   - maintain `plan_case_implementation` so **no authored Case ID is dropped**:
-     Layer A requires unit/widget `implemented` + on-disk `test_ref`;
-     integration/e2e at least `scheduled_campaign`; Layer B requires
-     integration `executed`; final-delivery e2e_campaign requires e2e
-     `executed`. Lint with `lint_plan_case_implementation.py`;
-   - unit lane Must cover every in-scope operation/action and Must not assert
-     user-visible copy (`lint_plan_unit_policy.py`, with `--scan-tests` at
-     Delivery);
-   - confirm shipped copy matches the pack inventory for `copy_locale` (other
-     locales remain Execution extras, not silent Plan drift);
-   - note schema / flow / UML deviations via `implementation-design-fidelity`
-     (kept divergences require better_rationale **and** pack/Task Work/data
-     attachment writeback in the same batch).
+   pack sections that are `present: true` via a structured
+   `milestone_plan_pack_reconcile` block (schema
+   `granoflow_milestone_plan_pack_reconcile_v1`):
+
+```yaml
+milestone_plan_pack_reconcile:
+  schema: granoflow_milestone_plan_pack_reconcile_v1
+  contract_loaded: true
+  pack_path: temp/milestone-plan-acceptance-M1-v1.md
+  pack_status: accepted
+  pack_content_sha256: ""
+  status: complete # pending | complete
+  sections:
+    user_copy: { applicable: true, status: matched } # matched | drifted | n_a
+    data_structures: { applicable: false, status: n_a }
+    flowcharts: { applicable: true, status: matched }
+    uml_diagrams: { applicable: false, status: n_a }
+    test_cases: { applicable: true, status: matched }
+  drift_writeback_ref: null # required when any status=drifted
+```
+
+Lint (structural declaration only — not pixel/copy semantics):
+
+```text
+python3 skills/granoflow-agent-workflow/scripts/lint_milestone_plan_pack_delivery_reconcile.py \
+  path/to/delivery.md --pack path/to/accepted-pack.md
+```
+
+Also:
+
+- maintain `plan_case_implementation` so **no authored Case ID is dropped**
+  (`lint_plan_case_implementation.py`);
+- unit lane Must cover every in-scope operation/action and Must not assert
+  user-visible copy (`lint_plan_unit_policy.py`, with `--scan-tests` at
+  Delivery);
+- note schema / flow / UML deviations via `implementation-design-fidelity`
+  (kept divergences require better_rationale **and** pack/Task Work/data
+  attachment writeback; set reconcile section `status: drifted` +
+  `drift_writeback_ref`).
+
 4. **Conflict / drift:** if implementation discovers the pack or Task Work is
    wrong, revise Task Work (discussion writeback), update the pack to a new
    `v<n+1>` when milestone-accepted content changes, and (interactive) re-seek
    acceptance for material deltas. Do not invent a parallel design only in
    chat (`milestone_plan_acceptance_pack_drift`).
-5. **Missing pack at implement time:** fail closed
-   `milestone_plan_acceptance_pack_missing` — do not start code edits for that
-   milestone's software tasks.
-6. Pack does **not** replace execution authorization (允许真正开工), Structural
+5. **Missing or unaccepted pack at implement time:** fail closed
+   `milestone_plan_acceptance_pack_missing` or
+   `project_e2e_sot_implement_before_pack_accepted` — do **not** start code
+   edits for that milestone's software tasks until frontmatter
+   `status: accepted` (interactive) or valid unattended Planning grant
+   auto-adopt. Scheme 1: all in-scope task Plans must feed the pack first.
+   Before Implement wave, Case sync lint (§ living updates item 4) Must be
+   green when `test_cases.present: true`.
+6. **User-facing listing:** On pack accept, emit pack md/html `file://` links
+   as **计划基准**. After milestone Implement closes, list the **same** links
+   again as **兑现承诺** (see `project-e2e-sot.md`).
+7. Pack does **not** replace execution authorization (允许真正开工), Structural
    Forecast notice, prototype confirmation, or Delivery Card Checkpoint. When
    telling the user the next step after pack acceptance, gloss those tokens per
    `workflow-jargon-plain-language.md` (e.g. 「可以说『开始实施』」)—do not end
@@ -274,11 +316,15 @@ Fail closed:
 
 - `milestone_plan_acceptance_pack_not_used` — Execution/Delivery for an
   in-scope software task without loading this reference and the accepted pack
-  file
+  file (lint: missing `pack_path` / reconcile block)
 - `milestone_plan_acceptance_pack_drift` — material deviation from accepted
-  pack with no Task Work + pack revision
+  pack with no Task Work + pack revision (`status: drifted` without
+  `drift_writeback_ref`)
 - `milestone_plan_acceptance_pack_delivery_unreconciled` — Delivery claims done
-  without reconciling `present: true` pack test cases / copy / schema / flows
+  without a complete `milestone_plan_pack_reconcile` for `present: true`
+  sections
+- `pack_case_missing_from_tasks` / `task_case_missing_from_pack` — Case ID set
+  drift between pack and Task Work sources
 
 ## Fail-Closed Codes
 

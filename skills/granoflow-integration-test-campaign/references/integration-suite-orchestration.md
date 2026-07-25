@@ -18,18 +18,53 @@ Skipping this load and claiming an orchestrated suite fails closed as
 
 ## Goals
 
-1. **Minimal path** — Order and merge cases so later steps reuse data and
-   session state from earlier ones (create → import → browse → open). Avoid
-   “run case → data wrong → tear down → rebuild” loops.
-2. **Service path** — Default `interaction_fidelity: service_path`: exercise
-   cross-module collaboration through real I/O (filesystem, crypto, catalog,
-   repositories, services). **UI taps are not required.** Real UI journeys
-   belong to `granoflow-e2e-test-campaign`.
-3. **Editable tests** — Rewriting, merging, or splitting test code during
-   orchestration is **allowed and expected** when it enables (1) and (2).
-4. **Background control** — A visible background activity mounts the real
+Integration tests **Must** satisfy **both**:
+
+1. **Unit-unreachable boundaries** — Cover cross-module real I/O, shared
+   session state, and assemblies unit tests cannot prove. Do **not** re-assert
+   what unit tests already cover step-by-step.
+2. **Minimal shared-session journey** — Order and merge cases so later steps
+   reuse data/session (create → import → browse → open). Prefer one thin
+   journey over a pile of isolated cases. Avoid “run case → data wrong → tear
+   down → rebuild” loops.
+
+Also:
+
+3. **Service path** — Default `interaction_fidelity: service_path`: exercise
+   cross-module collaboration through real I/O. **UI taps are not required.**
+   Real UI journeys belong to `granoflow-e2e-test-campaign`.
+4. **Editable tests** — Rewriting, merging, or splitting test code during
+   orchestration is **allowed and expected** when it enables (1)–(2).
+5. **Background control** — A visible background activity mounts the real
    component and state owner around a controllable event adapter. It is not
    proven by calling the service alone.
+
+### Project E2E SoT thin gate
+
+When stage `integration_campaign` runs (not `waived_e2e_direct`), update
+`temp/project-e2e-sot-v*.md`:
+
+```yaml
+integration_campaign:
+  path: full_unit_and_it # or waived_e2e_direct
+  cross_milestone_journey_check: not_applicable | covered | gap
+  evidence_ref:
+    - <suite_plan path>
+    - <closing_summary path>
+    - temp/.../journey_derivation.md # short evidence; required when check != not_applicable
+```
+
+- `not_applicable` — single-milestone waive path, or no cross-milestone edges.
+- `covered` — every known cross-milestone `produces→requires` / journey edge
+  has a project-level minimal journey in the Suite Plan.
+- `gap` — edges exist without journey coverage → **do not** mark stage done
+  (`cross_milestone_journey_gap`). Fix by authoring/orchestrating coverage or
+  recording an allowed residual after returning to Plan/PW.
+
+Derivation algorithms stay in this skill; the SoT only stores the conclusion +
+evidence pointers. Prefer marking `cross_milestone_integration:
+pending|planned` earlier at portfolio / Plan closeout so stage 6 is not a
+surprise.
 
 ## Inventory
 

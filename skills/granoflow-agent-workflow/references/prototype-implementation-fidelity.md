@@ -101,11 +101,22 @@ Answer all three without waiting for the user:
 3. **tech_stack_blocked** — Can the current stack not achieve the prototype
    effect with acceptable fidelity?
 
+When `tech_stack_blocked` is true, **first** re-read Analysis
+`stack_realization_notes` and the bound `ui_component_effect_matrix` SHA on
+the confirmed prototype draft. If notes/matrix are missing, stale, or never
+declared the gap, treat it as an **Analysis omission**: rematch the prototype
+(update Content Contract / notes / HTML) rather than silently
+`keep_implementation`. If notes already recorded
+`adapted_fallback` / `enhancement_schematic` / `user_accepted_degrade` for
+that surface, follow that disposition and cite the notes row in
+`decision_rationale`.
+
 Then choose `keep_implementation` or `revise_to_prototype` from those answers
 and apply the decision (revise **code** when deciding to match the prototype).
 Task-local `keep_implementation` remains allowed when the three answers support
-it and rationale is non-empty. This is **distinct** from E2E Phase B AI loop,
-where `keep` is forbidden until user final acceptance.
+it, rationale is non-empty, and stack gaps are covered by notes (or an
+explicit rematch). This is **distinct** from E2E Phase B AI loop, where `keep`
+is forbidden until user final acceptance.
 
 Human intervention is **not** required for Phase A, but the declaration **is**.
 

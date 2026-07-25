@@ -5,6 +5,11 @@ implementable Widget, control, and effect candidates inside the user's
 selection, locked Design Baseline, Widget Catalog, platform matrix, stack
 capability profile, and approved dependencies.
 
+HTML is not the limiting surface—the **selected stack** is. After this matrix
+is lint-clean, author `stack-realization-notes` so every **selected** role
+states how the stack realizes or degrades the HTML look. Serial revision
+draft-1 and `visualConfirmed` stay blocked while either gate is incomplete.
+
 ## Hard eligibility
 
 - Reuse an eligible Catalog Widget when the same role exists.
@@ -13,7 +18,10 @@ capability profile, and approved dependencies.
   functionally equivalent variant only when the mapping is visible in the
   review HTML and does not change behavior.
 - A behavior-changing replacement remains `pending_user_decision`.
-- `forbidden` candidates never enter a selected option.
+- `forbidden` candidates never enter a selected option **and Must not appear**
+  as the default main-path look in task HTML.
+- Do **not** introduce main-path controls/effects that are absent from this
+  matrix or marked `forbidden` / unresolved `pending_user_decision`.
 - Accessibility, functional equivalence, platform coverage, and performance
   are hard gates.
 - Every required platform/orientation/layout family needs an implementation
@@ -66,3 +74,11 @@ Fail closed with:
 
 After confirmation, promote reusable new roles or variants to `widgets.yaml`
 and its Design System HTML projection. Keep Task-local decoration local.
+
+## Stack realization notes (required companion)
+
+Load and complete `stack-realization-notes` for every selected candidate before
+HTML draft-1. Notes map `html_surface` → `stack_realization` with disposition
+`native_supported` | `adapted_fallback` | `enhancement_schematic` |
+`user_accepted_degrade`. Keep notes outside product UI. Bind both matrix and
+notes SHA on each serial revision draft.

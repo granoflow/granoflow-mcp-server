@@ -44,7 +44,10 @@ product:
     source_choice: user_provided | ai_generated | downloaded_license_clear | unresolved | not_applicable
     asset_path: null | <repo-relative or absolute path>
     license_note: null | <license / provenance note when downloaded or AI-generated>
+    # true after interactive user choice OR unattended_grant auto-adopt
     user_decision_recorded: true | false
+    decision_authority: interactive_user | unattended_grant | null
+    decision_provenance: null | { mode, decision, decided_by, decided_at, rationale }
 ```
 
 ## Interactive Mode
@@ -56,21 +59,47 @@ When `applicability: required` and `document_scan_status: missing`:
    - let the AI generate one (`ai_generated`); or
    - download a **copyright-clear** asset (`downloaded_license_clear`).
 2. Wait for the choice before finalizing any icon asset.
-3. Record `source_choice`, `user_decision_recorded: true`, and
-   `asset_path` / `license_note` when known.
+3. Record `source_choice`, `user_decision_recorded: true`,
+   `decision_authority: interactive_user`, and `asset_path` / `license_note`
+   when known.
 4. Do **not** silently generate, download, or invent a final icon.
 
 ## Unattended Mode
 
-Under an explicit unattended declaration:
+Under an **explicit** unattended declaration (see
+`unattended-interaction-contract`), App icon source selection is **solvable
+agent-selectable work**—not an interaction wait and not a whole-run residual
+by default.
 
-- If docs already contain an icon (`document_scan_status: found`), record it and
-  continue.
-- If the icon is missing, **do not** silently pick a source. Park
-  `app_icon_source_unresolved` as deferred/residual (or fail closed at Project
-  Work confirm / initialization Done) and continue other solvable work.
-- Never mark `source_choice` as resolved without a user decision or a document
-  finding.
+When `applicability: required`:
+
+1. If docs already contain an icon (`document_scan_status: found`), record
+   path/provenance and continue (`source_choice` may be `user_provided` when
+   the asset came from user docs).
+2. If the icon is **missing**, the Agent **must recommend and auto-adopt**
+   exactly one source, then finalize the asset without asking:
+   - **Default:** `ai_generated` (original mark for the product; record
+     `license_note` with generation provenance).
+   - Prefer `downloaded_license_clear` only when a specific copyright-clear
+     source is already identified in-repo or in the run ledger (never invent
+     a stock URL).
+   - Use `user_provided` only when an on-disk asset already exists and is
+     attributable to the user/docs—do not fabricate that label.
+3. Record:
+   - `source_choice` (resolved enum, never leave `unresolved` after the
+     adopt step);
+   - `user_decision_recorded: true` (the explicit unattended declaration is
+     the decision grant for this packaging choice);
+   - `decision_authority: unattended_grant`;
+   - `decision_provenance` with mode, decision, decided_by, decided_at, and
+     short rationale;
+   - `asset_path` and `license_note` when the asset is written.
+4. Only park `app_icon_source_unresolved` (or defer externally) when
+   generation/download is **externally impossible** in the current
+   environment (for example image tooling unavailable and no fallback).
+   Continue other solvable work; emit the item on the Unattended Residual
+   Report. Do **not** stop the queue solely to ask which of the three
+   sources the user prefers.
 
 ## Fail-Closed Codes
 
@@ -88,6 +117,11 @@ Under an explicit unattended declaration:
 python3 skills/granoflow-agent-workflow/scripts/lint_app_icon_source_gate.py \
   path/to/project-work.yaml
 ```
+
+A resolved `source_choice` after missing docs requires
+`user_decision_recorded: true`. That flag is satisfied by an interactive user
+choice **or** by `decision_authority: unattended_grant` under explicit
+unattended.
 
 ## MCP Thin Boundary
 

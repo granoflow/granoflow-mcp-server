@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +19,8 @@ VALID_SOURCE = frozenset(
         "not_applicable",
     }
 )
+VALID_AUTHORITY = frozenset({"interactive_user", "unattended_grant"})
+RESOLVED_SOURCES = frozenset({"user_provided", "ai_generated", "downloaded_license_clear"})
 
 
 def _err(code: str, detail: str) -> dict[str, str]:
@@ -45,6 +46,22 @@ def _app_icon(data: Any) -> dict[str, Any] | None:
     if isinstance(product, dict) and isinstance(product.get("app_icon"), dict):
         return product["app_icon"]
     return None
+
+
+def _decision_recorded(icon: dict[str, Any]) -> bool:
+    """Interactive choice or explicit unattended grant both count."""
+    if icon.get("user_decision_recorded") is True:
+        return True
+    if icon.get("decision_authority") == "unattended_grant":
+        return True
+    provenance = icon.get("decision_provenance")
+    if isinstance(provenance, dict):
+        if provenance.get("mode") == "unattended":
+            return True
+        decided_by = str(provenance.get("decided_by") or "")
+        if "unattended" in decided_by:
+            return True
+    return False
 
 
 def lint_app_icon(data: Any) -> dict[str, Any]:
@@ -132,24 +149,25 @@ def lint_app_icon(data: Any) -> dict[str, Any]:
                 "required + missing docs requires a resolved source_choice",
             )
         )
-    elif (
-        scan == "missing"
-        and source
-        in {
-            "user_provided",
-            "ai_generated",
-            "downloaded_license_clear",
-        }
-        and icon.get("user_decision_recorded") is not True
-    ):
+    elif scan == "missing" and source in RESOLVED_SOURCES and not _decision_recorded(icon):
         errors.append(
             _err(
                 "app_icon_source_unresolved",
-                "user_decision_recorded must be true after a source choice",
+                "user_decision_recorded or decision_authority=unattended_grant "
+                "required after a source choice",
             )
         )
 
-    if source in {"user_provided", "ai_generated", "downloaded_license_clear"}:
+    authority = icon.get("decision_authority")
+    if authority is not None and authority not in VALID_AUTHORITY:
+        errors.append(
+            _err(
+                "app_icon_source_lint_failed",
+                "decision_authority must be interactive_user|" "unattended_grant|null",
+            )
+        )
+
+    if source in RESOLVED_SOURCES:
         path = icon.get("asset_path")
         if path is not None and not (isinstance(path, str) and path.strip()):
             errors.append(
@@ -166,6 +184,16 @@ def lint_app_icon(data: Any) -> dict[str, Any]:
                 _err(
                     "app_icon_source_lint_failed",
                     "license_note required for downloaded_license_clear",
+                )
+            )
+
+    if source == "ai_generated" and _decision_recorded(icon):
+        note = icon.get("license_note")
+        if not isinstance(note, str) or not note.strip():
+            errors.append(
+                _err(
+                    "app_icon_source_lint_failed",
+                    "license_note required for ai_generated after decision",
                 )
             )
 
@@ -187,4 +215,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

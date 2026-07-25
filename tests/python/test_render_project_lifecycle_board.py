@@ -83,7 +83,37 @@ class RenderBoardTests(unittest.TestCase):
         self.assertIn("下一步", result["markdown"])
         self.assertEqual(result["earliest_incomplete"], "milestone_analysis")
 
-    def test_pipeline_order_label_rendered(self) -> None:
+    def test_schedule_policy_interactive_label_rendered(self) -> None:
+        board = base_board(mode="interactive")
+        board["schedule_policy"] = {
+            "schema": "granoflow_schedule_policy_v1",
+            "kind": "interactive_all_ap_then_implement",
+            "derived_from": "interactive",
+            "switched_at": None,
+            "switched_by": None,
+        }
+        result = MOD.validate_and_render(board)
+        self.assertTrue(result["ok"], result)
+        self.assertIn("交互：全项目分析+计划齐套后再实施", result["markdown"])
+        self.assertIn("interactive_all_ap_then_implement", result["markdown"])
+
+    def test_schedule_policy_unattended_label_rendered(self) -> None:
+        board = base_board(mode="unattended")
+        board["schedule_policy"] = {
+            "schema": "granoflow_schedule_policy_v1",
+            "kind": "unattended_milestone_loop",
+            "derived_from": "unattended",
+            "switched_at": "2026-07-25T00:00:00Z",
+            "switched_by": "user",
+        }
+        result = MOD.validate_and_render(board)
+        self.assertTrue(result["ok"], result)
+        # Expectation tracks SCHEDULE_POLICY_LABELS for unattended_milestone_loop
+        # (Scheme 1: all A→P + pack before Implement — not per-task A→P→I).
+        self.assertIn("无人值守：里程碑先全分析+计划+验收册，再实施", result["markdown"])
+        self.assertIn("unattended_milestone_loop", result["markdown"])
+
+    def test_legacy_pipeline_order_maps_to_schedule_label(self) -> None:
         board = base_board(mode="interactive")
         board["pipeline_order"] = {
             "mode": "breadth_first",
@@ -92,8 +122,33 @@ class RenderBoardTests(unittest.TestCase):
         }
         result = MOD.validate_and_render(board)
         self.assertTrue(result["ok"], result)
-        self.assertIn("先全部分析", result["markdown"])
-        self.assertIn("breadth_first", result["markdown"])
+        self.assertIn("交互：全项目分析+计划齐套后再实施", result["markdown"])
+        self.assertIn("interactive_all_ap_then_implement", result["markdown"])
+        self.assertNotIn("breadth_first", result["markdown"])
+
+    def test_legacy_pipeline_order_invalid_mode_rejected(self) -> None:
+        board = base_board(mode="interactive")
+        board["pipeline_order"] = {
+            "mode": "task_first",
+            "decided_at": "2026-07-25T00:00:00Z",
+            "decided_by": "user",
+        }
+        result = MOD.validate_and_render(board)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["failCode"], "project_lifecycle_board_render_failed")
+        self.assertIn("pipeline_order.mode", result["detail"])
+
+    def test_schedule_policy_invalid_kind_rejected(self) -> None:
+        board = base_board(mode="interactive")
+        board["schedule_policy"] = {
+            "schema": "granoflow_schedule_policy_v1",
+            "kind": "task_first",
+            "derived_from": "interactive",
+        }
+        result = MOD.validate_and_render(board)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["failCode"], "project_lifecycle_board_render_failed")
+        self.assertIn("schedule_policy.kind", result["detail"])
 
     def test_unattended_requires_display_only(self) -> None:
         board = base_board(mode="unattended")

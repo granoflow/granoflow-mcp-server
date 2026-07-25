@@ -18,20 +18,99 @@ declaration is the authorization boundary for the run:
    Delivery, campaign suite runs on the selected device, project-context
    `revise_code` / `revise_context_yaml` decisions, etc.). Do not invent a
    mid-run confirmation for solvable work.
-2. **Externally impossible work is deferred—not a whole-run stop.** If evidence
+2. **Agent-selectable defaults are solvable.** Packaging / source / tooling
+   choices the Agent can recommend without inventing product behavior (for
+   example App icon source under `app-icon-source-gate`, local stack picks
+   already covered by Project Work recommendation rows, Design Baseline
+   `auto_accept_recommendation`) must be **recommend → auto-adopt → record
+   provenance** with `decision_authority: unattended_grant`. Do **not**
+   consume `interaction_budget`, park an interaction wait, or stall the
+   queue solely to ask which of the Agent's enumerated options the user
+   prefers. Prefer documented defaults (App icon missing → `ai_generated`).
+3. **Externally impossible work is deferred—not a whole-run stop.** If evidence
    shows the item cannot be executed for an external reason (missing user-only
    credential/OTP, no device/simulator, App Store / payment human approval,
    offline third party, capability absent and not installable in-scope), park
    it in `deferred_external_work` and **continue every other ready task**.
-3. **Never block the queue.** One deferred item must not freeze sibling tasks,
+4. **Never block the queue.** One deferred item must not freeze sibling tasks,
    later milestones, or the rest of a campaign round.
-4. **End with an explicit residual list.** When no more solvable ready work
+5. **End with an explicit residual list.** When no more solvable ready work
    remains, emit a user-visible **Unattended Residual Report** naming every
    deferred or incomplete item, why it was external, and the resume condition.
    Do not silently omit residuals.
 
+Still fail closed (not agent-selectable): inventing product journeys as
+`user_stated`, thin-doc decision-changing gaps that change Outcome/behavior
+(`thin_product_doc_gap_requires_user`), secrets, payment, push/publish/deploy,
+destructive Git, or impersonation.
+
 Inventing credentials, impersonating the user, or marking external work done
 without evidence remains forbidden.
+
+## External Capability Inventory (ask early)
+
+Before treating an unattended run as fully scheduled—and again immediately when
+the user **switches into** unattended—run a one-time **External Capability
+Inventory** against product docs + Project Work + planned milestones. Cover at
+least:
+
+| Class                     | Examples                                                            |
+| ------------------------- | ------------------------------------------------------------------- |
+| Secrets / login           | API tokens, OTP, vendor console login, recovery codes               |
+| Payment                   | IAP, billing, bank / merchant human approval                        |
+| Push / publish / deploy   | store submit, production deploy, remote push, public messaging      |
+| Destructive Git / history | force-push, hard reset, rewrite published history                   |
+| Human / device gates      | App Store review, physical device, government / offline third party |
+| E2E visible window (UI)   | OS/app display for `e2e_campaign` (`window_capability`)             |
+
+For **software UI** whole-project unattended runs, also record in the inventory
+(and optionally SoT risks) that final-delivery E2E **requires**
+`window_capability: available`. This is an early demo/ops preflight hint—not a
+new mid-run confirmation. Missing display still fails closed later as
+`e2e_campaign_window_required` (see `granoflow-e2e-test-campaign`).
+
+For each class, record one disposition in Project Work / run ledger (and in a
+milestone authorization manifest when that runner path is used):
+
+- `granted` — user authorized the class for this run; credential **reference**
+  only (never persist secret values);
+- `excluded` / `not_required` — evidence shows the product/run does not need it;
+  later work must not reopen an interaction wait for that class without new
+  evidence;
+- `interaction_required` — needed but not yet authorizable; batch **all** such
+  classes in **one** early ask before deep milestone execution when possible.
+
+**Do not** discover these classes for the first time mid-implement when a
+document scan at unattended entry would have shown them. Early inventory is a
+hard scheduling gate for unattended portfolio runs; skipping it fails closed as
+`external_capability_inventory_skipped` when a later residual proves the class
+was knowable from docs/Project Work at entry.
+
+Ordinary Agent-selectable defaults (App icon, stack recommendations already in
+Project Work, Baseline `auto_accept_recommendation`) are **not** inventory
+classes—handle them under § Explicit Unattended Declaration item 2.
+
+## Late discovery: park at the end, never block the queue
+
+If an external / forbidden class is discovered **after** unattended entry
+despite inventory (or truly emerges only from implementation evidence):
+
+1. Immediately append `deferred_external_work` with `id`, `title`,
+   `blocker_class`, `evidence`, and `resume_condition`.
+2. **Do not** freeze sibling tasks, later milestones, IT/E2E campaigns, or
+   other solvable work.
+3. **Schedule late:** prefer completing all remaining solvable milestone work
+   (Scheme 1: all Analysis→Plan + pack accept → Implement) and then
+   `integration_campaign` / `e2e_campaign` before spending interaction budget
+   on the deferred class.
+   Surface it in the closing **Unattended Residual Report** (and any end-of-run
+   dry-run prep) rather than interrupting the middle of the queue.
+4. **Local hard dependency only:** when a single task's Outcome is impossible
+   without that class, mark **that task** (or its dependent node) deferred /
+   interaction_required and continue every independent task. Never escalate to a
+   portfolio-wide stop.
+5. Still fail closed on impersonation, inventing credentials, or claiming
+   external work done without evidence.
 
 ### Device capability is not unattended test scope
 
@@ -138,15 +217,39 @@ When filling `product_spec_coverage` under explicit unattended:
 4. Unattended Baseline visual `auto_accept_recommendation` never waives these
    gates.
 
-### Pipeline order under unattended
+### Schedule under unattended
 
-Multi-milestone Plan entry requires Project Work `pipeline_order.mode` already
-set to `breadth_first` or `depth_first` (grant text or Project Work write;
-`decided_by: unattended_grant`). Do not mid-run ask
-「多里程碑时，先全部分析，还是做一个完整闭环再做下一个？」. Missing mode when
-peer milestones still have Analysis `not_started` → fail closed
-`pipeline_order_unresolved`, refuse Plan, list in Residual Report. Never silent
-default to `depth_first`.
+Unattended **implies** `schedule_policy.kind: unattended_milestone_loop`
+(see `project-lifecycle-progress-board` **Schedule Policy**). Do **not** ask
+the user to choose `breadth_first` / `depth_first` / `unset` (retired).
+
+When the user (or an approved grant) **enters or switches into** unattended:
+
+1. Set `interaction_mode: unattended` and
+   `schedule_policy.kind: unattended_milestone_loop` for remaining work.
+2. Do not redo completed Analysis/Plan/Implement evidence.
+3. Run the **Unattended Entry Continuity Checklist** in
+   `long-task-run-continuity` **in the same wave**: load continuity +
+   `project-e2e-sot`; create/update `temp/project-e2e-sot-v*.md` with concrete
+   `next_step`; probe Layer B (activate if available); **Must probe** Layer C
+   and **arm** when available with the canonical wake payload bound to the SoT,
+   or emit `host_wake_unavailable_notice` with the canonical resume prompt when
+   unavailable/unknown. Expand the SoT after portfolio ready
+   (`project-e2e-sot.md`).
+4. Asking solely to enable host Plan mode fails closed as
+   `collaborative_planning_surface_confirm_in_unattended`. Wake without a bound
+   `next_step` is not a valid unattended schedule
+   (`host_wake_prompt_missing_next_step` /
+   `host_wake_unbound_from_run_plan`).
+
+**Scheme 1 schedule:** Under `pipeline_continue` / long-run / 「继续」 /
+host-wake tick, for the current milestone: complete **all** in-scope
+Analysis→Plan (定稿 Analysis opens Plan; `gf析` may stop only before 定稿) →
+accept the milestone Plan acceptance pack → **then** milestone Implement
+(Layer A + Layer B). **Forbidden** to Implement any child before the pack is
+`accepted`. Then open the next milestone’s Analysis. After all feature
+milestones finish that pattern, run `integration_campaign` then
+`e2e_campaign`.
 
 ### Prototype links under unattended
 
@@ -218,41 +321,31 @@ task `ui_prototype`):
    `user_visible_copy_boundary_violation`); keep design-first; high-risk UI needs
    feasibility conclusion before Readiness
    (`high_risk_feasibility_unresolved`).
-   - **Unattended:** mainstream-first candidate protocol then **one**
-     Baseline-fitted `expr_a` only (no dual/triple; no Design System reopen).
-     Load `prototype-baseline-fit` and `prototype-expression-brainstorm` when
-     authoring task page expressions; run
-     `lint_prototype_expression_brainstorm.py`.
-   - **Interactive (default when not unattended):** load
-     `prototype-baseline-fit` (and `prototype-confirmed-chrome-lock` when
-     chrome-family siblings are already confirmed), run
-     **mainstream-reference-first** candidates (≥5; brainstorm backfill only
-     when mainstream `<5`), then **two page expressions** (`expr_a` +
-     `expr_b`) with **functional parity** and **strict Spec/Shell fit** inside
-     the locked Design System **plus confirmed sibling chrome vocabulary**,
-     with ≥2 contrast axes; mix-and-match per task/page;
-     **side-by-side Contrast Gallery** with Baseline-fit + chrome-lock +
-     candidate digests
-     - per-axis visible-diff captions; optional third only for documented
-       industry-peer deadlock; never re-offer Design Spec labels as task
-       options; never feature-split, data-diverge, ship generic parallel
-       phones, or invent a parallel chrome dialect after siblings are
-       confirmed
-       (`prototype_option_design_system_reopened` /
-       `prototype_baseline_fit_*` /
-       `prototype_generic_phone_frame` /
-       `prototype_shell_chrome_mismatch` /
-       `prototype_confirmed_chrome_lock_*` /
-       `prototype_option_brainstorm_*` /
-       `prototype_option_mainstream_skip` /
-       `prototype_option_scope_mode_invalid` /
-       `prototype_option_function_split` /
-       `prototype_option_data_divergence` /
-       `prototype_option_third_unjustified` /
-       `prototype_option_contrast_insufficient` /
-       `prototype_option_near_duplicate` /
-       `prototype_option_contrast_gallery_required` /
-       `prototype_option_diff_unlabeled`).
+   - **Unattended:** load `prototype-baseline-fit`,
+     `prototype-expression-brainstorm`, and `prototype-serial-revision`.
+     Mainstream-first → promote **one** Baseline-fitted `expr_a` thesis; run
+     review-only gstack/preferred reviewers + grill **self-QA** (no user
+     interview); serial multi-draft up to 5; auto-adopt final green; residual
+     blocking at cap → `prototype_revision_blocking_residual`. Lint
+     `lint_prototype_expression_brainstorm.py` and
+     `lint_prototype_revision_ledger.py`. No Design System reopen.
+   - **Interactive (default when not unattended):** same serial pipeline with
+     strict Spec/Shell fit + confirmed sibling chrome vocabulary; selection
+     surface = last ≤3 drafts with **推荐**; single draft =
+     `confirm_or_revise` (detail revise notes open the next draft inside the
+     5-cap). Never re-offer Design Spec labels as task options; never ship
+     generic parallel phones or invent a parallel chrome dialect after
+     siblings are confirmed
+     (`prototype_option_design_system_reopened` /
+     `prototype_baseline_fit_*` /
+     `prototype_generic_phone_frame` /
+     `prototype_shell_chrome_mismatch` /
+     `prototype_confirmed_chrome_lock_*` /
+     `prototype_option_brainstorm_*` /
+     `prototype_option_mainstream_skip` /
+     `prototype_option_scope_mode_invalid` /
+     `prototype_option_promote_count_mismatch` /
+     `prototype_revision_*`).
 
 ## Current Run Versus Durable Delegation
 
@@ -300,6 +393,7 @@ Park in `deferred_external_work` and continue other work:
 - physical device / human App Store / payment / bank / government approval;
 - publish/deploy/push/external messaging that the current host literally cannot
   perform (missing token, offline store, policy wall);
+- destructive Git / history rewrites not pre-granted in the early inventory;
 - Note/Card creation/link/modify that still needs human study-judgment over the
   latest preview—prepare dry-run at the end, then list as residual rather than
   blocking engineering tasks mid-run.
@@ -307,7 +401,9 @@ Park in `deferred_external_work` and continue other work:
 - any action whose success cannot be evidenced without an external human step.
 
 Do not use “forbidden_action” as a mid-run freeze of the whole portfolio when
-sibling solvable work remains.
+sibling solvable work remains. Prefer the **Late discovery** scheduling rule:
+keep the deferred class at the end of the solvable queue unless a single task
+has a hard local dependency.
 
 ## Continue Without Asking
 
@@ -365,19 +461,38 @@ During unattended **implement**, still load the adopted pack and use it as the
 primary milestone alignment reference; skip only acknowledgement questions, not
 pack reconciliation at Delivery.
 
-### Long-task run continuity (required on implement)
+### Long-task run continuity (required on implement / unattended entry)
 
-Before unattended **implement** / campaign work that is long (milestone-wide or
-multi-task), load `long-task-run-continuity.md` and create/update a **durable
-run plan** on disk. That file is the portable continuity surface.
+Unattended full-pipeline completion needs **three** portable layers (see
+`long-task-run-continuity.md`). This contract owns **Auth** only:
 
-If the host exposes a **collaborative planning surface**
-(`availability: available`), activate it without asking. If it is unavailable
-or unknown, **do not block**—continue with the durable run plan alone.
+| Layer | Portable name                             | Owner                                          |
+| ----- | ----------------------------------------- | ---------------------------------------------- |
+| Auth  | ask-budget / continue / defer / residual  | **this file**                                  |
+| A     | Project E2E SoT / durable run plan        | `project-e2e-sot` + `long-task-run-continuity` |
+| B     | Collaborative planning surface (optional) | `long-task-run-continuity`                     |
+| C     | Host wake surface (when to re-enter)      | `long-task-run-continuity`                     |
+
+**Host wake alone is not enough.** A robust recurring tick that only says
+「继续」 without reading SoT `next_step` is not a successful unattended
+delivery path—it fails closed under
+`host_wake_prompt_missing_next_step` /
+`host_wake_unbound_from_run_plan` in `long-task-run-continuity`.
+
+When **entering unattended** (grant or mid-run switch), and again before
+unattended **implement** / campaign work that is long (milestone-wide or
+multi-task), execute the **Unattended Entry Continuity Checklist** in
+`long-task-run-continuity.md` (load + SoT + Layer B/C probe/arm or
+`host_wake_unavailable_notice`). That SoT file is the portable continuity
+surface. Do not treat chat wake as proof that `granoflow-gfmcp-runner` or
+another external worker is running.
 
 Asking the user solely to enable a host-local planning UI fails closed as
-`collaborative_planning_surface_confirm_in_unattended`. Missing or stale
-durable run plans fail as `long_run_plan_missing` / `long_run_plan_stale`.
+`collaborative_planning_surface_confirm_in_unattended`. Missing or stale SoT
+fails as `long_run_plan_missing` / `project_e2e_sot_missing` /
+`long_run_plan_stale` / `project_e2e_sot_stale`. Wake misuse codes
+(`host_wake_*`, including `host_wake_unavailable_notice` as a non-blocking
+notice) are owned by `long-task-run-continuity`.
 
 ## Defer Item (do not block peers)
 
@@ -402,6 +517,27 @@ externally impossible but other ready work exists:
 - `direction_change` / `scope_drift`: only when the item itself cannot be
   safely auto-resolved—even then, prefer adopting the recorded recommendation
   for solvable siblings; park only the contested item when possible.
+
+## Parallel Batch Merge Review (unattended)
+
+When a concurrent task batch finishes under
+`granoflow-agent-workflow/parallel-task-execution`:
+
+1. Load `parallel-batch-merge-review` and write
+   `temp/parallel-batch-<batch_id>-review-v<n>.md` (+ HTML links as notice).
+2. Auto-adopt only when lint is green, `pairwise_recheck: parallel_safe`, every
+   worker has Delivery readback evidence, and Host Concurrency Policy was
+   obeyed. Record `decision_authority: unattended_grant` /
+   `accepted_by: unattended_grant`. Never present this as user acceptance.
+3. On lint failure, write conflict, `host_isolation_unavailable`, or
+   `parallel_host_shared_write_forbidden`: **park that batch** (or the
+   conflicting workers) in `deferred_external_work` / Residual with resume
+   condition (serialize, isolate worktree, or replan). **Do not** freeze sibling
+   independent `parallel_safe` batches or later milestones.
+4. Single-writer merge + post-merge gates run only after auto-adopt
+   `status: accepted`.
+
+Same-tree `shared_write` fan-out remains forbidden even under unattended grant.
 
 ## Complete With Residuals
 
@@ -434,6 +570,9 @@ When no solvable ready work remains, set
   relative-only paths are not enough>
 - Plan Acceptance Link Digest: <clickable HTML/Markdown pack links authored this
   run; required when any Plan acceptance HTML was produced>
+- Parallel Batch Review Digest: <clickable HTML/Markdown
+  `temp/parallel-batch-*-review-v*.md` links; required when any concurrent batch
+  ran; note auto-adopted vs parked batches>
 - Acceptance layers (when any task/milestone closed this run):
   - Layer A 单任务完成: <per-task Delivery / acceptance_report refs>
   - Layer B 里程碑集成验收: <Suite Plan order / IT green|residual / matrix / Experience / 任务回顾>

@@ -118,18 +118,19 @@ emit the remaining-deliverables list from
 fills `execute_preflight_required` in Milestone Work by aggregating Analysis
 outputs.
 
-**Before entering Plan** for this milestone, load
-`granoflow-agent-workflow/project-lifecycle-progress-board` **Pipeline Order
-Gate**. If other feature milestones still have Analysis `not_started` and
-Project Work `pipeline_order.mode` is unset: interactive → ask
-「多里程碑时，先全部分析，还是做一个完整闭环再做下一个？」and write back
-`breadth_first` / `depth_first`; unattended → require pre-declared mode or fail
-closed `pipeline_order_unresolved`. Do not start Plan while blocked.
+Load `granoflow-agent-workflow/project-lifecycle-progress-board` **Schedule
+Policy**. Scheduling is derived from `interaction_mode` only—do **not** ask
+for `breadth_first` / `depth_first`. Interactive: finish per-task
+Analysis→Plan across milestones and accept packs before any Implement.
+Unattended (Scheme 1): per-milestone all Analysis→Plan → pack accept →
+Implement (including Layer B); when entering unattended, activate host
+Plan/planning mode if available and bind wake to Project E2E SoT.
 
 Then continue readiness, execution, Delivery, and local acceptance via
 the single-task Agent Workflow and
-`granoflow-agent-workflow/parallel-task-execution`, respecting the chosen
-`pipeline_order`.
+`granoflow-agent-workflow/parallel-task-execution`, respecting the active
+schedule (`interactive_all_ap_then_implement` vs
+`unattended_milestone_loop`).
 
 When execution may outlive one Agent turn, use
 `granoflow_persistent_milestone_runner_skill`. Before the first non-dry run,
@@ -140,8 +141,8 @@ Checkpoints:
 
 - UI-changing children: confirmed `ui_prototype` is an Analysis deliverable;
   refuse milestone Analysis-complete claims and Planning entry until present.
-- Plan entry requires resolved `pipeline_order` when peer Analysis is still
-  `not_started` (`pipeline_order_unresolved` otherwise).
+- Under interactive schedule, refuse Implement while any in-scope task lacks
+  confirmed Analysis+Plan (`implement_before_all_ap_forbidden`).
 - Before first non-dry run require complete `execute_preflight_required` and confirmed authorization manifest.
 
 ### 5. Reconcile And Replan

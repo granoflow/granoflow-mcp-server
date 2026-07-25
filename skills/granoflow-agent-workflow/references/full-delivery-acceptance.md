@@ -2,10 +2,21 @@
 
 User-facing **最终交付** for lifecycle stages **`integration_campaign` +
 `e2e_campaign`**, with a path that may skip the pre-E2E suite when the project
-has only one feature milestone. This is **not** a substitute for per-milestone
-Layer B (`milestone-integration-acceptance`).
+has only one feature milestone.
 
-**Milestone delivery** ends when Layer B (user-invisible milestone IT) is green.
+Layer B timing follows Schedule Policy derived from `interaction_mode` (see
+`project-lifecycle-progress-board`):
+
+- **unattended** (`unattended_milestone_loop`) — per-milestone Layer B runs in
+  stage `milestone_implement` via `milestone-integration-acceptance`.
+  Milestone delivery ends when that Layer B is green. Final delivery’s project
+  IT **does not** replace it.
+- **interactive** (`interactive_all_ap_then_implement`) — stage
+  `milestone_implement` is Layer A only (implement + unit tests). Deferred
+  milestone Layer B suites are orchestrated and executed inside stage
+  `integration_campaign` together with project-wide IT. Do **not** claim
+  milestone Layer B green mid-wave under this schedule.
+
 Milestone closeout **Must not** require user-visible E2E.
 
 Thread design lock (do not drop on polish):
@@ -54,10 +65,10 @@ user later requests it.
 Count **feature milestones in the Granoflow project** (via `milestone_list` /
 resolve)—not “milestones touched this session”.
 
-| `project_feature_milestone_count` | Pre-E2E path (`pre_e2e_path`)                                                                                                              | E2E                         |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
-| **1**                             | `e2e_direct` — **skip** portfolio full unit suite and stage `integration_campaign` (milestone Layer B already covered that milestone’s IT) | **Always full-project** E2E |
-| **≥ 2**                           | `full_unit_and_it` — full unit suite → orchestrate **all** user-invisible project IT → then E2E                                            | **Always full-project** E2E |
+| `project_feature_milestone_count` | Pre-E2E path (`pre_e2e_path`)                                                                                                                                                                                       | E2E                         |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **1**                             | `e2e_direct` — **skip** portfolio full unit suite and stage `integration_campaign` (unattended: milestone Layer B already covered that slice; interactive: single-milestone IT policy already satisfied before E2E) | **Always full-project** E2E |
+| **≥ 2**                           | `full_unit_and_it` — full unit suite → orchestrate **all** user-invisible IT (interactive: includes deferred Layer B suites + project IT; unattended: project IT after per-milestone Layer B) → then E2E            | **Always full-project** E2E |
 
 Fail closed:
 
@@ -90,7 +101,10 @@ Do **not** re-run portfolio unit + IT as a gate before E2E on this path.
    residual.
 2. **All user-invisible integration tests** — project-wide suite via
    `granoflow-integration-test-campaign` / stage `integration_campaign`
-   (`campaign_drive: agent_auto`). Does **not** replace per-milestone Layer B.
+   (`campaign_drive: agent_auto`). Under unattended schedule, this does **not**
+   replace per-milestone Layer B already run in stage 5. Under interactive
+   schedule, this stage **Must** include the deferred Layer B suites plus
+   project IT (orchestrate, then execute).
 3. **Full-project E2E** — `integration_gate: complete`, then
    `granoflow-e2e-test-campaign` / stage `e2e_campaign`. Close only when
    authored `e2e` Case IDs are `executed` in `plan_case_implementation`
@@ -122,6 +136,16 @@ session_delivery:
 
 User-facing labels: **完整交付 / 最终交付测试**. Stage ids stay
 `integration_campaign` + `e2e_campaign`.
+
+## Stage interaction (SoT black boxes)
+
+| Stage                  | Interactive                                                                                                                                                                                                                                                                                        | Unattended                                                    |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `integration_campaign` | **System accept** under `agent_auto`; emit Closing Summary; **do not** ask the user to approve IT results. IT = authored assets re-orchestrated as **unit-unreachable boundaries + minimal shared-session journeys**. SoT must record `cross_milestone_journey_check` ≠ `gap` before stage `done`. | Same                                                          |
+| `e2e_campaign` end     | Announce E2E complete; **ask** whether manual local testing is still needed; if yes, help local deploy.                                                                                                                                                                                            | Mark complete → enter `project_complete` (no manual-test ask) |
+| `project_complete`     | Congratulate; list remaining customer-handoff / publish steps as residuals (never fake store/GitHub publish).                                                                                                                                                                                      | Same                                                          |
+
+Update `temp/project-e2e-sot-v*.md` as these stages complete.
 
 ## Co-presentation
 
@@ -165,7 +189,11 @@ User-facing labels: **完整交付 / 最终交付测试**. Stage ids stay
 
 ## Must Not
 
-- Require E2E to accept a milestone (Layer B is enough).
+- Require E2E to accept a milestone (unattended: Layer B is enough;
+  interactive: do not claim milestone IT green until stage 6 has run the
+  deferred suites, except single-milestone `e2e_direct` path).
+- Under interactive schedule, run Layer B mid Implement wave or start
+  Implement before all in-scope tasks have confirmed Analysis+Plan.
 - Skip offering最终交付 solely because only one milestone finished today.
 - Use `e2e_direct` on multi-milestone projects.
 - Narrow E2E to “what we changed”.

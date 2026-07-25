@@ -1,13 +1,15 @@
 # Prototype Expression Brainstorm
 
 Apply this contract whenever the host authors an interactive **prototype option
-batch**—including Project Definition **Design Spec** and **App Shell** triads,
-and post-Baseline **task/milestone page expressions**. It forces an explicit
-**mainstream-reference-first** candidate set before HTML, and prevents splitting
-one product surface into incomplete options.
+batch**—including Project Definition **Design Spec** and **App Shell** triads—
+or collects mainstream references before a post-Baseline **task/milestone**
+serial HTML line. It forces an explicit **mainstream-reference-first**
+candidate set before HTML, and prevents splitting one product surface into
+incomplete options.
 
-For task option count, required layout families, and final multi-layout
-confirmation, also load `responsive-prototype-finalization`.
+For task **serial multi-draft** caps, selection surface, and revision ledger,
+load `prototype-serial-revision`. For required layout families and final
+multi-layout confirmation, also load `responsive-prototype-finalization`.
 
 ## Mandatory Load (fail closed if skipped)
 
@@ -33,20 +35,20 @@ reviewer-only candidate theses outside user-facing Preview Gate jargon.
 Do **not** collapse either Design Spec HTML round or Shell into task-level
 duals. Promote count is layer-specific:
 
-| Layer                                | When                                         | Candidate pool                        | Promote (interactive) | Option ids                                         |
-| ------------------------------------ | -------------------------------------------- | ------------------------------------- | --------------------- | -------------------------------------------------- |
-| **Design direction chooser**         | Project Definition Design Spec Round 1       | Product-fit candidates per dimension  | **4 per dimension**   | User-visible `1a`…`6d`; internal recipe ids hidden |
-| **Complete Design Spec**             | Project Definition Design Spec Round 2       | ≥5 (mainstream first; backfill if <5) | **3, justified 2**    | `spec_a`, `spec_b`, optional `spec_c`              |
-| **App Shell**                        | Project Definition Round B (after Spec lock) | ≥5 (mainstream first; backfill if <5) | **exactly 3**         | `shell_match`, chrome challenger a/b (deck labels) |
-| **Task / milestone page expression** | After Baseline lock                          | ≥5 (mainstream first; backfill if <5) | **2 or justified 3**  | `expr_a`, `expr_b`, optional `expr_c`              |
+| Layer                                | When                                         | Candidate pool                        | Promote (interactive) | Option ids                                                |
+| ------------------------------------ | -------------------------------------------- | ------------------------------------- | --------------------- | --------------------------------------------------------- |
+| **Design direction chooser**         | Project Definition Design Spec Round 1       | Product-fit candidates per dimension  | **4 per dimension**   | User-visible `1a`…`6d`; internal recipe ids hidden        |
+| **Complete Design Spec**             | Project Definition Design Spec Round 2       | ≥5 (mainstream first; backfill if <5) | **3, justified 2**    | `spec_a`, `spec_b`, optional `spec_c`                     |
+| **App Shell**                        | Project Definition Round B (after Spec lock) | ≥5 (mainstream first; backfill if <5) | **exactly 3**         | `shell_match`, chrome challenger a/b (deck labels)        |
+| **Task / milestone page expression** | After Baseline lock                          | ≥5 (mainstream first; backfill if <5) | **exactly 1**         | `expr_a` (serial thesis; multi-draft via revision ledger) |
 
 **Unattended (explicit only):** candidate protocol still runs; promote **one**
 faithful option (`spec_match` / `shell_match` / `expr_a`) per that round’s Mode
-split.
+split. Task layer promote is **always 1** (interactive and unattended).
 
 Fail closed `prototype_option_promote_count_mismatch` when the gallery offers
 the wrong count for the layer (e.g. Spec offered as AB-only, or task page
-expressions offered as a Design Spec triad).
+expressions offered as a dual pick / Design Spec triad).
 
 ## Functional Parity (hard)
 
@@ -186,19 +188,18 @@ fail closed `prototype_option_brainstorm_incomplete`. Missing
 2. AI judges fit to locked product truth / Baseline / Spec / Shell / Scope and
    promotes the best candidates to the layer count. Complete Spec defaults to
    three and may use two only with `insufficient_distinct_third`; Shell uses
-   three. Task pages default to two and may use three only with a permitted
-   `option_count_reason_code`; state `selection_rationale` and why each wins on
-   allowed contrast axes.
+   three. Task pages promote **exactly one** serial thesis (`expr_a`); further
+   HTML quality loops use `prototype-serial-revision` (not a second promote).
+   State `selection_rationale` for why that thesis wins among the pool.
 3. **Design Spec / Shell:** Design Spec draws one true-random master lot and
    derives stable candidate seeds from product fit + selection code; Shell
    still draws three chrome cards with
    `draw_visual_lots.py --kind shell --count 3 --record`. Mainstream analysis
    does **not** replace true-random lot draw.
 4. **Unattended:** run the same candidate protocol, then promote exactly **one**
-   faithful option.
-5. Conditional task `industry_peer_c` remains only for documented Craft Gate
-   deadlock (three live peers hard to separate for human review)—not the normal
-   path to introduce mainstream references.
+   faithful option (Spec/Shell/task).
+5. Task pages do **not** promote a parallel `expr_b` / `industry_peer_c` batch.
+   Serial HTML revision is owned by `prototype-serial-revision`.
 
 Do **not** author option HTML until the candidate record exists and
 `expression_brainstorm_ok` (or Project Work equivalent checklist field) can be
@@ -228,7 +229,7 @@ prototype_option_set:
     brainstorm_backfill: [] # only when len(mainstream_references) < 5
     brainstorm_backfill_reason: null # required when backfill non-empty
     candidate_count: 6 # mainstream + backfill; band 5–8 default
-    promote_count: 2 # 3 for Spec/Shell; task uses 2 or justified 3
+    promote_count: 1 # Spec/Shell use 3; task serial line uses 1
     candidates: # unified view (mainstream + backfill); ids may mirror r*/b*
       - id: c1
         source: mainstream # mainstream | brainstorm_backfill
@@ -244,9 +245,8 @@ prototype_option_set:
         promote_as: expr_a # Spec/Shell: spec_match | ai_challenger_a | …
     selected:
       expr_a: c2
-      expr_b: c5
       # Spec example: spec_match / ai_challenger_a / ai_challenger_b
-    selection_rationale: "<why these 2–3 fit this product best>"
+    selection_rationale: "<why this thesis fits the product best>"
     parity_check:
       same_capabilities: true
       same_data_fields: true # N/A for pure Style Guide boards → true if token roles complete on all
@@ -289,7 +289,7 @@ Require `ok: true`. Lint failure keeps craft / Spec / Shell gates incomplete.
 | `prototype_option_scope_mode_invalid`         | Missing / illegal `scope_mode`                                                    |
 | `prototype_option_mainstream_skip`            | `mainstream_count ≥ 5` but non-empty `brainstorm_backfill`                        |
 | `prototype_option_backfill_unjustified`       | Backfill used without `brainstorm_backfill_reason`                                |
-| `prototype_option_promote_count_mismatch`     | Promoted/offered count ≠ layer require (Spec/Shell=3, task page=2)                |
+| `prototype_option_promote_count_mismatch`     | Promoted/offered count ≠ layer require (Spec/Shell=3, task page=1)                |
 | `prototype_option_function_split`             | Promoted options differ in capabilities/Musts                                     |
 | `prototype_option_data_divergence`            | Promoted options show different domain data without shared scenario controls      |
 | `prototype_option_brainstorm_digest_required` | Interactive gallery/triad missing candidate digest                                |
@@ -307,15 +307,13 @@ batches are malformed).
 - **Baseline fit** (`prototype-baseline-fit`) still applies to every
   post-Baseline task candidate: presentation variety **inside** locked Spec
   tokens + Shell chrome language—never “escape Spec” mocks.
-- **Craft Gate / Contrast Gallery** still apply to task page expressions.
+- **Craft Gate / serial revision** (`prototype-serial-revision`) apply to task
+  page HTML drafts. Spec/Shell still use Contrast Gallery / triad wait.
 - **Product truth** still applies: candidates cannot invent unauthorized
   capabilities to pad count.
 - **User-visible copy boundary** still applies for product UI frames.
-- **Mix-and-match** (task pages only): each page runs its own candidate
-  protocol → promote-2 pair; Spec/Shell are project-level locks, not
-  mix-and-match.
-- **`industry_peer_c`:** optional deadlock exception only; mainstream references
-  are already the default candidate source.
+- **Task pages:** each page runs its own candidate protocol → promote-1 serial
+  thesis, then multi-draft revision; Spec/Shell are project-level locks.
 
 ## Admission Test (host self-check)
 
@@ -324,7 +322,7 @@ Before wait-for-confirm, answer yes to all:
 1. Did we choose `scope_mode` (or default `capability_match` when unsure)?
 2. Did we list mainstream references first, and brainstorm only if `<5`?
 3. Is the combined pool ≥5 full-scope candidates for **this** layer?
-4. Did we promote the **correct count** (Spec/Shell=3, task page=2)?
+4. Did we promote the **correct count** (Spec/Shell=3, task page=1)?
 5. Do all promoted options expose the same Musts/actions and the same data
    fields (or complete token roles for Spec boards)?
 6. Are empty/error/disabled states shown per option (or via shared scenario

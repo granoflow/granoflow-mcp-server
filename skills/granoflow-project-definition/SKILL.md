@@ -412,6 +412,12 @@ Emit the Project Lifecycle Progress Board
 `project_init=done` and next action = create milestone portfolio. Interactive
 mode keeps confirmation for the next gate; unattended is display-only.
 
+**Project E2E SoT:** After `project_init` is done, create
+`temp/project-e2e-sot-v1.md` from
+`granoflow-agent-workflow/project-e2e-sot-template` (see
+`project-e2e-sot.md`). Skeleton only—expand task 3.1/3.2 rows after portfolio
+ready. Lint with `lint_project_e2e_sot.py` when present.
+
 Emit a short **handoff card** naming `granoflow-portfolio-orchestrator` as the
 primary next owner. Component Skills: `granoflow-milestone-workflow`,
 `granoflow-task-authoring`, then `granoflow-milestone-coordination` /
@@ -472,16 +478,14 @@ milestone/task tree, run task Analysis/Plan Grill, or implement product code.
    baseline, `skill_routing`, and `widgets.yaml`. Task/milestone prototypes Must
    `derivedFrom` the exact baseline package SHA, **must not** re-roll random
    visual seeds, reuse catalog widgets when the same role exists, pass **Task
-   Prototype Craft Gate And Option Set** (interactive: mainstream-reference-
-   first candidates ≥5, brainstorm backfill only when mainstream `<5`, then
-   AI-selected two or three **page expressions** with functional parity inside
-   locked Design System **and confirmed sibling chrome vocabulary when
-   applicable**, **side-by-side Contrast Gallery** + Baseline-fit /
-   chrome-lock / candidate digests, mix-and-match per task/page, conditional
-   industry third; unattended same protocol then one `expr_a`; never reopen
-   Design Spec as task options; never feature-split A/B; never invent a
-   parallel chrome dialect after siblings are confirmed), and accept against
-   contract fidelity.
+   Prototype Craft Gate And Option Set** (mainstream-reference-first candidates
+   ≥5, brainstorm backfill only when mainstream `<5`, promote **one** serial
+   `expr_a` thesis inside locked Design System **and confirmed sibling chrome
+   vocabulary when applicable**, then `prototype-serial-revision` multi-draft
+   up to 5 with review-only gstack/grill self-QA; interactive last ≤3 drafts +
+   推荐, single draft confirm_or_revise; unattended auto-adopt final green;
+   never reopen Design Spec as task options; never invent a parallel chrome
+   dialect after siblings are confirmed), and accept against contract fidelity.
    Checkpoints:
    - Task prototypes `derivedFrom` exact baseline SHA; no task-level re-roll.
    - Hand off to portfolio orchestrator; do not create full milestone tree here.
@@ -499,15 +503,13 @@ Hard constraints (non-exhaustive; full list in
 - From Shell onward, design style converges (`shell_spec_mismatch`).
 - `widgets.yaml` after Baseline confirm when visual baseline required; task
   reuse + no task random seed.
-- Task interactive: **strict Baseline fit** (locked Spec tokens + Shell chrome
-  language) + **confirmed chrome lock** when chrome-family siblings are already
-  `visualConfirmed` + mainstream-first candidates → dual page expressions
-  (`expr_a`/`expr_b`) with functional parity + Craft Gate + **Contrast
-  Gallery** (Baseline-fit + chrome-lock + candidate digests + visible-diff
-  captions); mix-and-match per task/page; unattended same protocol → single
-  `expr_a`; never reopen Design Spec at task level; never feature-split A/B;
-  never ship generic parallel phone frames; never invent a parallel chrome
-  dialect after siblings are confirmed.
+- Task UI: **strict Baseline fit** (locked Spec tokens + Shell chrome language)
+  - **confirmed chrome lock** when chrome-family siblings are already
+    `visualConfirmed` + mainstream-first candidates → one serial `expr_a` +
+    Craft Gate + **serial revision ledger** (max 5 drafts; interactive last ≤3 /
+    single-draft confirm_or_revise; unattended auto-adopt); never reopen Design
+    Spec at task level; never ship generic parallel phone frames; never invent a
+    parallel chrome dialect after siblings are confirmed.
 - Never auto-accept Baseline+Shell in interactive mode.
 
 ## Automation Boundary

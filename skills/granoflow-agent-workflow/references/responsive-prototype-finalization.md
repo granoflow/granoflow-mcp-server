@@ -97,22 +97,15 @@ They also inherit the passed Logic Draft and accepted Screen Content Contract
 digests. User feedback that changes content or behavior must update those
 contracts before regenerating HTML.
 
-Before HTML, use the existing mainstream-first candidate protocol. Default to
-two complete, functionally equivalent page expressions. Three are allowed only
-when all three are materially distinct, feasible, parity-safe local
-expressions and `option_count_reason_code` is one of:
+Before HTML, use the mainstream-first candidate protocol and promote **one**
+serial thesis (`expr_a`). Refine that thesis via
+`prototype-serial-revision` (max 5 drafts; interactive last ≤3 on the
+selection surface). The serial line keeps one capabilities/data/state set and
+the locked design system across drafts.
 
-- `three_viable_patterns`
-- `cross_form_factor_tradeoff`
-- `high_risk_interaction_choice`
-
-Every option has the same capabilities, data fields, required states, product
-behavior, and locked design system. Options differ only on declared legal
-presentation axes.
-
-Show options in `primary_layout_family`. After selecting one, expand that
-option to all required layout families. Do not present portrait and landscape
-as different products or different feature sets.
+Show the current draft in `primary_layout_family`. After accepting one draft,
+expand that package to all required layout families. Do not present portrait
+and landscape as different products or different feature sets.
 
 ## Final Prototype Bundle
 

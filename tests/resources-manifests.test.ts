@@ -152,6 +152,64 @@ describe("resources-manifests", () => {
   });
 });
 
+describe("resources-manifests parallel batch merge-review", () => {
+  it("publishes parallel batch merge-review contracts", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-agent-workflow");
+
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "parallel-batch-merge-review",
+      path: "skills/granoflow-agent-workflow/references/parallel-batch-merge-review.md",
+    });
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "parallel-batch-merge-review-template",
+      path: "skills/granoflow-agent-workflow/references/parallel-batch-merge-review-template.md",
+    });
+    const pack = await resources.readReference(
+      "granoflow-agent-workflow",
+      "parallel-batch-merge-review",
+    );
+    expect(pack.content.length).toBeGreaterThan(0);
+    expect(pack.content.startsWith("---")).toBe(false);
+  });
+});
+
+describe("resources-manifests prototype stack gates", () => {
+  it("publishes the prototype serial revision contract", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-agent-workflow");
+
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "prototype-serial-revision",
+      path: "skills/granoflow-agent-workflow/references/prototype-serial-revision.md",
+    });
+    await expect(
+      resources.readReference("granoflow-agent-workflow", "prototype-serial-revision"),
+    ).resolves.toMatchObject({
+      content: expect.stringContaining("Prototype Serial Revision"),
+    });
+  });
+
+  it("publishes the stack realization notes contract", async () => {
+    const resources = createBundledSkillResources(new URL("../", import.meta.url));
+    const manifest = await resources.listReferences("granoflow-agent-workflow");
+
+    expect(manifest).toContainEqual({
+      skillId: "granoflow-agent-workflow",
+      referenceId: "stack-realization-notes",
+      path: "skills/granoflow-agent-workflow/references/stack-realization-notes.md",
+    });
+    await expect(
+      resources.readReference("granoflow-agent-workflow", "stack-realization-notes"),
+    ).resolves.toMatchObject({
+      content: expect.stringContaining("Stack Realization Notes"),
+    });
+  });
+});
+
 describe("resources-manifests agent-workflow extras", () => {
   it("publishes the engineering acceptance pack contracts", async () => {
     const resources = createBundledSkillResources(new URL("../", import.meta.url));

@@ -1,33 +1,14 @@
 # Durable Run Plan Template
 
-Copy to `temp/run-plan-<scope>-v<n>.md`. Host-agnostic; do not require any
-vendor “Plan mode” name. See `long-task-run-continuity.md`.
+**Superseded for project-bound long / unattended runs.**
 
-```yaml
----
-doc_type: durable_run_plan
-scope: M1
-project_id: ""
-status: active
-interaction_mode: interactive
-collaborative_planning_surface: unknown
-acceptance_pack_path: ""
-updated_at: ""
----
+Use [`project-e2e-sot-template.md`](project-e2e-sot-template.md) and copy to:
+
+```text
+temp/project-e2e-sot-v<n>.md
 ```
 
-# Run plan — `<scope>`
+Owner: `project-e2e-sot.md`. Continuity mechanics: `long-task-run-continuity.md`.
 
-## Goal
-
-## Stages
-
-| ID  | Stage | Status  | Notes |
-| --- | ----- | ------- | ----- |
-| 1   |       | pending |       |
-
-## Next step
-
-## Evidence
-
-## Pause / stop
+Do not create a parallel `temp/run-plan-*.md` for the same project orchestration
+scope — that splits the source of truth.

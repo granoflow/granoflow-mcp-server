@@ -247,32 +247,26 @@ status: pending | passed
 
 # (expr_a + expr_b) with functional parity inside locked Design System;
 
-# mix-and-match per task/page; optional third only for documented
+# Serial multi-draft (prototype-serial-revision): promote one expr_a thesis,
 
-# industry-peer deadlock. Unattended: same protocol then single expr_a.
+# then revise up to 5 drafts. Never reopen Design Spec as task option ids.
 
-# Never reopen Design Spec (delta_match / ai_challenger / spec_match) as task
-
-# option ids after Baseline lock.
-
-# Craft Gate must pass before visualConfirmed. See project-artifact-workflows
-
-# "Task Prototype Craft Gate And Option Set" and
-
-# prototype-expression-brainstorm.md. Lint:
+# Craft Gate + green revision ledger before visualConfirmed. Lint:
 
 # scripts/lint_prototype_expression_brainstorm.py
 
+# scripts/lint_prototype_revision_ledger.py
+
 prototype_option_set:
 mode: interactive_adaptive | unattended_single
-option_count_decision: two | three
-option_count_reason_code: null # three_viable_patterns | cross_form_factor_tradeoff | high_risk_interaction_choice
-design_system_locked: null # confirmed Spec/Baseline option id (required when dual)
-expression_brainstorm: null # { status, layer, source_strategy: mainstream_first, scope_mode: same_category|capability_match, scope_mode_rationale, mainstream_references[], brainstorm_backfill[], brainstorm_backfill_reason, candidate_count, promote_count, candidates[], selected, selection_rationale, parity_check, loaded_reference_sha256 }
-options: [] # [{ id: expr_a|expr_b|industry_peer_c, contrast_axes: [], rationale: null|string }]
-contrast_axes: [] # ≥2 from whitelist when interactive dual/triple
-third_option_rationale: null # required when industry_peer_c present
-selected_option_id: null # per-task; milestones may mix picks across tasks
+option_count_decision: one # serial thesis; dual/triple retired for task pages
+option_count_reason_code: null
+design_system_locked: null # confirmed Spec/Baseline option id (required)
+expression_brainstorm: null # { status, layer, source_strategy: mainstream_first, scope_mode: same_category|capability_match, scope_mode_rationale, mainstream_references[], brainstorm_backfill[], brainstorm_backfill_reason, candidate_count, promote_count: 1, candidates[], selected: { expr_a }, selection_rationale, parity_check, loaded_reference_sha256 }
+options: [] # [{ id: expr_a, contrast_axes: [], rationale: null|string }]
+contrast_axes: [] # optional thesis notes; not a dual-pick requirement
+third_option_rationale: null # unused on serial path
+selected_option_id: expr_a
 craft_checklist:
 intent_recorded: false
 fidelity_ok: false
@@ -281,11 +275,38 @@ required_states_covered: false
 enhancement_notes_ok: false
 task_ui_skill_pipeline_ok: false
 component_effect_matrix_ok: false
+stack_realization_notes_ok: false # must be true before visualConfirmed; lint_stack_realization_notes.py + stack-realization-notes.md
 user_visible_copy_boundary_ok: false # must be true before visualConfirmed; see user-visible-copy-boundary.md
-expression_brainstorm_ok: false # must be true before dual visualConfirmed; lint_prototype_expression_brainstorm.py + prototype-expression-brainstorm.md
+expression_brainstorm_ok: false # must be true before visualConfirmed; lint_prototype_expression_brainstorm.py + prototype-expression-brainstorm.md
+serial_revision_ok: false # must be true before visualConfirmed; lint_prototype_revision_ledger.py + prototype-serial-revision.md
 baseline_fit_ok: false # must be true before visualConfirmed; see prototype-baseline-fit.md
 confirmed_chrome_lock_ok: false # true|not_applicable; see prototype-confirmed-chrome-lock.md when siblings are visualConfirmed
 craft_status: incomplete | ready # incomplete => task_prototype_craft_incomplete
+
+# Stack deliverable map (outside product UI). See stack-realization-notes.md.
+
+stack_realization_notes:
+schema: granoflow_stack_realization_notes_v1
+contract_loaded: false
+stack_id: null
+platform_matrix_sha256: null
+component_effect_matrix_sha256: null
+rows: [] # [{ role, candidate_id, html_surface, stack_realization, disposition, fallback_or_schematic_note }]
+notes_sha256: null
+
+prototype_revision_ledger:
+schema: granoflow_prototype_revision_ledger_v1
+contract_loaded: false
+mode: interactive # interactive | unattended
+status: in_progress # in_progress | ready_for_selection | accepted | blocked
+drafts: [] # [{ ordinal, html_paths, package_sha256, component_effect_matrix_sha256, stack_realization_notes_sha256, pre_review, post_review, blocking_in, blocking_out }]
+stop_reason: null # zero_blocking | max_drafts
+selection_surface:
+draft_ordinals: [] # last min(n, 3)
+selection_mode: confirm_or_revise # confirm_or_revise | pick_among | auto_adopt
+recommended_ordinal: null
+accepted_ordinal: null
+accepted_package_sha256: null
 
 responsive_prototype_bundle:
 schema: granoflow_responsive_prototype_bundle_v2
@@ -550,33 +571,58 @@ analysis_status: draft | awaiting_confirmation | confirmed
 # Fail closed: prototype_link_* / analysis_deliverables_incomplete.
 
 # prototype_link_ledger:
-#   schema: granoflow_prototype_link_ledger_v1
-#   contract_loaded: true
-#   status: complete
-#   chat_digest_emitted: true
-#   markdown_digest: |
-#     ## Prototype Link Digest
-#     - [title](file:///abs/path.html)
-#   entries:
-#     - title: <plain>
-#       absolute_path: /abs/path.html
-#       file_url: file:///abs/path.html
-#       entity: task:<id>
-#       sha_or_pending: pending
+
+# schema: granoflow_prototype_link_ledger_v1
+
+# contract_loaded: true
+
+# status: complete
+
+# chat_digest_emitted: true
+
+# markdown_digest: |
+
+# ## Prototype Link Digest
+
+# - [title](file:///abs/path.html)
+
+# entries:
+
+# - title: <plain>
+
+# absolute_path: /abs/path.html
+
+# file_url: file:///abs/path.html
+
+# entity: task:<id>
+
+# sha_or_pending: pending
 
 # Plan Entry Prototype Acceptance Gate (before Planning / soft-merge into Plan).
+
 # Non-UI: prototype_requirement not_required → status not_applicable.
+
 # UI: auditable digest first, then acceptance_source verbal |
+
 # app_visual_confirmed | unattended_auto_accept.
+
 # Lint: scripts/lint_plan_entry_prototype_acceptance.py
+
 # Fail: plan_entry_prototype_acceptance_required |
+
 # plan_entry_prototype_unconfirmed.
+
 # prototype_plan_entry_acceptance:
-#   schema: granoflow_prototype_plan_entry_acceptance_v1
-#   contract_loaded: true
-#   prototype_requirement: required
-#   status: accepted
-#   acceptance_source: verbal
+
+# schema: granoflow_prototype_plan_entry_acceptance_v1
+
+# contract_loaded: true
+
+# prototype_requirement: required
+
+# status: accepted
+
+# acceptance_source: verbal
 
 analysis_grill_status: not_run | passed | revisions_required | blocked
 decision: proceed | needs_input | user_action | split | redefine | defer | abandon | completion_audit
@@ -589,32 +635,56 @@ planning_status: not_assessed | not_required | draft | awaiting_confirmation | c
 plan_design_gate_status: not_applicable | pending | passed
 plan_design_diagrams: []
 data_disposition: not_applicable | unchanged | extend | breaking
+
 # UI software: Must load readable Analysis Technical Package by SHA before Plan
+
 # Gate passed. Do not re-derive logic from HTML alone.
+
 # analysis_technical_package_sha256: <64 lowercase hex>
+
 # Verification Kind values: unit | integration | e2e | widget | manual
+
 # (integration/e2e = Markdown drafts only in Plan; execute in campaigns).
+
 # Unit hard policy: asserts=behavior + operation_id per action; NEVER
+
 # asserts=copy_presence / find.text unit checks. Lint:
+
 # scripts/lint_plan_unit_policy.py --cases … --operations …
+
 # Living milestone pack: refresh draft + HTML links + prototype_alignment
+
 # when this task's Plan Gate content changes (see milestone-plan-acceptance-pack).
 
 # Plan case implementation (Layer A Delivery hard gate): every Plan Case ID
+
 # must be bound—unit/widget implemented with on-disk test_ref mentioning Case
+
 # ID; integration/e2e scheduled_campaign until Layer B / e2e_campaign.
+
 # Lint: scripts/lint_plan_case_implementation.py --gate layer_a --workspace …
+
 # plan_case_implementation:
-#   schema: granoflow_plan_case_implementation_v1
-#   contract_loaded: true
-#   status: complete
-#   cases:
-#     - case_id: U1
-#       lane: unit
-#       status: implemented
-#       test_ref: test/foo_test.dart
-#       evidence: "flutter test … # U1"
-#       campaign_ref: null
+
+# schema: granoflow_plan_case_implementation_v1
+
+# contract_loaded: true
+
+# status: complete
+
+# cases:
+
+# - case_id: U1
+
+# lane: unit
+
+# status: implemented
+
+# test_ref: test/foo_test.dart
+
+# evidence: "flutter test … # U1"
+
+# campaign_ref: null
 
 # When Plan invents/changes user-visible copy (see milestone-plan-acceptance-pack):
 

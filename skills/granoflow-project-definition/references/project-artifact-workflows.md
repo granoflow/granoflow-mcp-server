@@ -226,28 +226,24 @@ set:
 5. After the user picks one, further single-screen refinements of that winner
    again follow the per-prototype rules above.
 
-**Task / milestone `ui_prototype` — interactive dual (default) / conditional
-third**
+**Task / milestone `ui_prototype` — serial multi-draft (default)**
 
-See **Task Prototype Craft Gate And Option Set** below. Default batch size is
-**two**; a **third** option is allowed only under the industry-peer exception.
+See **Task Prototype Craft Gate And Option Set** below and
+`granoflow-agent-workflow/prototype-serial-revision`. Default is **one serial
+thesis** (`expr_a`) refined across up to **5** drafts—not a parallel dual pick.
 
-**Contrast Gallery (hard, interactive option batches):** do **not** present only
-separate option links. Emit one clickable **side-by-side contrast gallery**
-page that shows every option in one viewport (or one scrollable section per
-task), with:
+**Contrast Gallery:**
 
-1. Plain-language option labels;
-2. Per declared contrast axis, one short **visible-diff caption** that names
-   what the user should see differ (not only intent prose);
-3. Embedded previews (iframe or equivalent) so options can be compared without
-   opening many tabs.
-
-Prefer `scripts/build_option_contrast_gallery.py` (or an equivalent host
-gallery). Missing gallery → `prototype_option_contrast_gallery_required`.
-Missing per-axis visible-diff captions → `prototype_option_diff_unlabeled`.
-Then **one wait**. Unattended mode **does not** use Spec/Shell triads or task
-dual/triple batches (and therefore does not require a contrast gallery).
+- **Spec/Shell interactive triads (hard):** do **not** present only separate
+  option links. Emit one clickable **side-by-side contrast gallery** with
+  plain-language labels, per-axis visible-diff captions, and embedded previews.
+  Prefer `scripts/build_option_contrast_gallery.py`. Missing gallery →
+  `prototype_option_contrast_gallery_required`. Missing captions →
+  `prototype_option_diff_unlabeled`. Then **one wait**.
+- **Task serial drafts:** when ≥2 drafts exist, emit a history gallery of the
+  **last ≤3** drafts with a clear **推荐** marker; single draft needs no pick
+  gallery (`confirm_or_revise`). Unattended task path does not wait on a
+  gallery.
 
 ## UI Prototype (Task / Milestone Slot)
 
@@ -271,15 +267,19 @@ soon as UI change is detected—not only when the user asks.
 5. Build and lint `ui_component_effect_matrix_v1`, then discover and lint the
    host-owned `task_ui_skill_pipeline_v1`. Do not author HTML while either
    record is pending, unsafe, stale, or missing evidence.
-6. Author options under **Task Prototype Craft Gate And Option Set** (below).
-7. Apply the **Prototype Preview Gate** for the option batch (interactive: all
-   links + one wait; unattended: single option notice + ledger).
-8. Visual confirmation (interactive user accept of the chosen option, or
-   unattended auto-accept when explicitly authorized) authorizes only packaging
-   that exact source hash. It is not implementation acceptance or execution
-   authorization. Craft Gate must pass before `visualConfirmed=true`—else
-   `task_prototype_craft_incomplete`. After confirmation, complete the Widget
-   Promotion Ledger, extract new/changed reusable widgets into the same project
+6. Author the serial line under **Task Prototype Craft Gate And Option Set**
+   (below) and `prototype-serial-revision` (pre-review → draft → post-review →
+   revise, max 5).
+7. Apply the **Prototype Preview Gate** for the selection surface (interactive:
+   last ≤3 draft links + recommend marker + one wait, or single-draft
+   confirm/revise; unattended: final-green notice + ledger).
+8. Visual confirmation (interactive user accept of the chosen/confirmed draft,
+   or unattended auto-accept when explicitly authorized) authorizes only
+   packaging that exact source hash. It is not implementation acceptance or
+   execution authorization. Craft Gate + green revision ledger must pass before
+   `visualConfirmed=true`—else `task_prototype_craft_incomplete` /
+   `prototype_revision_*`. After confirmation, complete the Widget Promotion
+   Ledger, extract new/changed reusable widgets into the same project
    `widgets` slot, and require App SHA readback before Analysis closes.
 9. Build a deterministic ZIP: root `index.html`, relative paths only, sorted
    entries, normalized timestamps, no symlinks, no path traversal, and all
@@ -305,34 +305,36 @@ alone are not enough.
 
 **Two layers (do not conflate):**
 
-| Layer                     | When                       | Brainstorm → promote | What the batch chooses                                                               |
-| ------------------------- | -------------------------- | -------------------- | ------------------------------------------------------------------------------------ |
-| **Design Spec triad**     | Project definition Round A | 6 → **3**            | Design System / Style Guide (`spec_match` + `ai_challenger_*`)                       |
-| **App Shell triad**       | Project definition Round B | 6 → **3**            | Chrome / nav fitted to selected Spec (`shell_match` + challengers)                   |
-| **Task page expressions** | After Baseline locked      | 6 → **2**            | Per-task / per-page layout & interaction detail **within** that locked Design System |
+| Layer                     | When                       | Brainstorm → promote | What is chosen                                                                        |
+| ------------------------- | -------------------------- | -------------------- | ------------------------------------------------------------------------------------- |
+| **Design Spec triad**     | Project definition Round A | 6 → **3**            | Design System / Style Guide (`spec_match` + `ai_challenger_*`)                        |
+| **App Shell triad**       | Project definition Round B | 6 → **3**            | Chrome / nav fitted to selected Spec (`shell_match` + challengers)                    |
+| **Task page serial line** | After Baseline locked      | 6 → **1**            | One presentation thesis, then serial multi-draft revision inside locked Design System |
 
-Task-level dual options are **not** a second Design Spec vote, and Spec/Shell
-remain **triads of three**—never collapse them to task AB. After the user locks
-Spec/Shell/Baseline, re-labeling task options as `delta_match` vs
+Task-level work is **not** a second Design Spec vote, and Spec/Shell remain
+**triads of three**—never collapse them to task AB. After the user locks
+Spec/Shell/Baseline, re-labeling task drafts as `delta_match` vs
 `ai_challenger` (or any design-system reopen) fails closed
 `prototype_option_design_system_reopened`. Offering Spec/Shell as dual-only
-fails closed `prototype_option_promote_count_mismatch`.
+fails closed `prototype_option_promote_count_mismatch`. Offering a default task
+dual pick instead of serial revision fails closed
+`prototype_option_promote_count_mismatch` /
+`prototype_revision_ledger_required`.
 
-**Why side-by-side still matters:** page-expression galleries exist to force
-visible, page-local choices and to surface agent misunderstandings of product
-behavior early. Exposing those errors is a successful gate—not a reason to
-collapse back to a single frame or to reopen the Design System.
+**Why serial revision matters:** pre/post review loops catch craft and product
+errors before the user is asked to confirm; history galleries (last ≤3 drafts)
+surface misunderstandings without forcing a hasty 2-pick.
 
 #### Craft Gate (fail closed before `visualConfirmed=true`)
 
-Every option in the batch Must pass all of:
+Every draft on the serial line Must pass all of:
 
 1. **Intent:** state the authorized UI delta (what changes / what must not
    change vs Baseline). Whole-page redesign only when Scope explicitly
    authorizes it.
 2. **Fidelity / Baseline fit (hard):** `derivedFrom` exact Baseline; no random
-   visual seed; reuse `widgets.yaml` for the same role; **both** options share
-   the locked Design System (`design_system_locked`). Load
+   visual seed; reuse `widgets.yaml` for the same role; the serial line stays
+   inside the locked Design System (`design_system_locked`). Load
    `granoflow-agent-workflow/prototype-baseline-fit` via
    `granoflow_bundled_skill_reference`. Embed/link locked Spec tokens with
    `data-baseline-tokens="locked"`; match Shell chrome language (immersive
@@ -349,8 +351,8 @@ Every option in the batch Must pass all of:
    `granoflow-agent-workflow/prototype-confirmed-chrome-lock`, record
    `chrome_lock.authorities` (exact package SHAs), and **reuse that confirmed
    control vocabulary** (title-ico / tbtn / chip selected tint / pref-ico)—do
-   not invent a parallel dialect that only shares Baseline tokens. A/B May
-   change layout only. Run
+   not invent a parallel dialect that only shares Baseline tokens. Serial
+   drafts May change layout only. Run
    `lint_prototype_confirmed_chrome_lock.py --authority …`. Set
    `craft_checklist.confirmed_chrome_lock_ok: true` only when load + lint
    pass (or `chrome_lock.status: not_applicable` when no sibling is confirmed
@@ -370,7 +372,7 @@ Every option in the batch Must pass all of:
    Keep design rationale / filtering policy / reviewer pedagogy **outside**
    the simulated product UI. Run
    `granoflow-agent-workflow/scripts/lint_prototype_user_copy.py` on each
-   option HTML and require `ok: true`. Record
+   draft HTML and require `ok: true`. Record
    `craft_checklist.user_visible_copy_boundary_ok: true` only after both the
    load and lint succeed. Fail closed
    `user_visible_copy_boundary_unread` /
@@ -379,34 +381,59 @@ Every option in the batch Must pass all of:
 6. **Capability and feasibility evidence:** require passed
    `task_ui_skill_pipeline_v1` and `ui_component_effect_matrix_v1`, bound to
    the current Baseline, Widget Catalog, platform matrix, stack capability,
-   approved dependencies, and option HTML inputs. Fail closed on missing
-   capability, unsafe invocation, incompatible selection, unjustified
-   high-cost effects, missing fallback, ranking drift, or Widget reuse bypass.
-7. **Expression candidates (hard for interactive dual/triple):** load
+   approved dependencies, and draft HTML inputs. HTML Must stay inside the
+   matrix deliverable surface (no default Web-only / `forbidden` showcase).
+   Fail closed on missing capability, unsafe invocation, incompatible
+   selection, unjustified high-cost effects, missing fallback, ranking drift,
+   or Widget reuse bypass.
+   6b. **Stack realization notes (hard):** load
+   `granoflow-agent-workflow/stack-realization-notes`. For every matrix
+   **selected** role, record `html_surface` → `stack_realization` with
+   disposition `native_supported` | `adapted_fallback` |
+   `enhancement_schematic` | `user_accepted_degrade` (notes outside product
+   UI). Lint `lint_stack_realization_notes.py` (prefer `--matrix`). Set
+   `craft_checklist.stack_realization_notes_ok: true` only when lint ok.
+   Fail closed `stack_realization_notes_*`.
+7. **Expression candidates → serial thesis (hard):** load
    `prototype-expression-brainstorm`, run mainstream-reference-first (≥5;
-   backfill only when mainstream `<5`), promote parity-safe A/B, lint with
-   `lint_prototype_expression_brainstorm.py`, set
-   `expression_brainstorm_ok: true`. Every candidate Must assume Baseline fit
-   (no “escape Spec” options). Fail closed `prototype_option_brainstorm_*` /
-   `prototype_option_mainstream_skip` / `prototype_option_scope_mode_invalid` /
-   `prototype_option_function_split` / `prototype_option_data_divergence`.
-8. **Confirm surface:** interactive shows Baseline-fit digest (Spec id + Shell
-   chrome variant + sha short) + **confirmed-chrome-lock digest** (family id +
-   authority SHA shorts + vocabulary) when applicable + candidate digest +
-   craft checklist + **per-page/per-task** Contrast Gallery before wait;
-   unattended records the same checklist into the run digest for the single
-   option. Do **not** ask for `visualConfirmed` while `baseline_fit_ok`,
+   backfill only when mainstream `<5`), promote **exactly one** `expr_a`
+   thesis, lint with `lint_prototype_expression_brainstorm.py`, set
+   `expression_brainstorm_ok: true`. Every pool candidate Must assume Baseline
+   fit (no “escape Spec” options). Fail closed `prototype_option_brainstorm_*`
+   / `prototype_option_mainstream_skip` /
+   `prototype_option_scope_mode_invalid` /
+   `prototype_option_promote_count_mismatch`.
+8. **Serial revision ledger (hard):** load
+   `granoflow-agent-workflow/prototype-serial-revision`. Before draft 1, write
+   a thin `temp/` brief and land accepted decisions in Logic Draft / Screen
+   Content Contract; require green effect matrix + stack realization notes.
+   Run applicable review-only gstack / preferred reviewers + grill self-QA
+   (unattended: self-answer only). After each draft, run HTML reviewers +
+   deterministic lints; bind `component_effect_matrix_sha256` and
+   `stack_realization_notes_sha256` on every draft; open the next draft only
+   for **blocking** findings; max **5** drafts; early stop on 0 blocking;
+   drafts 4–5 blocking-only. Lint `lint_prototype_revision_ledger.py`. Set
+   `craft_checklist.serial_revision_ok: true` only when the ledger is green
+   for the current mode. Fail closed `prototype_serial_revision_unread` /
+   `prototype_revision_*` /
+   `prototype_revision_stack_gates_incomplete`.
+9. **Confirm surface:** interactive shows Baseline-fit digest + chrome-lock
+   digest (when applicable) + candidate digest + craft checklist + **last ≤3
+   draft links** with a clear **推荐** marker (history gallery when ≥2 drafts;
+   single draft = `confirm_or_revise`, no forced multi-pick). Unattended
+   records the same checklist into the run digest and auto-adopts the final
+   green draft. Do **not** ask for `visualConfirmed` while `baseline_fit_ok`,
    `confirmed_chrome_lock_ok` (when applicable),
    `task_ui_skill_pipeline_ok`, `component_effect_matrix_ok`,
-   `user_visible_copy_boundary_ok`, or (interactive dual)
-   `expression_brainstorm_ok` is false.
+   `stack_realization_notes_ok`, `user_visible_copy_boundary_ok`,
+   `expression_brainstorm_ok`, or `serial_revision_ok` is false.
 
 Fail closed `task_prototype_craft_incomplete` if any item is missing. Do not
 treat packaging or upload as craft completion.
 
-#### Expression candidates → functional-parity A/B (hard)
+#### Expression candidates → serial thesis (hard)
 
-Before authoring dual HTML, run **Prototype Expression Brainstorm**
+Before authoring draft-1 HTML, run **Prototype Expression Brainstorm**
 (`granoflow-agent-workflow/prototype-expression-brainstorm`):
 
 1. Load the reference via `granoflow_bundled_skill_reference` (else
@@ -415,119 +442,73 @@ Before authoring dual HTML, run **Prototype Expression Brainstorm**
    `capability_match` when unsure). Collect mainstream product references
    first; brainstorm backfill **only** when mainstream `<5`. Combined pool
    band **5–8**. Every candidate Must cover the **full** authorized
-   Outcome/Scope—do not omit capabilities or break serial/recovery logic to
-   manufacture variety.
-3. Promote the host's best **two** as `expr_a` / `expr_b`. They Must be
-   **functionally identical** and show the **same domain data fields**; only
-   presentation (whitelist contrast axes) may differ.
+   Outcome/Scope.
+3. Promote the host's best **one** as `expr_a` (serial thesis). Do **not**
+   author a parallel `expr_b` batch.
 4. Product **states** (empty / error / TTS unavailable / limit reached) are
-   covered **inside** each expression or via shared scenario controls—not as
-   the A-vs-B difference (`prototype_option_function_split` /
-   `prototype_option_data_divergence`).
+   covered **inside** the thesis or via shared scenario controls.
 5. Record `expression_brainstorm`, run
    `lint_prototype_expression_brainstorm.py`, and set
-   `craft_checklist.expression_brainstorm_ok: true`. Interactive galleries
-   Must show a short candidate digest above the frames.
+   `craft_checklist.expression_brainstorm_ok: true`.
 
 Fail closed: `prototype_option_brainstorm_missing` /
 `prototype_option_brainstorm_incomplete` /
 `prototype_option_mainstream_skip` /
 `prototype_option_scope_mode_invalid` /
 `prototype_option_backfill_unjustified` /
+`prototype_option_promote_count_mismatch` /
 `prototype_option_brainstorm_digest_required`.
 
-#### Interactive option set (AI chooses two or three)
+#### Serial multi-draft set (interactive and unattended)
 
-**Default (hard):** after the candidate protocol, author two complete page
-expressions. AI may author three only with a permitted
-`option_count_reason_code` and three materially distinct, feasible,
-parity-safe expressions. All options share the locked Design System and pass
-**functional parity**:
+**Default (hard):** after the candidate protocol and pre-draft review, author
+one complete page expression as draft 1, then iterate per
+`prototype-serial-revision`:
 
-| Label    | Role                                                                                                                                           |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `expr_a` | Page expression A — a complete, craft-ready treatment of the authorized delta                                                                  |
-| `expr_b` | Page expression B — an equally complete **presentation** alternative on the declared contrast axes (same capabilities, same data, same tokens) |
+| Label    | Role                                                                                            |
+| -------- | ----------------------------------------------------------------------------------------------- |
+| `expr_a` | Serial thesis — complete, craft-ready treatment of the authorized delta (refined across drafts) |
 
 Record `prototype_option_set.design_system_locked` to the confirmed Spec /
-Baseline option id (e.g. `ai_challenger_a` / project-local label). Selection is
-**mix-and-match by task (and by page when a task owns multiple screens)** —
-the user may pick `expr_a` for import and `expr_b` for bookshelf; do **not**
-require one expression id for the whole milestone.
+Baseline option id. Multi-page tasks run the serial pipeline **per page**
+(each page has its own revision ledger / accepted package).
 
-Both options Must fully satisfy the Craft Gate (not a sketch + a finished
-pair). Emit a **side-by-side Contrast Gallery** (see Preview Gate option-set
-exception) plus optional per-option deep links; **one wait** for per-page
-select / revise / request-more. Separate links alone are insufficient.
+Persist `granoflow_prototype_revision_ledger_v1`. Caps:
 
-**Contrast axes (hard):** declare **at least two** axes from this whitelist and
-make the options diverge on those axes in a user-visible, defendable way.
-Axes describe **page-local** hierarchy/interaction/disclosure—not a new Spec:
-
-- `information_hierarchy`
-- `density`
-- `interaction_pattern`
-- `state_emphasis`
-- `progressive_disclosure`
-- `secondary_nav_within_delta` (task-local only; must not rewrite global Shell)
-
-**Visible-diff bar (hard):** for each declared axis, the gallery Must show a
-one-line caption the reviewer can verify in the frames (e.g. “续读顶栏条卡 vs
-续读英雄大卡”, “确认对话框+checklist vs 新旧对比卡”). Captions that only
-restate axis names without a screen-checkable difference fail
-`prototype_option_diff_unlabeled`.
-
-**Not valid contrast:** new palette/typography/material seed; spacing/radius/
-shadow-only tweaks; restyling a locked widget for the same role; unauthorized
-Shell IA change; reopening Design Spec (`delta_match` / `ai_challenger` /
-`spec_match` as task option ids); **prose-only** differences where the two
-frames look the same to a careful reviewer.
+- max **5** drafts; early stop on **0 blocking**;
+- drafts **4–5** only when prior `blocking_out > 0`;
+- interactive selection surface = last **≤3** drafts; **1 draft** →
+  `confirm_or_revise` (user may confirm or give detail revise notes);
+- unattended → `auto_adopt` final green; residual blocking at cap →
+  `prototype_revision_blocking_residual`.
 
 Fail closed:
 
-- `prototype_option_design_system_reopened` — task options re-offer Design
+- `prototype_option_design_system_reopened` — task drafts re-offer Design
   Spec / Design System choice after Baseline lock;
 - `prototype_option_brainstorm_unread` /
   `prototype_option_brainstorm_missing` /
   `prototype_option_brainstorm_incomplete` /
-  `prototype_option_brainstorm_digest_required` — brainstorm contract skipped
-  or incomplete (see `prototype-expression-brainstorm`);
-- `prototype_option_function_split` — A/B differ in capabilities or omit
-  Scope actions (feature-split disguised as presentation contrast);
-- `prototype_option_data_divergence` — A/B show different domain data without
-  shared scenario controls;
-- `prototype_option_contrast_insufficient` — fewer than two whitelist axes, or
-  either expression lacks a defendable page-local contrast thesis;
-- `prototype_option_near_duplicate` — options are the same skeleton with only
-  cosmetic deltas, **or** the frames are not distinguishable on the declared
-  axes without reading captions;
-- `prototype_option_contrast_gallery_required` — interactive batch presented
-  without a side-by-side contrast gallery;
-- `prototype_option_diff_unlabeled` — gallery missing per-axis visible-diff
-  captions.
+  `prototype_option_brainstorm_digest_required` /
+  `prototype_option_promote_count_mismatch` — brainstorm contract skipped
+  or wrong promote count;
+- `prototype_serial_revision_unread` /
+  `prototype_revision_ledger_required` /
+  `prototype_revision_max_drafts` /
+  `prototype_revision_late_draft_without_blocking` /
+  `prototype_revision_blocking_residual` /
+  `prototype_revision_selection_invalid` /
+  `prototype_revision_lint_failed`.
 
-**Conditional third option:** add `industry_peer_c` **only when** all of the
-following hold (record under `prototype_option_set.third_option_rationale`):
-
-1. The industry has **three** peer interaction/IA patterns in active use for
-   this problem class;
-2. All three are suitable for **this** app given Baseline Musts and Outcome
-   **and** stay inside the locked Design System;
-3. The host **cannot honestly prefer** one of the three on evidence (not taste
-   laziness)—document the three industry references and why preference is
-   blocked.
-
-Otherwise stay at two. A gratuitous third option without that rationale fails
-closed as `prototype_option_third_unjustified`.
-
-**Request-more:** a new batch must again meet Craft Gate + contrast rules and
-must not near-duplicate the prior batch (`prototype_option_near_duplicate`).
+**User detail revise:** after a single-draft or multi-draft surface, accepted
+detail notes open the next draft inside the same 5-cap (and must update
+Content Contract / writeback when operations change).
 
 #### Unattended (explicit only)
 
-Author **one** option only: `expr_a`, full Craft Gate, no dual/triple
-exploration, no random seed, no Design System reopen. Link notice + ledger;
-closing digest includes the craft checklist summary.
+Same serial pipeline: promote-1 thesis, review-only reviewers, grill self-QA
+(no user interview), max 5 drafts, auto-adopt final green. No random seed, no
+Design System reopen. Link notices + ledgers still required.
 
 ## Project Design Baseline Package
 
@@ -818,28 +799,20 @@ and AI visual fidelity gates; other sizes preserve responsive mapping.
   truth → `prototype_product_truth_violation`).
 - Keep design-first; high-risk platform-coupled UI needs Tech Note conclusion
   before Readiness (`high_risk_feasibility_unresolved`).
-- Interactive: **strict Spec token embed + Shell chrome language**,
-  mainstream-reference-first (≥5; backfill only when mainstream `<5`) then
-  dual **page expressions** (`expr_a` + `expr_b`) with functional parity
-  inside the locked Design System; mix-and-match per task/page; ≥2 whitelist
-  contrast axes; **side-by-side Contrast Gallery** with Baseline-fit
-  - candidate digests + per-axis visible-diff captions; conditional third
-    only for documented industry-peer deadlock. Fail closed
-    `prototype_option_design_system_reopened` /
-    `prototype_baseline_fit_*` /
-    `prototype_spec_tokens_not_loaded` /
-    `prototype_shell_chrome_mismatch` /
-    `prototype_option_brainstorm_*` /
-    `prototype_option_mainstream_skip` /
-    `prototype_option_scope_mode_invalid` /
-    `prototype_option_function_split` /
-    `prototype_option_data_divergence` /
-    `prototype_option_contrast_insufficient` /
-    `prototype_option_near_duplicate` /
-    `prototype_option_contrast_gallery_required` /
-    `prototype_option_diff_unlabeled` / `prototype_option_third_unjustified`.
-- Unattended: mainstream-first protocol then single Baseline-fitted `expr_a`
-  only.
+- Interactive and unattended: **strict Spec token embed + Shell chrome
+  language**, mainstream-reference-first (≥5; backfill only when mainstream
+  `<5`) then promote **one** serial `expr_a` thesis and run
+  `prototype-serial-revision` (max 5 drafts; last ≤3 on interactive selection
+  surface; single draft = confirm_or_revise). Fail closed
+  `prototype_option_design_system_reopened` /
+  `prototype_baseline_fit_*` /
+  `prototype_spec_tokens_not_loaded` /
+  `prototype_shell_chrome_mismatch` /
+  `prototype_option_brainstorm_*` /
+  `prototype_option_mainstream_skip` /
+  `prototype_option_scope_mode_invalid` /
+  `prototype_option_promote_count_mismatch` /
+  `prototype_revision_*`.
 - Material Shell/token/widget catalog changes require a new Baseline version
   and catalog update—not silent drift in a task prototype.
 

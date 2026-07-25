@@ -73,13 +73,20 @@ Append to the base Delivery when `profiles` contains `software_development`:
   `integration_test_special_requirement_ignored`, or
   `integration_test_special_requirement_as_app_seed` when violated. Never treat
   unrun integration tests as runtime Evidence;
-- milestone Plan acceptance pack (when the milestone emitted one): record the
-  pack path / version and reconcile `present: true` sections—test-case ticks
-  (same Case IDs), `copy_locale` copy inventory, schema/flow notes—per
-  `milestone-plan-acceptance-pack.md`. Fail as
-  `milestone_plan_acceptance_pack_not_used`,
+- milestone Plan acceptance pack (when the milestone emitted one): record
+  `milestone_plan_pack_reconcile` (schema
+  `granoflow_milestone_plan_pack_reconcile_v1`) and lint against the accepted
+  pack:
+
+  ```text
+  python3 skills/granoflow-agent-workflow/scripts/lint_milestone_plan_pack_delivery_reconcile.py \
+    path/to/delivery.md --pack path/to/accepted-pack.md
+  ```
+
+  Fail as `milestone_plan_acceptance_pack_not_used`,
   `milestone_plan_acceptance_pack_drift`, or
   `milestone_plan_acceptance_pack_delivery_unreconciled` when violated.
+
 - Plan case implementation ledger (`plan_case_implementation`): every Plan /
   pack verification Case ID for this task **Must** appear with a non-`missing`
   status. Before Layer A Delivery close:
@@ -87,7 +94,7 @@ Append to the base Delivery when `profiles` contains `software_development`:
     exists under the workspace and mentions the Case ID (or evidence does);
   - `integration` / `e2e` → at least `scheduled_campaign` with `campaign_ref`
     (do not silently drop authored cases).
-  Lint:
+    Lint:
 
   ```text
   python3 skills/granoflow-agent-workflow/scripts/lint_plan_case_implementation.py \
@@ -99,6 +106,7 @@ Append to the base Delivery when `profiles` contains `software_development`:
   Fail closed as `plan_case_implementation_missing` /
   `plan_case_implementation_gap` / `plan_case_test_ref_missing` /
   `plan_case_test_ref_unbound` / `plan_case_implementation_incomplete`.
+
 - Unit policy (`lint_plan_unit_policy.py`): before Layer A Delivery, every
   in-scope Screen Content Contract `action_id` / operation Must have a `unit`
   Plan case; unit cases/tests **Must not** assert user-visible copy presence

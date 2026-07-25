@@ -22,8 +22,8 @@ granoflow_bundled_skill_reference(
 Skipping fails closed as `prototype_baseline_fit_unread`.
 Seeing Craft Gate prose or `derivedFrom` YAML alone does **not** count.
 
-Also load `user-visible-copy-boundary` and (interactive dual)
-`prototype-expression-brainstorm` per their own gates.
+Also load `user-visible-copy-boundary`, `prototype-expression-brainstorm`, and
+`prototype-serial-revision` per their own gates.
 
 ## Strict Fit (hard)
 

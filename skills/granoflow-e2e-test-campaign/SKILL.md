@@ -244,20 +244,30 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
    - `keep_implementation` forbidden until `user_final_acceptance`.
    - Re-capture affected screenshots after fixes.
 8. **Round / campaign close** — Green (or green_with_residuals) + Closing
-   Summary with 「关键步骤截图」 when capable; `plain.next_step` → 项目收尾.
-   Non-selected supported platforms need an external-device handoff with
-   `tested: false`; a user acknowledgement such as “知道了” completes workflow
-   acceptance but is never test evidence. Missing live
-   window → **fail closed** (not green_with_residuals).
-   Success criteria:
-   - Plain-language Closing Summary emitted; lifecycle board shows next stage
-     `project_complete` only after user final acceptance.
+   Summary with 「关键步骤截图」 when capable. Announce **E2E 已完结** in plain
+   language. Then:
+   - **interactive:** after prototype AI loop complete, obtain user final
+     acceptance; **ask** whether the user still wants manual local testing; if
+     yes, help local deploy/start; if no (or after hand-test), next →
+     `project_complete` / 「项目收尾」.
+   - **unattended:** do **not** ask for manual testing; mark campaign done and
+     enter `project_complete` (external publish remains residual).
+     Non-selected supported platforms need an external-device handoff with
+     `tested: false`; a user acknowledgement such as “知道了” completes workflow
+     acceptance but is never test evidence. Missing live
+     window → **fail closed** (not green_with_residuals).
+     Success criteria:
+   - Plain-language Closing Summary emitted; E2E-完结 notice clear.
+   - Interactive: user final acceptance + optional manual-test offer before
+     `project_complete`.
+   - Unattended: SoT/`project_complete` without manual-test ask.
    - Residuals explain unavailable hosts and manual-test reminders when
      `deferred_manual`.
      Checkpoints:
    - Missing Closing Summary or AI loop incomplete → fail closed (listed codes).
    - Missing live window cannot become `green_with_residuals`.
-   - 「项目收尾」 only after prototype AI loop complete + user final acceptance.
+   - Interactive 「项目收尾」 only after prototype AI loop complete + user final
+     acceptance.
 
 ## Success Criteria
 
@@ -278,7 +288,8 @@ acceptance—do not suggest 「项目收尾」 earlier. Lint with
 - Any AI fail auto-remediated (milestone + GF tasks; feature gaps via
   Analysis/Plan) and re-run in a subsequent full round under agent_auto.
 - Bugs found in-loop fixed and re-tested under agent_auto.
-- Plain-language Closing Summary; 「项目收尾」 only after user final acceptance.
+- Plain-language Closing Summary; interactive 「项目收尾」 only after user final
+  acceptance (+ optional manual-test offer); unattended proceeds to stage 8.
 
 ## Failure Codes
 

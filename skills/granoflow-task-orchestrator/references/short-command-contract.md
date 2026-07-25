@@ -6,25 +6,42 @@ English, or other languages.
 
 ## Commands
 
-| Command | ASCII alias | Route          | Normal stopping point                                                         |
-| ------- | ----------- | -------------- | ----------------------------------------------------------------------------- |
-| `gf`    | none        | automatic      | selected from context                                                         |
-| `gf记`  | `gf+`       | `capture`      | task id readback                                                              |
-| `gf析`  | `gf?`       | `analyze`      | confirmed A or blocker (**does not** auto-enter Plan)                         |
-| `gf规`  | `gf>`       | `plan`         | finish A if needed; UI Plan Entry acceptance (digest + verbal/App/unattended); then P + readiness (**no second Planning-permission ask**) |
-| `gf做`  | `gf!`       | `run`          | A→P auto-continue in-task; D uploaded and task `done`                         |
-| `gf完`  | `gf.`       | `finish_audit` | evidence-backed closure                                                       |
+| Command | ASCII alias | Route          | Normal stopping point                                                                                    |
+| ------- | ----------- | -------------- | -------------------------------------------------------------------------------------------------------- |
+| `gf`    | none        | automatic      | selected from context                                                                                    |
+| `gf记`  | `gf+`       | `capture`      | task id readback                                                                                         |
+| `gf析`  | `gf?`       | `analyze`      | ready-to-confirm A or blocker; **does not invent 定稿**. User 确认/定稿 → opens Plan same wave           |
+| `gf规`  | `gf>`       | `plan`         | finish A if needed; UI Plan Entry acceptance; then P + readiness (**no second Planning-permission ask**) |
+| `gf做`  | `gf!`       | `run`          | A→P after 定稿; **pack accepted** before code; D uploaded and task `done`                                |
+| `gf完`  | `gf.`       | `finish_audit` | evidence-backed closure                                                                                  |
 
-Soft-merge rule: `gf规` / `gf做` never wait for a user phrase equivalent to
-「开始 Plan」after Analysis deliverables are complete for the same task.
-UI tasks still Must pass Plan Entry Prototype Acceptance (auditable
-`file://` digest, then `verbal` / App / unattended auto-accept) before Plan
-content—non-UI skips. Interactive milestone Plan acceptance pack confirmation
-and execution authorization remain real stops when those gates apply.
+Soft-merge / affinity: Analysis **确认/定稿** (or `gf规` / `gf做` when A is
+ready) opens Plan for the same task—no second 「开始 Plan」. `gf析` alone stops
+before 定稿. UI tasks still Must pass Plan Entry Prototype Acceptance
+(auditable `file://` digest, then `verbal` / App / unattended auto-accept)
+before Plan content—non-UI skips. Interactive milestone Plan acceptance pack
+confirmation is a real stop. **Scheme 1:** no Execution until that milestone
+pack is `accepted` (or valid unattended Planning grant).
 
 The text after the command names the target and scope. If the target is
 ambiguous because multiple existing tasks match, the host must not update one
 by guess.
+
+## Whole-project unattended (canonical)
+
+Natural language may request a full unattended project pipeline without a `gf*`
+shortcut. Treat an explicit unattended whole-project generate-and-deliver
+request as `run` scope across project definition → portfolio → Scheme 1
+milestone loops → final delivery / E2E, and apply
+`granoflow-agent-workflow/unattended-interaction-contract` plus the
+**Unattended Entry Continuity Checklist** in `long-task-run-continuity`
+(Project E2E SoT + Layer B/C probe/arm or `host_wake_unavailable_notice`).
+
+Canonical Chinese trigger (example):
+
+```text
+请用无人值守模式根据 docs 下的产品文档和用户故事生成 granoflow 项目并完成和交付它。长跑维护 Project E2E SoT，并在宿主支持时按 SoT next_step 定时唤醒续跑。
+```
 
 ## User-Facing Artifact Names
 

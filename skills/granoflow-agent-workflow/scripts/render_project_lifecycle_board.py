@@ -34,10 +34,26 @@ STAGE_LABELS = {
     "milestones_created": "2. 里程碑与任务组合创建",
     "milestone_analysis": "3. 分里程碑 Analysis",
     "milestone_plan": "4. 分里程碑 Plan / Design Gate",
-    "milestone_implement": "5. 实施（Layer A + 里程碑 Layer B IT）",
+    "milestone_implement": "5. 实施（Layer A；Layer B 视交互/无人调度）",
     "integration_campaign": "6. 最终交付 · 项目级 IT（单里程碑可跳过）",
     "e2e_campaign": "7. 最终交付 · 全面 E2E（界面路径 + 截图）",
     "project_complete": "8. 项目完成",
+}
+
+SCHEDULE_POLICY_KINDS = frozenset(
+    {
+        "interactive_all_ap_then_implement",
+        "unattended_milestone_loop",
+    }
+)
+SCHEDULE_POLICY_LABELS = {
+    "interactive_all_ap_then_implement": "交互：全项目分析+计划齐套后再实施",
+    "unattended_milestone_loop": "无人值守：里程碑先全分析+计划+验收册，再实施",
+}
+# Legacy boards may still carry pipeline_order; map for display only.
+LEGACY_PIPELINE_ORDER_TO_SCHEDULE = {
+    "breadth_first": "interactive_all_ap_then_implement",
+    "depth_first": "unattended_milestone_loop",
 }
 
 STATUS_OK = frozenset({"not_started", "in_progress", "done", "blocked"})
@@ -268,6 +284,39 @@ def validate_and_render(board: dict[str, Any]) -> dict[str, Any]:
             "reentry must be an object when present",
         )
 
+    schedule_kind: str | None = None
+    schedule_policy = board.get("schedule_policy")
+    if isinstance(schedule_policy, dict) and schedule_policy.get("kind") is not None:
+        schedule_kind = str(schedule_policy.get("kind"))
+        if schedule_kind not in SCHEDULE_POLICY_KINDS:
+            return _fail(
+                "project_lifecycle_board_render_failed",
+                f"schedule_policy.kind must be one of {sorted(SCHEDULE_POLICY_KINDS)}; "
+                f"got {schedule_kind!r}",
+            )
+    else:
+        # Legacy mirror: pipeline_order.mode → schedule_policy.kind for display
+        pipeline_order = board.get("pipeline_order")
+        if isinstance(pipeline_order, dict) and pipeline_order.get("mode") is not None:
+            legacy_mode = str(pipeline_order.get("mode"))
+            if legacy_mode == "unset":
+                schedule_kind = None
+            elif legacy_mode in LEGACY_PIPELINE_ORDER_TO_SCHEDULE:
+                schedule_kind = LEGACY_PIPELINE_ORDER_TO_SCHEDULE[legacy_mode]
+            else:
+                return _fail(
+                    "project_lifecycle_board_render_failed",
+                    "pipeline_order.mode must be one of "
+                    f"{sorted(set(LEGACY_PIPELINE_ORDER_TO_SCHEDULE) | {'unset'})}; "
+                    f"got {legacy_mode!r}",
+                )
+        elif mode in {"interactive", "unattended"}:
+            schedule_kind = (
+                "unattended_milestone_loop"
+                if mode == "unattended"
+                else "interactive_all_ap_then_implement"
+            )
+
     title = str(board.get("project_title") or board.get("project_id") or "Project")
     lines: list[str] = [
         "## 项目进度板",
@@ -279,15 +328,8 @@ def validate_and_render(board: dict[str, Any]) -> dict[str, Any]:
     ]
     if entry_kind:
         lines.append(f"- 入口：`{entry_kind}`")
-    pipeline_order = board.get("pipeline_order")
-    if isinstance(pipeline_order, dict) and pipeline_order.get("mode"):
-        po_mode = pipeline_order.get("mode")
-        po_label = {
-            "unset": "未选择（进 Plan 前需确认）",
-            "breadth_first": "先全部分析",
-            "depth_first": "做一个完整闭环再做下一个",
-        }.get(str(po_mode), str(po_mode))
-        lines.append(f"- 多里程碑顺序：{po_label} (`{po_mode}`)")
+    if schedule_kind is not None:
+        lines.append(f"- 调度：{SCHEDULE_POLICY_LABELS[schedule_kind]} (`{schedule_kind}`)")
     lines.extend(
         [
             "",

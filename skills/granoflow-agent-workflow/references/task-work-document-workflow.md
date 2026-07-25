@@ -265,23 +265,31 @@ Hard rules:
    Catalog SHA, platform matrix, stack capability profile, and approved
    dependencies. Resolve behavior-changing incompatibilities with the user
    before HTML. Set `component_effect_matrix_ok: true` only after the linter
-   passes.
-   4b. Load `task-ui-skill-pipeline`. Discover host capabilities, select only
+   passes. HTML Must stay inside this deliverable surface (no default
+   Web-only / `forbidden` showcase).
+   4b. Load `stack-realization-notes`. For every matrix **selected** role,
+   record `html_surface` → `stack_realization` with a valid disposition
+   (notes outside product UI). Lint `lint_stack_realization_notes.py`
+   (prefer `--matrix`). Set `stack_realization_notes_ok: true` only after
+   lint ok. Bind matrix + notes SHA on each serial draft.
+   4c. Load `task-ui-skill-pipeline`. Discover host capabilities, select only
    relevant safe providers, and lint `task_ui_skill_pipeline_v1`. A provider
    brand may fall back; a missing authoring/audit capability may not. Set
    `task_ui_skill_pipeline_ok: true` only after observable artifact evidence.
 5. Apply **Task Prototype Craft Gate And Option Set** from
-   `granoflow-project-definition/project-artifact-workflows`:
+   `granoflow-project-definition/project-artifact-workflows` and
+   `prototype-serial-revision`:
    - Craft Gate (intent / **Baseline fit** / **confirmed chrome lock** / craft /
      **skill pipeline** / **component-effect matrix** /
-     **user-visible copy boundary** / confirm surface) must pass before
-     `visualConfirmed=true`
+     **user-visible copy boundary** / **serial revision** / confirm surface)
+     must pass before `visualConfirmed=true`
      else `task_prototype_craft_incomplete` /
      `prototype_baseline_fit_*` /
      `prototype_generic_phone_frame` /
      `prototype_confirmed_chrome_lock_*` /
      `user_visible_copy_boundary_unread` /
-     `user_visible_copy_boundary_violation`. Load
+     `user_visible_copy_boundary_violation` /
+     `prototype_revision_*`. Load
      `prototype-baseline-fit`; embed locked Spec tokens; match Shell chrome
      language; run `lint_prototype_baseline_fit.py`; set `baseline_fit_ok`.
      When chrome-family siblings are already `visualConfirmed`, load
@@ -289,45 +297,30 @@ Hard rules:
      reuse confirmed control vocabulary, run
      `lint_prototype_confirmed_chrome_lock.py --authority …`, and set
      `confirmed_chrome_lock_ok`.
-   - **Interactive:** load `prototype-expression-brainstorm`, run
-     **mainstream-reference-first** candidates (`scope_mode`
-     `same_category`|`capability_match`; default `capability_match` when
-     unsure), brainstorm backfill **only** when mainstream `<5`, then promote
-     two page expressions by default, or three only with a permitted reason
-     code, with **functional parity**
-     (same capabilities, same data fields, same required states;
-     presentation-only contrast) inside the locked Design System
-     (`design_system_locked`), with **≥2** whitelist contrast axes and
-     page-local theses; **mix-and-match** per task/page. Run
+   - Load `prototype-expression-brainstorm`, run **mainstream-reference-first**
+     candidates (`scope_mode` `same_category`|`capability_match`; default
+     `capability_match` when unsure), brainstorm backfill **only** when
+     mainstream `<5`, then promote **exactly one** serial thesis (`expr_a`)
+     inside the locked Design System (`design_system_locked`). Run
      `lint_prototype_expression_brainstorm.py` and set
-     `expression_brainstorm_ok`. Add a **third** (`industry_peer_c`) only when
-     three industry peer patterns all fit inside the locked Design System and
-     the host cannot honestly prefer one (else
-     `prototype_option_third_unjustified`). Do **not** re-offer Design Spec
-     choice (`delta_match` / `ai_challenger` / `spec_match` as task option ids)
-     → `prototype_option_design_system_reopened`. Do **not** split features or
-     product states across A/B → `prototype_option_function_split` /
-     `prototype_option_data_divergence`. Options Must diverge in the **frames**
-     (not prose-only). Emit a **side-by-side Contrast Gallery** with candidate
-     digest + per-axis visible-diff captions (prefer
-     `granoflow-project-definition/scripts/build_option_contrast_gallery.py`);
-     separate option links alone are insufficient. Fail closed
-     `prototype_option_brainstorm_*` /
-     `prototype_option_mainstream_skip` /
-     `prototype_option_scope_mode_invalid` /
-     `prototype_option_contrast_insufficient` /
-     `prototype_option_near_duplicate` /
-     `prototype_option_contrast_gallery_required` /
-     `prototype_option_diff_unlabeled`. One wait (per-page picks allowed).
-   - **Unattended (explicit only):** same mainstream-first protocol then
-     **one** `expr_a` only.
-6. Author the HTML option(s), then apply the **Prototype Preview Gate**:
-   interactive waits on the Contrast Gallery (option batch); unattended shows
-   the single-link notice, continues, and includes every link in the
-   run-closing Prototype Link Digest.
-   The Gallery shows selected Widgets, platform adaptations, effects,
-   fallbacks, and visible differences, but never internal provider/skill
-   bookkeeping.
+     `expression_brainstorm_ok`. Do **not** re-offer Design Spec choice
+     (`delta_match` / `ai_challenger` / `spec_match` as task option ids) →
+     `prototype_option_design_system_reopened`. Do **not** default to a
+     parallel dual pick → `prototype_option_promote_count_mismatch`.
+   - Load `prototype-serial-revision`. Write a thin `temp/` brief; land
+     accepted decisions in Logic Draft / Content Contract. Run applicable
+     review-only gstack / preferred reviewers + grill self-QA (unattended:
+     self-answer only, no user interview). Author draft 1 via the skill
+     pipeline; post-review; revise only for **blocking** findings; max **5**
+     drafts; early stop on 0 blocking; drafts 4–5 blocking-only. Lint
+     `lint_prototype_revision_ledger.py` and set `serial_revision_ok`.
+6. Author HTML drafts, then apply the **Prototype Preview Gate**:
+   interactive presents the **last ≤3** draft links with a clear **推荐**
+   marker (history gallery when ≥2; single draft = `confirm_or_revise`, no
+   forced multi-pick); unattended shows the final-green notice, continues, and
+   includes every link in the run-closing Prototype Link Digest.
+   Surfaces may show Widgets / platform adaptations / effects, but never
+   internal provider/skill bookkeeping.
 7. Obtain visual confirmation for the **chosen** package hash (interactive
    user accept, or unattended auto-accept only when explicitly unattended),
    upload to the task `ui_prototype` slot with `visualConfirmed=true`, and
@@ -599,21 +592,28 @@ Analysis owns the accepted problem framing **and**, for UI-changing tasks, the
 confirmed high-fidelity prototype. Prototypes are **not** a separate lifecycle
 stage and **Must not** be deferred into Planning.
 
-Orchestration follows Project Work `pipeline_order` (see
-`project-lifecycle-progress-board` **Pipeline Order Gate**):
+Orchestration follows Schedule Policy derived from `interaction_mode` (see
+`project-lifecycle-progress-board` **Schedule Policy**):
 
-- `depth_first` — per-milestone Analysis → Plan → Implement, then the next
-  milestone;
-- `breadth_first` — finish all feature-milestone Analyses (including
-  prototypes), then Plan batches, then Implement batches;
-- `unset` — when the host is about to enter Plan for a milestone and at least
-  one other feature milestone still has Analysis `not_started`, **stop** and
-  ask (interactive) or fail closed `pipeline_order_unresolved` (unattended).
-  Do not invent a default.
+- **interactive** (`interactive_all_ap_then_implement`, default) — **per
+  task**: Analysis (including prototypes) → Plan → next task, across all
+  feature milestones; **forbidden** to Implement while any in-scope task still
+  lacks confirmed Analysis+Plan; then all Layer A (implement + unit tests) →
+  `integration_campaign` full IT (absorbs Layer B) → E2E. Under
+  `pipeline_continue` / 「继续」, after Analysis `confirmed` for a task,
+  proceed to that same task’s Plan before the next task’s Analysis. Explicit
+  `analyze` / `gf析` may still stop at Analysis.
+- **unattended** (`unattended_milestone_loop`) — Scheme 1 per milestone: all
+  children Analysis → Plan → pack accept → Implement (incl. Layer B), then the
+  next
+  milestone. Entering unattended activates the host collaborative planning
+  surface / Plan mode when available (`long-task-run-continuity`). Do not ask
+  the user to choose `breadth_first` / `depth_first` (retired).
 
 Either way: **Planning Must not start for a task while that task's Analysis
-deliverables are incomplete**, and Must not start while `pipeline_order` blocks
-Plan entry.
+deliverables are incomplete**. Under interactive schedule, Implement Must not
+start while any in-scope task lacks confirmed Analysis+Plan
+(`implement_before_all_ap_forbidden`).
 
 ### Required for every task
 
@@ -629,6 +629,8 @@ Plan entry.
 | -------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `prototype_requirement`                      | `required` (not `not_required` / unresolved `conditional`)                                          |
 | Confirmed `ui_prototype`                     | App slot with `visualConfirmed=true`, exact package SHA, `derivedFrom` Design Baseline when present |
+| Serial revision ledger                       | `granoflow_prototype_revision_ledger_v1` green (`lint_prototype_revision_ledger.py`); max 5 drafts  |
+| Effect matrix + stack realization notes      | Matrix lint green; notes cover selected roles; each draft binds both SHAs                           |
 | HTML / widget / doc coverage (Analysis side) | `prototype-doc-coverage` Analysis ledgers complete; no pending gaps                                 |
 | Final responsive Prototype Bundle            | Every required layout family present; cross-layout checks, acceptance, and digest pass              |
 | Widget Catalog promotion                     | Promotion ledger passed/not-applicable; App readback equals catalog-after SHA                       |
@@ -652,14 +654,14 @@ table listing **each** applicable deliverable with status `done` or `pending` /
 ```markdown
 ## Analysis 交付物
 
-| 交付物                          | 状态    |
-| ------------------------------- | ------- |
-| Task Work Analysis              | done    |
-| 确认 ui_prototype（UI）         | missing |
-| Prototype Link 小结/Digest（UI）| missing |
-| Analysis Grill                  | pending |
-| Planning recommendation         | pending |
-| → 未全部 done 前不得进入 Plan。 |
+| 交付物                           | 状态    |
+| -------------------------------- | ------- |
+| Task Work Analysis               | done    |
+| 确认 ui_prototype（UI）          | missing |
+| Prototype Link 小结/Digest（UI） | missing |
+| Analysis Grill                   | pending |
+| Planning recommendation          | pending |
+| → 未全部 done 前不得进入 Plan。  |
 ```
 
 Rules:

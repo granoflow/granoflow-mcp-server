@@ -28,11 +28,11 @@ Do not invent a second Planning template. Put Gate content under the existing
 Before Planning content work starts (`plan` / `gf规` / soft-merge from
 Analysis into Plan / `run` auto-continue into P):
 
-| `prototype_requirement` | Rule |
-| --- | --- |
-| `not_required` / `not_applicable` | Gate N/A — non-UI tasks do not need prototypes |
-| `conditional` + `prototype_condition_result: false` | Gate N/A |
-| `required` (or conditional true / unresolved) | **Must** pass acceptance below |
+| `prototype_requirement`                             | Rule                                           |
+| --------------------------------------------------- | ---------------------------------------------- |
+| `not_required` / `not_applicable`                   | Gate N/A — non-UI tasks do not need prototypes |
+| `conditional` + `prototype_condition_result: false` | Gate N/A                                       |
+| `required` (or conditional true / unresolved)       | **Must** pass acceptance below                 |
 
 UI path (fail closed — do **not** enter Plan):
 
@@ -173,9 +173,13 @@ milestone Plan closeout), merge this task's Gate excerpts (copy / schema /
 flows / UML / test cases including `unit`|`integration`|`e2e` lanes), re-run
 `render_markdown_acceptance_html.py`, emit clickable Plan Acceptance Link
 block (clear filename + absolute `file://`), and update
-`prototype_alignment` for this task. Do **not** set
+`prototype_alignment` for this task. When
+`sections.test_cases.present: true`, run
+`lint_milestone_plan_pack_case_sync.py` against this pack and all in-scope
+task Plan case sources; fail closed on `pack_case_missing_from_tasks` /
+`task_case_missing_from_pack`. Do **not** set
 `plan_design_gate_status: passed` while the pack draft omits this task's
-required excerpts or alignment is not `aligned: true`
+required excerpts, Case sync is red, or alignment is not `aligned: true`
 (`milestone_plan_acceptance_pack_incomplete` /
 `milestone_plan_prototype_alignment_failed`).
 

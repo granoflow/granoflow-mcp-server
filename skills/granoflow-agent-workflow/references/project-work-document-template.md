@@ -212,14 +212,17 @@ agent_preferences:
       - secrets
       - destructive_git_history
 
-# Multi-milestone Analysis/Plan/Implement order. Ask gate fires when entering
-# Plan while peer milestones still have Analysis not_started. See
-# project-lifecycle-progress-board Pipeline Order Gate.
-# User-facing ask (interactive): 多里程碑时，先全部分析，还是做一个完整闭环再做下一个？
-pipeline_order:
-  mode: unset # unset | breadth_first | depth_first
-  decided_at: null
-  decided_by: null # user | unattended_grant
+# Schedule derived from interaction_mode — never a user chooser.
+# See project-lifecycle-progress-board Schedule Policy.
+# interactive → interactive_all_ap_then_implement (all A+P then Implement)
+# unattended → unattended_milestone_loop (Scheme 1: all A→P + pack, then I)
+# Entering unattended: activate host Plan/planning mode when available.
+schedule_policy:
+  schema: granoflow_schedule_policy_v1
+  kind: interactive_all_ap_then_implement # or unattended_milestone_loop
+  derived_from: interactive # or unattended
+  switched_at: null
+  switched_by: null # user | unattended_grant
 
 requirement:
   original_request: null
@@ -368,7 +371,10 @@ product:
     source_choice: user_provided | ai_generated | downloaded_license_clear | unresolved | not_applicable
     asset_path: null
     license_note: null
+    # true after interactive choice OR unattended_grant auto-adopt
     user_decision_recorded: false
+    decision_authority: interactive_user | unattended_grant | null
+    decision_provenance: null
 
 # Hard gate for thin or uneven product docs. Initialization Done and
 # complete_confirmed_current automation require status=ready.

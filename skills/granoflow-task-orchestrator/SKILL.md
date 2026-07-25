@@ -28,6 +28,7 @@ Use this bundled MCP skill as the single upper-layer task entrypoint. It decides
 - 刚想到以后要优化首次同步，先记一下。
 - gf析 把我们刚才讨论的导入兼容问题整理成可决策的分析。
 - gf做 把刚才确认的两个任务建档、分析、计划、实现、验证并在 GF 完成。
+- 请用无人值守模式根据 docs 下的产品文档和用户故事生成 granoflow 项目并完成和交付它。长跑维护 Project E2E SoT，并在宿主支持时按 SoT next_step 定时唤醒续跑。
 
 ## Workflow
 
@@ -125,14 +126,16 @@ Compose the existing task owners through the requested stopping point.
 Actions:
 
 - capture stops after create and id readback; enrich stops after a context-rich task readback.
-- analyze runs Analysis plus bundled Grill and stops at the confirmed or
-  decision-blocked Analysis state (**soft-merge**: `analyze` / `gf析` does
-  **not** auto-enter Planning). End every Analysis turn with an explicit
-  **Analysis Deliverables** table (done / pending / missing). UI-changing tasks
-  must set `prototype_requirement: required` and Must obtain a confirmed
-  `ui_prototype` plus lint-green `prototype_link_ledger` before Analysis
-  confirmation; missing prototype/links fails closed as `ui_prototype_required`
-  / `prototype_link_*` / `analysis_deliverables_incomplete` and keeps the task
+- analyze runs Analysis plus bundled Grill. `analyze` / `gf析` may stop at a
+  **ready-to-confirm** Analysis (does **not** invent a 定稿). When the user
+  (or unattended grant) **确认/定稿** Analysis, that confirmation **opens
+  Plan in the same wave** for that task (3.1→3.2 affinity; update Project E2E
+  SoT). End every Analysis turn with an explicit **Analysis Deliverables**
+  table (done / pending / missing). UI-changing tasks must set
+  `prototype_requirement: required` and Must obtain a confirmed `ui_prototype`
+  plus lint-green `prototype_link_ledger` before Analysis confirmation;
+  missing prototype/links fails closed as `ui_prototype_required` /
+  `prototype_link_*` / `analysis_deliverables_incomplete` and keeps the task
   in Analysis (Planning Must not start).
 - plan **soft-merges** Analysis→Plan for the same task: if Analysis is not yet
   finalized, complete Analysis (including UI prototype + link ledger) first,
@@ -147,24 +150,31 @@ Actions:
   waits; unattended auto-accepts only after digest). Then **without a second
   Planning-permission ask** enter Planning, create Plan and nodes, update the
   living milestone Plan acceptance pack draft, run Readiness Grill, and stop
-  execution-ready. Before Plan entry on a multi-milestone project, apply
-  `project-lifecycle-progress-board` **Pipeline Order Gate**: if peer feature
-  milestones still have Analysis `not_started` and Project Work
-  `pipeline_order.mode` is unset, interactive asks
-  「多里程碑时，先全部分析，还是做一个完整闭环再做下一个？」and
-  **recommends depth_first** for software UI long runs; unattended requires a
-  pre-declared mode or fails closed `pipeline_order_unresolved`. UI-changing
-  tasks cannot pass Readiness without a visually confirmed `ui_prototype`
-  (`derivedFrom` Design Baseline when present). Software tasks that will edit
-  code cannot pass Readiness without a complete `Structural Change Forecast`
+  at **Plan acceptance** (task Gate / pack refresh). Apply
+  `project-lifecycle-progress-board` **Schedule Policy** derived from
+  `interaction_mode` (never ask `breadth_first`/`depth_first`). Under
+  **interactive**, after Analysis 定稿, enter that same task’s Plan before the
+  next task’s Analysis; Implement waits until all in-scope tasks have
+  confirmed Analysis+Plan **and** the milestone pack is `accepted`
+  (`implement_before_all_ap_forbidden` /
+  `project_e2e_sot_implement_before_pack_accepted`). Under **unattended**
+  (Scheme 1), finish **all** milestone Analysis→Plan + pack accept, then
+  milestone Implement (incl. Layer B), then the next milestone; when entering
+  unattended, activate host Plan/planning mode if available and bind wake to
+  `temp/project-e2e-sot-v*.md` (`long-task-run-continuity` /
+  `project-e2e-sot`). UI-changing tasks cannot pass Readiness without a
+  visually confirmed `ui_prototype` (`derivedFrom` Design Baseline when
+  present). Software tasks that will edit code cannot pass Readiness without a
+  complete `Structural Change Forecast`
   (`structural_forecast_status: present_in_plan`); otherwise
   `structural_forecast_missing`.
 - run composes create or resolve, one App-owned execution snapshot, Analysis,
-  Grill, Plan, Readiness Grill, safe execution, verification, Delivery, node
-  completion, and done-state readback. After Analysis deliverables are
-  complete for a task, **auto-continue** into that task's Plan and Readiness
-  in the same wave (no pause merely for A→P). Interactive milestone Plan
-  acceptance pack confirmation and execution authorization remain real stops.
+  Grill, Plan, Readiness Grill, pack accept, safe execution, verification,
+  Delivery, node completion, and done-state readback. After Analysis **定稿**
+  for a task, **auto-continue** into that task's Plan in the same wave.
+  **Refuse Execution** until the milestone Plan acceptance pack is `accepted`
+  (or valid unattended Planning grant). Interactive pack confirmation remains
+  a real stop.
   Reconcile spoken requirements against Project Work and Task Work before
   planning. Never execute a UI-changing task while `ui_prototype_required`
   applies. Before the first software edit: run

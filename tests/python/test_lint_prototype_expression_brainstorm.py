@@ -93,9 +93,6 @@ def base_task_ok(*, mainstream_n: int = 5, backfill_n: int = 0) -> dict:
         if i == 1:
             promote = "expr_a"
             discarded = False
-        elif i == 2:
-            promote = "expr_b"
-            discarded = False
         candidates.append(_cand(i, source=source, discarded=discarded, promote_as=promote))
     record: dict = {
         "status": "recorded",
@@ -109,9 +106,9 @@ def base_task_ok(*, mainstream_n: int = 5, backfill_n: int = 0) -> dict:
             "only three close peers; invented two presentation theses" if backfill_n else None
         ),
         "candidate_count": total,
-        "promote_count": 2,
+        "promote_count": 1,
         "candidates": candidates,
-        "selected": {"expr_a": "c1", "expr_b": "c2"},
+        "selected": {"expr_a": "c1"},
         "selection_rationale": "best density and chrome fit for our Scope",
         "parity_check": {
             "same_capabilities": True,
@@ -180,11 +177,10 @@ class LintPrototypeExpressionBrainstormTests(unittest.TestCase):
 
     def test_t7_promote_count_mismatch_fails(self) -> None:
         data = base_task_ok()
-        data["expression_brainstorm"]["promote_count"] = 3
+        data["expression_brainstorm"]["promote_count"] = 2
         data["expression_brainstorm"]["selected"] = {
             "expr_a": "c1",
             "expr_b": "c2",
-            "industry_peer_c": "c3",
         }
         result = MOD.lint_document(data)
         self.assertFalse(result["ok"])

@@ -28,10 +28,13 @@ bundled references and use their structured tools.
 
 ### `plan`
 
-Resolve or create one task. **Soft-merge Analysis→Plan:** if A is incomplete,
-finish Analysis (Grill, UI prototype + `prototype_link_ledger` when UI applies)
-first. **Plan Entry Prototype Acceptance Gate:** non-UI tasks skip; UI tasks
-Must show an auditable Prototype Link Digest and record acceptance
+Resolve or create one task. Maintain Project E2E SoT (`project-e2e-sot`) when
+project-bound. **Analysis→Plan affinity (3.1→3.2):** if A is incomplete, finish
+Analysis (Grill, UI prototype + `prototype_link_ledger` when UI applies) to
+ready-to-confirm. User (or unattended) **确认/定稿** **opens Plan in the same
+wave**—do not invent 定稿. `gf析` may stop only before 定稿. **Plan Entry
+Prototype Acceptance Gate:** non-UI tasks skip; UI tasks Must show an auditable
+Prototype Link Digest and record acceptance
 (`verbal` | `app_visual_confirmed` | `unattended_auto_accept` after digest)
 via `lint_plan_entry_prototype_acceptance.py` before any Planning content.
 Then enter Planning **without a separate Planning-permission round trip**.
@@ -39,7 +42,8 @@ Build P (Plan Design Gate), update the living milestone Plan acceptance pack
 draft, confirm P under the interaction contract, run the readiness Grill,
 upload/hash-read back Task Work, create meaningful nodes, and stop
 execution-ready. P does not imply execution unless a direct instruction or
-valid delegated grant says so.
+valid delegated grant says so. **Scheme 1:** do not start Execution until the
+milestone Plan acceptance pack is `accepted` (or valid unattended adopt).
 
 ### `run`
 
@@ -50,28 +54,32 @@ it. Then for each task:
 
 1. create the right-depth task record and recover historical timing through the
    dedicated mutation surface when needed;
-2. complete and confirm A, applying bundled Grill findings directly;
-3. **auto-continue** into P in the same wave (no pause merely because A was
-   reached) **only after** Plan Entry Prototype Acceptance Gate is green
-   (force parent-chat digest + acceptance when UI; unattended may
-   `unattended_auto_accept` only after auditable links): build and confirm P,
-   refresh the living milestone acceptance pack + HTML links, batch only true
-   decision-changing questions once, and run the readiness Grill;
-4. validate direct or delegated authorization against current facts;
-5. capture AI execution start time without changing `pending` to `doing`,
+2. complete Analysis to ready-to-confirm; on **确认/定稿**, mark SoT 3.1 done and
+   open 3.2 in the same wave (pin `next_step`);
+3. **auto-continue** into P in the same wave after 定稿 **only after** Plan
+   Entry Prototype Acceptance Gate is green (force parent-chat digest +
+   acceptance when UI; unattended may `unattended_auto_accept` only after
+   auditable links): build and confirm P, refresh the living milestone
+   acceptance pack + HTML links, batch only true decision-changing questions
+   once, and run the readiness Grill;
+4. **Scheme 1 gate:** before any code Execution for the milestone, require all
+   in-scope tasks’ Plans done and pack `status: accepted` (or unattended
+   adopt)—fail closed `implement_before_milestone_pack_accepted` otherwise;
+5. validate direct or delegated authorization against current facts;
+6. capture AI execution start time without changing `pending` to `doing`,
    execute only allowed local work, and verify each deliverable;
-6. upload and content/hash-read back D;
-7. finish the final required node and let NodeService complete the parent;
-8. re-read task status and timestamps; continue with the next dependency batch
-   only when the user requested a multi-task run.
+7. upload and content/hash-read back D;
+8. finish the final required node and let NodeService complete the parent;
+9. re-read task status and timestamps; continue with the next dependency batch
+   only when the user requested a multi-task run and Scheme 1 allows it.
 
 An end-to-end request does not pause merely because A or P was reached, and
-does **not** pause for a courtesy “开始 Plan” after Analysis is complete. It
+does **not** pause for a courtesy “开始 Plan” after Analysis **定稿**. It
 pauses only for a real unresolved direction, unsafe target ambiguity, failed
-readiness, interactive milestone Plan acceptance pack confirmation, scope
-drift, forbidden action, missing material, or external authorization. Classify
-the stop through the shared unattended interaction contract rather than
-inventing a phase-specific prompt.
+readiness, interactive milestone Plan acceptance pack confirmation, Scheme 1
+pack gate, scope drift, forbidden action, missing material, or external
+authorization. Classify the stop through the shared unattended interaction
+contract rather than inventing a phase-specific prompt.
 
 ### `finish_audit`
 

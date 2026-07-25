@@ -151,13 +151,33 @@ Before non-dry-run dispatch, the milestone coordinator completes
    whole portfolio to finish before filling preflight for the first ready batch.
 4. Never treat a charter-time placeholder matrix as a real conflict assessment.
 
-Then read `granoflow-agent-workflow/parallel-task-execution` and dispatch every
-member of a fully `parallel_safe` batch at once when the host supports multiple
-workers. Serialize ordered dependencies, overlapping writes, shared side
-effects, and unknown material surfaces. Recheck revisions before writes and
-replan only the affected batch when new overlap is discovered; other independent
-work continues. Set `required_fields_phase: execute_preflight_required` only when
-preflight sections are complete for the work about to run.
+Then read `granoflow-agent-workflow/parallel-task-execution` (including Host
+Concurrency Policy) and dispatch every member of a fully `parallel_safe` batch
+at once when the host supports multiple workers under
+`read_only_fanout` / `disjoint_write_batch` (or isolated worktrees). Serialize
+ordered dependencies, overlapping writes, shared side effects, unknown material
+surfaces, and any `shared_write` without host isolation. Recheck revisions
+before writes and replan only the affected batch when new overlap is discovered;
+other independent work continues.
+
+After workers in a concurrent batch stop—and **before** claiming the batch done
+or merging into the main tree—load
+`granoflow-agent-workflow/parallel-batch-merge-review`, write
+`temp/parallel-batch-<batch_id>-review-v<n>.md` (+ HTML), lint, then:
+
+1. interactive: emit `file://` links and wait for pack accept/revise/reject;
+2. unattended: auto-adopt only when lint + pairwise + Delivery readbacks are
+   green (`decision_authority: unattended_grant`); otherwise park that batch and
+   continue independent batches;
+3. **single-writer merge** into the main tree only after `status: accepted`;
+4. run post-merge / combined integration gates serially on the main tree;
+5. set Milestone Work `parallel_execution.batches[].review_ref` (and Project E2E
+   SoT `parallel_batches[]` pointer when active).
+
+Skipping merge-review fails closed as `parallel_batch_merge_review_required` /
+`parallel_batch_merge_review_unaccepted`. Set
+`required_fields_phase: execute_preflight_required` only when preflight sections
+are complete for the work about to run.
 
 ### Persistent execution preflight
 

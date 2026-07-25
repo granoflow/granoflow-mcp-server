@@ -30,100 +30,103 @@ Also load `pipeline-attachment-and-reentry` on project-bound turns to classify
 Hosts **Must** treat the following stages as the canonical project path.
 Do not invent parallel “shortcut” completions that skip earlier stages.
 
-| #   | Stage id               | Meaning                                                                                                                                                                           | Primary owners                                                                                 |
-| --- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| 1   | `project_init`         | Project Definition Done (Project Work + Engineering pack; Design Baseline when `visual_baseline` required)                                                                        | `granoflow-project-definition`                                                                 |
-| 2   | `milestones_created`   | Planned milestones exist; portfolio tasks authored                                                                                                                                | `granoflow-portfolio-orchestrator`, `granoflow-milestone-workflow`, `granoflow-task-authoring` |
-| 3   | `milestone_analysis`   | **Per active milestone**: every in-scope child has confirmed Analysis (**UI includes confirmed prototype + link ledger**). `gf析` may stop here; `gf规`/`run` soft-merge into Plan. | `granoflow-task-orchestrator` + agent-workflow Analysis                                        |
-| 4   | `milestone_plan`       | **Per-task** Plan Design Gate + living milestone Plan acceptance pack (draft→HTML links→`prototype_alignment`→accept). Soft-merge: no courtesy pause after Analysis for `gf规`/`run`. | Plan Design Gate + `milestone-plan-acceptance-pack` + `lint_milestone_plan_acceptance_pack.py` + Readiness |
-| 5   | `milestone_implement`  | **IT preflight** then **Layer A** per child; per-milestone **Layer B** = milestone-scoped IT suite (user-invisible) + Experience + 任务回顾 (`milestone-integration-acceptance`). | task-orchestrator + `milestone-integration-acceptance`                                         |
-| 6   | `integration_campaign` | **最终交付 · 项目级 IT**（多里程碑路径：全量单测后编排全部不可见 IT）。单功能里程碑项目可 **waive** 本阶段，直进全面 E2E。不替代 Layer B。见 `full-delivery-acceptance`。         | `full-delivery-acceptance` + `granoflow-integration-test-campaign`                             |
-| 7   | `e2e_campaign`         | **最终交付 · 全面 E2E**（始终全项目覆盖，防改一处坏别处）：覆盖矩阵、可见窗、截图、Closing Summary。                                                                              | `full-delivery-acceptance` + `granoflow-e2e-test-campaign`                                     |
-| 8   | `project_complete`     | Required milestones accepted; **最终交付** green (or explicit residual); residuals closed or deferred                                                                             | milestone-coordination accept + project closeout                                               |
+| #   | Stage id               | Meaning                                                                                                                                                                                                             | Primary owners                                                                                             |
+| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 1   | `project_init`         | Project Definition Done (Project Work + Engineering pack; Design Baseline when `visual_baseline` required)                                                                                                          | `granoflow-project-definition`                                                                             |
+| 2   | `milestones_created`   | Planned milestones exist; portfolio tasks authored                                                                                                                                                                  | `granoflow-portfolio-orchestrator`, `granoflow-milestone-workflow`, `granoflow-task-authoring`             |
+| 3   | `milestone_analysis`   | **Per active milestone**: every in-scope child has confirmed Analysis (**UI includes confirmed prototype + link ledger**). `gf析` may stop here; `gf规`/`run` soft-merge into Plan.                                 | `granoflow-task-orchestrator` + agent-workflow Analysis                                                    |
+| 4   | `milestone_plan`       | **Per-task** Plan Design Gate + living milestone Plan acceptance pack (draft→HTML links→`prototype_alignment`→accept). Soft-merge: no courtesy pause after Analysis for `gf规`/`run`.                               | Plan Design Gate + `milestone-plan-acceptance-pack` + `lint_milestone_plan_acceptance_pack.py` + Readiness |
+| 5   | `milestone_implement`  | **Only after** milestone Plan acceptance pack is `accepted`. Milestone-level implement black box (per-task code inside). Unattended: include Layer B here. Interactive: Layer A here; Layer B may defer to stage 6. | task-orchestrator + (`milestone-integration-acceptance` when Layer B runs here)                            |
+| 6   | `integration_campaign` | **最终交付 · 项目级 IT**：编排并跑全量不可见 IT。交互调度在此吸收原各里程碑 Layer B + 项目级 IT。单功能里程碑项目可 **waive** 本阶段，直进全面 E2E。见 `full-delivery-acceptance`。                                 | `full-delivery-acceptance` + `granoflow-integration-test-campaign`                                         |
+| 7   | `e2e_campaign`         | **最终交付 · 全面 E2E**（始终全项目覆盖，防改一处坏别处）：覆盖矩阵、可见窗、截图、Closing Summary。                                                                                                                | `full-delivery-acceptance` + `granoflow-e2e-test-campaign`                                                 |
+| 8   | `project_complete`     | Required milestones accepted; **最终交付** green (or explicit residual); residuals closed or deferred                                                                                                               | milestone-coordination accept + project closeout                                                           |
 
 Rules:
 
-1. Stages 3–5 follow Project Work `pipeline_order` (see **Pipeline Order Gate**
-   below). Until the user chooses, do **not** assume milestone-by-milestone Plan
-   entry when peer milestones have not started Analysis.
-2. Stages 6–7 are **最终交付测试** (`full-delivery-acceptance`). Milestone
-   delivery stops at Layer B (no E2E). Final delivery **May** start after any
-   Layer B green (including a single milestone finished today). Path:
+1. Stages 3–5 follow **Schedule Policy** derived from `interaction_mode`
+   (see below). **Do not** ask the user to choose traversal names
+   (`breadth_first` / `depth_first` / `unset` are retired).
+2. Stages 6–7 are **最终交付测试** (`full-delivery-acceptance`). Path:
    - project has **1** feature milestone → waive stage 6 / skip portfolio unit+IT
-     → **full-project** E2E
+     → **full-project** E2E (milestone Layer B already covered under unattended
+     schedule, or ran inside the single-milestone design+implement path)
    - project has **≥2** → full unit → stage 6 IT → **full-project** E2E
      Inside campaigns, `campaign_drive: agent_auto`; board display-only.
 3. Stage 7 requires stage 6 `done` **or** valid single-milestone waiver
    (`pre_e2e_path: e2e_direct` / `integration_gate: waived_single_milestone`).
    Claiming `project_complete` while skipping最终交付 without residual fails
    closed as `project_lifecycle_stage_skip`.
-4. Ordinary feature tasks still obey task-local IT policy. Per-milestone IT =
-   Layer B in stage 5; project-wide IT/E2E only in最终交付 (with the 1-milestone
-   waiver above).
+4. Ordinary feature tasks still obey task-local IT policy. Layer B timing:
+   unattended → stage 5 per milestone; interactive → stage 6 with project IT.
+   E2E only in最终交付.
 
-## Pipeline Order Gate
+## Schedule Policy (derived from interaction mode)
 
-Persist on Project Work (and mirror on the board snapshot):
+**Default is interactive.** Users never pick `breadth_first` /
+`depth_first` / `unset`. Scheduling is implied by
+`interaction_mode` (preferences, grant, or an explicit mid-run switch).
+
+Persist optionally on Project Work / board (mirror only; not a user chooser):
 
 ```yaml
-pipeline_order:
-  mode: unset | breadth_first | depth_first
-  decided_at: null # ISO-8601 when set
-  decided_by: null # user | unattended_grant
+schedule_policy:
+  schema: granoflow_schedule_policy_v1
+  # Always derived — do not ask the user to set this enum
+  kind: interactive_all_ap_then_implement | unattended_milestone_loop
+  derived_from: interactive | unattended
+  switched_at: null # ISO-8601 when user switches into unattended mid-run
+  switched_by: null # user | unattended_grant
 ```
 
-| `mode`          | Meaning                                                                                                  |
-| --------------- | -------------------------------------------------------------------------------------------------------- |
-| `breadth_first` | Finish Analysis (including prototypes) for **all** feature milestones, then Plan batches, then Implement |
-| `depth_first`   | For one milestone: Analysis → Plan → Implement (incl. Layer B), then start the next milestone's Analysis |
-| `unset`         | Not yet chosen; Plan entry may be blocked by the ask gate below                                          |
+| `interaction_mode`      | `schedule_policy.kind`              | Meaning                                                                                                                                                                                                                                                                                                             |
+| ----------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `interactive` (default) | `interactive_all_ap_then_implement` | **Per task** across all feature milestones: Analysis (incl. prototypes) → Plan → next task. **Forbidden** to start any Implement while any in-scope task still lacks confirmed Analysis+Plan. Then all Layer A → stage 6 full IT (absorbs Layer B) → stage 7 E2E. Purpose: finish human-reviewed design work first. |
+| `unattended`            | `unattended_milestone_loop`         | **Per milestone (Scheme 1)**: all in-scope children Analysis→Plan (3.1→3.2; 定稿 opens Plan) → milestone Plan acceptance pack `accepted` → then milestone Implement (+ Layer B) → next milestone. **Forbidden** to Implement any task before the pack is accepted.                                                  |
 
-**Recommendation (software UI long runs):** prefer `depth_first` to keep per-wave
-context bounded (task Plan + living pack). Users may still choose
-`breadth_first`. Unattended Must never silently default—mode must already be
-written.
+### Mid-run switch to unattended
 
-### Ask gate (interactive)
+Whenever the user (or an approved grant) switches into unattended:
 
-Before starting Plan for any feature milestone (Plan Design Gate drafts, Plan
-batch, or claiming `milestone_plan` in progress), if **all** of:
+1. Set `interaction_mode: unattended` and
+   `schedule_policy.kind: unattended_milestone_loop` for **remaining** work.
+2. Do **not** redo completed Analysis/Plan/Implement evidence.
+3. Continue from the earliest incomplete work under the unattended milestone
+   loop (finish current milestone’s P→I before opening the next milestone’s
+   Analysis when that reduces context drift).
+4. If the host Agent exposes a built-in **Plan / planning mode** (or equivalent
+   collaborative planning surface) and it is available, **enter it when
+   switching into unattended** without asking the user to enable it. If the
+   surface is unavailable or unknown, continue with the Project E2E SoT alone
+   (`project-e2e-sot` / `long-task-run-continuity`) — never block on a vendor
+   mode name. Asking solely to enable host Plan mode fails closed as
+   `collaborative_planning_surface_confirm_in_unattended`.
+5. If the host exposes a **host wake surface** and it is available, arm wake
+   **bound to `temp/project-e2e-sot-v*.md`** (Host Wake Tick Protocol in
+   `long-task-run-continuity`). Do not arm a bare 「继续」 wake.
 
-1. Project has **≥2** feature milestones;
-2. `pipeline_order.mode` is `unset` (or missing);
-3. At least one **other** feature milestone still has Analysis `not_started`
-   (no child Analysis started);
+### Interactive continue rules
 
-then **stop**. Do not enter Plan. Ask the user in plain language exactly:
+Under interactive `pipeline_continue` / 「继续」: after a task’s Analysis
+**定稿/确认**, proceed to that same task’s Plan before the next task’s
+Analysis. Explicit `analyze` / `gf析` may stop before 定稿. Do **not** start
+Implement until every feature milestone’s in-scope tasks have confirmed
+Analysis+Plan **and** each milestone Plan acceptance pack is `accepted`.
 
-> 多里程碑时，先全部分析，还是做一个完整闭环再做下一个？
-> （软件 UI 长跑更推荐「做一个完整闭环再做下一个」，避免一次 Plan 上下文过大。）
+### Unattended continue rules
 
-Map answers:
-
-- 先全部分析 → write `pipeline_order.mode: breadth_first`, `decided_by: user`
-- 做一个完整闭环再做下一个 → write `pipeline_order.mode: depth_first`,
-  `decided_by: user`
-
-Then continue per the chosen mode. Skipping the ask and entering Plan fails
-closed as `pipeline_order_unresolved`.
-
-Skip the ask when: only one feature milestone; or every other feature milestone
-already has Analysis `in_progress` / `done`; or `mode` is already set.
-
-### Unattended
-
-Do **not** chat-ask mid-run. `pipeline_order.mode` Must already be
-`breadth_first` or `depth_first` in Project Work or the unattended grant
-(`decided_by: unattended_grant`). Missing choice → fail closed
-`pipeline_order_unresolved`, list it in the Residual Report, and refuse Plan
-entry. Never silently default to `depth_first`.
+Do **not** chat-ask for schedule choice. Unattended already implies
+`unattended_milestone_loop` (Scheme 1). Under `pipeline_continue` / long-run /
+「继续」 / host-wake tick: finish all remaining Analysis→Plan for the current
+milestone and accept the Plan pack before any Implement; do not Implement one
+child while sibling Plans are open. Orchestration truth is
+`temp/project-e2e-sot-v*.md` (`project-e2e-sot.md`).
 
 ## Interaction Modes
 
-| Mode          | Same pipeline? | Progress board                                  | Stage / phase confirmations                                                                                                                                   |
-| ------------- | -------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `interactive` | Yes            | **Required** at end of every project-bound turn | Existing confirm gates remain (`[confirm]`, Plan Gate, visual pick, etc.)                                                                                     |
-| `unattended`  | Yes            | **Required** as **display-only notice**         | Do **not** ask the user to confirm the board or ordinary phase questions; follow `unattended-interaction-contract` (defer external blockers; residual report) |
+| Mode          | Same pipeline?             | Progress board                                  | Stage / phase confirmations                                                                                                                                   |
+| ------------- | -------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `interactive` | Yes (interactive schedule) | **Required** at end of every project-bound turn | Existing confirm gates remain (`[confirm]`, Plan Gate, visual pick, etc.)                                                                                     |
+| `unattended`  | Yes (unattended schedule)  | **Required** as **display-only notice**         | Do **not** ask the user to confirm the board or ordinary phase questions; follow `unattended-interaction-contract` (defer external blockers; residual report) |
 
 Unattended **never** skips stages. It only skips **asking**. The board is still
 emitted so the user can see progress and gaps.
@@ -163,10 +166,12 @@ project_lifecycle_board:
   board_confirmation: required | display_only
   updated_at: <ISO-8601>
   contract_loaded: true
-  pipeline_order: # mirror Project Work; optional on legacy boards
-    mode: unset | breadth_first | depth_first
-    decided_at: null
-    decided_by: null # user | unattended_grant
+  schedule_policy: # derived from interaction_mode; never a user chooser
+    schema: granoflow_schedule_policy_v1
+    kind: interactive_all_ap_then_implement | unattended_milestone_loop
+    derived_from: interactive | unattended
+    switched_at: null
+    switched_by: null # user | unattended_grant
   stages:
     - id: project_init
       status: not_started | in_progress | done | blocked
@@ -267,36 +272,40 @@ then apply **最终交付** rules from `full-delivery-acceptance`:
 
 1. `project_init` incomplete → continue Project Definition
 2. milestones missing → portfolio / milestone-workflow
-3. If the **Pipeline Order Gate** ask applies (about to enter Plan; peers not
-   started Analysis; mode unset):
-   - interactive → `stage_id: milestone_plan`,
-     `needs_user_confirmation: true`,
-     `summary` = the exact ask sentence above; do not start Plan work
-   - unattended → blocker `pipeline_order_unresolved`; refuse Plan; residual
-4. Else if Analysis incomplete under the active order:
-   - `depth_first` / single milestone / peers already analyzing → finish the
-     earliest sequenced milestone's remaining Analysis
-   - `breadth_first` → finish Analysis on any feature milestone still incomplete
-     before any Plan
-5. Analysis done for the Plan-eligible milestone(s), Plan incomplete → Plan
-   Design Gate / plan batch; when Gate drafts are ready, emit
-   `milestone-plan-acceptance-pack` for acceptance
-6. Plan ready (pack accepted / unattended grant), implement incomplete → run /
-   execute remaining tasks **using the accepted pack as the primary milestone
-   alignment reference** (see `milestone-plan-acceptance-pack.md`); for long
-   or unattended implement also keep an active durable run plan per
-   `long-task-run-continuity.md` (optional collaborative planning surface when
-   the host exposes one—never require a vendor mode name)
-7. After Layer B green, **May** offer最终交付 even if only one milestone
-   finished this run. When entering:
-   - `project_feature_milestone_count == 1` → `pre_e2e_path: e2e_direct`;
-     waive/skip stage 6; `next_action.stage_id: e2e_campaign` (full-project E2E)
-   - count ≥ 2 → `full_unit_and_it`; next is stage 6 then stage 7
-8. Final delivery green (or residuals) → `project_complete` / accept residuals
+3. Else if design work (Analysis/Plan) incomplete under the active schedule:
+   - interactive (`interactive_all_ap_then_implement`) → for the earliest
+     sequenced task that lacks confirmed Analysis or Plan: finish that task’s
+     Analysis (incl. prototype), then that task’s Plan, then the next task;
+     traverse all feature milestones before any Implement. Living milestone
+     Plan acceptance pack updates as each task enters Plan.
+   - unattended (`unattended_milestone_loop`) → on the earliest sequenced
+     milestone: finish **all** in-scope Analysis→Plan (3.1→3.2; 定稿 opens
+     Plan), accept the milestone Plan pack, **then** milestone Implement
+     (+ Layer B). Never Implement before pack `accepted` (Scheme 1).
+4. Under interactive schedule, when every feature milestone’s in-scope tasks
+   have confirmed Analysis+Plan **and** each milestone pack is accepted, and
+   Implement is incomplete → stage `milestone_implement`: Layer A only
+   (implement + unit tests) for each task in order; **do not** run Layer B
+   mid-wave. Use accepted packs as the primary alignment reference; keep
+   `temp/project-e2e-sot-v*.md` per `project-e2e-sot.md` /
+   `long-task-run-continuity.md` when long/unattended.
+5. Under unattended schedule, after a milestone’s pack is accepted, implement
+   that milestone (Layer A + Layer B) before starting the next milestone’s
+   Analysis. When switching into unattended, activate the host collaborative
+   planning surface if available and bind host wake to the Project E2E SoT.
+6. After the Implement wave is ready for最终交付:
+   - interactive + count ≥ 2 → stage 6 runs **full** IT (orchestrate then
+     execute; absorbs deferred Layer B suites + project IT), then stage 7 E2E
+   - unattended: after any milestone Layer B green, **May** offer最终交付;
+     count == 1 → `e2e_direct` (waive stage 6); count ≥ 2 → `full_unit_and_it`
+   - interactive + count == 1 → after Layer A (and any single-milestone IT
+     policy) green, `e2e_direct` may waive stage 6 → full-project E2E
+7. Final delivery green (or residuals) → `project_complete` / accept residuals
 
-Within stages 3–5 after `pipeline_order` is set: `depth_first` prefers the
-**earliest sequenced** milestone not done through Implement; `breadth_first`
-prefers completing all Analyses, then all Plans, then all Implements.
+Within stages 3–5: interactive prefers **per-task Analysis→Plan across all
+milestones**, then all Implements; unattended prefers the **earliest
+sequenced** milestone not done through Implement (including that milestone’s
+Layer B).
 
 ## Relationship To Other Contracts
 
@@ -312,19 +321,21 @@ prefers completing all Analyses, then all Plans, then all Implements.
 
 ## Fail-Closed Codes
 
-| Code                                            | When                                                                 |
-| ----------------------------------------------- | -------------------------------------------------------------------- |
-| `project_lifecycle_board_unread`                | Reference not loaded via MCP                                         |
-| `project_lifecycle_board_missing`               | Project-bound turn without board                                     |
-| `project_lifecycle_board_render_failed`         | Script/render not ok                                                 |
-| `project_lifecycle_board_confirm_in_unattended` | Unattended asked user to confirm the board                           |
-| `project_lifecycle_stage_skip`                  | Later stage claimed without earlier evidence                         |
-| `project_lifecycle_board_incomplete_stages`     | Board omits one of the eight stage ids                               |
-| `pipeline_order_unresolved`                     | Plan entry attempted while order unset and peer Analysis not started |
-| `full_delivery_*`                               | See `full-delivery-acceptance`                                       |
-| `pipeline_entry_unclassified`                   | See `pipeline-attachment-and-reentry`                                |
-| `pipeline_reentry_skipped`                      | See `pipeline-attachment-and-reentry`                                |
-| `pipeline_stage_not_rewound`                    | See `pipeline-attachment-and-reentry`                                |
+| Code                                                   | When                                                                                         |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `project_lifecycle_board_unread`                       | Reference not loaded via MCP                                                                 |
+| `project_lifecycle_board_missing`                      | Project-bound turn without board                                                             |
+| `project_lifecycle_board_render_failed`                | Script/render not ok                                                                         |
+| `project_lifecycle_board_confirm_in_unattended`        | Unattended asked user to confirm the board                                                   |
+| `project_lifecycle_stage_skip`                         | Later stage claimed without earlier evidence                                                 |
+| `project_lifecycle_board_incomplete_stages`            | Board omits one of the eight stage ids                                                       |
+| `implement_before_all_ap_forbidden`                    | Interactive schedule started Implement while any in-scope task lacks confirmed Analysis+Plan |
+| `project_e2e_sot_implement_before_pack_accepted`       | Implement started before milestone Plan acceptance pack accepted (Scheme 1)                  |
+| `collaborative_planning_surface_confirm_in_unattended` | Asked solely to enable host Plan/planning UI under unattended                                |
+| `full_delivery_*`                                      | See `full-delivery-acceptance`                                                               |
+| `pipeline_entry_unclassified`                          | See `pipeline-attachment-and-reentry`                                                        |
+| `pipeline_reentry_skipped`                             | See `pipeline-attachment-and-reentry`                                                        |
+| `pipeline_stage_not_rewound`                           | See `pipeline-attachment-and-reentry`                                                        |
 
 ## Admission Test
 
@@ -336,9 +347,14 @@ prefers completing all Analyses, then all Plans, then all Implements.
    phrase (e.g. 「可以说『开始实施』」).
 4. If unattended: is the board display-only with no confirm prompt?
 5. Does the next stage match the first incomplete pipeline step under the
-   active `pipeline_order` (or the Pipeline Order ask / residual when unset)?
-6. If about to enter Plan with peer Analysis `not_started` and mode unset: was
-   Plan refused and the ask (interactive) or `pipeline_order_unresolved`
-   (unattended) emitted?
-7. If midstream change was confirmed: were writeback + stage rewind applied
+   schedule derived from `interaction_mode`?
+6. Under interactive: was Implement refused while any in-scope task still
+   lacks confirmed Analysis+Plan (`implement_before_all_ap_forbidden`)?
+7. When switching into unattended: if host Plan/planning mode is available,
+   was it entered without asking; if unavailable, did work continue with the
+   Project E2E SoT alone? If host wake is available, was it armed bound to
+   that SoT (not a bare 「继续」)?
+8. Under unattended: was Implement withheld until the milestone Plan acceptance
+   pack was accepted (Scheme 1)?
+9. If midstream change was confirmed: were writeback + stage rewind applied
    (`pipeline_reentry_skipped` / `pipeline_stage_not_rewound` otherwise)?

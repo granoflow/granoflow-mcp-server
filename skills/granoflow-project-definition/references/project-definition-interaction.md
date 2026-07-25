@@ -31,6 +31,12 @@ project`, `定义这个项目`, document completeness, urgency, or the presence 
    text or “default interactive”).
 4. Read `granoflow-agent-workflow/unattended-interaction-contract` **only when**
    `executionMode` is unattended.
+5. When unattended: immediately run the contract's **External Capability
+   Inventory** (secrets / payment / push-publish-deploy / destructive Git /
+   human-device gates). Batch early grant / `not_required` /
+   `interaction_required`. Do not leave knowable external classes to mid-run
+   discovery; if one still appears later, defer it to the end of the solvable
+   queue without blocking siblings.
 
 ### Interactive mode (default)
 
@@ -126,8 +132,11 @@ in a decision batch:
 2. If found → record `document_scan_status: found` and path/provenance.
 3. If missing → **interactive:** ask the three-way source choice
    (`user_provided` / `ai_generated` / `downloaded_license_clear`) and wait;
-   **unattended:** do not invent a source—residual / fail closed
-   `app_icon_source_unresolved`.
+   **unattended:** recommend and auto-adopt (default `ai_generated`), set
+   `user_decision_recorded: true` + `decision_authority: unattended_grant`,
+   finalize the asset, continue—do **not** wait to ask which source. Residual
+   only when generation/download is externally impossible
+   (`app_icon_source_unresolved` then).
 4. Lint with `lint_app_icon_source_gate.py` before Project Work confirm.
 
 Pure Web/CLI/library projects set `applicability: not_applicable` with basis.

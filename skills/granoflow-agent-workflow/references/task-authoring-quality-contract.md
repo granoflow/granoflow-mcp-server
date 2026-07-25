@@ -101,27 +101,26 @@ protected surfaces.
 
 **Mandatory prototype:** any UI change requires a high-fidelity HTML prototype.
 Set Task Work `prototype_requirement: required`. Apply **Task Prototype Craft
-Gate And Option Set**: interactive **mainstream-reference-first** candidate
-pool (≥5; brainstorm backfill only when mainstream `<5`; AI chooses
-`same_category` vs `capability_match`, defaulting to capability when unsure)
-then dual **page expressions** (`expr_a` + `expr_b`) with **functional
-parity** (same capabilities + same data; see
-`prototype-expression-brainstorm.md`) inside the locked Design System, with ≥2
-contrast axes and a **side-by-side Contrast Gallery** with candidate digest +
-per-axis visible-diff captions (mix-and-match per task/page; never reopen
-Design Spec as task options; conditional industry third only when documented);
-unattended same protocol then single `expr_a`; Craft Gate before
-`visualConfirmed` (`task_prototype_craft_incomplete` otherwise), including
-**Baseline fit** (`prototype-baseline-fit.md`;
-`prototype_baseline_fit_*` / `prototype_generic_phone_frame` /
-`prototype_shell_chrome_mismatch`; require
+Gate And Option Set** + `prototype-serial-revision`: **mainstream-reference-
+first** candidate pool (≥5; brainstorm backfill only when mainstream `<5`; AI
+chooses `same_category` vs `capability_match`, defaulting to capability when
+unsure) then promote **one** serial thesis (`expr_a`; see
+`prototype-expression-brainstorm.md`) inside the locked Design System; run
+serial multi-draft revision (max 5; interactive last ≤3 / single-draft
+confirm_or_revise; unattended auto-adopt; never reopen Design Spec as task
+options); Craft Gate before `visualConfirmed`
+(`task_prototype_craft_incomplete` otherwise), including **Baseline fit**
+(`prototype-baseline-fit.md`; `prototype_baseline_fit_*` /
+`prototype_generic_phone_frame` / `prototype_shell_chrome_mismatch`; require
 `craft_checklist.baseline_fit_ok` after `lint_prototype_baseline_fit.py`),
 **product truth** (`prototype_product_truth_violation`), **expression
 candidates** (`prototype_option_brainstorm_*` /
 `prototype_option_mainstream_skip` / `prototype_option_scope_mode_invalid` /
-`prototype_option_function_split` / `prototype_option_data_divergence`;
-require `craft_checklist.expression_brainstorm_ok` after
-`lint_prototype_expression_brainstorm.py`), and **user-visible copy boundary**
+`prototype_option_promote_count_mismatch`; require
+`craft_checklist.expression_brainstorm_ok` after
+`lint_prototype_expression_brainstorm.py`), **serial revision**
+(`prototype_revision_*`; require `craft_checklist.serial_revision_ok` after
+`lint_prototype_revision_ledger.py`), and **user-visible copy boundary**
 (`user_visible_copy_boundary_unread` /
 `user_visible_copy_boundary_violation`; require
 `craft_checklist.user_visible_copy_boundary_ok` after

@@ -18,6 +18,30 @@ Skipping this load and claiming full user-flow coverage fails closed as
 `e2e_campaign_coverage_unloaded`. An incomplete matrix without residuals fails
 as `e2e_campaign_coverage_incomplete`.
 
+## Project E2E SoT thin gate
+
+Coverage is **not invented in the campaign**. It is derived from Project Work
+journeys, `stress_paths`, and hard acceptance rows (below). After the matrix is
+built and every required row is `covered` or an explicit residual, update
+`temp/project-e2e-sot-v*.md`:
+
+```yaml
+e2e_campaign:
+  coverage_matrix_check: not_applicable | covered | gap
+  evidence_ref:
+    - <coverage_matrix path>
+    - <suite_plan path>
+```
+
+- `covered` — matrix complete (or only allowed residuals).
+- `gap` — required journeys/acceptance rows missing cases without residual →
+  **do not** mark stage `e2e_campaign` done (`e2e_coverage_matrix_gap`).
+- `not_applicable` — only when E2E truly does not apply (rare; document basis).
+
+Stage 7 remains `agent_auto` for the run loop; interactive mode may ask about
+optional manual local testing **after** E2E announces complete (see
+`full-delivery-acceptance`).
+
 ## Required Sources (Must load)
 
 | Source                  | Where                                                                            | What to extract                                                      |

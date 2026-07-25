@@ -1,9 +1,13 @@
 # Parallel Task Execution
 
 Use this contract whenever an AI agent is asked to execute two or more current
-Granoflow tasks. `doing` is a human focus state, not an AI worker lease and not
-an execution-admission gate. AI-owned work normally keeps every task `pending`
-until its completion owner changes it to `done`.
+Granoflow tasks, or when the host fans out Cursor Task / Multitask / subagent
+workers against the same project. `doing` is a human focus state, not an AI
+worker lease and not an execution-admission gate. AI-owned work normally keeps
+every task `pending` until its completion owner changes it to `done`.
+
+Also load `parallel-batch-merge-review` before claiming any concurrent batch
+done. Skipping that load fails closed as `parallel_batch_merge_review_unread`.
 
 ## 1. Build The Conflict Inventory
 
@@ -55,6 +59,7 @@ parallel_execution:
       shared_read_inputs: []
       disjoint_write_surfaces: [<bounded surfaces>]
       independent_acceptance: [<evidence ids>]
+      review_ref: null # temp/parallel-batch-<batch_id>-review-v<n>.md after close
   serialized_edges:
     - from: <task id>
       to: <task id>
@@ -65,20 +70,46 @@ parallel_execution:
 Task Work owns each task's local write-surface declaration. Milestone Work owns
 the pairwise decision and batch assignment. Do not duplicate full task plans.
 
-## 3. Dispatch The Whole Safe Batch
+## 3. Host Concurrency Policy
+
+Host subprocesses (Cursor Task, Multitask, explore/generalPurpose workers, shell
+fan-out) share one working tree unless the host supplies an isolated worktree /
+branch per worker. Classify every fan-out before launch:
+
+| Class                  | When                                                                                         | Same tree allowed? |
+| ---------------------- | -------------------------------------------------------------------------------------------- | ------------------ |
+| `read_only_fanout`     | Workers only read; no material write, no mutating gates                                      | Yes                |
+| `disjoint_write_batch` | Every pair is `parallel_safe`; each worker bound to recorded write surfaces                  | Yes                |
+| `shared_write`         | Two or more workers may touch the same file, SoT, Delivery, lockfile, or shared gate command | **No**             |
+
+Rules:
+
+1. **`shared_write` on the same working tree is forbidden.** Launching it fails
+   closed as `parallel_host_shared_write_forbidden`. Serialize, or escalate to
+   one isolated worktree/branch per writer, then a single-writer merge.
+2. **No host isolation capability** (no worktree / branch isolation available)
+   means: only `read_only_fanout` and proven `disjoint_write_batch` may run
+   concurrently. Anything else **must serialize**. Claiming concurrency without
+   isolation fails closed as `host_isolation_unavailable`.
+3. A host capacity limit may reduce actual concurrency; report
+   `host_capacity_limited`, not a fake task conflict.
+4. Skill-cluster edits, Project E2E SoT mutations, and a shared `npm run check`
+   (or equivalent portfolio gate) on one tree count as `shared_write` unless
+   ownership is explicitly single-writer for that step.
+
+## 4. Dispatch The Whole Safe Batch
 
 When the host supports multiple agents or workers, dispatch every task in one
-`parallel_safe` batch concurrently. A host capability limit may reduce actual
-concurrency, but it must be reported as `host_capacity_limited`, not disguised
-as a task conflict. Each worker receives one task, its exact write boundary,
-its dependencies, the batch id, and the stop rule for newly discovered overlap.
+`parallel_safe` / `disjoint_write_batch` concurrently under §3. Each worker
+receives one task, its exact write boundary, its dependencies, the batch id, and
+the stop rule for newly discovered overlap.
 
 Before each material write, re-read the relevant revision. If a worker discovers
 an unplanned shared write, dependency, or side effect, it must stop that write,
 publish the new conflict fact to the supervisor, and replan the affected batch.
 Other still-independent workers continue.
 
-## 4. Keep AI Work Pending Until Completion
+## 5. Keep AI Work Pending Until Completion
 
 After Analysis, Planning, readiness, and authorization pass, AI execution uses
 this lifecycle:
@@ -108,13 +139,60 @@ instead of fabricating readback.
 Human manual work keeps the normal `pending -> doing -> done` focus lifecycle;
 the App continues to own the `doing` transition's automatic start time.
 
-## 5. Acceptance
+## 6. Parallel Batch Merge Review
+
+After all workers in a concurrent batch finish (or stop for replanning), and
+**before** any claim that the batch is done or any multi-writer merge into the
+main tree:
+
+1. Load `parallel-batch-merge-review` and write
+   `temp/parallel-batch-<batch_id>-review-v<n>.md` (+ HTML per that contract).
+2. Re-run pairwise classification on the recorded write surfaces
+   (`pairwise_recheck`). New overlap → do not merge; replan.
+3. Lint the pack (`lint_parallel_batch_merge_review.py`).
+4. **Interactive:** emit clickable `file://` HTML + Markdown links; wait for
+   explicit pack accept/revise. Reject may target one worker or the whole batch.
+5. **Unattended:** do not ask; if lint + pairwise + worker Delivery readbacks
+   are green, auto-adopt with `decision_authority: unattended_grant`. On
+   failure, park the batch (or conflicting workers) per
+   `unattended-interaction-contract` Residual rules and continue other
+   independent `parallel_safe` batches—never freeze the whole portfolio for one
+   bad batch.
+6. **Single-writer merge** into the main working tree only after
+   `status: accepted` (interactive) or valid unattended auto-adopt.
+7. Run post-merge / combined integration gates on the main tree **serially**.
+
+Skipping the pack before batch-done fails closed as
+`parallel_batch_merge_review_required`. Merging or marking the batch done while
+the pack is not accepted fails closed as
+`parallel_batch_merge_review_unaccepted`.
+
+Point Project E2E SoT `parallel_batches[]` at `batch_id` / `review_ref` /
+`status` when a project SoT is active (coarse pointer only).
+
+## 7. Acceptance
 
 Parallel execution is accepted only when:
 
 - every pair in a concurrent batch was explicitly classified `parallel_safe`;
+- Host Concurrency Policy was obeyed (`read_only_fanout` or
+  `disjoint_write_batch`, or isolated worktrees for otherwise-conflicting
+  writers);
 - no unplanned overlapping write or external effect occurred;
 - each task has independent Delivery, node, status, and timestamp readback;
-- combined integration checks pass after all batch members finish;
-- a worker summary, process exit, or elapsed time was never treated as task
-  completion.
+- the Parallel Batch Review Pack is `accepted` (interactive) or validly
+  auto-adopted (unattended);
+- combined integration checks pass after single-writer merge;
+- a worker summary, process exit code, subprocess UI success, or elapsed time
+  was never treated as task or batch completion.
+
+## Hard-fail codes
+
+| Code                                     | When                                                           |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `parallel_host_shared_write_forbidden`   | Concurrent writers share a write surface on one working tree   |
+| `host_isolation_unavailable`             | Concurrency claimed without worktree/isolation when required   |
+| `parallel_batch_merge_review_unread`     | Merge-review reference not loaded before batch close           |
+| `parallel_batch_merge_review_required`   | Batch done / merge without a review pack                       |
+| `parallel_batch_merge_review_unaccepted` | Merge or batch-done while pack not accepted / not auto-adopted |
+| `host_capacity_limited`                  | Reported capacity shrink (not a conflict class; informational) |
