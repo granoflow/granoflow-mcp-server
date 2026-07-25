@@ -195,6 +195,28 @@ export function registerAuthorizationAndProjectSkillTools(
     deps.readProjectDefinitionSkill,
     "granoflow-project-definition",
   );
+  registerCampaignDeliveryAndSotSkillTools(registerTool, deps);
+}
+
+function registerCampaignDeliveryAndSotSkillTools(
+  registerTool: ToolRegistrar,
+  deps: FoundationDependencies,
+): void {
+  const read = (
+    name: string,
+    description: string,
+    path: string,
+    skill: SkillReader,
+    skillId: string,
+  ) =>
+    registerTool(
+      name,
+      description,
+      {},
+      async () =>
+        await skillResult(deps, path, skill(), deps.bundledSkillResources.listReferences(skillId)),
+    );
+
   read(
     "granoflow_integration_test_campaign_skill",
     "Read the bundled Granoflow Integration Test Campaign skill. Call when the user wants a standard integration-test campaign (service_path / cross-module real I/O): orchestrate, auto-drive until green, plain-language closing summary. Not E2E UI/screenshots and not task-local write-only integration tests.",
