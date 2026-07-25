@@ -6,14 +6,21 @@ English, or other languages.
 
 ## Commands
 
-| Command | ASCII alias | Route          | Normal stopping point            |
-| ------- | ----------- | -------------- | -------------------------------- |
-| `gf`    | none        | automatic      | selected from context            |
-| `gf记`  | `gf+`       | `capture`      | task id readback                 |
-| `gf析`  | `gf?`       | `analyze`      | confirmed A or blocker           |
-| `gf规`  | `gf>`       | `plan`         | P confirmed and readiness passed |
-| `gf做`  | `gf!`       | `run`          | D uploaded and task `done`       |
-| `gf完`  | `gf.`       | `finish_audit` | evidence-backed closure          |
+| Command | ASCII alias | Route          | Normal stopping point                                                         |
+| ------- | ----------- | -------------- | ----------------------------------------------------------------------------- |
+| `gf`    | none        | automatic      | selected from context                                                         |
+| `gf记`  | `gf+`       | `capture`      | task id readback                                                              |
+| `gf析`  | `gf?`       | `analyze`      | confirmed A or blocker (**does not** auto-enter Plan)                         |
+| `gf规`  | `gf>`       | `plan`         | finish A if needed; UI Plan Entry acceptance (digest + verbal/App/unattended); then P + readiness (**no second Planning-permission ask**) |
+| `gf做`  | `gf!`       | `run`          | A→P auto-continue in-task; D uploaded and task `done`                         |
+| `gf完`  | `gf.`       | `finish_audit` | evidence-backed closure                                                       |
+
+Soft-merge rule: `gf规` / `gf做` never wait for a user phrase equivalent to
+「开始 Plan」after Analysis deliverables are complete for the same task.
+UI tasks still Must pass Plan Entry Prototype Acceptance (auditable
+`file://` digest, then `verbal` / App / unattended auto-accept) before Plan
+content—non-UI skips. Interactive milestone Plan acceptance pack confirmation
+and execution authorization remain real stops when those gates apply.
 
 The text after the command names the target and scope. If the target is
 ambiguous because multiple existing tasks match, the host must not update one

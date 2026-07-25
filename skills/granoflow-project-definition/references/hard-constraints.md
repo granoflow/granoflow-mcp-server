@@ -44,6 +44,66 @@ and review.
 - Unattended: non-blocking notice + ledger; closing **Prototype Link Digest**
   required (`prototype_link_digest_required`).
 - Skipping interactive wait → `prototype_preview_review_required`.
+- Persist `granoflow_prototype_link_ledger_v1` and lint with
+  `lint_prototype_link_ledger.py --require-complete` before UI Analysis
+  confirmation. Missing/empty HTML files, non-absolute `file://` links, or
+  digest without Markdown links → `prototype_link_file_missing` /
+  `prototype_link_not_absolute` / `prototype_link_digest_required` /
+  `prototype_link_ledger_incomplete`. SHA/id-only confirmation is not enough.
+
+## Plan soft-merge + living acceptance pack
+
+- `gf析` stops at Analysis; `gf规` / `run` auto-continue into per-task Plan after
+  Analysis deliverables are complete (no courtesy “开始 Plan” pause).
+- Keep task-level Plan Design Gate; milestone Plan acceptance pack is a **living
+  draft** refreshed after each task Gate, with HTML basename + `file://` links
+  and `prototype_alignment` vs confirmed prototypes.
+- Software UI pack closeout requires Markdown test lanes `unit` + `integration`
+  + `e2e` (author only; suites still run in Layer B / final-delivery campaigns).
+- Lint: `lint_milestone_plan_acceptance_pack.py --require-links`.
+
+## Plan cases must be implemented (no silent drop)
+
+- Every authored Plan / pack Case ID Must appear in
+  `plan_case_implementation` before the matching gate:
+  - Layer A: `unit`/`widget` → on-disk `test_ref` bound to Case ID;
+    `integration`/`e2e` → `scheduled_campaign` + `campaign_ref`.
+  - Layer B: `integration` → `executed`.
+  - Final-delivery e2e_campaign: `e2e` → `executed`.
+- Lint: `lint_plan_case_implementation.py --gate … --workspace …`.
+  Gaps → `plan_case_implementation_gap` / `plan_case_test_ref_missing` /
+  `plan_case_test_ref_unbound`.
+
+## Prototype → Contract operation coverage
+
+- Confirmed HTML Must not carry `action:` / `navigation:` `data-contract-ref`
+  values absent from the Screen Content Contract
+  (`prototype_contract_orphan_ref`).
+- Interactive controls Must use `data-contract-ref` or
+  `data-contract-ignore` (`prototype_interactive_unmarked`).
+- Lint: `lint_contract_prototype_semantics.py` with `--html` (Analysis /
+  rematch / product-truth writeback). Contract → prototype coverage remains
+  required as before.
+
+## Plan Entry — prototype acceptance
+
+- Non-UI (`prototype_requirement: not_required` / N/A): no prototype gate.
+- UI: before Plan / soft-merge into Plan, auditable Prototype Link Digest
+  (`file://`) **then** acceptance (`verbal` | `app_visual_confirmed` |
+  `unattended_auto_accept`). Unattended auto-accept only after digest.
+- Lint: `lint_plan_entry_prototype_acceptance.py`. Fail closed
+  `plan_entry_prototype_acceptance_required` /
+  `plan_entry_prototype_unconfirmed`.
+
+## Unit tests: behavior per operation — not copy
+
+- **Forbid** unit tests whose purpose is asserting user-visible copy/text
+  presence (`find.text` / `getByText` / `asserts: copy_presence`).
+- **Require** ≥1 `unit` Plan case per in-scope operation/action
+  (`operation_id` ← Screen Content Contract `actions[].action_id`).
+- Lint: `lint_plan_unit_policy.py` (+ `--scan-tests` at Delivery).
+  Fail closed `unit_copy_assertion_forbidden` /
+  `unit_operation_coverage_incomplete`.
 
 ## Design Spec / Shell
 

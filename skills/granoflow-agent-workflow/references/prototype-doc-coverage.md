@@ -194,12 +194,16 @@ Rules:
    update docs to match the prototype. Product-behavior conflicts reopen and
    update the Screen Content Contract first, then regenerate the prototype and
    docs (`prototype_doc_conflict`). Do not soft-pass Analysis.
-4. Analysis / discussion batch **Must not** close while any row is
+4. After finalize / rematch / conflict resolution that changes clickable
+   controls, re-run `lint_contract_prototype_semantics.py --html` so Prototype →
+   Contract reverse coverage is green (`prototype_contract_orphan_ref` /
+   `prototype_interactive_unmarked` fail closed).
+5. Analysis / discussion batch **Must not** close while any row is
    `missing`/`conflict`, or while `status` is `pending` with a non-empty
    required inventory.
-5. `status: complete` only when every row is `covered` (or inventory truly
+6. `status: complete` only when every row is `covered` (or inventory truly
    empty with explicit `not_applicable` justification).
-6. Project Work updates are required when the prototype changes journeys,
+7. Project Work updates are required when the prototype changes journeys,
    screens, acceptance, ship bar, or user-visible product copy that Project
    Work owns. Honest `project_work_locus: not_applicable` needs a reason.
 
@@ -293,10 +297,13 @@ from `task-work-document-workflow` when closing or pausing Analysis.
 1. Load this reference + product-truth writeback + fan-out + discussion writeback?
 2. Inventory **all task-owned UI surfaces** into `prototype_html_coverage.surfaces` with HTML refs?
 3. Lint `--kind html_coverage` ok and `prototype_html_coverage.status: complete`?
-4. Load `widgets.yaml`; declare `prototype_widget_reuse`; lint `--kind widget_reuse` ok?
-5. Inventory prototype pages/controls/states/copy/flows into doc `rows`?
-6. Update Task Work + Project Work until all doc rows `covered`?
-7. Lint `--kind coverage` ok and `prototype_doc_coverage.status: complete`?
+4. Persist `prototype_link_ledger` (`granoflow_prototype_link_ledger_v1`) with
+   absolute `file://` Markdown digest; lint
+   `lint_prototype_link_ledger.py --require-complete --html-coverage … --prototype-root …`?
+5. Load `widgets.yaml`; declare `prototype_widget_reuse`; lint `--kind widget_reuse` ok?
+6. Inventory prototype pages/controls/states/copy/flows into doc `rows`?
+7. Update Task Work + Project Work until all doc rows `covered`?
+8. Lint `--kind coverage` ok and `prototype_doc_coverage.status: complete`?
 
 ### Plan
 

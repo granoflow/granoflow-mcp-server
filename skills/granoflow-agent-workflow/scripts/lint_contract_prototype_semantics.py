@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Validate semantic evidence from Screen Content Contract to HTML prototypes."""
+"""Validate semantic evidence between Screen Content Contract and HTML prototypes.
+
+Contract → prototype: every contract element must appear as data-contract-ref.
+Prototype → contract (operations): action:/navigation: markers must exist in
+the contract; interactive controls must carry a marker or data-contract-ignore.
+"""
 
 from __future__ import annotations
 
@@ -16,18 +21,80 @@ from typing import Any
 from lint_requirement_contract_traceability import contract_element_refs
 
 HASH_RE = re.compile(r"^[0-9a-f]{64}$")
+ACTION_NAV_PREFIXES = ("action:", "navigation:")
+INTERACTIVE_ROLES = frozenset({"button", "link", "menuitem", "tab"})
+INTERACTIVE_INPUT_TYPES = frozenset({"button", "submit", "reset", "image"})
+ERROR_PRIORITY = (
+    "contract_prototype_semantic_review_required",
+    "prototype_contract_orphan_ref",
+    "prototype_interactive_unmarked",
+    "contract_prototype_layout_coverage_missing",
+    "contract_element_unrendered",
+    "contract_state_uncaptured",
+    "prototype_interaction_unverified",
+    "contract_prototype_semantic_mismatch",
+    "contract_prototype_semantic_digest_mismatch",
+    "semantic_reviewer_failed",
+    "visual_quality_reviewer_failed",
+    "semantic_verifier_failed",
+)
 
 
 class ContractMarkerParser(HTMLParser):
+    """Collect contract markers and unmarked interactive controls."""
+
     def __init__(self) -> None:
         super().__init__()
         self.refs: set[str] = set()
+        self.unmarked_interactive: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        del tag
-        for name, value in attrs:
-            if name == "data-contract-ref" and isinstance(value, str):
-                self.refs.add(value)
+        attr_map = {name: value for name, value in attrs}
+        ref = attr_map.get("data-contract-ref")
+        if isinstance(ref, str) and ref.strip():
+            self.refs.add(ref.strip())
+        if "data-contract-ignore" in attr_map:
+            return
+        if isinstance(ref, str) and ref.strip():
+            return
+        if _is_interactive_control(tag, attr_map):
+            self.unmarked_interactive.append(_describe_control(tag, attr_map))
+
+
+def _is_interactive_control(tag: str, attr_map: dict[str, str | None]) -> bool:
+    tag_l = tag.lower()
+    if tag_l == "button":
+        return True
+    if tag_l == "a" and "href" in attr_map:
+        return True
+    if tag_l == "input":
+        input_type = (attr_map.get("type") or "text").strip().lower()
+        return input_type in INTERACTIVE_INPUT_TYPES
+    role = (attr_map.get("role") or "").strip().lower()
+    if role in INTERACTIVE_ROLES:
+        return True
+    return "onclick" in attr_map
+
+
+def _describe_control(tag: str, attr_map: dict[str, str | None]) -> str:
+    parts = [tag.lower()]
+    for key in ("id", "type", "role", "href", "aria-label"):
+        value = attr_map.get(key)
+        if isinstance(value, str) and value.strip():
+            parts.append(f'{key}="{value.strip()}"')
+    if "onclick" in attr_map:
+        parts.append("onclick")
+    return "<" + " ".join(parts) + ">"
+
+
+def _primary_code(errors: list[dict[str, str]]) -> str:
+    if not errors:
+        return "ok"
+    present = {error["code"] for error in errors}
+    for code in ERROR_PRIORITY:
+        if code in present:
+            return code
+    return errors[0]["code"]
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -84,13 +151,54 @@ def _required_layouts(bundle: dict[str, Any] | None) -> set[str]:
     }
 
 
-def _load_html_markers(html_paths: dict[str, Path]) -> dict[str, set[str]]:
-    markers: dict[str, set[str]] = {}
+def _load_html_inventory(
+    html_paths: dict[str, Path],
+) -> dict[str, dict[str, Any]]:
+    inventory: dict[str, dict[str, Any]] = {}
     for layout_id, path in html_paths.items():
         parser = ContractMarkerParser()
         parser.feed(path.read_text(encoding="utf-8"))
-        markers[layout_id] = parser.refs
-    return markers
+        inventory[layout_id] = {
+            "refs": parser.refs,
+            "unmarked_interactive": list(parser.unmarked_interactive),
+        }
+    return inventory
+
+
+def _append_prototype_to_contract_errors(
+    errors: list[dict[str, str]],
+    *,
+    expected_elements: set[str],
+    inventory: dict[str, dict[str, Any]],
+) -> None:
+    """Fail closed on orphan action/nav markers and unmarked interactive controls."""
+    for layout_id, row in inventory.items():
+        refs: set[str] = row["refs"]
+        orphans = sorted(
+            ref
+            for ref in refs
+            if ref.startswith(ACTION_NAV_PREFIXES) and ref not in expected_elements
+        )
+        for ref in orphans:
+            errors.append(
+                {
+                    "code": "prototype_contract_orphan_ref",
+                    "detail": (
+                        f"{layout_id}: HTML marker {ref} is not in the Screen "
+                        "Content Contract (update the contract before confirming HTML)"
+                    ),
+                }
+            )
+        for control in row["unmarked_interactive"]:
+            errors.append(
+                {
+                    "code": "prototype_interactive_unmarked",
+                    "detail": (
+                        f"{layout_id}: interactive control {control} lacks "
+                        "data-contract-ref (or data-contract-ignore for chrome)"
+                    ),
+                }
+            )
 
 
 def validate_contract_prototype_semantics(
@@ -268,7 +376,8 @@ def validate_contract_prototype_semantics(
             }
         )
 
-    markers = _load_html_markers(html_paths or {})
+    inventory = _load_html_inventory(html_paths or {})
+    markers = {layout_id: set(row["refs"]) for layout_id, row in inventory.items()}
     for element_ref, layout_id in expected_pairs:
         if layout_id in markers and element_ref not in markers[layout_id]:
             errors.append(
@@ -277,6 +386,11 @@ def validate_contract_prototype_semantics(
                     "detail": f"{element_ref} marker missing from {layout_id} HTML",
                 }
             )
+    _append_prototype_to_contract_errors(
+        errors,
+        expected_elements=expected_elements,
+        inventory=inventory,
+    )
     browser = semantic.get("deterministic_browser")
     if (
         not isinstance(browser, dict)
@@ -370,7 +484,7 @@ def validate_contract_prototype_semantics(
         )
     return {
         "ok": not errors,
-        "code": "ok" if not errors else errors[0]["code"],
+        "code": _primary_code(errors),
         "errors": errors,
         "semantic_review_sha256": actual_digest,
         "required_pair_count": len(expected_pairs),

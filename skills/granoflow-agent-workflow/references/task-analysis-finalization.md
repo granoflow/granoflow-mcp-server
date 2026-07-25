@@ -150,6 +150,21 @@ in every required layout family. Verified rows include:
 - AI semantic review and a distinct final verifier;
 - non-mutating visual-quality review.
 
+**Prototype → Contract (operations, hard):** when HTML paths are supplied to
+`lint_contract_prototype_semantics.py`, also enforce the reverse direction so
+confirmed prototypes cannot invent unregistered operations:
+
+- Every HTML `data-contract-ref` starting with `action:` or `navigation:` Must
+  exist in the bound Screen Content Contract (`contract_element_refs`). Orphans
+  fail closed as `prototype_contract_orphan_ref`.
+- Interactive controls (`button`, `a[href]`, `input[type=button|submit|reset|image]`,
+  `[role=button|link|menuitem|tab]`, `[onclick]`) Must carry `data-contract-ref`
+  or explicit `data-contract-ignore` (chrome/decorative only). Unmarked
+  controls fail closed as `prototype_interactive_unmarked`.
+- Rematch / accepted prototype feedback that adds or removes clickable controls
+  Must update the Content Contract **before** regenerating HTML, then re-run
+  this lint to green.
+
 Use a host plan-design reviewer when it explicitly supports review-only mode;
 otherwise use a native visual reviewer. The default gstack `design-review`
 workflow may edit and commit, so it must not run in Analysis unless the host
@@ -232,6 +247,8 @@ instead of silently overriding product behavior.
 - `responsive_prototype_content_mismatch`
 - `contract_prototype_semantic_review_required`
 - `contract_element_unrendered`
+- `prototype_contract_orphan_ref`
+- `prototype_interactive_unmarked`
 - `contract_state_uncaptured`
 - `prototype_interaction_unverified`
 - `contract_prototype_layout_coverage_missing`

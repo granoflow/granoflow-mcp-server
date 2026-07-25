@@ -65,8 +65,10 @@ Localize the gloss to the conversation language. Tokens stay English.
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `execution_authorization`                               | 还差一步「允许真正开始改代码/做实现」的授权；Plan/验收通过不等于已经开工                                    | 若同意开工，直接说「开始实施」或「实施 M1」                                 |
 | `run` / `gf做` / 实施指令                               | 告诉 AI：**现在可以按已确认的方案动手做**                                                                   | 回复「开始实施」；需要限定范围时说「开始实施 M1」或「实施这个任务」         |
-| Plan Design Gate / `plan_design_gate`                   | 实施前的设计验收：测试用例、流程、数据结构等是否够用                                                        | 看验收册后回复「确认 Plan 验收册」或指出要改的地方                          |
-| milestone Plan acceptance pack / 验收册                 | 把本里程碑 Plan 产物（文案、表结构、流程图、测试用例等）收成一份给你验收                                    | 点开 Agent 给出的 HTML（或 Markdown）链接核对后说「确认」；通过后才能谈开工 |
+| Plan Design Gate / `plan_design_gate`                   | 每个任务自己的实施设计：测试用例（unit/IT/e2e 文本）、流程、数据结构等是否够用                              | 任务 Plan 齐后看里程碑验收册；`gf规`/`开始实施`会在分析齐套后自动连跑 Plan  |
+| milestone Plan acceptance pack / 验收册                 | 里程碑级活文档：汇总各任务文案/表结构/流程图/UML/三类测试用例 Markdown，转 HTML 给你点开验收                | 点开带清晰文件名的 HTML（或 Markdown）`file://` 链接核对后说「确认」        |
+| soft-merge Analysis→Plan                                | `gf析` 可停在分析；`gf规`/`gf做` 在分析齐套后不再等人说「开始 Plan」，直接做任务 Plan 与验收册更新           | 只要分析；要连跑 Plan 用 `gf规` 或「开始实施」                              |
+| depth_first（推荐软件 UI 长跑）                         | 一个里程碑分析→Plan→实施闭环后再做下一个，降低一次塞太多任务的上下文压力                                    | 多里程碑提问时可选「做一个完整闭环再做下一个」                              |
 | Readiness Grill                                         | 开工前再检查一遍：依赖、原型、预测文件等是否齐                                                              | 一般由 AI 自检；缺东西时按提示补充或确认                                    |
 | `execution_authorization: not_requested`                | 还没申请「可以动手」                                                                                        | 需要动手时说「开始实施」                                                    |
 | Structural Change Forecast / 结构预测                   | 打算改哪些文件/模块的预告（不是让你背代码）                                                                 | 通常只需知晓；有明显跑题再说                                                |

@@ -126,18 +126,48 @@ Actions:
 
 - capture stops after create and id readback; enrich stops after a context-rich task readback.
 - analyze runs Analysis plus bundled Grill and stops at the confirmed or
-  decision-blocked Analysis state. End every Analysis turn with an explicit
+  decision-blocked Analysis state (**soft-merge**: `analyze` / `gf析` does
+  **not** auto-enter Planning). End every Analysis turn with an explicit
   **Analysis Deliverables** table (done / pending / missing). UI-changing tasks
   must set `prototype_requirement: required` and Must obtain a confirmed
-  `ui_prototype` before Analysis confirmation; missing prototype fails closed
-  as `ui_prototype_required` / `analysis_deliverables_incomplete` and keeps the
-  task in Analysis (Planning Must not start).
-- plan consumes a finalized Analysis, creates Plan and nodes, runs Readiness Grill, and stops execution-ready. Before Plan entry on a multi-milestone project, apply `project-lifecycle-progress-board` **Pipeline Order Gate**: if peer feature milestones still have Analysis `not_started` and Project Work `pipeline_order.mode` is unset, interactive asks 「多里程碑时，先全部分析，还是做一个完整闭环再做下一个？」; unattended requires a pre-declared mode or fails closed `pipeline_order_unresolved`. UI-changing tasks cannot pass Readiness without a visually confirmed `ui_prototype` (`derivedFrom` Design Baseline when present). Software tasks that will edit code cannot pass Readiness without a complete `Structural Change Forecast` (`structural_forecast_status: present_in_plan`); otherwise `structural_forecast_missing`.
+  `ui_prototype` plus lint-green `prototype_link_ledger` before Analysis
+  confirmation; missing prototype/links fails closed as `ui_prototype_required`
+  / `prototype_link_*` / `analysis_deliverables_incomplete` and keeps the task
+  in Analysis (Planning Must not start).
+- plan **soft-merges** Analysis→Plan for the same task: if Analysis is not yet
+  finalized, complete Analysis (including UI prototype + link ledger) first,
+  then apply **Plan Entry Prototype Acceptance Gate**
+  (`lint_plan_entry_prototype_acceptance.py`): non-UI
+  (`prototype_requirement: not_required` / N/A) skips; UI Must have auditable
+  Prototype Link Digest (`file://`) **and** acceptance
+  (`verbal` | `app_visual_confirmed` | `unattended_auto_accept`) before any Plan
+  content work—otherwise fail closed
+  `plan_entry_prototype_acceptance_required` /
+  `plan_entry_prototype_unconfirmed` (force links in parent chat; interactive
+  waits; unattended auto-accepts only after digest). Then **without a second
+  Planning-permission ask** enter Planning, create Plan and nodes, update the
+  living milestone Plan acceptance pack draft, run Readiness Grill, and stop
+  execution-ready. Before Plan entry on a multi-milestone project, apply
+  `project-lifecycle-progress-board` **Pipeline Order Gate**: if peer feature
+  milestones still have Analysis `not_started` and Project Work
+  `pipeline_order.mode` is unset, interactive asks
+  「多里程碑时，先全部分析，还是做一个完整闭环再做下一个？」and
+  **recommends depth_first** for software UI long runs; unattended requires a
+  pre-declared mode or fails closed `pipeline_order_unresolved`. UI-changing
+  tasks cannot pass Readiness without a visually confirmed `ui_prototype`
+  (`derivedFrom` Design Baseline when present). Software tasks that will edit
+  code cannot pass Readiness without a complete `Structural Change Forecast`
+  (`structural_forecast_status: present_in_plan`); otherwise
+  `structural_forecast_missing`.
 - run composes create or resolve, one App-owned execution snapshot, Analysis,
   Grill, Plan, Readiness Grill, safe execution, verification, Delivery, node
-  completion, and done-state readback. Reconcile spoken requirements against
-  Project Work and Task Work before planning. Never execute a UI-changing task
-  while `ui_prototype_required` applies. Before the first software edit: run
+  completion, and done-state readback. After Analysis deliverables are
+  complete for a task, **auto-continue** into that task's Plan and Readiness
+  in the same wave (no pause merely for A→P). Interactive milestone Plan
+  acceptance pack confirmation and execution authorization remain real stops.
+  Reconcile spoken requirements against Project Work and Task Work before
+  planning. Never execute a UI-changing task while `ui_prototype_required`
+  applies. Before the first software edit: run
   project-context Hard Gate (`project_snapshot.yaml` / `project_rules.yaml`);
   on conflict, interactive users confirm, unattended runs emit `revise_code` or
   `revise_context_yaml` explicitly; then show the structural forecast notice

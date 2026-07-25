@@ -142,13 +142,18 @@ Applies to:
 Emit a short **Plan Acceptance Link** or **Engineering Acceptance Link** block
 (localize labels) that includes:
 
-1. Milestone key / project key / pack version / one-line what to review.
+1. Milestone key / project key / pack version / **clear basename** of the HTML
+   (and Markdown) file / one-line what to review.
 2. **Primary clickable link** when `html_render.status: ready`:
-   - absolute `file://…/….html` Markdown link, **and**
+   - absolute `file://…/….html` Markdown link with the basename visible in the
+     link text (e.g. `[milestone-plan-acceptance-M1-v1.html](file:///…)`),
+     **and**
    - host open when available (`open_resource` / IDE open / `open` on macOS) so
      one click opens the browser or editor preview.
-3. Secondary clickable link to the Markdown SoT (`file://…/*.md`).
-4. Explicit ask (interactive): accept / revise this pack after reviewing the
+3. For living milestone packs: re-emit this block after **every** material
+   draft refresh (not only at final closeout).
+4. Secondary clickable link to the Markdown SoT (`file://…/*.md`).
+5. Explicit ask (interactive): accept / revise this pack after reviewing the
    opened page.
 
 Example shape:

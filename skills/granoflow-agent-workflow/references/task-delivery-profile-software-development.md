@@ -80,6 +80,31 @@ Append to the base Delivery when `profiles` contains `software_development`:
   `milestone_plan_acceptance_pack_not_used`,
   `milestone_plan_acceptance_pack_drift`, or
   `milestone_plan_acceptance_pack_delivery_unreconciled` when violated.
+- Plan case implementation ledger (`plan_case_implementation`): every Plan /
+  pack verification Case ID for this task **Must** appear with a non-`missing`
+  status. Before Layer A Delivery close:
+  - `unit` / `widget` → `implemented` (or `executed`) with `test_ref` file that
+    exists under the workspace and mentions the Case ID (or evidence does);
+  - `integration` / `e2e` → at least `scheduled_campaign` with `campaign_ref`
+    (do not silently drop authored cases).
+  Lint:
+
+  ```text
+  python3 skills/granoflow-agent-workflow/scripts/lint_plan_case_implementation.py \
+    --ledger path/to/plan-case-implementation.yaml \
+    --cases path/to/task-plan-or-pack.md \
+    --gate layer_a --workspace /abs/repo
+  ```
+
+  Fail closed as `plan_case_implementation_missing` /
+  `plan_case_implementation_gap` / `plan_case_test_ref_missing` /
+  `plan_case_test_ref_unbound` / `plan_case_implementation_incomplete`.
+- Unit policy (`lint_plan_unit_policy.py`): before Layer A Delivery, every
+  in-scope Screen Content Contract `action_id` / operation Must have a `unit`
+  Plan case; unit cases/tests **Must not** assert user-visible copy presence
+  (`unit_copy_assertion_forbidden`). Run with `--scan-tests --workspace` so
+  `find.text` / `getByText`-style unit assertions fail closed. Copy alignment
+  stays on prototype + Content Contract + 验收册.
 - Implementation Contract Semantic Replay
   (`implementation-contract-semantic-replay.md`): a new, reopened, or modified
   runnable UI task must bind current Analysis and implementation snapshot SHA

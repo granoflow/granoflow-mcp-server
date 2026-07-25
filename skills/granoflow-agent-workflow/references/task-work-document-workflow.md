@@ -369,7 +369,10 @@ Hard rules:
    `contract_grill_*`, `responsive_prototype_*`, `contract_prototype_*`,
    `analysis_technical_package_*`, or `widget_promotion_*` fail-closed code.
    unattended closing digest when prototypes were authored returns
-   `prototype_link_digest_required`.
+   `prototype_link_digest_required`. A missing/invalid
+   `prototype_link_ledger` lint
+   (`lint_prototype_link_ledger.py --require-complete`) also blocks Analysis
+   confirmation via `prototype_link_*` / `analysis_deliverables_incomplete`.
 10. Keep **design-first** (see
     `granoflow-project-definition/project-artifact-workflows` § Design-first,
     product-truth, and high-risk feasibility). Previews must pass **product
@@ -653,6 +656,7 @@ table listing **each** applicable deliverable with status `done` or `pending` /
 | ------------------------------- | ------- |
 | Task Work Analysis              | done    |
 | 确认 ui_prototype（UI）         | missing |
+| Prototype Link 小结/Digest（UI）| missing |
 | Analysis Grill                  | pending |
 | Planning recommendation         | pending |
 | → 未全部 done 前不得进入 Plan。 |
@@ -670,9 +674,23 @@ Rules:
    Must not skip the table.
 4. When any HTML prototype was authored or updated this Analysis turn, emit
    clickable absolute `file://` links (ledger + 小结) per
-   `project-artifact-workflows` / `unattended-interaction-contract`. Relative
-   paths fail closed as `prototype_link_not_absolute` /
-   `prototype_link_incomplete`.
+   `project-artifact-workflows` / `unattended-interaction-contract`, persist
+   `prototype_link_ledger` (`granoflow_prototype_link_ledger_v1`), and run:
+
+   ```text
+   python3 skills/granoflow-agent-workflow/scripts/lint_prototype_link_ledger.py \
+     <ledger> --require-complete
+   ```
+
+   Prefer also passing `--html-coverage` + `--prototype-root` so every covered
+   surface HTML appears in the ledger. Relative paths, missing/empty HTML,
+   missing digest Markdown links, or claiming `ui_prototype_confirmed` /
+   `analysis_status: confirmed` without a lint-green complete ledger fail
+   closed as `prototype_link_not_absolute` / `prototype_link_incomplete` /
+   `prototype_link_file_missing` / `prototype_link_digest_required` /
+   `prototype_link_ledger_incomplete` / `prototype_link_ledger_unread` (and
+   `analysis_deliverables_incomplete`). SHA/id-only “prototype confirmed”
+   without clickable absolute links is not sufficient.
 
 ## Analysis Confirmation
 
@@ -1122,15 +1140,25 @@ For software execution, enforce **these** Hard Gates before the first edit:
 1. Refuse code/test/build edits while a required Gate is not
    `plan_design_gate_status: passed`.
 2. Fail closed with `plan_design_gate_missing`,
-   `plan_design_gate_incomplete`, `plan_test_cases_missing`, or
+   `plan_design_gate_incomplete`, `plan_test_cases_missing`,
+   `analysis_technical_package_required` /
+   `analysis_technical_package_digest_mismatch`, or
    `plan_copy_missing` / `plan_copy_locale_unresolved` when the Design
-   Package is absent, hollow, missing Analysis-traced verification cases, or
-   missing locale-bound user-visible copy when Scope requires it.
+   Package is absent, hollow, missing Analysis-traced verification cases
+   (including authored `unit` / `integration` / `e2e` Markdown kinds where
+   software UI applies), missing readable Technical Package handoff for UI
+   tasks, or missing locale-bound user-visible copy when Scope requires it.
 3. Gate `passed` does not waive Structural Forecast notice (section C).
-4. When the milestone's Plan batch is ready to close, emit one
-   `milestone-plan-acceptance-pack` (template + contract) aggregating present
-   copy / schema / flowcharts / UML / test cases; interactive acceptance of
-   that pack is required before treating milestone Planning as closed.
+4. **Living pack (soft-merge):** on the **first** in-scope task entering Plan,
+   create `milestone-plan-acceptance-pack` at `status: draft`. After **each**
+   task Plan Gate completes, refresh aggregated copy / schema / flowcharts /
+   UML / test-case lanes (`unit`|`integration`|`e2e`), re-render HTML, emit
+   clickable Plan Acceptance Link (clear filename + absolute `file://`), and
+   update `prototype_alignment`. Lint with
+   `lint_milestone_plan_acceptance_pack.py`. When the milestone's Plan batch
+   is ready to close, set `pending_acceptance` / `accepted` per the pack
+   contract; interactive acceptance is required before treating milestone
+   Planning as closed.
 5. After the pack is accepted (or validly auto-adopted unattended), every
    in-scope software Execution turn and Delivery **Must** load
    `milestone-plan-acceptance-pack` and keep the accepted pack file as the

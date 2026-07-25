@@ -181,8 +181,20 @@ task `ui_prototype`):
 5. At run close, emit a mandatory **Prototype Link Digest** that lists every
    ledger entry with clickable absolute `file://` links so the user can audit
    all prototypes in one place. Omitting the digest fails closed as
-   `prototype_link_digest_required`.
-6. Interactive mode (default when unattended was not declared) uses the
+   `prototype_link_digest_required`. Persist
+   `granoflow_prototype_link_ledger_v1` and run
+   `lint_prototype_link_ledger.py --require-complete` before UI Analysis
+   confirmation; missing/empty HTML → `prototype_link_file_missing`.
+6. **Plan Entry:** before soft-merge / `plan` / `run` enters Planning on a UI
+   task, run `lint_plan_entry_prototype_acceptance.py`. Non-UI
+   (`prototype_requirement: not_required` / N/A) skips. UI Must have the
+   auditable digest first; under unattended, record
+   `prototype_plan_entry_acceptance` with
+   `acceptance_source: unattended_auto_accept` **only after** that digest is
+   green—never auto-accept without parent-chat-auditable `file://` links.
+   Fail closed `plan_entry_prototype_acceptance_required` /
+   `plan_entry_prototype_unconfirmed`.
+7. Interactive mode (default when unattended was not declared) uses the
    product-fitted two-round Design Spec HTML contract: six-dimension chooser,
    user selection code, then three complete Style Guide candidates by default
    or justified two. After the selected Spec is locked, run the Shell triad of
@@ -196,7 +208,7 @@ task `ui_prototype`):
    User-facing Preview Gate copy stays plain language (no `seed-*` / internal
    option enums). Absolute `file://` links remain mandatory in interactive mode
    too.
-7. Task / milestone `ui_prototype`: inherit locked Spec + Shell; **no** random
+8. Task / milestone `ui_prototype`: inherit locked Spec + Shell; **no** random
    visual seed (`task_prototype_seed_forbidden`); reuse `widgets.yaml` when the
    same role exists (`widget_reuse_required`); pass Craft Gate before confirm
    else `task_prototype_craft_incomplete` (including Baseline fit →

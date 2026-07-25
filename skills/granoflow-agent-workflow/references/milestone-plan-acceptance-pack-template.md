@@ -13,6 +13,7 @@ milestone_id: "" # UUID when known
 project_id: ""
 version: 1
 status: draft # draft | pending_acceptance | accepted | superseded
+# Living pack: create at first task Plan entry; refresh after each Gate.
 # Copy locale — required when sections.user_copy.present is true
 copy_locale: zh-Hans # BCP 47; Plan shows only this locale
 copy_locale_source: conversation_language # user_explicit | conversation_language
@@ -32,8 +33,14 @@ sections:
   test_cases:
     present: false
     basis: ""
+    # Software UI: before accepted, present must be true with unit+integration+e2e lanes
 in_scope_task_ids: [] # tasks whose Plan Gate content feeds this pack
 source_plan_paths: [] # Task Work Plan paths or attachment logical ids
+software_ui_milestone: true # false only when milestone has no UI surfaces
+prototype_alignment:
+  schema: granoflow_milestone_plan_prototype_alignment_v1
+  status: pending # pending | aligned | conflict
+  tasks: [] # [{ task_id, prototype_package_sha256, aligned, evidence }]
 accepted_at: "" # ISO8601 when status=accepted
 accepted_by: "" # user | unattended_grant
 ai_decomposition_review_ref: ""
@@ -129,12 +136,25 @@ stateDiagram-v2
 
 > Include only when `sections.test_cases.present: true`.
 > Aggregate per-task Verification Test Cases; keep Traces to Analysis Outcomes.
+> Software UI: all three lanes required before accepted (Markdown only; do not run suites here).
 
-### `<task_id or title>`
+### Unit
 
-| ID  | Kind | Case | Traces to | Expected |
-| --- | ---- | ---- | --------- | -------- |
-|     |      |      |           |          |
+| ID  | Lane | Case | Traces to | Expected | Task |
+| --- | ---- | ---- | --------- | -------- | ---- |
+|     | unit |      |           |          |      |
+
+### Integration (`service_path` / milestone IT)
+
+| ID  | Lane        | Case | Traces to | Expected | Task |
+| --- | ----------- | ---- | --------- | -------- | ---- |
+|     | integration |      |           |          |      |
+
+### E2E (journeys/screens in this milestone; execute later in e2e_campaign)
+
+| ID  | Lane | Case | Traces to | Expected | Task |
+| --- | ---- | ---- | --------- | -------- | ---- |
+|     | e2e  |      |           |          |      |
 
 ## Acceptance checklist
 
@@ -142,5 +162,8 @@ stateDiagram-v2
 - [ ] Schema / data shapes match intended Plan disposition (or N/A)
 - [ ] Flowcharts cover Operation Flow for Gate-required tasks (or N/A)
 - [ ] UML diagrams are only those that help implementation (or N/A)
-- [ ] Test cases trace to Analysis Outcomes (or N/A)
+- [ ] Test cases include unit + integration + e2e Markdown lanes (software UI) or N/A basis
+- [ ] `prototype_alignment.status: aligned` for all in-scope UI tasks
+- [ ] Plan Acceptance Link shown (clear HTML/Markdown filename + file://)
 - [ ] User accepts this pack (interactive) / unattended grant recorded
+- [ ] `lint_milestone_plan_acceptance_pack.py --require-links` ok

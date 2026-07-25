@@ -23,11 +23,49 @@ Do not invent a second Planning template. Put Gate content under the existing
 `Verification Plan`, and `Execution Plan` sections (see
 `task-work-document-template.md`).
 
-For UI software tasks, Planning must first load the passed
-`analysis_technical_package` and record its SHA. Inherited logical flows, state
+## Plan Entry — Prototype Acceptance Gate (hard)
+
+Before Planning content work starts (`plan` / `gf规` / soft-merge from
+Analysis into Plan / `run` auto-continue into P):
+
+| `prototype_requirement` | Rule |
+| --- | --- |
+| `not_required` / `not_applicable` | Gate N/A — non-UI tasks do not need prototypes |
+| `conditional` + `prototype_condition_result: false` | Gate N/A |
+| `required` (or conditional true / unresolved) | **Must** pass acceptance below |
+
+UI path (fail closed — do **not** enter Plan):
+
+1. **Auditable links first:** `prototype_link_ledger` `status: complete` with
+   `chat_digest_emitted: true` and `markdown_digest` containing every entry as
+   absolute `file://` Markdown links. Missing digest →
+   `plan_entry_prototype_acceptance_required` (force emit links in the **parent
+   chat**, then wait or unattended-accept).
+2. **Acceptance** recorded in `prototype_plan_entry_acceptance`
+   (`granoflow_prototype_plan_entry_acceptance_v1`):
+   - `status: accepted`
+   - `acceptance_source`: `verbal` (user oral/chat OK) |
+     `app_visual_confirmed` | `unattended_auto_accept`
+3. **Unattended:** May set `unattended_auto_accept` **only after** step 1 is
+   green (digest must exist for audit). Never silent-accept without links.
+4. Lint:
+
+   ```text
+   python3 skills/granoflow-agent-workflow/scripts/lint_plan_entry_prototype_acceptance.py \
+     path/to/task-work.yaml
+   ```
+
+For UI software tasks, Planning must also load the passed
+`analysis_technical_package` **by SHA from persisted Task Work / attachment
+readback** (readable body required—not chat memory alone) and record
+`analysis_technical_package_sha256`. Missing body, missing SHA, or digest
+mismatch fails closed as `analysis_technical_package_required` /
+`analysis_technical_package_digest_mismatch`. Inherited logical flows, state
 models, permissions, and UI-to-data bindings may be referenced by exact
 section/evidence ref instead of copied. Planning owns only the physical and
-implementation decisions layered on that logical authority.
+implementation decisions layered on that logical authority. **Do not**
+re-derive the logical package from the HTML prototype alone; if the logical
+package is wrong, reopen Analysis.
 
 ## Minimal Sufficient Set
 
@@ -40,15 +78,43 @@ Every required Gate must include all of the following. Omit nothing by claiming
    one row. Prefer this over UML for proving "done". Columns (localize headers;
    keep semantics):
 
-   | Case ID | Traces to (Outcome / Evidence / Scope / Risk) | Preconditions | Steps | Expected | Kind (unit / widget / manual) | False-success exclusion |
+   | Case ID | Traces to (Outcome / Evidence / Scope / Risk) | Preconditions | Steps | Expected | Kind (unit / integration / e2e / widget / manual) | False-success exclusion |
 
    Rules:
 
    - Every protected surface and every Evidence bullet that this task claims
      gets ≥1 case.
-   - `Kind=unit` or `widget` must be implementable as automated tests in
-     Execution; `manual` stays on a short hand-test list and must not be
-     silently dropped.
+   - `Kind` values:
+     - `unit` / `widget` — implementable as automated tests in Execution;
+     - `integration` — Markdown draft for milestone Layer B / `service_path`
+       IT (**author only** in Plan; do not run the suite inside the feature
+       task);
+     - `e2e` — Markdown draft for user-visible journeys touched by this task /
+       milestone (**author only** in Plan; full-project E2E **runs** only in
+       final-delivery `e2e_campaign`);
+     - `manual` — short hand-test list; must not be silently dropped.
+   - **Unit policy (hard):**
+     - `unit` cases **Must** set `asserts: behavior` and bind
+       `operation_id` / `operation_ids` to Screen Content Contract
+       `actions[].action_id` (or `task_operations`). **Every** in-scope
+       operation/action Must have ≥1 `unit` case.
+     - `unit` cases **Must not** set `asserts: copy_presence` and **Must not**
+       use copy-existence checks (`find.text` / `getByText` / equivalent) as
+       unit assertions. User-visible copy is validated via prototype + Content
+       Contract + 验收册—not unit suites. Fail closed
+       `unit_copy_assertion_forbidden` / `unit_operation_coverage_incomplete`.
+     - Lint:
+
+       ```text
+       python3 skills/granoflow-agent-workflow/scripts/lint_plan_unit_policy.py \
+         --cases path/to/cases.yaml \
+         --operations path/to/screen-content-contract.yaml
+       ```
+
+       At Delivery also pass `--scan-tests --workspace /abs/repo`.
+   - Software UI tasks Must author unit coverage for **every** operation, and
+     Must contribute `integration` / `e2e` Markdown rows that the living
+     milestone acceptance pack can aggregate (task may cite shared Case IDs).
    - If a case cannot run yet (missing upstream fixture), mark
      `blocked_by_dependency:<task-or-artifact>` — do not pretend it passed.
    - Do **not** maintain a separate Acceptance Path Map when this table already
@@ -100,6 +166,19 @@ and Task/Project Work; lint
 `prototype_plan_truth.status: conflict` and
 `user_resolution: pending` (`prototype_plan_truth_conflict`).
 
+5c. **Living milestone acceptance pack update** — when this task belongs to a
+software milestone, create or refresh
+`temp/milestone-plan-acceptance-<milestoneKey>-v<n>.md` (`status: draft` until
+milestone Plan closeout), merge this task's Gate excerpts (copy / schema /
+flows / UML / test cases including `unit`|`integration`|`e2e` lanes), re-run
+`render_markdown_acceptance_html.py`, emit clickable Plan Acceptance Link
+block (clear filename + absolute `file://`), and update
+`prototype_alignment` for this task. Do **not** set
+`plan_design_gate_status: passed` while the pack draft omits this task's
+required excerpts or alignment is not `aligned: true`
+(`milestone_plan_acceptance_pack_incomplete` /
+`milestone_plan_prototype_alignment_failed`).
+
 6. **User-visible copy (locale-bound)** — when the task introduces or changes
    user-visible strings, inventory final copy for the Plan locale. Locale
    resolution (hard): user-explicit product/UI language if given; else the
@@ -138,10 +217,13 @@ Fail closed when Planning for a Gate-required task has any of:
 - listing every Project Work dependency instead of **task-local** libraries;
 - `data_disposition` missing while claiming readiness;
 - UI task missing UI ↔ data binding against the **current** App prototype;
-- UI task missing or stale `analysis_technical_package_sha256`, or Planning
-  restating conflicting logical behavior instead of reopening Analysis;
+- UI task missing or stale `analysis_technical_package_sha256`, unread
+  Technical Package body, digest mismatch, or Planning restating conflicting
+  logical behavior instead of reopening Analysis;
 - UI task with unresolved `prototype_plan_truth` conflict
   (`prototype_plan_truth_conflict` / `prototype_plan_truth_docs_stale`);
+- software milestone task whose living acceptance pack draft was not updated /
+  re-rendered, or `prototype_alignment` for this task is not aligned;
 - user-visible copy in Scope without a locale-bound copy inventory
   (`plan_copy_missing` / `plan_copy_locale_unresolved`).
 
@@ -149,11 +231,22 @@ Codes:
 
 - `plan_design_gate_missing` — Gate required but section/metadata absent
 - `plan_design_gate_incomplete` — present but missing a required item above
+- `plan_entry_prototype_acceptance_required` — UI Plan entry without auditable
+  Prototype Link Digest
+- `plan_entry_prototype_unconfirmed` — digest present but acceptance not
+  recorded (`verbal` | `app_visual_confirmed` | `unattended_auto_accept`)
 - `plan_test_cases_missing` — verification table absent or untraced to Analysis
+- `unit_copy_assertion_forbidden` — unit case/tests assert user-visible copy
+- `unit_operation_coverage_incomplete` — an operation/action lacks a unit case
+- `analysis_technical_package_required` /
+  `analysis_technical_package_digest_mismatch` — UI Plan missing readable
+  Technical Package handoff
 - `plan_copy_missing` / `plan_copy_locale_unresolved` — see acceptance pack
 - `prototype_plan_truth_conflict` / `prototype_plan_truth_unnotified` /
   `prototype_plan_truth_docs_stale` / `prototype_plan_truth_sot_invalid` —
   see `prototype-doc-coverage.md`
+- `milestone_plan_acceptance_pack_incomplete` /
+  `milestone_plan_prototype_alignment_failed` — living pack / alignment gate
 
 ## Metadata
 

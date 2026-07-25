@@ -297,15 +297,19 @@ class ContractPrototypeSemanticReviewTest(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertGreater(result["required_pair_count"], 20)
 
-    def test_real_html_markers_are_checked_per_layout(self) -> None:
+    def _write_marked_html(self, directory: str, *, extra: str = "") -> dict[str, Path]:
         elements = sorted(contract_element_refs(self.content))
-        html = "".join(f'<div data-contract-ref="{element}"></div>' for element in elements)
+        html = "".join(f'<div data-contract-ref="{element}"></div>' for element in elements) + extra
+        paths: dict[str, Path] = {}
+        for layout in self.semantic["required_layout_family_ids"]:
+            path = Path(directory) / f"{layout}.html"
+            path.write_text(html, encoding="utf-8")
+            paths[layout] = path
+        return paths
+
+    def test_real_html_markers_are_checked_per_layout(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            paths: dict[str, Path] = {}
-            for layout in self.semantic["required_layout_family_ids"]:
-                path = Path(directory) / f"{layout}.html"
-                path.write_text(html, encoding="utf-8")
-                paths[layout] = path
+            paths = self._write_marked_html(directory)
             self.assertTrue(
                 validate_contract_prototype_semantics(
                     self.semantic,
@@ -330,6 +334,56 @@ class ContractPrototypeSemanticReviewTest(unittest.TestCase):
             self.assertTrue(
                 any(error["code"] == "contract_element_unrendered" for error in result["errors"])
             )
+
+    def test_orphan_action_marker_fails_prototype_to_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self._write_marked_html(
+                directory,
+                extra='<button data-contract-ref="action:item-detail/ghost-op">X</button>',
+            )
+            result = validate_contract_prototype_semantics(
+                self.semantic,
+                self.content,
+                self.traceability,
+                self.bundle,
+                paths,
+            )
+            self.assertFalse(result["ok"])
+            self.assertEqual(result["code"], "prototype_contract_orphan_ref")
+            self.assertTrue(
+                any(error["code"] == "prototype_contract_orphan_ref" for error in result["errors"])
+            )
+
+    def test_unmarked_button_fails_without_ignore(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self._write_marked_html(
+                directory,
+                extra='<button type="button">Save</button>',
+            )
+            result = validate_contract_prototype_semantics(
+                self.semantic,
+                self.content,
+                self.traceability,
+                self.bundle,
+                paths,
+            )
+            self.assertFalse(result["ok"])
+            self.assertEqual(result["code"], "prototype_interactive_unmarked")
+
+    def test_data_contract_ignore_allows_chrome_controls(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self._write_marked_html(
+                directory,
+                extra='<button data-contract-ignore type="button">Chrome</button>',
+            )
+            result = validate_contract_prototype_semantics(
+                self.semantic,
+                self.content,
+                self.traceability,
+                self.bundle,
+                paths,
+            )
+            self.assertTrue(result["ok"], result)
 
     def test_missing_pair_interaction_and_state_evidence_block(self) -> None:
         semantic = copy.deepcopy(self.semantic)

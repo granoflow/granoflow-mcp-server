@@ -152,6 +152,12 @@ closing the batch.
   the Screen Content Contract, requirement traceability, Contract Grill,
   Bundle, semantic review, Analysis Technical Package, Planning, and dependent
   acceptance artifacts.
+- Adding or removing clickable controls on a confirmed prototype is an action /
+  navigation change: update the Content Contract first, regenerate HTML with
+  matching `data-contract-ref` (or `data-contract-ignore` for chrome), then
+  re-run `lint_contract_prototype_semantics.py --html` until green—including
+  reverse checks `prototype_contract_orphan_ref` /
+  `prototype_interactive_unmarked`.
 - A domain relationship, core workflow, or data-disposition change also
   reopens the Analysis Logic Draft. Accepted prototype feedback must update the
   earliest affected contract before HTML regeneration.

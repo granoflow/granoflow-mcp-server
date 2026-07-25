@@ -79,6 +79,11 @@ In the same batch as prototype writeback, the Change Impact Ledger Must:
    / entries are unchanged — with an auditable reason. Silent skip is not.
 8. Update related `prototype` packages + Task Work `ui_prototype_confirmed`
    refs per writeback.
+9. When rematch / craft fix adds or removes clickable controls, update the
+   Screen Content Contract first, regenerate HTML with `data-contract-ref` (or
+   `data-contract-ignore` for chrome), and re-run
+   `lint_contract_prototype_semantics.py --html` until reverse coverage is
+   green (`prototype_contract_orphan_ref` / `prototype_interactive_unmarked`).
 
 Closing with only `prototype` `updated` (docs/contracts left stale) fails
 closed as `prototype_product_doc_writeback_required`. Coverage gaps/conflicts

@@ -63,9 +63,16 @@ applicable)—not milestone closure.
 **Typical gates (software):** project context; structural forecast reconciled;
 UI Phase A when applicable; unit/static evidence; Implementation Design
 Fidelity (`implementation-design-fidelity`); task-scoped Plan reconciliation;
+`plan_case_implementation` lint `--gate layer_a` green (every Plan Case ID
+bound—unit/widget implemented with on-disk `test_ref`; integration/e2e
+`scheduled_campaign`); `lint_plan_unit_policy.py --scan-tests` green (every
+in-scope operation has a `unit` case; no copy-presence unit assertions);
 owned `feature_completeness_matrix` rows updated (`implemented` + `test_ref`);
 Delivery + `acceptance_report` HTML; Card Checkpoint; task readback `done`.
-Task-local IT may be **authored** here but **not executed** (Layer B runs them).
+Task-local IT may be **authored** here but **not executed** (Layer B runs
+them). Missing ledger rows fail as `plan_case_implementation_gap`; unit
+policy gaps fail as `unit_copy_assertion_forbidden` /
+`unit_operation_coverage_incomplete`.
 
 **Does not mean:** the milestone’s integration suite passed, or that other
 matrix rows for sibling tasks are green.
@@ -91,9 +98,11 @@ treating suite green while matrix rows stay stubbed/pending.
 in-scope tasks (`milestone_it_preflight_missing` / `_coverage_insufficient`);
 matrix at least `ready`.
 
-**After suite green:** matrix must reach `green`; record Experience assets from
-issues; write **任务回顾** for covered tasks (`milestone_it_experience_unrecorded`
-/ `milestone_it_task_review_unrecorded` if skipped).
+**After suite green:** matrix must reach `green`; every in-scope
+`integration` Plan Case ID Must show `plan_case_implementation` status
+`executed` (lint `--gate layer_b`); record Experience assets from issues; write
+**任务回顾** for covered tasks (`milestone_it_experience_unrecorded` /
+`milestone_it_task_review_unrecorded` if skipped).
 
 ## Co-presentation (same turn / multi-milestone runs)
 

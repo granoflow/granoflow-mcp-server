@@ -34,8 +34,8 @@ Do not invent parallel “shortcut” completions that skip earlier stages.
 | --- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | 1   | `project_init`         | Project Definition Done (Project Work + Engineering pack; Design Baseline when `visual_baseline` required)                                                                        | `granoflow-project-definition`                                                                 |
 | 2   | `milestones_created`   | Planned milestones exist; portfolio tasks authored                                                                                                                                | `granoflow-portfolio-orchestrator`, `granoflow-milestone-workflow`, `granoflow-task-authoring` |
-| 3   | `milestone_analysis`   | **Per active milestone**: every in-scope child has confirmed Analysis                                                                                                             | `granoflow-task-orchestrator` + agent-workflow Analysis                                        |
-| 4   | `milestone_plan`       | **Per active milestone**: every in-scope child has Plan Design Gate / execution-ready Plan **and** one milestone Plan acceptance pack shown (interactive: user-accepted)          | Plan Design Gate + `milestone-plan-acceptance-pack` + Readiness                                |
+| 3   | `milestone_analysis`   | **Per active milestone**: every in-scope child has confirmed Analysis (**UI includes confirmed prototype + link ledger**). `gf析` may stop here; `gf规`/`run` soft-merge into Plan. | `granoflow-task-orchestrator` + agent-workflow Analysis                                        |
+| 4   | `milestone_plan`       | **Per-task** Plan Design Gate + living milestone Plan acceptance pack (draft→HTML links→`prototype_alignment`→accept). Soft-merge: no courtesy pause after Analysis for `gf规`/`run`. | Plan Design Gate + `milestone-plan-acceptance-pack` + `lint_milestone_plan_acceptance_pack.py` + Readiness |
 | 5   | `milestone_implement`  | **IT preflight** then **Layer A** per child; per-milestone **Layer B** = milestone-scoped IT suite (user-invisible) + Experience + 任务回顾 (`milestone-integration-acceptance`). | task-orchestrator + `milestone-integration-acceptance`                                         |
 | 6   | `integration_campaign` | **最终交付 · 项目级 IT**（多里程碑路径：全量单测后编排全部不可见 IT）。单功能里程碑项目可 **waive** 本阶段，直进全面 E2E。不替代 Layer B。见 `full-delivery-acceptance`。         | `full-delivery-acceptance` + `granoflow-integration-test-campaign`                             |
 | 7   | `e2e_campaign`         | **最终交付 · 全面 E2E**（始终全项目覆盖，防改一处坏别处）：覆盖矩阵、可见窗、截图、Closing Summary。                                                                              | `full-delivery-acceptance` + `granoflow-e2e-test-campaign`                                     |
@@ -78,6 +78,11 @@ pipeline_order:
 | `depth_first`   | For one milestone: Analysis → Plan → Implement (incl. Layer B), then start the next milestone's Analysis |
 | `unset`         | Not yet chosen; Plan entry may be blocked by the ask gate below                                          |
 
+**Recommendation (software UI long runs):** prefer `depth_first` to keep per-wave
+context bounded (task Plan + living pack). Users may still choose
+`breadth_first`. Unattended Must never silently default—mode must already be
+written.
+
 ### Ask gate (interactive)
 
 Before starting Plan for any feature milestone (Plan Design Gate drafts, Plan
@@ -91,6 +96,7 @@ batch, or claiming `milestone_plan` in progress), if **all** of:
 then **stop**. Do not enter Plan. Ask the user in plain language exactly:
 
 > 多里程碑时，先全部分析，还是做一个完整闭环再做下一个？
+> （软件 UI 长跑更推荐「做一个完整闭环再做下一个」，避免一次 Plan 上下文过大。）
 
 Map answers:
 

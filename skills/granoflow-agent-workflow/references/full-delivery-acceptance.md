@@ -77,7 +77,9 @@ Fail closed:
      and next_action → `e2e_campaign`).
    - E2E durable state: `integration_gate: waived_single_milestone`.
 3. Run **full-project** `e2e_campaign` (coverage matrix from Project Work; no
-   narrowed “only what we touched” suite).
+   narrowed “only what we touched” suite). Before closing E2E, every authored
+   pack `e2e` Case ID Must show `plan_case_implementation` status `executed`
+   (`lint_plan_case_implementation.py --gate e2e_campaign`).
 
 Do **not** re-run portfolio unit + IT as a gate before E2E on this path.
 
@@ -90,7 +92,9 @@ Do **not** re-run portfolio unit + IT as a gate before E2E on this path.
    `granoflow-integration-test-campaign` / stage `integration_campaign`
    (`campaign_drive: agent_auto`). Does **not** replace per-milestone Layer B.
 3. **Full-project E2E** — `integration_gate: complete`, then
-   `granoflow-e2e-test-campaign` / stage `e2e_campaign`.
+   `granoflow-e2e-test-campaign` / stage `e2e_campaign`. Close only when
+   authored `e2e` Case IDs are `executed` in `plan_case_implementation`
+   (`--gate e2e_campaign`).
 
 Do not claim `project_complete` while skipping required path steps without an
 explicit residual.

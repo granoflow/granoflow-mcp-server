@@ -1,19 +1,21 @@
 # Milestone Plan Acceptance Pack
 
-Single owner for the **milestone-level Plan closeout artifact**: one Markdown
-file that aggregates Plan-phase design products for user acceptance before the
-milestone leaves Planning.
+Single owner for the **milestone-level Plan acceptance artifact**: one Markdown
+file that aggregates Plan-phase design products. It is a **living draft** while
+tasks complete Plan Design Gate, then the **user-facing acceptance surface**
+when the milestone leaves Planning.
 
 Per-task Plan Design Gate content remains in each Task Work Plan
-(`plan-design-gate.md`). This pack is the **user-facing acceptance surface** at
-the end of a milestone's Plan phase.
+(`plan-design-gate.md`). This pack never replaces task-level Plans; it
+summarizes them for human review and implementation alignment.
 
 ## Mandatory Load
 
-Load via MCP before either of:
+Load via MCP before any of:
 
-1. closing a milestone Plan phase (batch Gate confirm / “Plan 环节结束”);
-2. starting **Execution** for any in-scope task of that milestone (first code /
+1. the **first** in-scope software task of the milestone enters Planning;
+2. closing a milestone Plan phase (batch Gate confirm / “Plan 环节结束”);
+3. starting **Execution** for any in-scope task of that milestone (first code /
    test / build edit, or Delivery that claims Plan outcomes).
 
 ```text
@@ -31,7 +33,9 @@ Skipping the load fails closed as `milestone_plan_acceptance_pack_unread`.
 
 | Case                                                                                                | Rule                                                                          |
 | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Software milestone finishing Plan Design Gate batch (interactive or unattended)                     | **required**                                                                  |
+| First in-scope software task enters Planning                                                        | Create living pack at `status: draft`                                         |
+| Each subsequent task Plan Gate completes                                                            | Refresh pack + re-render HTML + emit links + update `prototype_alignment`     |
+| Software milestone finishing Plan Design Gate batch (interactive or unattended)                     | **required** closeout to `pending_acceptance` / `accepted`                    |
 | Milestone has zero Plan-phase artifacts (no UI copy, no schema change, no diagrams, no test tables) | Still emit a pack with every section marked `present: false` + one-line basis |
 | Non-software / no Planning milestone                                                                | `not_applicable`                                                              |
 
@@ -81,8 +85,35 @@ temp/milestone-plan-acceptance-<milestoneKey>-v<n>.md
 
 Examples: `temp/milestone-plan-acceptance-M1-v1.md`.
 
-One file per milestone Plan closeout version. Do not split copy / schema /
-diagrams / tests across multiple acceptance files for the same closeout.
+One file per milestone Plan version. Bump `v<n>` on material content changes
+after a prior `accepted` pack (or when superseding a closed draft). Do not
+split copy / schema / diagrams / tests across multiple acceptance files for
+the same version.
+
+### Living draft lifecycle
+
+| `status`             | When                                                                 |
+| -------------------- | -------------------------------------------------------------------- |
+| `draft`              | First task entered Plan; refresh after each task Gate                |
+| `pending_acceptance` | All in-scope task Gates `passed`; pack ready for Preview Gate        |
+| `accepted`           | Interactive accept or valid unattended Planning grant                |
+| `superseded`         | Replaced by `v<n+1>` after material drift                            |
+
+Rules for living updates:
+
+1. After each task Plan Gate refresh: rewrite affected sections, run
+   `render_markdown_acceptance_html.py`, emit **Plan Acceptance Link** with
+   clear basename + absolute `file://` for HTML (when ready) and Markdown.
+2. Record `prototype_alignment` (below) for every in-scope UI task.
+3. Lint:
+
+```text
+python3 skills/granoflow-agent-workflow/scripts/lint_milestone_plan_acceptance_pack.py \
+  path/to/pack.md --require-links
+```
+
+4. Task Gate Must not claim `passed` while this task is missing from a current
+   draft pack or alignment is not `aligned: true`.
 
 ### Single-File Sections (include only what exists)
 
@@ -96,7 +127,7 @@ true`, the Markdown body **Must** contain the corresponding heading and content.
 | `data_structures` | 表结构 / 数据结构    | Tables, JSON shapes, ER/field lists this Plan introduces or extends |
 | `flowcharts`      | 流程图               | Mermaid `flowchart` (and only flowcharts) aggregated from tasks     |
 | `uml_diagrams`    | UML 图               | State / sequence / class / ER sketches that were authored in Plan   |
-| `test_cases`      | 测试用例             | Aggregated verification tables (or links + inlined tables)          |
+| `test_cases`      | 测试用例             | Aggregated verification tables with **lane** `unit`/`integration`/`e2e` |
 
 Rules:
 
@@ -108,6 +139,36 @@ false` + basis (e.g. `no_user_visible_copy_in_milestone_plan`).
    **inline or excerpt** tables/diagrams and cite `task_id` / Plan path.
 4. Flowcharts vs UML: Operation Flow Mermaid → `flowcharts`; state/sequence/
    class/ER → `uml_diagrams`. Do not double-count.
+5. **Software UI milestones:** `sections.test_cases.present` Must be `true`
+   before `accepted`, and the body Must include non-empty Markdown rows for
+   all three lanes: `unit`, `integration` (`service_path` / milestone IT), and
+   `e2e` (journeys/screens touched by this milestone). These are **authored
+   cases only**—do not run IT/E2E suites while drafting the pack. Full-project
+   E2E **execution** remains final-delivery `e2e_campaign`. Marking
+   `integration` or `e2e` `present: false` on a software UI milestone fails
+   closed as `milestone_plan_test_lanes_incomplete` unless the milestone truly
+   has zero UI (documented basis).
+
+### Prototype alignment (hard for UI)
+
+Persist in frontmatter and keep current as prototypes rematch:
+
+```yaml
+prototype_alignment:
+  schema: granoflow_milestone_plan_prototype_alignment_v1
+  status: pending | aligned | conflict
+  tasks:
+    - task_id: <id>
+      prototype_package_sha256: <64 hex>
+      aligned: true | false
+      evidence: <one-line what was checked vs pack sections>
+```
+
+AI Must actively re-check pack copy / flows / structures / UML / cases against
+each task's **confirmed** prototype package SHA. `aligned: false`, missing
+in-scope UI task rows, or `status: conflict` blocks pack `accepted` and blocks
+that task's Plan Gate `passed`
+(`milestone_plan_prototype_alignment_failed`).
 
 ## Acceptance Interaction
 
@@ -182,6 +243,14 @@ Rules:
    pack sections that are `present: true`:
    - tick pack test-case rows (or cite the same Case IDs from Task Work) with
      `passed` / `failed` / `blocked_by_dependency`;
+   - maintain `plan_case_implementation` so **no authored Case ID is dropped**:
+     Layer A requires unit/widget `implemented` + on-disk `test_ref`;
+     integration/e2e at least `scheduled_campaign`; Layer B requires
+     integration `executed`; final-delivery e2e_campaign requires e2e
+     `executed`. Lint with `lint_plan_case_implementation.py`;
+   - unit lane Must cover every in-scope operation/action and Must not assert
+     user-visible copy (`lint_plan_unit_policy.py`, with `--scan-tests` at
+     Delivery);
    - confirm shipped copy matches the pack inventory for `copy_locale` (other
      locales remain Execution extras, not silent Plan drift);
    - note schema / flow / UML deviations via `implementation-design-fidelity`
@@ -221,6 +290,8 @@ Fail closed:
 | `milestone_plan_acceptance_pack_not_used`              | Implement/Delivery skipped the accepted pack as working reference    |
 | `milestone_plan_acceptance_pack_drift`                 | Shipped work contradicts accepted pack without revision              |
 | `milestone_plan_acceptance_pack_delivery_unreconciled` | Delivery omitted pack reconciliation                                 |
+| `milestone_plan_test_lanes_incomplete`                 | Software UI pack accepted without unit+integration+e2e Markdown rows |
+| `milestone_plan_prototype_alignment_failed`            | UI pack/task alignment missing, conflict, or aligned:false           |
 | `plan_copy_locale_unresolved`                          | Copy needed; locale not resolved                                     |
 | `plan_copy_missing`                                    | Copy needed; no inventory                                            |
 | `plan_copy_extra_locale`                               | Non-selected locales treated as Plan deliverables                    |
@@ -248,15 +319,23 @@ Additional UI fail-closed codes:
 ## Admission Test
 
 1. Was this reference loaded via MCP?
-2. Is there exactly one pack Markdown for this closeout version?
-3. Are all five section keys listed with `present`?
-4. If any task has user-visible copy: is `copy_locale` set and only that locale
+2. Was a living `draft` created when the first in-scope task entered Plan?
+3. Is there exactly one current pack Markdown for this version?
+4. Are all five section keys listed with `present`?
+5. Software UI: do `test_cases` include non-empty `unit`, `integration`, and
+   `e2e` Markdown lanes before `accepted`?
+6. If any task has user-visible copy: is `copy_locale` set and only that locale
    shown?
-5. Was `render_markdown_acceptance_html.py` run, and does frontmatter
-   `html_render` record paths / file URLs / `link_emitted`?
-6. Interactive: did the user get a clickable HTML link (when ready) or
-   Markdown link (fallback) **before** the acceptance question, and did we wait?
-7. Before implement: is the accepted pack path in context, and will Delivery
-   reconcile `present: true` sections?
-8. Did `grill-finalizer` and `grill-me` complete for the reviewed digest, with
-   unattended adoption labeled as unattended rather than user acceptance?
+7. Was `render_markdown_acceptance_html.py` run after each material refresh, and
+   does frontmatter `html_render` record paths / file URLs / `link_emitted`?
+8. Does `prototype_alignment` cover every in-scope UI task with
+   `aligned: true` and current prototype package SHAs?
+9. Did `lint_milestone_plan_acceptance_pack.py --require-links` pass before
+   closeout?
+10. Interactive: did the user get a clickable HTML link (when ready) or
+    Markdown link (fallback) with a clear filename **before** the acceptance
+    question, and did we wait?
+11. Before implement: is the accepted pack path in context, and will Delivery
+    reconcile `present: true` sections?
+12. Did `grill-finalizer` and `grill-me` complete for the reviewed digest, with
+    unattended adoption labeled as unattended rather than user acceptance?

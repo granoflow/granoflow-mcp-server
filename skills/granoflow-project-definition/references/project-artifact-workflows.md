@@ -106,20 +106,42 @@ Engineering Acceptance Preview Gate). Local static server or host
 sidebar/browser open is allowed **in addition**, never instead of leaving the
 absolute `file://` path in chat/ledger.
 
-Ledger entry shape (interactive and unattended):
+Ledger shape (interactive and unattended). Persist on Task Work / run continuity
+/ `temp/` and lint before Analysis confirmation:
 
 ```yaml
 prototype_link_ledger:
-  - title: <plain language>
-    absolute_path: </resolved/absolute/path.html>
-    file_url: file:///resolved/absolute/path.html
-    entity: <project|milestone|task id or label>
-    sha_or_pending: <hex|pending>
+  schema: granoflow_prototype_link_ledger_v1
+  contract_loaded: true
+  status: not_applicable | pending | complete
+  # status=complete also requires:
+  chat_digest_emitted: true
+  markdown_digest: |
+    ## Prototype Link Digest
+    - [title](file:///resolved/absolute/path.html)
+  entries:
+    - title: <plain language>
+      absolute_path: </resolved/absolute/path.html>
+      file_url: file:///resolved/absolute/path.html
+      entity: <project|milestone|task id or label>
+      sha_or_pending: <hex|pending>
 ```
 
-Relative paths, bare filenames, or prose-only “see temp/…” fail closed as
-`prototype_link_not_absolute` / `prototype_link_incomplete`. User-visible links
-Must be Markdown `[title](file:///absolute/path/...)`.
+Mechanical lint (fail closed; required for UI Analysis close):
+
+```text
+python3 skills/granoflow-agent-workflow/scripts/lint_prototype_link_ledger.py \
+  path/to/prototype-link-ledger.yaml --require-complete \
+  [--html-coverage path/to/html-coverage.yaml --prototype-root /abs/proto/root]
+```
+
+Relative paths, bare filenames, prose-only “see temp/…”, missing/empty HTML
+files, missing Markdown digest links, or `chat_digest_emitted: false` while
+`status: complete` fail closed as `prototype_link_not_absolute` /
+`prototype_link_incomplete` / `prototype_link_file_missing` /
+`prototype_link_digest_required` / `prototype_link_ledger_incomplete` /
+`prototype_link_ledger_unread`. Bare YAML lists are rejected. User-visible
+links Must be Markdown `[title](file:///absolute/path/...)`.
 
 ### Mode Gate
 

@@ -28,10 +28,18 @@ bundled references and use their structured tools.
 
 ### `plan`
 
-Resolve or create one task, obtain a confirmed A, run the Analysis Grill, enter
-Planning, confirm P, run the readiness Grill, upload/hash-read back Task Work,
-create meaningful nodes, and stop execution-ready. P does not imply execution
-unless a direct instruction or valid delegated grant says so.
+Resolve or create one task. **Soft-merge Analysis→Plan:** if A is incomplete,
+finish Analysis (Grill, UI prototype + `prototype_link_ledger` when UI applies)
+first. **Plan Entry Prototype Acceptance Gate:** non-UI tasks skip; UI tasks
+Must show an auditable Prototype Link Digest and record acceptance
+(`verbal` | `app_visual_confirmed` | `unattended_auto_accept` after digest)
+via `lint_plan_entry_prototype_acceptance.py` before any Planning content.
+Then enter Planning **without a separate Planning-permission round trip**.
+Build P (Plan Design Gate), update the living milestone Plan acceptance pack
+draft, confirm P under the interaction contract, run the readiness Grill,
+upload/hash-read back Task Work, create meaningful nodes, and stop
+execution-ready. P does not imply execution unless a direct instruction or
+valid delegated grant says so.
 
 ### `run`
 
@@ -43,8 +51,12 @@ it. Then for each task:
 1. create the right-depth task record and recover historical timing through the
    dedicated mutation surface when needed;
 2. complete and confirm A, applying bundled Grill findings directly;
-3. build and confirm P, batch all decision-changing questions once, and run the
-   readiness Grill;
+3. **auto-continue** into P in the same wave (no pause merely because A was
+   reached) **only after** Plan Entry Prototype Acceptance Gate is green
+   (force parent-chat digest + acceptance when UI; unattended may
+   `unattended_auto_accept` only after auditable links): build and confirm P,
+   refresh the living milestone acceptance pack + HTML links, batch only true
+   decision-changing questions once, and run the readiness Grill;
 4. validate direct or delegated authorization against current facts;
 5. capture AI execution start time without changing `pending` to `doing`,
    execute only allowed local work, and verify each deliverable;
@@ -53,10 +65,12 @@ it. Then for each task:
 8. re-read task status and timestamps; continue with the next dependency batch
    only when the user requested a multi-task run.
 
-An end-to-end request does not pause merely because A or P was reached. It pauses
-only for a real unresolved direction, unsafe target ambiguity, failed readiness,
-scope drift, forbidden action, missing material, or external authorization.
-Classify the stop through the shared unattended interaction contract rather than
+An end-to-end request does not pause merely because A or P was reached, and
+does **not** pause for a courtesy “开始 Plan” after Analysis is complete. It
+pauses only for a real unresolved direction, unsafe target ambiguity, failed
+readiness, interactive milestone Plan acceptance pack confirmation, scope
+drift, forbidden action, missing material, or external authorization. Classify
+the stop through the shared unattended interaction contract rather than
 inventing a phase-specific prompt.
 
 ### `finish_audit`
