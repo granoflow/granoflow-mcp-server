@@ -5,6 +5,49 @@ are two different logical stages. Hosts may finish one milestone (or several)
 in a single Agent turn and show both surfaces in one message—but they **Must**
 remain **two labeled sections**, never one fused “everything is done” blob.
 
+## Universal task closeout (hard)
+
+Applies to **every** task (feature implement, IT/E2E campaign child, other):
+
+1. **产物** — the task Must leave a concrete artifact (Delivery /
+   `acceptance_report`, suite closing summary + evidence pointers, or the
+   profile-required equivalent). No artifact → keep `pending`.
+2. **验收** — that artifact Must be accepted. AI **May** self-recommend
+   acceptance (自荐).
+3. **确认** —
+   - interactive: user confirms the recommendation (or equivalent
+     browse-confirm surface);
+   - unattended: AI self-recommend **is** confirmation
+     (`unattended_auto_adopted` / `unattended_grant`)—do not wait for a
+     human OK.
+4. **打钩** — the **same wave** as confirmation: call the single completion
+   path (`granoflow_task_finish` or NodeService) so App readback is
+   `status=done`. Confirmed acceptance **without** checkbox fails closed as
+   incomplete closeout—do not advance past the task while it stays `pending`.
+
+Local edits, green unit tests, or uploaded filenames alone are **not**
+acceptance and **not** a checkbox.
+
+## Universal milestone closeout (hard)
+
+**确认里程碑验收 = 同波给该里程碑内所有 in-scope 子任务打钩。**
+
+Enforce with (same wave as claiming Layer B / `acceptance_status: passed`):
+
+```text
+python3 skills/granoflow-agent-workflow/scripts/lint_milestone_child_done.py \
+  --milestone-work <milestone-work.yaml> \
+  --milestone-id <uuid> \
+  --claim-passed
+```
+
+Offline / tests: pass `--tasks-json` instead of `--milestone-id`. Fail closed
+as `milestone_child_pending_on_acceptance` when any in-scope child is not
+`done`. Cancelled / deleted / superseded children are excluded.
+
+Matrix green without checkboxes is incomplete; checkboxes without matrix green
+are also incomplete (see Feature Completeness Matrix).
+
 ## Feature Completeness Matrix (hard)
 
 Software milestones that own Project Work requirement / acceptance / detail
@@ -35,9 +78,12 @@ Rules:
 - Layer A task finish requires every row owned by that task to have
   `impl_status: implemented` and non-empty `test_ref`, then `result: green`
   (or `blocked_external` only for true host/environment blockers).
-- Layer B / `acceptance_status: passed` requires matrix `status: green`.
+- Layer B / `acceptance_status: passed` requires matrix `status: green` **and**
+  every in-scope child App `status=done`
+  (`lint_milestone_child_done.py --claim-passed`).
 - Child tasks all `done` is **not** enough without matrix green.
-- Lint: `scripts/lint_feature_completeness_matrix.py`.
+- Lint: `scripts/lint_feature_completeness_matrix.py` +
+  `scripts/lint_milestone_child_done.py`.
 
 ### Residual classification (hard)
 
@@ -59,6 +105,10 @@ Layer A/B / milestone / final delivery green while matrix rows remain
 
 **Authority:** that task’s Task Work + confirmed Plan (and UI `ui_prototype` when
 applicable)—not milestone closure.
+
+**Closeout:** Delivery / `acceptance_report` is the artifact; AI self-check is
+the recommendation; interactive user confirm or unattended auto-adopt is
+confirmation; **then immediately** App `done` (see Universal task closeout).
 
 **Typical gates (software):** project context; structural forecast reconciled;
 UI Phase A when applicable; unit/static evidence; Implementation Design
@@ -90,9 +140,15 @@ only), the coordinator runs the **milestone-scoped** integration suite.
 minimal steps (e.g. add / browse / list before delete). See
 `milestone-integration-acceptance.md`.
 
+**Closeout:** when Layer B is confirmed (suite + matrix, interactive or
+unattended), the **same wave Must** checkbox every in-scope child
+(`status=done`). Confirmed milestone acceptance **is** that all-child
+checkbox wave plus the Layer B artifact gates—not a separate oral OK.
+
 **What it is not:** E2E/screenshots; user click-confirm of acceptance IDs as the
-acceptance decision; treating “all children done” as milestone accepted;
-treating suite green while matrix rows stay stubbed/pending.
+acceptance decision; treating “all children done” alone as milestone accepted
+without matrix/suite green; treating suite green while matrix rows stay
+stubbed/pending or while any in-scope child stays `pending`.
 
 **Before milestone implement:** IT sufficiency + Suite Plan preflight for **all**
 in-scope tasks (`milestone_it_preflight_missing` / `_coverage_insufficient`);

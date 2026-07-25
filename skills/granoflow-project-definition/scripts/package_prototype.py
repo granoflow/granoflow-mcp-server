@@ -35,6 +35,25 @@ def collect_files(source: Path) -> list[tuple[Path, str]]:
     return sorted(files, key=lambda item: item[1])
 
 
+def _lint_prototype_stack(source: Path) -> dict[str, object]:
+    lint_script = (
+        Path(__file__).resolve().parents[1].parent
+        / "granoflow-agent-workflow"
+        / "scripts"
+        / "lint_prototype_stack.py"
+    )
+    if not lint_script.is_file():
+        raise ValueError(f"missing prototype stack lint script: {lint_script}")
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("lint_prototype_stack", lint_script)
+    if spec is None or spec.loader is None:
+        raise ValueError("unable to load lint_prototype_stack")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.lint_prototype_stack(source)
+
+
 def build_zip(
     source: Path,
     output: Path,
@@ -42,8 +61,16 @@ def build_zip(
     *,
     title: str | None = None,
     version: str = "1.0.0",
+    skip_stack_lint: bool = False,
 ) -> dict[str, object]:
     files = collect_files(source)
+    if not skip_stack_lint:
+        stack_lint = _lint_prototype_stack(source)
+        if not stack_lint.get("ok"):
+            raise ValueError(
+                "prototype_stack_lint_failed: "
+                + json.dumps(stack_lint, ensure_ascii=False, sort_keys=True)
+            )
     resolved_title = (title or source.resolve().name).strip()
     if not resolved_title:
         raise ValueError("prototype title must not be empty")
@@ -169,12 +196,29 @@ def main() -> int:
                     )
                 )
                 return 1
+        stack_lint = _lint_prototype_stack(args.source)
+        if not stack_lint.get("ok"):
+            print(
+                json.dumps(
+                    {
+                        "ok": False,
+                        "error": stack_lint.get("code", "prototype_stack_lint_failed"),
+                        "failCode": stack_lint.get(
+                            "code", "prototype_stack_lint_failed"
+                        ),
+                        "lint": stack_lint,
+                    },
+                    ensure_ascii=False,
+                )
+            )
+            return 1
         result = build_zip(
             args.source,
             args.output,
             args.dry_run,
             title=args.title,
             version=args.version,
+            skip_stack_lint=True,
         )
     except (OSError, ValueError) as error:
         print(json.dumps({"ok": False, "error": str(error)}, ensure_ascii=False))

@@ -143,9 +143,10 @@ User-facing labels: **完整交付 / 最终交付测试**. Stage ids stay
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | `integration_campaign` | **System accept** under `agent_auto`; emit Closing Summary; **do not** ask the user to approve IT results. IT = authored assets re-orchestrated as **unit-unreachable boundaries + minimal shared-session journeys**. SoT must record `cross_milestone_journey_check` ≠ `gap` before stage `done`. | Same                                                          |
 | `e2e_campaign` end     | Announce E2E complete; **ask** whether manual local testing is still needed; if yes, help local deploy.                                                                                                                                                                                            | Mark complete → enter `project_complete` (no manual-test ask) |
-| `project_complete`     | Congratulate; list remaining customer-handoff / publish steps as residuals (never fake store/GitHub publish).                                                                                                                                                                                      | Same                                                          |
+| `project_complete`     | Congratulate; list remaining customer-handoff / publish steps as residuals (never fake store/GitHub publish). Unattended: **do not** solicit verbal `user_final_acceptance` / oral sign-off.                                                                                                       | Same — congratulate on `project_complete*`; no oral验收索要   |
 
-Update `temp/project-e2e-sot-v*.md` as these stages complete.
+Update `temp/project-sot.yaml` (Project SoT) as these stages complete. Campaign
+artifacts stay under `temp/**` as evidence pointers only.
 
 ## Co-presentation
 

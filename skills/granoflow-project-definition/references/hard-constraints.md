@@ -109,6 +109,19 @@ and review.
 - Lint: `lint_plan_unit_policy.py` (+ `--scan-tests` at Delivery).
   Fail closed `unit_copy_assertion_forbidden` /
   `unit_operation_coverage_incomplete`.
+- Reality Boundary Plan half: `lint_plan_reality_boundary.py` (+ `--snapshot`
+  when available). Fail closed `reality_boundary_check_missing` /
+  `reality_boundary_will_change_without_verification` /
+  `card_change_plan_notice_missing`.
+- Card change Delivery notice (any review card write): 
+  `lint_delivery_card_change_notice.py`. Fail closed
+  `card_change_delivery_notice_missing` /
+  `reality_boundary_delivery_stale`.
+- Product truth dual-write: Project Work must not host screen visual / status
+  quo / boundary **detail** that also lives on UIT/RB cards (PW keeps
+  inventory + short declared `ui_details` + `uit_fact_id`/`rb_fact_id`
+  pointers). Fail closed `product_truth_dual_write_forbidden` (document gate;
+  see `granoflow-agent-workflow/product-truth-sot-layers`).
 
 ## Design Spec / Shell
 

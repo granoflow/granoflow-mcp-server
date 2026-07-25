@@ -75,6 +75,10 @@ export const ACCEPTANCE_DELIVERY_SKILL_URL = new URL(
   "../skills/granoflow-acceptance-delivery/SKILL.md",
   import.meta.url,
 );
+export const PROJECT_SOT_SKILL_URL = new URL(
+  "../skills/granoflow-project-sot/SKILL.md",
+  import.meta.url,
+);
 export const SKILL_ORCHESTRATOR_SKILL_URL = new URL(
   "../skills/granoflow-skill-orchestrator/SKILL.md",
   import.meta.url,
@@ -182,6 +186,10 @@ export function readE2eTestCampaignSkill(): string {
 
 export function readAcceptanceDeliverySkill(): string {
   return readFileSync(ACCEPTANCE_DELIVERY_SKILL_URL, "utf8");
+}
+
+export function readProjectSotSkill(): string {
+  return readFileSync(PROJECT_SOT_SKILL_URL, "utf8");
 }
 
 export function readSkillOrchestratorSkill(): string {

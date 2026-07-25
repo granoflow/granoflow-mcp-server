@@ -141,6 +141,46 @@ Use the running App's schema and advertised capabilities. Do not implement card 
 
 Read [Task Lifecycle Card Checkpoints](references/lifecycle-card-checkpoints.md) whenever card knowledge is read or changed during Task Work, Execution, Delivery, or Deferred Review. That reference owns the checkpoint record, phase responsibilities, inbox capability fallback, and cross-phase provenance. Completion only verifies the Delivery checkpoint and never starts a new card-write pass.
 
+## Reality Boundary Themes (现状 / 边界)
+
+When the work is project **status quo（现状）** and **boundaries（边界）** that
+agents must retrieve later—not exam-style active recall—read
+[Reality Boundary Cards](references/reality-boundary-cards.md).
+
+That reference owns theme granularity, `fact_id` (`RB-<slug>`), Note/card
+shape, `project_snapshot.reality_boundary_index`, the add/update/retrieve
+flow, and the **Anti-Drift Lifecycle** for Task Analysis / Plan / Delivery
+(full `index_review` enumeration, `unchanged` | `will_change` | `gap` |
+`unrelated`, verification refs, and fail-closed codes). Plan Design Gate requires green `lint_plan_reality_boundary.py` before
+Readiness (including user-visible `card_change_plan_notice` when any card will
+change). Delivery requires green `lint_delivery_card_change_notice.py` when
+any card was updated. Write path is Knowledge assessment → materialization with
+`defer_active_learning` (archived reference). Do not use `create_note_cards`
+as the primary path for these themes. Similarity search is a leak-net only for
+RB relatedness; AI filtering and preview/apply confirmation still follow this
+skill. Do **not** copy boundary detail back into Project Work body—PW may keep
+`rb_fact_id` pointers only (`product-truth-sot-layers.md`;
+`product_truth_dual_write_forbidden`).
+
+## Route UI Truth Themes（界面真相）
+
+When the work is **route-screen UI truth** (stable main screens + operation
+overlays' textual deltas) that agents must retrieve later—not exam-style
+active recall—read [Route UI Truth Cards](references/route-ui-truth-cards.md).
+
+That reference owns `fact_id` (`UIT-<slug>`), Note/card shape (route card-back
+WebP via `granoflow_review_note_field_media_upload`),
+`project_snapshot.route_ui_truth_index`, dual-mode vision rules (route
+freshness skip when screenshot_at ≥ ui_changed_at; otherwise auto vision for
+routes and ops in interactive and unattended),
+and the Anti-Drift Lifecycle parallel to Reality Boundary. Plan Design Gate
+requires green `lint_plan_route_ui_truth.py` before Readiness. Delivery uses
+the shared `lint_delivery_card_change_notice.py` (accepts
+`kind: route_ui_truth`). Write path is Knowledge `defer_active_learning`.
+Do **not** copy visual/checklist detail back into Project Work—PW keeps
+inventory + short declared `ui_details` + `uit_fact_id` pointers
+(`product-truth-sot-layers.md`; `product_truth_dual_write_forbidden`).
+
 ## Knowledge And Source Fidelity
 
 First decide whether the material is durable knowledge worth active recall. Do not card plain activity logs, temporary status, secrets, weak speculation, or facts with no plausible future retrieval trigger.

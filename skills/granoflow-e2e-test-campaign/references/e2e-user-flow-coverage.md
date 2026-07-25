@@ -18,12 +18,12 @@ Skipping this load and claiming full user-flow coverage fails closed as
 `e2e_campaign_coverage_unloaded`. An incomplete matrix without residuals fails
 as `e2e_campaign_coverage_incomplete`.
 
-## Project E2E SoT thin gate
+## Project SoT thin gate
 
 Coverage is **not invented in the campaign**. It is derived from Project Work
 journeys, `stress_paths`, and hard acceptance rows (below). After the matrix is
 built and every required row is `covered` or an explicit residual, update
-`temp/project-e2e-sot-v*.md`:
+`temp/project-sot.yaml` (owner: `granoflow-project-sot`):
 
 ```yaml
 e2e_campaign:
@@ -32,6 +32,11 @@ e2e_campaign:
     - <coverage_matrix path>
     - <suite_plan path>
 ```
+
+Write **status + pointers only** on the SoT. Suite plans / matrices / screenshots
+remain under `temp/e2e-campaign/**` as evidence. On interrupt, write thin gates
+and `next_step` back to the SoT before stopping—do not leave orchestration in
+`campaign-state.json` alone.
 
 - `covered` — matrix complete (or only allowed residuals).
 - `gap` — required journeys/acceptance rows missing cases without residual →

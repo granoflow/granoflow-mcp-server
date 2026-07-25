@@ -64,6 +64,9 @@ prototype_html_coverage:
       kind: page | dialog | modal | sheet | popover | toast | panel | other
       label: <plain-language>
       html_prototype_ref: <package-relative path or clickable link>
+      # Optional; omit for backward compatibility with older ledgers.
+      reveal: default | interaction
+      host_surface_id: S-reader # recommended when reveal=interaction
       coverage: covered | missing
       note: <optional>
 ```
@@ -83,6 +86,14 @@ Rules:
    still missing HTML.
 5. `status: complete` only when every inventoried surface is `covered` (or
    `not_applicable` when the task truly has no UI surfaces).
+6. Optional `reveal` / `host_surface_id` (when present):
+   - `reveal` Must be `default` or `interaction`.
+   - Prefer `reveal: default` for `kind: page` (route main screen).
+   - Prefer `reveal: interaction` for
+     `dialog|modal|sheet|popover|toast|panel|other`.
+   - When `reveal: interaction`, set `host_surface_id` to the host route
+     `surface_id`. `html_prototype_ref` may point at the host file plus a
+     fragment/anchor (e.g. `reader.html#op-search`).
 
 ### Navigable prototype policy (Analysis / Baseline checklist)
 
@@ -97,16 +108,55 @@ surface in `prototype_html_coverage`:
 2. An isolated HTML file opened only via an out-of-app link, with no in-shell
    path, does **not** satisfy navigability for that surface. Mark the surface
    incomplete until a navigable path exists (or an allowed exception applies).
-3. **Exceptions (do not force fake pages):**
+3. **Route vs operation reveal:**
+   - Route main screens (`kind: page`, `reveal: default`): the stable visible
+     baseline when that route is entered (or reached via in-package nav).
+   - Operation overlays (`dialog|modal|sheet|popover|toast|panel|other`,
+     typically `reveal: interaction`): **Must** appear via real in-package
+     control interaction (vanilla JS show/hide, dialog, navigation)—not as
+     the sole authority of a disconnected static frame with no host path.
+4. **Exceptions (do not force fake pages):**
    - same-page empty / loading / inline error states of one operation;
    - OS chrome (uninjected file dialogs, tray, system sheets)—may use an
      in-app entry affordance; full OS chrome is verified in E2E/manual;
    - `out_of_scope` / non-adopted screens.
-4. Design Baseline Done and task Analysis close **Must** run this checklist
+5. Design Baseline Done and task Analysis close **Must** run this checklist
    (policy). Mechanical `reachable_from` lint is not required in this skill
    revision.
 
-Lint:
+### Prototype stack lock (v1)
+
+Applies to Design Baseline and task `ui_prototype` **source directories and zip
+contents** (`schema: granoflow.prototype`). No MCP global toolchain install.
+
+**Allowed:** `.html` / `.css` / `.js`, local static assets (images, fonts,
+SVG), relative paths only; openable in App Prototype Viewer or `file://`
+**without** `npm install` / bundler build.
+
+**Forbidden in the deliverable package:**
+
+- languages: `.ts`, `.tsx`, `.jsx`, `.vue`; `tsconfig*.json`
+- toolchains: `node_modules/`; `package.json` / lockfiles inside the package
+- frameworks / CDN: React, Preact, Vue, Svelte (imports, globals, or script
+  URLs such as `unpkg.com/react`)
+- layouts that require Vite / webpack / similar before preview
+
+Fail closed:
+
+- `prototype_stack_forbidden_language`
+- `prototype_stack_forbidden_framework`
+- `prototype_stack_forbidden_toolchain`
+
+Lint (before package / Analysis UI prototype close):
+
+```text
+python3 skills/granoflow-agent-workflow/scripts/lint_prototype_stack.py \
+  path/to/prototype-source-dir
+```
+
+`package_prototype.py` runs this lint before writing the zip.
+
+Coverage ledger lint:
 
 ```text
 python3 skills/granoflow-agent-workflow/scripts/lint_prototype_doc_coverage.py \

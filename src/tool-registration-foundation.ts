@@ -25,6 +25,7 @@ type FoundationDependencies = {
   readIntegrationTestCampaignSkill: SkillReader;
   readE2eTestCampaignSkill: SkillReader;
   readAcceptanceDeliverySkill: SkillReader;
+  readProjectSotSkill: SkillReader;
   readSkillOrchestratorSkill: SkillReader;
   bundledSkillResources: BundledSkillResources;
   apiTool: (options: ApiRequestOptions) => Promise<ToolResult>;
@@ -214,6 +215,13 @@ export function registerAuthorizationAndProjectSkillTools(
     "skills/granoflow-acceptance-delivery/SKILL.md",
     deps.readAcceptanceDeliverySkill,
     "granoflow-acceptance-delivery",
+  );
+  read(
+    "granoflow_project_sot_skill",
+    "Read the bundled Granoflow Project SoT skill. Owns the single project-local orchestration SoT at temp/project-sot.yaml: create, lint, and regenerate from the Granoflow App when missing or wiped. Use on long/unattended runs and host-wake resume. Not an E2E test runner.",
+    "skills/granoflow-project-sot/SKILL.md",
+    deps.readProjectSotSkill,
+    "granoflow-project-sot",
   );
 }
 

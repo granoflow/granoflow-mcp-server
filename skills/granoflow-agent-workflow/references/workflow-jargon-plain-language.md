@@ -77,7 +77,7 @@ Localize the gloss to the conversation language. Tokens stay English.
 | Structural Change Forecast / 结构预测                   | 打算改哪些文件/模块的预告（不是让你背代码）                                                                  | 通常只需知晓；有明显跑题再说                                                 |
 | `needs_decision`（库/依赖）                             | 要用到一个新的重要第三方能力，需你拍板                                                                       | 按提示选同意/换方案/暂停                                                     |
 | Unattended / 无人值守                                   | AI 尽量自己往下做，少打断你；遇外部阻塞会记下来。切入时若 Agent 自带 Plan/规划模式会尽量打开                 | 一般不用回「确认进度板」；有 Residual 报告时再处理                           |
-| Project E2E SoT / 项目端到端编排真源                    | 项目 `temp/project-e2e-sot-v*.md`：粗步骤+下一步；skill 细节是黑盒；丢了可重生                               | 一般由 AI 维护；长跑/无人值守以它为准                                        |
+| Project SoT / 项目编排真源                              | 项目 `temp/project-sot.yaml`：粗步骤+下一步；skill 细节是黑盒；丢了可从 App 重生（不是 E2E 测试文件）         | 一般由 AI 维护；长跑/无人值守以它为准；旧名 Project E2E SoT 已弃用            |
 | 整项目无人值守交付 + SoT 唤醒续跑                       | 一句「无人值守…生成项目并完成和交付」：入口就写 SoT；宿主能定时唤醒就按 `next_step` 续跑，否则给可复制续跑句 | 演示用完整句；中断后勿只说「继续」，应按 SoT / 续跑提示推进                  |
 | SoT digest match / 编排真源摘要对账                     | 长跑续跑前，项目 SoT 记录的 Project Work 摘要要和 App 里当前内容一致                                         | 一般不用管；续跑报 stale 时让 AI 刷新 SoT 后再继续                           |
 | Parallel Batch / 并行批次                               | 多个互不抢同一文件的任务一起做；抢同一文件则必须串行或分 worktree                                            | 一般不用管；出现评审链接时点开核对                                           |
@@ -91,6 +91,8 @@ Localize the gloss to the conversation language. Tokens stay English.
 | Host-local “Plan mode” / “/loop” 等品牌名               | 某宿主的本地称呼，不是跨 Agent 硬门禁                                                                        | 勿要求用户只会说某个 IDE 的模式名；说「开始实施」或「无人值守」即可          |
 | Integration campaign Closing Summary / 集成测试收尾总结 | 用大白话说明：查了什么、过没过、对你有什么影响、还剩什么、下一步说啥                                         | 读总结；有遗留就按提示补材料；全过可说「项目收尾」                           |
 | Layer A / 单任务完成验收                                | 某个任务自己做完：Delivery、报告、单测等（AI 自检为主）                                                      | 一般不用逐任务点确认；看清单知悉即可                                         |
+| 确认验收即打钩                                          | 产物验收确认后，同一波就把 App 任务勾成 done；无人值守下 AI 自荐=已确认                                       | 交互：确认后应看到勾选；无人值守：跑完应收口为已完成                         |
+| 确认里程碑验收=打齐任务钩                               | 里程碑 Layer B 确认时，同波把该里程碑所有 in-scope 子任务勾成 done                                           | 里程碑已验收时，列表里不应再留未勾子任务                                     |
 | Layer B / 里程碑集成验收                                | 里程碑范围不可见 IT；无人值守在实施波次内跑，交互调度推迟到全量 IT 阶段                                      | 看集成验收/最终交付 IT 结果即可                                              |
 | Milestone IT Suite Plan / 里程碑集成编排                | 删前先加/浏览/列表等，尽量少步骤的测试顺序                                                                   | 一般由 AI 编排                                                               |
 | 最终交付 / 完整交付                                     | 里程碑交付止于不可见 IT；最终交付可随时开。仅 1 个里程碑则直进全面 E2E；多个则先全量单测+全部 IT 再全面 E2E  | 里程碑过了可说「开始最终交付」；E2E 始终查全项目                             |

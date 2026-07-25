@@ -47,6 +47,25 @@ destructive Git, or impersonation.
 Inventing credentials, impersonating the user, or marking external work done
 without evidence remains forbidden.
 
+## Card-Truth Batch Gate (RB / UIT)
+
+Reality Boundary and Route UI Truth writes use Knowledge materialization and
+are **subjective_acceptance** — unattended **Must not** apply them.
+
+Before whole-project / milestone-wide / final-delivery unattended when the
+project keeps `reality_boundary_index` and/or `route_ui_truth_index`:
+
+1. Complete an **interactive Card-Truth Batch** (preview→user/batch approve→
+   apply→index upsert) for seed gaps and any pending `will_change` card updates.
+2. Run `lint_unattended_card_truth_ready.py` (see
+   `unattended-card-truth-batch-gate.md`).
+3. Only then auto-run solvable engineering, E2E, and freshness-gated vision.
+
+Do **not** claim “unattended Delivery closed UIT/RB truth” while card apply is
+still deferred. Engineering `project_complete` with Residual for cards /
+`user_final_acceptance` is allowed; conflating that with anti-drift closed is
+not (`card_truth_delivery_claim_without_apply`).
+
 ## External Capability Inventory (ask early)
 
 Before treating an unattended run as fully scheduled—and again immediately when
@@ -145,6 +164,16 @@ deferred_external_work: []
 # each deferred row: id, title, blocker_class, evidence, resume_condition
 question_batch_size: 0
 ```
+
+## Task / milestone acceptance = checkbox (hard)
+
+Universal closeout lives in `task-and-milestone-acceptance-layers`. In
+unattended mode, AI self-recommend on the task artifact **is** confirmation
+(`unattended_auto_adopted`)—the **same wave** **Must** complete the App task
+(`status=done`). For milestone Layer B, run
+`lint_milestone_child_done.py --claim-passed` in the same wave. Do not treat
+suite green, Delivery upload, or a Closing Summary alone as closeout while a
+task or in-scope sibling stays `pending`.
 
 ## Milestone Final Grill
 

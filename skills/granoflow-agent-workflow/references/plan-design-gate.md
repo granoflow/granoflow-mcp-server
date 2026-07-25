@@ -183,12 +183,49 @@ required excerpts, Case sync is red, or alignment is not `aligned: true`
 (`milestone_plan_acceptance_pack_incomplete` /
 `milestone_plan_prototype_alignment_failed`).
 
+5d. **Reality Boundary anti-drift (index enumeration)** — Gate-required software
+Plans **Must** complete the Anti-Drift Plan half from
+`granoflow-review-card-draft/references/reality-boundary-cards.md`.
+
+    | Requirement | Rule |
+    | --- | --- |
+    | Index review | Full `reality_boundary_index` → `reality_boundary_index_review` (`related` + `disposition` per row) |
+    | Fields | `reality_boundary_check_status`, `reality_boundary_fact_ids`, `reality_boundary_will_change`; key = `fact_id` |
+    | Verification | Every `will_change` has non-empty `verification_refs` |
+    | Plan notice (hard) | Always show notice + `card_change_plan_notice` (`emitted`/`shown_to_user` true). Changes → item list. No changes → **only** one line `none: true` + `summary` (e.g. 「本次迭代无卡片变更」), `items: []` |
+    | N/A | Empty index: `not_applicable` + reason; still require the one-line none notice |
+    | Lint | `lint_plan_reality_boundary.py` (+ `--snapshot` when available) before Readiness |
+
+    Fail closed as `reality_boundary_check_missing`,
+    `reality_boundary_will_change_without_verification`, or
+    `card_change_plan_notice_missing`. Do **not** set
+    `plan_design_gate_status: passed` while this lint is red.
+
+5e. **Route UI Truth anti-drift (index enumeration)** — Gate-required software
+Plans that touch user-visible routes/screens **Must** complete the Anti-Drift
+Plan half from
+`granoflow-review-card-draft/references/route-ui-truth-cards.md`.
+
+    | Requirement | Rule |
+    | --- | --- |
+    | Index review | Full `route_ui_truth_index` → `route_ui_truth_index_review` (`related` + `disposition` per row) |
+    | Fields | `route_ui_truth_check_status`, `route_ui_truth_fact_ids`, `route_ui_truth_will_change`; key = `fact_id` (`UIT-*`) |
+    | Verification | Every `will_change` has non-empty `verification_refs` (E2E / screenshot / checklist) |
+    | Plan notice (hard) | Shared `card_change_plan_notice`; UIT items use `kind: route_ui_truth` |
+    | Vision freshness | `screenshot_at >= ui_changed_at` → skip; else auto vision (routes + ops) in interactive and unattended |
+    | Lint | `lint_plan_route_ui_truth.py` (+ `--snapshot` when available) before Readiness |
+
+    Fail closed as `route_ui_truth_check_missing`,
+    `route_ui_truth_will_change_without_verification`, or
+    `card_change_plan_notice_missing`. Do **not** set
+    `plan_design_gate_status: passed` while this lint is red.
+
 6. **User-visible copy (locale-bound)** — when the task introduces or changes
-   user-visible strings, inventory final copy for the Plan locale. Locale
-   resolution (hard): user-explicit product/UI language if given; else the
-   language of the current user↔AI conversation. Multilingual products: Plan
-   designs **only** that locale; other locales are Execution work. Full rules:
-   `milestone-plan-acceptance-pack.md` (Copy Language).
+user-visible strings, inventory final copy for the Plan locale. Locale
+resolution (hard): user-explicit product/UI language if given; else the
+language of the current user↔AI conversation. Multilingual products: Plan
+designs **only** that locale; other locales are Execution work. Full rules:
+`milestone-plan-acceptance-pack.md` (Copy Language).
 
 7. **Structural Change Forecast** — concrete expected files/symbols per
    `software-structural-budget.md`. Uncertain names may be `provisional` /
@@ -229,7 +266,20 @@ Fail closed when Planning for a Gate-required task has any of:
 - software milestone task whose living acceptance pack draft was not updated /
   re-rendered, or `prototype_alignment` for this task is not aligned;
 - user-visible copy in Scope without a locale-bound copy inventory
-  (`plan_copy_missing` / `plan_copy_locale_unresolved`).
+  (`plan_copy_missing` / `plan_copy_locale_unresolved`);
+- Reality Boundary Plan half missing or lint-red: absent
+  `reality_boundary_check_status` / `reality_boundary_index_review`, incomplete
+  index enumeration, `will_change` without `verification_refs`, or planned
+  card/`will_change` writes without a user-visible
+  `card_change_plan_notice` (`reality_boundary_check_missing` /
+  `reality_boundary_will_change_without_verification` /
+  `card_change_plan_notice_missing`);
+- Route UI Truth Plan half missing or lint-red when UI routes are in scope:
+  absent `route_ui_truth_check_status` / `route_ui_truth_index_review`,
+  incomplete index enumeration, `will_change` without `verification_refs`, or
+  missing Plan notice (`route_ui_truth_check_missing` /
+  `route_ui_truth_will_change_without_verification` /
+  `card_change_plan_notice_missing`).
 
 Codes:
 
@@ -251,6 +301,10 @@ Codes:
   see `prototype-doc-coverage.md`
 - `milestone_plan_acceptance_pack_incomplete` /
   `milestone_plan_prototype_alignment_failed` — living pack / alignment gate
+- `reality_boundary_check_missing` /
+  `reality_boundary_will_change_without_verification` /
+  `card_change_plan_notice_missing` — see `reality-boundary-cards.md`
+  Anti-Drift; lint `lint_plan_reality_boundary.py`
 
 ## Metadata
 
@@ -259,6 +313,12 @@ plan_design_gate_status: not_applicable | pending | passed
 plan_design_diagrams: [] # e.g. [flowchart, state] — diagrams actually included
 data_disposition: not_applicable | unchanged | extend | breaking
 analysis_technical_package_sha256: null | <64 lowercase hex>
+reality_boundary_check_status: not_applicable | missing | checked_unchanged | checked_will_change | updated_on_delivery
+reality_boundary_fact_ids: []
+reality_boundary_will_change: []
+reality_boundary_index_review: []
+reality_boundary_not_applicable_reason: null | <one line>
+card_change_plan_notice: null | { emitted, shown_to_user, items: [] }
 ```
 
 - Set `pending` while drafting or awaiting the normal Plan acceptance gate.
@@ -269,7 +329,9 @@ analysis_technical_package_sha256: null | <64 lowercase hex>
   `needs_decision` library.
 - Readiness Grill must not set `readiness_grill_status: passed` while status is
   `pending` or the Gate is incomplete (`plan_design_gate_incomplete` /
-  `plan_test_cases_missing`).
+  `plan_test_cases_missing` / `reality_boundary_check_missing` /
+  `reality_boundary_will_change_without_verification` /
+  `card_change_plan_notice_missing`).
 - Do not request `execution_authorization` / start code edits while Gate is
   required and not `passed`.
 

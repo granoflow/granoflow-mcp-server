@@ -14,6 +14,20 @@ At each checkpoint:
 4. Route every proposed write through the parent skill's preview and operation-level approval flow.
 5. Apply only approved operations and require App-owned `practiceReady: true` readback.
 6. Persist the checkpoint result in the phase document or node evidence.
+7. **Explicit change notice (hard):** The Agent **Must** show a user-visible
+   notice and record `card_change_plan_notice` (Plan / Task Work) or
+   `card_change_delivery_notice` (Execution apply / Delivery) with
+   `shown_to_user: true`. If any card create/update/archive is planned or
+   applied (Reality Boundary or **any** other review card kind), list every
+   item; Delivery applied writes **Must** set `cards_updated: true`. If zero
+   cards change, show **only** one confirmation line
+   (`none: true`, e.g. 「本次迭代无卡片变更」/「本次实施无卡片变更」)—no item
+   list. Missing notices fail closed as `card_change_plan_notice_missing` or
+   `card_change_delivery_notice_missing`. Reality Boundary details:
+   `reality-boundary-cards.md` Anti-Drift. Route UI Truth details:
+   `route-ui-truth-cards.md` Anti-Drift (freshness + auto vision). Unattended
+   whole-project runs that claim RB/UIT Delivery closed must pass
+   `unattended-card-truth-batch-gate` first.
 
 Before preview, validate every proposed Note: its body must contain at least
 one concrete example of the knowledge in use. If the knowledge is abstract,

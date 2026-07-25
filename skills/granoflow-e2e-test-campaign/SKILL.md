@@ -68,6 +68,20 @@ Each campaign round boundary and the campaign end **Must** emit the Project
 Lifecycle Progress Board with stage `e2e_campaign` status (display-only during
 the loop). After success, next stage is `project_complete`.
 
+## Project SoT (orchestration)
+
+Campaign suite files under `temp/e2e-campaign/**` are **evidence only**. Mutable
+orchestration (`next_step`, stage `e2e_campaign`, thin gate
+`e2e_campaign.coverage_matrix_check` + `evidence_ref` pointers) lives in:
+
+```text
+temp/project-sot.yaml
+```
+
+Owner: `granoflow_project_sot_skill` / `project-sot`. On interrupt or round
+boundary, **write back** SoT before stopping. Do not treat
+`campaign-state.json` as the `next_step` SoT.
+
 ## Mode: Agent Auto-Drive
 
 - Set `campaign_drive: agent_auto` for the whole E2E loop.
@@ -110,6 +124,20 @@ are viewable in chat.
 
 Policies: `screenshot_policy: required_if_capable`,
 `vision_policy: on_if_capable` (capability `available` implies a live window).
+
+When the product keeps **Route UI Truth** cards (`UIT-*`, see
+`granoflow-review-card-draft/references/route-ui-truth-cards.md`):
+
+- After key-step live captures, write/update the UIT screenshot manifest and
+  upload route WebP to card backs via `granoflow_review_note_field_media_upload`.
+- Freshness: if `screenshot_at >= ui_changed_at`, skip recapture/reupload/vision;
+  otherwise auto screenshot → upload → vision for routes **and** operation
+  overlays in both interactive and unattended (no cost ask/skip).
+- On vision fail: interactive → alert + human image review; unattended → enter
+  fix flow.
+- Unattended E2E that claims UIT card-back truth **Must** pass
+  `unattended-card-truth-batch-gate` first (interactive seed + App
+  `field-media.upload`). Otherwise treat upload/vision card steps as Residual.
 
 ## Workflow
 

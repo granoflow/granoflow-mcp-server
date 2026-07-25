@@ -401,7 +401,15 @@ Hard rules (non-copy software tasks):
    - complete `prototype_html_coverage` so **every task-owned user-visible
      surface** (page, dialog/modal, sheet, popover, toast when task-owned) has
      a high-fidelity HTML prototype (`lint_prototype_doc_coverage.py --kind
-html_coverage`; no `prototype_html_coverage_gap`);
+html_coverage`; no `prototype_html_coverage_gap`); route pages use
+     `reveal: default`; operation overlays use `reveal: interaction` and
+     appear via in-package vanilla JS from a host route;
+   - run `lint_prototype_stack.py` on the prototype source directory before
+     packaging/upload (Vanilla JS stack lock; fail closed
+     `prototype_stack_forbidden_language` /
+     `prototype_stack_forbidden_framework` /
+     `prototype_stack_forbidden_toolchain`); `package_prototype.py` enforces
+     the same gate;
    - complete `prototype_widget_reuse` against project `widgets.yaml` (same role
      ⇒ Must reuse catalog widget; no near-duplicates;
      `--kind widget_reuse --widgets …`);

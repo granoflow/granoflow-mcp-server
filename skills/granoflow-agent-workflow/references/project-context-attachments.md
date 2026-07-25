@@ -17,7 +17,9 @@ Resolve it with `granoflow_project_interaction_style`; if it is absent, use the
 newcomer-friendly default. This is a presentation preference, not a second
 source of project facts.
 
-These files are project **consistency guards**, not product SoT:
+These files are project **consistency guards**, not product SoT and not the
+home for screen visual essays or Reality Boundary treatises (those live on
+UIT/RB cards; see `product-truth-sot-layers.md`):
 
 - They are **not** the product journey, screen, or acceptance ledger (that is
   **Project Work** current truth).
@@ -90,10 +92,72 @@ Rules:
    historical hints, not complete facts—still run the Hard Gate against the
    best available sections and record staleness in the conflict report.
 
+## Reality Boundary Index (`project_snapshot.yaml`)
+
+When project status quo / boundaries are materialized as Knowledge Notes and
+archived-reference cards (see
+`granoflow-review-card-draft/references/reality-boundary-cards.md`), keep a
+lookup table on the snapshot:
+
+```yaml
+reality_boundary_index:
+  - fact_id: RB-library-encryption
+    note_id: <uuid>
+    card_ids: [<uuid>, ...]
+    title: 书库加密
+    updated_at: <ISO-8601>
+```
+
+Update rules:
+
+1. Upsert by `fact_id` after materialization readback (never invent `note_id`).
+2. Refresh `card_ids` and `updated_at` when boundaries are added or removed.
+3. Agents **must** read this index before creating a new reality-boundary Note;
+   a hit forbids a second Note for the same `fact_id`.
+4. Keep Hard Gate prose in snapshot/rules to **one-line constraints**; detail
+   lives on the Note/cards. Do not paste screen/boundary essays into snapshot
+   body (`product_truth_dual_write_forbidden`).
+5. Index writes follow the snapshot Write Contract (factual, low-risk); they do
+   not replace `project_rules.yaml` boundary authority for Hard Gate checks.
+6. **Anti-drift:** when a task changes observable status quo or boundaries,
+   Hard Gate short summaries and the matching RB Note/cards **must** be updated
+   in the same Delivery batch. Leaving YAML short prose on the old truth while
+   code moved (or the reverse) is the same class of failure as
+   `reality_boundary_delivery_stale`—see
+   `granoflow-review-card-draft/references/reality-boundary-cards.md`
+   Anti-Drift Lifecycle. Do not “fix” drift by expanding Project Work prose.
+
+## Route UI Truth Index (`project_snapshot.yaml`)
+
+When route-screen UI truth is materialized as Knowledge Notes and
+archived-reference cards (see
+`granoflow-review-card-draft/references/route-ui-truth-cards.md`), keep a
+lookup table on the snapshot:
+
+```yaml
+route_ui_truth_index:
+  - fact_id: UIT-bookshelf
+    note_id: <uuid>
+    card_ids: [<uuid>, ...]
+    title: 书架
+    route_id: S-bookshelf
+    updated_at: <ISO-8601>
+    screenshot_at: <ISO-8601> # last successful card-back upload
+    ui_changed_at: <ISO-8601> # last UIT Delivery update for this fact_id
+```
+
+Update rules mirror Reality Boundary index rules (`fact_id` upsert, forbid
+second Note, anti-drift on Delivery). Index is a pointer only; App Note/Card
+and card-back WebP remain content SoT (not Project Work body). Vision skips
+when `screenshot_at >= ui_changed_at`. Project Work may reference
+`uit_fact_id` only—see `product-truth-sot-layers.md`.
+
 ## Write Contract
 
 1. `project_snapshot.yaml` may receive low-risk factual updates such as current
-   state, next step, blocker, recent verification, and context gaps.
+   state, next step, blocker, recent verification, context gaps, and
+   `reality_boundary_index` / `route_ui_truth_index` upserts after Knowledge
+   materialization readback.
 2. `project_rules.yaml` stores active rules, long-term preferences, boundaries,
    public-copy constraints, and short decision notes that still affect current
    execution.

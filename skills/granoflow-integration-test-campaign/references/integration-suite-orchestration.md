@@ -39,10 +39,10 @@ Also:
    component and state owner around a controllable event adapter. It is not
    proven by calling the service alone.
 
-### Project E2E SoT thin gate
+### Project SoT thin gate
 
 When stage `integration_campaign` runs (not `waived_e2e_direct`), update
-`temp/project-e2e-sot-v*.md`:
+`temp/project-sot.yaml` (owner: `granoflow-project-sot`):
 
 ```yaml
 integration_campaign:

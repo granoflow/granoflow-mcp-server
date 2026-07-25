@@ -2,13 +2,21 @@
 
 **Superseded for project-bound long / unattended runs.**
 
-Use [`project-e2e-sot-template.md`](project-e2e-sot-template.md) and copy to:
+Use the Project SoT YAML skeleton:
 
 ```text
-temp/project-e2e-sot-v<n>.md
+skills/granoflow-project-sot/references/project-sot-template.yaml
 ```
 
-Owner: `project-e2e-sot.md`. Continuity mechanics: `long-task-run-continuity.md`.
+Copy to:
+
+```text
+temp/project-sot.yaml
+```
+
+Owner: `granoflow-project-sot` / `project-sot`. Continuity mechanics:
+`long-task-run-continuity.md`.
 
 Do not create a parallel `temp/run-plan-*.md` for the same project orchestration
-scope — that splits the source of truth.
+scope — that splits the source of truth. Legacy `temp/project-e2e-sot-v*.md` is
+read-only compatibility only.

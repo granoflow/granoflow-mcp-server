@@ -28,7 +28,7 @@ Granoflow project. Unattended full-pipeline completion needs **all three**:
 | Layer | Portable name                          | Solves                       | Does **not** solve                            |
 | ----- | -------------------------------------- | ---------------------------- | --------------------------------------------- |
 | Auth  | Unattended interaction contract        | Do not ask; defer external   | What to resume after cutoff; when to wake     |
-| A     | **Durable run plan / Project E2E SoT** | **What** to resume next      | Waking the agent; ask-budget                  |
+| A     | **Durable run plan / Project SoT**     | **What** to resume next      | Waking the agent; ask-budget                  |
 | B     | **Collaborative planning surface**     | Optional host planning UI    | Continuity if unavailable                     |
 | C     | **Host wake surface**                  | **When** the agent re-enters | Phase truth, ask-budget, or next-step content |
 
@@ -43,7 +43,7 @@ This file owns Layers A–C continuity mechanics.
 
 | Layer | Portable name                          | Required?                                        | Purpose                                                                                      |
 | ----- | -------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| A     | **Project E2E SoT** (durable run plan) | **Yes** for long / unattended project runs       | `temp/project-e2e-sot-v*.md`: stages + coarse work_items + next_step; survives summarization |
+| A     | **Project SoT** (durable run plan)     | **Yes** for long / unattended project runs       | `temp/project-sot.yaml`: stages + coarse work_items + next_step; survives summarization; regen if missing |
 | B     | **Collaborative planning surface**     | When the **host exposes** it                     | Optional host UI/mode that helps structure work before/while executing                       |
 | C     | **Host wake surface**                  | When the **host exposes** it for long unattended | Recurring / event wake so work continues after turn cutoff or idle without a human 「继续」  |
 
@@ -73,7 +73,7 @@ host_wake_surface:
   # optional note for logs only — never fail on the string:
   host_local_label: <free text or omit>
   # required when arming a wake while Layer A is active:
-  bound_run_plan_path: temp/project-e2e-sot-v<n>.md
+  bound_run_plan_path: temp/project-sot.yaml
 ```
 
 Rules:
@@ -108,59 +108,71 @@ Short single-file fixes are exempt unless unattended milestone implement applies
 
 ## Durable Run Plan (Layer A) — hard
 
-For **project-bound** long / unattended runs, Layer A **is** the Project E2E
-SoT. Do not maintain a second parallel `temp/run-plan-*.md` format.
+For **project-bound** long / unattended runs, Layer A **is** the **Project SoT**.
+Do not maintain a second parallel `temp/run-plan-*.md` format.
 
 ### Location
 
 ```text
-temp/project-e2e-sot-v<n>.md
+temp/project-sot.yaml
 ```
 
-Owner contract and schema: `project-e2e-sot.md` (+ `project-e2e-sot-template.md`).
+Owner skill: `granoflow-project-sot` (`referenceId: project-sot`). Skeleton:
+`skills/granoflow-project-sot/references/project-sot-template.yaml`.
 Create after `project_init` done; expand after `milestones_created`; lint with
-`lint_project_e2e_sot.py`.
+`lint_project_sot.py`.
+
+If `temp/project-sot.yaml` is missing (or `temp/` wiped), **regen before continue**:
+
+```text
+python3 skills/granoflow-project-sot/scripts/regen_project_sot_from_app.py \
+  --project-id <uuid> --repo-root <path> --force --migrate-legacy
+```
+
+Skipping regen when required → `project_sot_missing`.
 
 Before each long/unattended resume (host wake tick or new Agent turn after
 cutoff): App-readback current Project Work (and any other non-empty
 `source_digests` keys), fill `source_digest_verification`, then:
 
 ```text
-python3 skills/granoflow-agent-workflow/scripts/lint_project_e2e_sot.py \
-  path/to/project-e2e-sot-v1.md --require-digest-match
+python3 skills/granoflow-project-sot/scripts/lint_project_sot.py \
+  temp/project-sot.yaml --require-digest-match
 ```
 
-Mismatch or missing verification → `project_e2e_sot_stale` (do not continue on
-a stale digest).
+Mismatch or missing verification → `project_sot_stale` (do not continue on
+a stale digest). Legacy alias: `project_e2e_sot_stale`.
 
 Also load:
 
 ```text
 granoflow_bundled_skill_reference(
-  skillId: "granoflow-agent-workflow",
-  referenceId: "project-e2e-sot"
+  skillId: "granoflow-project-sot",
+  referenceId: "project-sot"
 )
 ```
 
 ### Minimum contents
 
-Follow `project-e2e-sot.md`: eight lifecycle `stages`, coarse `work_items`
-(task 3.1/3.2, milestone pack + implement, project campaigns), and a single
-`next_step`. Skill-internal details stay out of the file.
+Follow `granoflow-project-sot` / `project-sot`: eight lifecycle `stages`,
+coarse `work_items` (task 3.1/3.2, milestone pack + implement, project
+campaigns), and a single `next_step`. Skill-internal details stay out of the
+file.
 
 Legacy alias: `long_run_plan_missing` / `long_run_plan_stale` still apply when
 the SoT file is absent or its `next_step` / stage rows were not refreshed after
-cutoff. Prefer the `project_e2e_sot_*` codes when linting the SoT document.
+cutoff. Prefer the `project_sot_*` codes when linting the SoT document
+(`project_e2e_sot_*` remains a legacy alias).
 
 Fail closed:
 
-- `long_run_plan_missing` / `project_e2e_sot_missing` — long/unattended project
-  run without an active SoT file
-- `long_run_plan_stale` / `project_e2e_sot_stale` — continuing after
+- `long_run_plan_missing` / `project_sot_missing` — long/unattended project
+  run without an active SoT file (regen first if wiped)
+- `long_run_plan_stale` / `project_sot_stale` — continuing after
   summary/cutoff without refreshing `next_step` / statuses, or
   `--require-digest-match` failed against App readback
-- `project_e2e_sot_*` — schema / affinity / pack-before-implement invariants
-  (see `project-e2e-sot.md`)
+- `project_sot_*` — schema / affinity / pack-before-implement invariants
+  (see `granoflow-project-sot` / `project-sot`)
 
 ## Unattended Entry Continuity Checklist (hard)
 
@@ -168,9 +180,10 @@ When the user **enters or switches into** unattended for a **whole-project**,
 **milestone-wide**, or **final-delivery** scope, the **same wave Must** complete
 this checklist before deep Analysis / Implement waves that risk turn cutoff:
 
-1. **Load** this reference and `project-e2e-sot` via MCP.
-2. **Create or update** `temp/project-e2e-sot-v*.md` with a concrete `next_step`
-   (skeleton after `project_init` is enough; expand after portfolio ready).
+1. **Load** this reference and `granoflow-project-sot` / `project-sot` via MCP.
+2. **Create or update** `temp/project-sot.yaml` with a concrete `next_step`
+   (skeleton after `project_init` is enough; expand after portfolio ready;
+   regen from App if missing).
 3. **Probe Layer B** (`collaborative_planning_surface`):
    - `available` → activate / enter without asking;
    - `unavailable` / `unknown` → continue with Layer A only (do not block).
@@ -182,28 +195,36 @@ this checklist before deep Analysis / Implement waves that risk turn cutoff:
      `host_wake_unavailable_notice` that includes the **canonical resume
      prompt** (never a bare 「继续」 / “continue”) so a human or later host
      can re-enter on `next_step`.
+5. **Card-Truth Batch Gate (RB/UIT)** — When the project uses
+   `reality_boundary_index` and/or `route_ui_truth_index`, complete
+   `unattended-card-truth-batch-gate.md` in this wave (interactive seed /
+   pending `will_change` apply + `lint_unattended_card_truth_ready.py`) **or**
+   record `card_truth_batch_gate.status: deferred` with Residual fact_ids.
+   Do not enter deep unattended Implement/E2E claiming UIT/RB Delivery closed
+   while the gate is `pending` / blocked.
 
 Skipping the SoT create/update on this entry fails closed as
-`project_e2e_sot_missing` / `long_run_plan_missing`. Asking solely to enable a
+`project_sot_missing` / `long_run_plan_missing`. Asking solely to enable a
 host-local planning UI fails closed as
-`collaborative_planning_surface_confirm_in_unattended`.
+`collaborative_planning_surface_confirm_in_unattended`. Card-truth gate
+failures: `card_truth_batch_gate_missing` / `card_truth_batch_gate_blocked`.
 
 **Canonical whole-project unattended utterance** (natural-language trigger;
 contract body stays English):
 
 ```text
-请用无人值守模式根据 docs 下的产品文档和用户故事生成 granoflow 项目并完成和交付它。长跑维护 Project E2E SoT，并在宿主支持时按 SoT next_step 定时唤醒续跑。
+请用无人值守模式根据 docs 下的产品文档和用户故事生成 granoflow 项目并完成和交付它。长跑维护 Project SoT（temp/project-sot.yaml），并在宿主支持时按 SoT next_step 定时唤醒续跑。
 ```
 
 English equivalent intent: unattended generate-from-docs → full delivery
-including E2E; maintain Project E2E SoT; arm host wake on `next_step` when the
+including E2E; maintain Project SoT; arm host wake on `next_step` when the
 host exposes Layer C.
 
 **Canonical resume prompt** (user-visible when Layer C is unavailable, and the
 semantic core of every wake payload):
 
 ```text
-Unattended Granoflow continue: load long-task-run-continuity and project-e2e-sot; read bound_run_plan_path; run Host Wake Tick Protocol for exactly next_step; update the SoT; re-arm if solvable work remains.
+Unattended Granoflow continue: load long-task-run-continuity and granoflow-project-sot; read bound_run_plan_path (temp/project-sot.yaml); regen if missing; run Host Wake Tick Protocol for exactly next_step; update the SoT; re-arm if solvable work remains.
 ```
 
 ## Collaborative Planning Surface (Layer B)
@@ -251,14 +272,14 @@ path. That fails closed as `host_wake_prompt_missing_next_step`.
 Each wake / tick **Must** run this sequence—no status-only turn that leaves the
 plan unchanged while solvable work remains:
 
-1. **Read** the Project E2E SoT at `bound_run_plan_path` (refresh if
-   summary/cutoff made chat memory stale). Lint when materially updating.
+1. **Read** the Project SoT at `bound_run_plan_path` (default
+   `temp/project-sot.yaml`; regen if missing). Lint when materially updating.
 2. **Execute exactly one** `next_step` work item (skill black box). Apply
    `unattended-interaction-contract` (`continue` / `defer_item` /
    `complete_with_residuals`)—do not invent mid-tick questions.
 3. **Update** the same SoT file: stage / work_item statuses, `next_step`,
    evidence, `updated_at`. Stale next-step after a productive tick →
-   `long_run_plan_stale` / `project_e2e_sot_stale`.
+   `long_run_plan_stale` / `project_sot_stale`.
 4. **Re-arm or stop:**
    - If solvable work remains and the run is not paused/stopped → re-arm Layer
      C with a payload that still names `bound_run_plan_path` and instructs the
@@ -279,8 +300,8 @@ Checklist (or an equivalent that still names load → read SoT → one `next_ste
 
 ```json
 {
-  "prompt": "Unattended Granoflow continue: load long-task-run-continuity and project-e2e-sot; read bound_run_plan_path; run Host Wake Tick Protocol for exactly next_step; update the SoT; re-arm if solvable work remains.",
-  "bound_run_plan_path": "temp/project-e2e-sot-v1.md"
+  "prompt": "Unattended Granoflow continue: load long-task-run-continuity and granoflow-project-sot; read bound_run_plan_path (temp/project-sot.yaml); regen if missing; run Host Wake Tick Protocol for exactly next_step; update the SoT; re-arm if solvable work remains.",
+  "bound_run_plan_path": "temp/project-sot.yaml"
 }
 ```
 
@@ -303,14 +324,14 @@ closed as `host_wake_unbound_from_run_plan`.
 | Per-task Plan Design Gate                    | `plan-design-gate.md`                |
 | Surviving long agent loops / host variance   | **this file**                        |
 | Host wake bound to durable next step         | **this file** (Layer C)              |
-| Project orchestration SoT (Layer A file)     | `project-e2e-sot.md`                 |
+| Project orchestration SoT (Layer A file)     | `granoflow-project-sot` / `project-sot` |
 | Plain-language gloss for users               | `workflow-jargon-plain-language.md`  |
 | Unattended ask budget                        | `unattended-interaction-contract.md` |
 
 ## Admission Test
 
 1. Was this reference loaded for a long or unattended implement run?
-2. Does an active `temp/project-e2e-sot-v*.md` exist and name `next_step`?
+2. Does an active `temp/project-sot.yaml` exist and name `next_step`?
 3. Were Layers B / C referenced only via availability, not a required vendor name?
 4. Unattended entry: was the Unattended Entry Continuity Checklist completed in
    the same wave (SoT + Layer B probe + Layer C probe/arm or

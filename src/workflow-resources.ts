@@ -22,6 +22,7 @@ export const BUNDLED_SKILL_IDS = [
   "granoflow-integration-test-campaign",
   "granoflow-e2e-test-campaign",
   "granoflow-acceptance-delivery",
+  "granoflow-project-sot",
   "granoflow-skill-orchestrator",
 ] as const;
 

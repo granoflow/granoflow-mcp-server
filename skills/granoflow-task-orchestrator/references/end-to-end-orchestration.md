@@ -97,12 +97,15 @@ Continue independent safe work before waiting.
 ## Verified Completion
 
 Never equate local edits, a green unit test, HTTP success, or an uploaded
-filename with completion. A planned task is complete only when:
+filename with completion. Follow **Universal task closeout** in
+`task-and-milestone-acceptance-layers`: artifact → acceptance (AI may
+self-recommend; unattended self-recommend = confirm) → **same-wave** App
+checkbox. A planned task is complete only when:
 
 - required gates and full project checks pass;
 - App-owned Task Work and D content or SHA-256 readback matches;
 - every required node is `finished`;
-- the task readback is `status=done` with `endedAt`;
+- acceptance is confirmed and the task readback is `status=done` with `endedAt`;
 - any project/milestone context upkeep decision is recorded.
 
 If any evidence is partial, keep the task pending and record the precise

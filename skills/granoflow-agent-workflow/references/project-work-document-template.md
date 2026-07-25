@@ -19,6 +19,21 @@ contract—not a change-log narrative and not a full copy of user product docs.
   `product_spec_coverage` / `acceptance` rows; **do not paste** full product
   manuals or user-story books into this YAML.
 
+### SoT layers vs UIT / RB cards (no dual-write)
+
+Project Work is the **requirements + inventory + pointer** contract—not the
+home for screen visual truth or status-quo/boundary essays. See
+`product-truth-sot-layers.md`.
+
+| Keep in Project Work | Do **not** keep in Project Work body |
+| --- | --- |
+| `screen_coverage` / journey inventory (short) | Route “looks like now”, checklists, screenshot narratives |
+| Short declared `ui_details` + `source` | Reality/boundary treatises |
+| Optional `uit_fact_id` / `rb_fact_id` pointers | Second copy of Note/card detail |
+
+Fail closed as `product_truth_dual_write_forbidden` when agents maintain the
+same detail in both PW and UIT/RB cards.
+
 ### Layered fill (do not flatten)
 
 | Layer                              | Typical sections                                                                                           | Rule                                                         |
@@ -78,10 +93,15 @@ These App-owned attachments support engineering and verification. They are
 **not** a second product journey/acceptance ledger—that stays in Project Work
 above. Task Work / Delivery hold history and evidence.
 
+`project_snapshot.yaml` / `project_rules.yaml` hold **Hard Gate short lines**
+and index **pointers** (`reality_boundary_index`, `route_ui_truth_index`). They
+are **not** the SoT for screen visual detail or boundary essays—those live on
+UIT/RB Notes and cards (`product-truth-sot-layers.md`).
+
 | Attachment                         | Purpose                                         | Effect on development                                           |
 | ---------------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
-| `project_snapshot.yaml`            | Code/module status quo, next step, blockers     | Hard Gate before first software edit (`project_context_*`)      |
-| `project_rules.yaml`               | Durable boundaries, prefs, `interaction_style`  | Same Hard Gate; not product acceptance SoT                      |
+| `project_snapshot.yaml`            | Code/module status quo, next step, blockers; RB/UIT index pointers | Hard Gate before first software edit (`project_context_*`)      |
+| `project_rules.yaml`               | Durable **one-line** boundaries, prefs, `interaction_style` | Same Hard Gate; not product acceptance SoT; not UIT/RB detail   |
 | Design Baseline (App package)      | Project visual/IA authority + token refs        | Definition Done when `visual_baseline.applicability: required`  |
 | Design Tokens (`token_sources`)    | Color/type/spacing                              | Contract-fidelity basis                                         |
 | `widgets.yaml`                     | Reusable widget **contracts** (not full HTML)   | Mandatory after Baseline confirm (UI path); reuse or `widget_*` |
@@ -540,6 +560,7 @@ product_spec_coverage:
   # Does NOT promise full milestone page coverage. Refined screens + task
   # binding live in Milestone Work task_plan (screen-task-portfolio-coverage).
   # Listing here does NOT require init-time full-page HTML.
+  # Visual "looks like now" + checklist + screenshot → UIT cards (pointer only).
   screen_inventory:
     inventory_role: key_pages_from_sources
     completeness: not_portfolio_complete
@@ -554,7 +575,10 @@ product_spec_coverage:
       source_refs: []
       provenance: null
       disposition: adopted | needs_clarification | out_of_scope
-      # Register durable UI details when product docs / stories state them.
+      # Pointer to Route UI Truth card theme when materialized (optional).
+      uit_fact_id: null # UIT-<slug> | null when gap / not yet carded
+      # Declared UI points from product docs / stories only—short bullets.
+      # Never paste E2E/screenshot status quo here (product-truth-sot-layers).
       # Empty when sources are silent. Never invent as from_product_doc.
       ui_details:
         - detail_id: null
@@ -562,6 +586,8 @@ product_spec_coverage:
           # user_confirmed | from_product_doc | from_user_story | inferred
           source: null
           source_ref: null
+  # Optional pointers to Reality Boundary themes (detail lives on RB cards).
+  # reality_boundary_fact_ids: [] # RB-<slug>
   # Hard gate before status: ready. See requirement-intake-and-traceability.
   screen_detail_registration:
     status: adopted | incomplete
@@ -1400,6 +1426,11 @@ artifacts:
       path_traversal_allowed: false
       deterministic_entry_order_and_timestamps: true
       static_resources_must_be_included: true
+      # Stack lock v1 (see prototype-doc-coverage § Prototype stack lock):
+      # HTML/CSS/vanilla JS only; no TS/React/Vue/bundler deliverables.
+      vanilla_js_only: true
+      typescript_allowed: false
+      framework_bundlers_allowed: false
   data_model:
     owner_entity_type: project
     logical_slot: data_model

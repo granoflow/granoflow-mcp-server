@@ -58,7 +58,10 @@ The HTML Must:
 - accept partial selection; omitted dimensions use their recorded recommended
   value;
 - show the completed code before the user confirms;
-- use HTML/CSS/JS and inline SVG only by default;
+- use HTML/CSS/vanilla JS and inline SVG only by default;
+- do **not** use TypeScript (`.ts`/`.tsx`), JSX, or UI frameworks (React,
+  Preact, Vue, Svelte) or bundler/npm layouts in prototype deliverables
+  (see `prototype-doc-coverage` § Prototype stack lock);
 - avoid generated raster images; existing product-owned assets may be used
   only with a local source and a graceful fallback;
 - be usable on narrow and wide viewports;

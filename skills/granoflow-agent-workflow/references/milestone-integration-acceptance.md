@@ -118,7 +118,12 @@ runs them via the Milestone IT Suite Plan.
 5. Do **not** require the user to confirm “里程碑验收通过” for the IT decision.
    User confirmation remains only for true external/manual blockers or for
    archiving/closure actions that the App still gates separately.
+   Unattended: AI self-recommend on Layer B **is** confirmation.
 6. Do **not** set `acceptance_status: passed` while matrix is not `green`.
+7. **Same wave as Layer B confirmation:** run
+   `lint_milestone_child_done.py --claim-passed` (with `--milestone-id` or
+   `--tasks-json`) so every in-scope child is App `done`. Suite/matrix green
+   with orphan `pending` children → `milestone_child_pending_on_acceptance`.
 
 ## Writeback After IT (hard)
 

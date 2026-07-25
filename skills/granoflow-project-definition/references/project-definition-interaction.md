@@ -284,12 +284,17 @@ During Step 1, after source intake and before Project Work confirm:
    primary journey, key-page inventory, critical state, or acceptance
    condition as a decision-changing gap.
 2. For every **adopted** key screen: when product docs or user stories state
-   durable UI details, register them under `ui_details[]` with
-   `source` / `source_ref` (`from_product_doc` / `from_user_story` /
-   `inferred` / `user_confirmed`). Adopt
+   durable UI details, register them under `ui_details[]` as **short declared
+   points** with `source` / `source_ref` (`from_product_doc` /
+   `from_user_story` / `inferred` / `user_confirmed`). Adopt
    `screen_detail_registration` (design-truth priority +
    `init_html_policy: design_spec_and_shell_only`). Do not invent layout as
-   `from_product_doc`.
+   `from_product_doc`. **Do not** write E2E/screenshot “looks like now”
+   essays into Project Work (`product_truth_dual_write_forbidden`)—that SoT
+   is UIT cards. After adopt, set `uit_fact_id` when a Route UI Truth theme
+   exists; if missing, record a UIT gap for the Card-Truth Batch Gate—do not
+   pad Project Work with visual prose. See
+   `granoflow-agent-workflow/product-truth-sot-layers`.
 3. For every **adopted** journey: **draw the operation flowchart**, mark
    **serial gates** vs parallel ops + final confirm, then record conclusion
    `split` / `keep_cohesive` / `needs_user_decision` and sync

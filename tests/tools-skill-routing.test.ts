@@ -119,6 +119,15 @@ describe("tools-skill-routing", () => {
     );
   });
 
+  it("exposes the project sot skill", async () => {
+    const { handlers } = collectHandlers();
+    assertSkillSurface(
+      parseToolText(await handlers.get("granoflow_project_sot_skill")?.({})),
+      "skills/granoflow-project-sot/SKILL.md",
+      ["project-sot", "regen-from-app"],
+    );
+  });
+
   it("exposes the skill orchestrator skill", async () => {
     const { handlers } = collectHandlers();
     assertSkillSurface(

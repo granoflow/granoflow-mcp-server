@@ -33,6 +33,15 @@ Fail closed:
   `green_with_residuals` or `phase: complete` with
   `screenshot_capability: unavailable` (residuals cannot waive)
 
+## Project SoT writeback (hard)
+
+Orchestration SoT is **Project SoT** at `temp/project-sot.yaml`
+(`granoflow-project-sot`). After matrix build, round close, interrupt, or
+campaign end, update thin gates + `next_step` there. Keep suite plan / coverage
+matrix / screenshots under `temp/e2e-campaign/**` as `evidence_ref` pointers
+only. Leaving `next_step` only in `campaign-state.json` fails closed as
+`project_sot_missing` / stale orchestration.
+
 ## Prerequisite: Integration Gate
 
 E2E **Must not** start until integration campaign is complete. On durable state:

@@ -58,6 +58,35 @@ page/control/state/copy/flow into Task Work **and** Project Work with no
   at most **2** task-local integration tests and **do not execute** them
   (manual run later)—see `task-work-document-workflow.md` and
   `user-visible-copy-boundary.md`;
+- Reality Boundary anti-drift check: read
+  `granoflow-review-card-draft/references/reality-boundary-cards.md`
+  Anti-Drift Lifecycle. Analysis/Plan **Must** enumerate the **full**
+  `reality_boundary_index` into `reality_boundary_index_review` (every row
+  `related` + `disposition`; unrelated → `unrelated`). Do **not** use vector
+  top-k as relatedness authority (`similar` is leak-net only, filter by full
+  `fact_id`). Set `reality_boundary_check_status` /
+  `reality_boundary_fact_ids` / `reality_boundary_will_change`. Every
+  `will_change` **Must** carry non-empty `verification_refs` (and Plan
+  verification rows that cite `fact_id` / `note_id` / `card_ids`).   **Always display** a Plan card notice: itemized list when any
+  `will_change`/card write is planned, otherwise one line
+  「本次迭代无卡片变更」(`none: true`). Set `card_change_plan_notice` with
+  `shown_to_user: true`. Before Readiness, run
+  `lint_plan_reality_boundary.py` (prefer `--snapshot`). Fail as
+  `reality_boundary_check_missing`,
+  `reality_boundary_will_change_without_verification`, or
+  `card_change_plan_notice_missing` when omitted or lint-red;
+- Route UI Truth anti-drift check: read
+  `granoflow-review-card-draft/references/route-ui-truth-cards.md`
+  Anti-Drift Lifecycle when the task touches user-visible routes/screens.
+  Enumerate full `route_ui_truth_index` into `route_ui_truth_index_review`,
+  set `route_ui_truth_*` fields, require verification refs for `will_change`,
+  share `card_change_plan_notice` (`kind: route_ui_truth`). Vision: freshness
+  skip when `screenshot_at >= ui_changed_at`; otherwise auto-run route + op
+  vision in interactive and unattended (no cost ask/skip). Before
+  Readiness run `lint_plan_route_ui_truth.py` (prefer `--snapshot`). Fail as
+  `route_ui_truth_check_missing`,
+  `route_ui_truth_will_change_without_verification`, or
+  `card_change_plan_notice_missing` when omitted or lint-red;
 - the real user-visible surface that must be rechecked;
 - rollback and stop conditions.
 

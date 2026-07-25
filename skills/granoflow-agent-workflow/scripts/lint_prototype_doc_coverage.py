@@ -17,6 +17,7 @@ VALID_SURFACE_KIND = frozenset(
     {"page", "dialog", "modal", "sheet", "popover", "toast", "panel", "other"}
 )
 VALID_SURFACE_COVERAGE = frozenset({"covered", "missing"})
+VALID_SURFACE_REVEAL = frozenset({"default", "interaction"})
 VALID_WIDGET_ACTION = frozenset({"reused", "new_role"})
 VALID_ROW_KIND = frozenset({"page", "control", "state", "copy", "flow"})
 VALID_ROW_COVERAGE = frozenset({"covered", "missing", "conflict"})
@@ -349,7 +350,23 @@ def lint_prototype_html_coverage(data: Any) -> dict[str, Any]:
                     f"{prefix}.coverage must be covered|missing",
                 )
             )
-        elif status == "complete":
+        reveal = row.get("reveal")
+        if reveal is not None and reveal not in VALID_SURFACE_REVEAL:
+            errors.append(
+                _err(
+                    "prototype_doc_coverage_lint_failed",
+                    f"{prefix}.reveal must be default|interaction when present",
+                )
+            )
+        host_surface_id = row.get("host_surface_id")
+        if host_surface_id is not None and not _nonempty_str(host_surface_id):
+            errors.append(
+                _err(
+                    "prototype_doc_coverage_lint_failed",
+                    f"{prefix}.host_surface_id must be non-empty when present",
+                )
+            )
+        if status == "complete":
             html_ref = row.get("html_prototype_ref")
             if coverage == "missing" or not _nonempty_str(html_ref):
                 gap_ids.append(surface_id)

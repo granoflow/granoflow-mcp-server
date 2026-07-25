@@ -170,7 +170,11 @@ Actions:
 
 1. Resolve one project; emit Mode Gate notice.
 2. Requirement intake + **Product Spec Completeness Hard Gate**
-   (`product_spec_coverage`; mandatory operation-flow / serial-gate page-count
+   (`product_spec_coverage`; SoT layers:
+   `granoflow-agent-workflow/product-truth-sot-layers` — PW inventory + short
+   declared `ui_details` + `uit_fact_id` pointers; visual/boundary detail on
+   UIT/RB cards, not PW body; `product_truth_dual_write_forbidden`;
+   mandatory operation-flow / serial-gate page-count
    conclusion + stress paths + **screen detail registration** /
    `ui_details` when sources state them + source-fact ledger and journey-step
    traceability + classification of every fact under
@@ -412,11 +416,11 @@ Emit the Project Lifecycle Progress Board
 `project_init=done` and next action = create milestone portfolio. Interactive
 mode keeps confirmation for the next gate; unattended is display-only.
 
-**Project E2E SoT:** After `project_init` is done, create
-`temp/project-e2e-sot-v1.md` from
-`granoflow-agent-workflow/project-e2e-sot-template` (see
-`project-e2e-sot.md`). Skeleton only—expand task 3.1/3.2 rows after portfolio
-ready. Lint with `lint_project_e2e_sot.py` when present.
+**Project SoT:** After `project_init` is done, create `temp/project-sot.yaml`
+from `granoflow-project-sot` / `project-sot-template.yaml` (see
+`granoflow_project_sot_skill`). Skeleton only—expand task 3.1/3.2 rows after
+portfolio ready. Lint with `lint_project_sot.py`; regen via
+`regen_project_sot_from_app.py` if missing.
 
 Emit a short **handoff card** naming `granoflow-portfolio-orchestrator` as the
 primary next owner. Component Skills: `granoflow-milestone-workflow`,
@@ -537,6 +541,8 @@ tools and their own authorization gates.
   only and must still run the operation-flow pass — decision-changing thin-doc
   gaps fail closed `thin_product_doc_gap_requires_user`
   (`product_spec_coverage_incomplete` / nested codes otherwise).
+- Project Work does not dual-write UIT/RB detail
+  (`product_truth_dual_write_forbidden`; `product-truth-sot-layers`).
 - A partial discussion can produce a useful, hash-read-back Project Work YAML.
 - Every recommendation is explicit; unattended (explicit only) adopts
   recommendations without re-asking, except real blockers.

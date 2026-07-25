@@ -218,6 +218,29 @@ class LintPrototypeHtmlCoverageTests(unittest.TestCase):
         result = MOD.lint_prototype_html_coverage(data)
         self.assertTrue(result["ok"], result)
 
+    def test_optional_reveal_fields_ok(self) -> None:
+        data = ok_html_coverage(
+            surfaces=[
+                ok_html_surface(reveal="default"),
+                ok_html_surface(
+                    surface_id="S-search-sheet",
+                    kind="sheet",
+                    reveal="interaction",
+                    host_surface_id="S-settings",
+                    html_prototype_ref="options/expr_a/settings.html#op-search",
+                ),
+            ]
+        )
+        result = MOD.lint_prototype_html_coverage(data)
+        self.assertTrue(result["ok"], result)
+
+    def test_invalid_reveal_fails(self) -> None:
+        data = ok_html_coverage(surfaces=[ok_html_surface(reveal="click")])
+        result = MOD.lint_prototype_html_coverage(data)
+        self.assertFalse(result["ok"])
+        detail = " ".join(e["detail"] for e in result["errors"])
+        self.assertIn("reveal", detail)
+
 
 class LintPrototypeWidgetReuseTests(unittest.TestCase):
     def test_reused_ok(self) -> None:

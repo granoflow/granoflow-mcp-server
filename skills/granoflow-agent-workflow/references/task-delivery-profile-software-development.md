@@ -35,6 +35,34 @@ Append to the base Delivery when `profiles` contains `software_development`:
   `project_context_check_missing`, `project_context_conflict_unconfirmed`,
   `project_context_decision_not_emitted`, or
   `project_context_check_unreconciled` when violated;
+- Reality Boundary anti-drift: Delivery records
+  `reality_boundary_check_status` and the Plan `reality_boundary_index_review`
+  (`fact_id` primary key with `note_id` / `card_ids`). For every
+  `will_change` item, require verification evidence **and** an update of the
+  **same** `fact_id` Note / archived-reference cards / `reality_boundary_index`
+  (plus Hard Gate short summaries in snapshot/rules when those still state the
+  old truth)—then set `updated_on_delivery`.   **Hard:** **always display** a Delivery card notice—itemized list with
+  `cards_updated: true` after any card write, otherwise one line
+  「本次实施无卡片变更」(`none: true`, `cards_updated: false`). Set
+  `card_change_delivery_notice` with `shown_to_user: true`; run
+  `lint_delivery_card_change_notice.py`. If all related items were
+  `unchanged` or none apply, set `checked_unchanged` or `not_applicable`
+  without empty card edits. Fail as `reality_boundary_check_missing`,
+  `reality_boundary_will_change_without_verification`,
+  `reality_boundary_delivery_stale`, or
+  `card_change_delivery_notice_missing` per
+  `granoflow-review-card-draft/references/reality-boundary-cards.md`;
+- Route UI Truth anti-drift: Delivery records `route_ui_truth_check_status`
+  and Plan `route_ui_truth_index_review`. For every `will_change`, verify then
+  update the same `fact_id` Note / archived cards / `route_ui_truth_index`
+  (and refresh card-back WebP when screenshots changed) →
+  `updated_on_delivery`. Share `card_change_delivery_notice` with
+  `kind: route_ui_truth`. Run `lint_delivery_card_change_notice.py`. Fail as
+  `route_ui_truth_check_missing`,
+  `route_ui_truth_will_change_without_verification`,
+  `route_ui_truth_delivery_stale`, or
+  `card_change_delivery_notice_missing` per
+  `granoflow-review-card-draft/references/route-ui-truth-cards.md`;
 - Prototype document coverage: when a UI prototype was finalized/rematched,
   Delivery / Analysis close must show `prototype_html_coverage.status: complete`
   (no `prototype_html_coverage_gap`), `prototype_widget_reuse.status: complete`
