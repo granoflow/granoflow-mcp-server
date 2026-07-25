@@ -10,13 +10,13 @@ Related: `project-work-document-template.md`, `reality-boundary-cards.md`,
 
 ## Layers
 
-| Content | Authority | Project Work |
-| --- | --- | --- |
-| Screen / journey inventory | PW `screen_coverage` / journey rows | Keep short rows (id, title, journeys) |
-| Product-declared UI points (even if unimplemented) | PW `ui_details` (declared) | Keep short bullets + `source`; forbid screenshot-level essays |
-| Route “what it looks like now” + checklist + screenshot | UIT Note/cards + `route_ui_truth_index` | **No body prose**; optional `uit_fact_id: UIT-*` pointer |
-| Status quo / boundary detail | RB Note/cards + `reality_boundary_index` | **No body prose**; optional `rb_fact_id: RB-*` pointer |
-| Hard Gate “may we change code?” | `project_rules.yaml` / `project_snapshot.yaml` **one-line** summaries | Do not pile boundary essays into PW |
+| Content                                                 | Authority                                                             | Project Work                                                  |
+| ------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Screen / journey inventory                              | PW `screen_coverage` / journey rows                                   | Keep short rows (id, title, journeys)                         |
+| Product-declared UI points (even if unimplemented)      | PW `ui_details` (declared)                                            | Keep short bullets + `source`; forbid screenshot-level essays |
+| Route “what it looks like now” + checklist + screenshot | UIT Note/cards + `route_ui_truth_index`                               | **No body prose**; optional `uit_fact_id: UIT-*` pointer      |
+| Status quo / boundary detail                            | RB Note/cards + `reality_boundary_index`                              | **No body prose**; optional `rb_fact_id: RB-*` pointer        |
+| Hard Gate “may we change code?”                         | `project_rules.yaml` / `project_snapshot.yaml` **one-line** summaries | Do not pile boundary essays into PW                           |
 
 ```text
 Product docs (evidence)
@@ -43,9 +43,9 @@ When Plan marks UIT/RB `will_change`:
 
 1. Verify, then update the **same** `fact_id` Note/cards + index.
 2. Refresh Hard Gate **short** lines in snapshot/rules only if they still state
-  the old constraint.
+   the old constraint.
 3. Do **not** paste the new detail into Project Work body. Pointers
-  (`uit_fact_id` / `rb_fact_id`) may be added or corrected.
+   (`uit_fact_id` / `rb_fact_id`) may be added or corrected.
 
 ## Unattended
 

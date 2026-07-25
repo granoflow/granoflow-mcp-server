@@ -41,7 +41,7 @@ Append to the base Delivery when `profiles` contains `software_development`:
   `will_change` item, require verification evidence **and** an update of the
   **same** `fact_id` Note / archived-reference cards / `reality_boundary_index`
   (plus Hard Gate short summaries in snapshot/rules when those still state the
-  old truth)—then set `updated_on_delivery`.   **Hard:** **always display** a Delivery card notice—itemized list with
+  old truth)—then set `updated_on_delivery`. **Hard:** **always display** a Delivery card notice—itemized list with
   `cards_updated: true` after any card write, otherwise one line
   「本次实施无卡片变更」(`none: true`, `cards_updated: false`). Set
   `card_change_delivery_notice` with `shown_to_user: true`; run

@@ -67,7 +67,7 @@ page/control/state/copy/flow into Task Work **and** Project Work with no
   `fact_id`). Set `reality_boundary_check_status` /
   `reality_boundary_fact_ids` / `reality_boundary_will_change`. Every
   `will_change` **Must** carry non-empty `verification_refs` (and Plan
-  verification rows that cite `fact_id` / `note_id` / `card_ids`).   **Always display** a Plan card notice: itemized list when any
+  verification rows that cite `fact_id` / `note_id` / `card_ids`). **Always display** a Plan card notice: itemized list when any
   `will_change`/card write is planned, otherwise one line
   「本次迭代无卡片变更」(`none: true`). Set `card_change_plan_notice` with
   `shown_to_user: true`. Before Readiness, run

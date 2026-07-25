@@ -25,12 +25,12 @@ Skipping the load on a long or unattended implement run fails closed as
 A host wake / recurring-tick mechanism can be robust and still fail to finish a
 Granoflow project. Unattended full-pipeline completion needs **all three**:
 
-| Layer | Portable name                          | Solves                       | Does **not** solve                            |
-| ----- | -------------------------------------- | ---------------------------- | --------------------------------------------- |
-| Auth  | Unattended interaction contract        | Do not ask; defer external   | What to resume after cutoff; when to wake     |
-| A     | **Durable run plan / Project SoT**     | **What** to resume next      | Waking the agent; ask-budget                  |
-| B     | **Collaborative planning surface**     | Optional host planning UI    | Continuity if unavailable                     |
-| C     | **Host wake surface**                  | **When** the agent re-enters | Phase truth, ask-budget, or next-step content |
+| Layer | Portable name                      | Solves                       | Does **not** solve                            |
+| ----- | ---------------------------------- | ---------------------------- | --------------------------------------------- |
+| Auth  | Unattended interaction contract    | Do not ask; defer external   | What to resume after cutoff; when to wake     |
+| A     | **Durable run plan / Project SoT** | **What** to resume next      | Waking the agent; ask-budget                  |
+| B     | **Collaborative planning surface** | Optional host planning UI    | Continuity if unavailable                     |
+| C     | **Host wake surface**              | **When** the agent re-enters | Phase truth, ask-budget, or next-step content |
 
 Mnemonic: **wake re-enters; unattended avoids questions; durable plan names the
 next step.** Satisfying only Layer C (host wake / loop) is necessary but not
@@ -41,11 +41,11 @@ This file owns Layers A–C continuity mechanics.
 
 ## Continuity Surfaces (Layers A / B / C)
 
-| Layer | Portable name                          | Required?                                        | Purpose                                                                                      |
-| ----- | -------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| A     | **Project SoT** (durable run plan)     | **Yes** for long / unattended project runs       | `temp/project-sot.yaml`: stages + coarse work_items + next_step; survives summarization; regen if missing |
-| B     | **Collaborative planning surface**     | When the **host exposes** it                     | Optional host UI/mode that helps structure work before/while executing                       |
-| C     | **Host wake surface**                  | When the **host exposes** it for long unattended | Recurring / event wake so work continues after turn cutoff or idle without a human 「继续」  |
+| Layer | Portable name                      | Required?                                        | Purpose                                                                                                   |
+| ----- | ---------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| A     | **Project SoT** (durable run plan) | **Yes** for long / unattended project runs       | `temp/project-sot.yaml`: stages + coarse work_items + next_step; survives summarization; regen if missing |
+| B     | **Collaborative planning surface** | When the **host exposes** it                     | Optional host UI/mode that helps structure work before/while executing                                    |
+| C     | **Host wake surface**              | When the **host exposes** it for long unattended | Recurring / event wake so work continues after turn cutoff or idle without a human 「继续」               |
 
 Layer B / C **local labels** are host-specific and must not appear as hard tokens
 in skills. Examples of local labels (informative only, never required wording):
@@ -318,15 +318,15 @@ closed as `host_wake_unbound_from_run_plan`.
 
 ## Relationship
 
-| Concern                                      | Owner                                |
-| -------------------------------------------- | ------------------------------------ |
-| Milestone Plan acceptance (design artifacts) | `milestone-plan-acceptance-pack.md`  |
-| Per-task Plan Design Gate                    | `plan-design-gate.md`                |
-| Surviving long agent loops / host variance   | **this file**                        |
-| Host wake bound to durable next step         | **this file** (Layer C)              |
+| Concern                                      | Owner                                   |
+| -------------------------------------------- | --------------------------------------- |
+| Milestone Plan acceptance (design artifacts) | `milestone-plan-acceptance-pack.md`     |
+| Per-task Plan Design Gate                    | `plan-design-gate.md`                   |
+| Surviving long agent loops / host variance   | **this file**                           |
+| Host wake bound to durable next step         | **this file** (Layer C)                 |
 | Project orchestration SoT (Layer A file)     | `granoflow-project-sot` / `project-sot` |
-| Plain-language gloss for users               | `workflow-jargon-plain-language.md`  |
-| Unattended ask budget                        | `unattended-interaction-contract.md` |
+| Plain-language gloss for users               | `workflow-jargon-plain-language.md`     |
+| Unattended ask budget                        | `unattended-interaction-contract.md`    |
 
 ## Admission Test
 

@@ -18,10 +18,10 @@ dishonesty.
 
 ## Split claim (hard)
 
-| Claim | Allowed when |
-| --- | --- |
+| Claim                                                      | Allowed when                                                                                                                                                 |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Unattended engineering campaign → E2E → `project_complete` | Card writes are either already applied, or deferred as Residual (`subjective_acceptance`) — **not** silently skipped while status says `updated_on_delivery` |
-| RB/UIT anti-drift Delivery closed | Interactive (or explicit batch grant) completed preview→apply for every `will_change` / seed fact_id in the same wave |
+| RB/UIT anti-drift Delivery closed                          | Interactive (or explicit batch grant) completed preview→apply for every `will_change` / seed fact_id in the same wave                                        |
 
 Do **not** tell the user “SoT guarantees unattended through Delivery including
 UIT/RB truth” unless the batch gate below is green.
@@ -85,13 +85,13 @@ Fail codes:
 
 ## Unattended behavior after gate
 
-| Work | Unattended |
-| --- | --- |
-| Code, IT, E2E, vision (freshness), fix loops | Auto |
-| Plan/Delivery `card_change_*_notice` display | Auto (notice, not approval) |
-| New Note/Card / Knowledge apply | **Forbidden** — preview → Residual |
-| Stale UIT vision fail | Enter fix (code/E2E); if fix needs new card text, park card update for next interactive batch |
-| Final wording | `project_complete` with Residual for cards/`user_final_acceptance` **or** stop for interactive final acceptance — never conflate |
+| Work                                         | Unattended                                                                                                                       |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Code, IT, E2E, vision (freshness), fix loops | Auto                                                                                                                             |
+| Plan/Delivery `card_change_*_notice` display | Auto (notice, not approval)                                                                                                      |
+| New Note/Card / Knowledge apply              | **Forbidden** — preview → Residual                                                                                               |
+| Stale UIT vision fail                        | Enter fix (code/E2E); if fix needs new card text, park card update for next interactive batch                                    |
+| Final wording                                | `project_complete` with Residual for cards/`user_final_acceptance` **or** stop for interactive final acceptance — never conflate |
 
 ## GranoReader first-wave UIT
 

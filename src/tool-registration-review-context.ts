@@ -104,13 +104,7 @@ function registerGranoflowReviewNoteFieldMediaUploadTool(
   context: ToolRegistrationContext,
   _schemas: RegistrationSchemas,
 ): void {
-  const {
-    basename,
-    createHash,
-    readFileSync,
-    jsonTextResult,
-    resourceCapabilityApiTool,
-  } = context;
+  const { basename, createHash, readFileSync, jsonTextResult, resourceCapabilityApiTool } = context;
   registerTool(
     "granoflow_review_note_field_media_upload",
     "Read local image bytes at the MCP boundary, upload them through Local HTTP as Base64 onto a persisted review note image field (App compresses to WebP ≤300KB). Optionally place the field on a card front/back layout via cardId+layoutSide. The file path is not sent to or opened by the Granoflow app.",

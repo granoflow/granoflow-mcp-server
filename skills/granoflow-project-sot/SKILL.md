@@ -35,12 +35,12 @@ details stay out of this file.
 
 ## Not this Skill
 
-| Concern | Owner |
-| --- | --- |
-| Running Flutter UI E2E | `granoflow-e2e-test-campaign` |
-| Portfolio IT loop | `granoflow-integration-test-campaign` |
-| Project Work intake | `granoflow-project-definition` |
-| Wake protocol details | `granoflow-agent-workflow` → `long-task-run-continuity` |
+| Concern                | Owner                                                   |
+| ---------------------- | ------------------------------------------------------- |
+| Running Flutter UI E2E | `granoflow-e2e-test-campaign`                           |
+| Portfolio IT loop      | `granoflow-integration-test-campaign`                   |
+| Project Work intake    | `granoflow-project-definition`                          |
+| Wake protocol details  | `granoflow-agent-workflow` → `long-task-run-continuity` |
 
 ## Mandatory loads
 
@@ -104,14 +104,14 @@ python3 skills/granoflow-project-sot/scripts/regen_project_sot_from_app.py \
 
 ## Fail-closed codes
 
-| Code | Meaning |
-| --- | --- |
-| `project_sot_unread` | Contract reference not loaded |
-| `project_sot_missing` | Required run without active SoT |
-| `project_sot_stale` | Digests / next_step stale or digest match failed |
-| `project_sot_lint_failed` | Lint aggregate failure |
-| `project_sot_legacy_path` | Using deprecated e2e-named SoT path |
-| `project_sot_regen_failed` | App API / projection failed |
+| Code                       | Meaning                                          |
+| -------------------------- | ------------------------------------------------ |
+| `project_sot_unread`       | Contract reference not loaded                    |
+| `project_sot_missing`      | Required run without active SoT                  |
+| `project_sot_stale`        | Digests / next_step stale or digest match failed |
+| `project_sot_lint_failed`  | Lint aggregate failure                           |
+| `project_sot_legacy_path`  | Using deprecated e2e-named SoT path              |
+| `project_sot_regen_failed` | App API / projection failed                      |
 
 Legacy codes `project_e2e_sot_*` may still appear from old wrappers; treat as
 aliases of `project_sot_*`.

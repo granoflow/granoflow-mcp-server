@@ -14,14 +14,14 @@ python3 skills/granoflow-project-sot/scripts/regen_project_sot_from_app.py \
 
 Optional:
 
-| Flag | Meaning |
-| --- | --- |
-| `--base-url URL` | Override `GRANOFLOW_API_BASE_URL` (default `http://127.0.0.1:56789`) |
-| `--token TOKEN` | Override `GRANOFLOW_API_TOKEN` |
-| `--output PATH` | Default `<repo-root>/temp/project-sot.yaml` |
-| `--force` | Overwrite existing SoT |
-| `--probe-workspace` | Record analyze/test pointer notes under stages when local cmds exist |
-| `--migrate-legacy` | Prefer fields from `temp/project-e2e-sot-v*.md` when present (still emit new schema) |
+| Flag                | Meaning                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| `--base-url URL`    | Override `GRANOFLOW_API_BASE_URL` (default `http://127.0.0.1:56789`)                 |
+| `--token TOKEN`     | Override `GRANOFLOW_API_TOKEN`                                                       |
+| `--output PATH`     | Default `<repo-root>/temp/project-sot.yaml`                                          |
+| `--force`           | Overwrite existing SoT                                                               |
+| `--probe-workspace` | Record analyze/test pointer notes under stages when local cmds exist                 |
+| `--migrate-legacy`  | Prefer fields from `temp/project-e2e-sot-v*.md` when present (still emit new schema) |
 
 Stdout is a JSON envelope (`ok` / `code` / `path` / details). Exit `0` only when
 write + structural projection succeeded.
@@ -42,11 +42,11 @@ Does **not** require full Project Work YAML body. Large PW is hash-only.
 
 When `--probe-workspace` or when scanning `temp/`:
 
-| Path | Effect |
-| --- | --- |
-| `temp/integration-campaign/closing-summary.json` | Pointer on `integration_campaign.evidence_ref` |
-| `temp/e2e-campaign/**/closing-summary.json` | Pointer on `e2e_campaign.evidence_ref` |
-| Missing dirs | Leave thin gates `not_applicable` / stages not greenwashed; may set `evidence_missing: true` |
+| Path                                             | Effect                                                                                       |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `temp/integration-campaign/closing-summary.json` | Pointer on `integration_campaign.evidence_ref`                                               |
+| `temp/e2e-campaign/**/closing-summary.json`      | Pointer on `e2e_campaign.evidence_ref`                                                       |
+| Missing dirs                                     | Leave thin gates `not_applicable` / stages not greenwashed; may set `evidence_missing: true` |
 
 Regen **never** invents screenshot files or green coverage. Missing evidence →
 honest incomplete fields.
@@ -75,11 +75,11 @@ python3 skills/granoflow-project-sot/scripts/lint_project_sot.py \
 
 ## Failure codes
 
-| Code | Meaning |
-| --- | --- |
+| Code                       | Meaning                                          |
+| -------------------------- | ------------------------------------------------ |
 | `project_sot_regen_failed` | API unreachable, project missing, or write error |
-| `project_sot_exists` | Output exists and `--force` not set |
-| `project_sot_lint_failed` | Caller must fix after regen if lint fails |
+| `project_sot_exists`       | Output exists and `--force` not set              |
+| `project_sot_lint_failed`  | Caller must fix after regen if lint fails        |
 
 ## Explicit non-goals
 

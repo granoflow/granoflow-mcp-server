@@ -25,11 +25,11 @@ Project Work is the **requirements + inventory + pointer** contract—not the
 home for screen visual truth or status-quo/boundary essays. See
 `product-truth-sot-layers.md`.
 
-| Keep in Project Work | Do **not** keep in Project Work body |
-| --- | --- |
-| `screen_coverage` / journey inventory (short) | Route “looks like now”, checklists, screenshot narratives |
-| Short declared `ui_details` + `source` | Reality/boundary treatises |
-| Optional `uit_fact_id` / `rb_fact_id` pointers | Second copy of Note/card detail |
+| Keep in Project Work                           | Do **not** keep in Project Work body                      |
+| ---------------------------------------------- | --------------------------------------------------------- |
+| `screen_coverage` / journey inventory (short)  | Route “looks like now”, checklists, screenshot narratives |
+| Short declared `ui_details` + `source`         | Reality/boundary treatises                                |
+| Optional `uit_fact_id` / `rb_fact_id` pointers | Second copy of Note/card detail                           |
 
 Fail closed as `product_truth_dual_write_forbidden` when agents maintain the
 same detail in both PW and UIT/RB cards.
@@ -98,21 +98,21 @@ and index **pointers** (`reality_boundary_index`, `route_ui_truth_index`). They
 are **not** the SoT for screen visual detail or boundary essays—those live on
 UIT/RB Notes and cards (`product-truth-sot-layers.md`).
 
-| Attachment                         | Purpose                                         | Effect on development                                           |
-| ---------------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
+| Attachment                         | Purpose                                                            | Effect on development                                           |
+| ---------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------- |
 | `project_snapshot.yaml`            | Code/module status quo, next step, blockers; RB/UIT index pointers | Hard Gate before first software edit (`project_context_*`)      |
-| `project_rules.yaml`               | Durable **one-line** boundaries, prefs, `interaction_style` | Same Hard Gate; not product acceptance SoT; not UIT/RB detail   |
-| Design Baseline (App package)      | Project visual/IA authority + token refs        | Definition Done when `visual_baseline.applicability: required`  |
-| Design Tokens (`token_sources`)    | Color/type/spacing                              | Contract-fidelity basis                                         |
-| `widgets.yaml`                     | Reusable widget **contracts** (not full HTML)   | Mandatory after Baseline confirm (UI path); reuse or `widget_*` |
-| Task/milestone `ui_prototype`      | Task UI authority (clickable HTML package)      | Ready before Readiness; Phase A/B fidelity                      |
-| `data-model.md`                    | Entities/tables when DB applies                 | Update in same task as schema changes or `data_artifact_stale`  |
-| `data-contracts.yaml`              | JSON/structured file shapes                     | Same                                                            |
-| `constants-catalog.yaml`           | Shared constants catalog                        | Same                                                            |
-| `workflows.md`                     | Flow diagrams + notes                           | Consistency with data-model / acceptance                        |
-| Engineering Acceptance Pack (host) | Step 1 **user browse-confirm** MD→HTML surface  | Blocks `granoflow_project_work_confirm` until accepted/adopted  |
-| Task Delivery / acceptance reports | Actual outcomes and evidence                    | Completion path                                                 |
-| IT/E2E campaign artifacts          | Suite plans, coverage, evidence packs, closings | Stages 6–7; incomplete hard rows block bare green               |
+| `project_rules.yaml`               | Durable **one-line** boundaries, prefs, `interaction_style`        | Same Hard Gate; not product acceptance SoT; not UIT/RB detail   |
+| Design Baseline (App package)      | Project visual/IA authority + token refs                           | Definition Done when `visual_baseline.applicability: required`  |
+| Design Tokens (`token_sources`)    | Color/type/spacing                                                 | Contract-fidelity basis                                         |
+| `widgets.yaml`                     | Reusable widget **contracts** (not full HTML)                      | Mandatory after Baseline confirm (UI path); reuse or `widget_*` |
+| Task/milestone `ui_prototype`      | Task UI authority (clickable HTML package)                         | Ready before Readiness; Phase A/B fidelity                      |
+| `data-model.md`                    | Entities/tables when DB applies                                    | Update in same task as schema changes or `data_artifact_stale`  |
+| `data-contracts.yaml`              | JSON/structured file shapes                                        | Same                                                            |
+| `constants-catalog.yaml`           | Shared constants catalog                                           | Same                                                            |
+| `workflows.md`                     | Flow diagrams + notes                                              | Consistency with data-model / acceptance                        |
+| Engineering Acceptance Pack (host) | Step 1 **user browse-confirm** MD→HTML surface                     | Blocks `granoflow_project_work_confirm` until accepted/adopted  |
+| Task Delivery / acceptance reports | Actual outcomes and evidence                                       | Completion path                                                 |
+| IT/E2E campaign artifacts          | Suite plans, coverage, evidence packs, closings                    | Stages 6–7; incomplete hard rows block bare green               |
 
 **Acceptance division (Project Definition):** Project Work YAML is **AI
 self-checked** (never the user-facing acceptance page). The Engineering

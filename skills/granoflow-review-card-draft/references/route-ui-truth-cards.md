@@ -19,11 +19,11 @@ the parent `granoflow-review-card-draft` skill.
 
 See `granoflow-agent-workflow/references/product-truth-sot-layers.md`.
 
-| Layer | Owner |
-| --- | --- |
-| Screen inventory + short declared `ui_details` | Project Work |
-| “Looks like now”, checklist, card-back WebP | **These UIT cards** |
-| Hard Gate one-liners | `project_rules` / snapshot |
+| Layer                                          | Owner                      |
+| ---------------------------------------------- | -------------------------- |
+| Screen inventory + short declared `ui_details` | Project Work               |
+| “Looks like now”, checklist, card-back WebP    | **These UIT cards**        |
+| Hard Gate one-liners                           | `project_rules` / snapshot |
 
 Do **not** copy UIT detail back into Project Work body. PW may store
 `uit_fact_id` only. Dual-write → `product_truth_dual_write_forbidden`.
@@ -83,10 +83,10 @@ last_changed_in_milestone: <id or null>
 
 ## Card shape
 
-| Card              | Front                                      | Back                                                         |
-| ----------------- | ------------------------------------------ | ------------------------------------------------------------ |
-| Route main        | Screen name / one-line duty                | WebP screenshot field + short state notes                    |
-| Operation overlay | Trigger + relative delta vs host route     | Optional overlay WebP (only when op vision is opted in)      |
+| Card              | Front                                  | Back                                                    |
+| ----------------- | -------------------------------------- | ------------------------------------------------------- |
+| Route main        | Screen name / one-line duty            | WebP screenshot field + short state notes               |
+| Operation overlay | Trigger + relative delta vs host route | Optional overlay WebP (only when op vision is opted in) |
 
 `sourceSummary` **Must** include the full `fact_id`.
 
@@ -108,9 +108,9 @@ Pointer only—App Note/Card remain content SoT.
 
 Track per `fact_id` / `op_id`:
 
-| Field | Meaning |
-| --- | --- |
-| `screenshot_at` | Last successful card-back upload / capture time (App readback preferred) |
+| Field           | Meaning                                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------------------- |
+| `screenshot_at` | Last successful card-back upload / capture time (App readback preferred)                             |
 | `ui_changed_at` | Last Delivery update for that UIT theme (`will_change` → `updated_on_delivery` / index `updated_at`) |
 
 Rule:

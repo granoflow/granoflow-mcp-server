@@ -641,9 +641,13 @@ data_disposition: not_applicable | unchanged | extend | breaking
 # Lint: scripts/lint_plan_reality_boundary.py path/to/task-work.yaml [--snapshot …]
 
 # reality_boundary_check_status: not_applicable | checked_unchanged | checked_will_change | updated_on_delivery
+
 # reality_boundary_fact_ids: []
+
 # reality_boundary_will_change: []
+
 # reality_boundary_index_review: []
+
 # reality_boundary_not_applicable_reason: null
 
 # Route UI Truth anti-drift (UI routes in scope): full index enumeration.
@@ -651,10 +655,15 @@ data_disposition: not_applicable | unchanged | extend | breaking
 # Lint: scripts/lint_plan_route_ui_truth.py path/to/task-work.yaml [--snapshot …]
 
 # route_ui_truth_check_status: not_applicable | checked_unchanged | checked_will_change | updated_on_delivery
+
 # route_ui_truth_fact_ids: []
+
 # route_ui_truth_will_change: []
+
 # route_ui_truth_index_review: []
+
 # route_ui_truth_not_applicable_reason: null
+
 # Freshness on index rows: screenshot_at / ui_changed_at (skip vision when fresh)
 
 # UI software: Must load readable Analysis Technical Package by SHA before Plan

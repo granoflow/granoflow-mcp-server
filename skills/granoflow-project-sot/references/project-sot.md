@@ -235,19 +235,19 @@ Honest fields when evidence is missing (do not invent green):
 
 ## Fail-closed codes
 
-| Code                                     | Meaning                                                               |
-| ---------------------------------------- | --------------------------------------------------------------------- |
-| `project_sot_unread`                     | Reference not loaded                                                  |
-| `project_sot_missing`                    | Required run without active SoT file                                  |
-| `project_sot_stale`                      | Digests / next_step not refreshed, or `--require-digest-match` failed |
-| `project_sot_lint_failed`                | Lint aggregate failure                                                |
-| `project_sot_legacy_path`                | Using deprecated `project-e2e-sot` path / doc_type                    |
-| `project_sot_regen_failed`               | App API / projection failed                                           |
-| `project_sot_next_step_unpinned`         | 3.1 done but next skips pending 3.2                                   |
-| `project_sot_next_step_missing_gate_lint`| Stage-transition `next_step` omitted required gate lint name          |
-| `implement_before_milestone_pack_accepted` | Execution before pack accepted                                      |
-| `cross_milestone_journey_gap`            | Stage 6 done while check is `gap`                                     |
-| `e2e_coverage_matrix_gap`                | Stage 7 done while check is `gap`                                     |
+| Code                                       | Meaning                                                               |
+| ------------------------------------------ | --------------------------------------------------------------------- |
+| `project_sot_unread`                       | Reference not loaded                                                  |
+| `project_sot_missing`                      | Required run without active SoT file                                  |
+| `project_sot_stale`                        | Digests / next_step not refreshed, or `--require-digest-match` failed |
+| `project_sot_lint_failed`                  | Lint aggregate failure                                                |
+| `project_sot_legacy_path`                  | Using deprecated `project-e2e-sot` path / doc_type                    |
+| `project_sot_regen_failed`                 | App API / projection failed                                           |
+| `project_sot_next_step_unpinned`           | 3.1 done but next skips pending 3.2                                   |
+| `project_sot_next_step_missing_gate_lint`  | Stage-transition `next_step` omitted required gate lint name          |
+| `implement_before_milestone_pack_accepted` | Execution before pack accepted                                        |
+| `cross_milestone_journey_gap`              | Stage 6 done while check is `gap`                                     |
+| `e2e_coverage_matrix_gap`                  | Stage 7 done while check is `gap`                                     |
 
 Legacy codes `project_e2e_sot_*` are aliases of `project_sot_*`.
 

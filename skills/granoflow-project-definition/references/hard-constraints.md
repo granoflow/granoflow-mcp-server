@@ -113,7 +113,7 @@ and review.
   when available). Fail closed `reality_boundary_check_missing` /
   `reality_boundary_will_change_without_verification` /
   `card_change_plan_notice_missing`.
-- Card change Delivery notice (any review card write): 
+- Card change Delivery notice (any review card write):
   `lint_delivery_card_change_notice.py`. Fail closed
   `card_change_delivery_notice_missing` /
   `reality_boundary_delivery_stale`.
