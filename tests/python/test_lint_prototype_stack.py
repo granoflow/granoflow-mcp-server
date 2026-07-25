@@ -13,9 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "skills" / "granoflow-agent-workflow" / "scripts" / "lint_prototype_stack.py"
-PACKAGER = (
-    ROOT / "skills" / "granoflow-project-definition" / "scripts" / "package_prototype.py"
-)
+PACKAGER = ROOT / "skills" / "granoflow-project-definition" / "scripts" / "package_prototype.py"
 
 
 def load_module():

@@ -203,9 +203,7 @@ def main() -> int:
                     {
                         "ok": False,
                         "error": stack_lint.get("code", "prototype_stack_lint_failed"),
-                        "failCode": stack_lint.get(
-                            "code", "prototype_stack_lint_failed"
-                        ),
+                        "failCode": stack_lint.get("code", "prototype_stack_lint_failed"),
                         "lint": stack_lint,
                     },
                     ensure_ascii=False,
