@@ -75,7 +75,8 @@ Actions:
 
 - Load `task-and-milestone-acceptance-layers`.
 - Complete task-local Delivery gates (design fidelity / prototype Phase A when
-  applicable).
+  applicable; Static Quality Gate `quality_gate_run` `for_stage: layer_a` per
+  `static-quality-gate`).
 - Author ≤2 `service_path` IT cases with `requires`/`produces` when useful.
 
 Success criteria:
@@ -104,8 +105,9 @@ Rules:
 ### 2. Layer B — milestone IT (milestone delivery ends here)
 
 Accept the milestone with **user-invisible**, **milestone-scoped** integration
-tests only **and** `feature_completeness_matrix.status: green`. No user-visible
-E2E for milestone accept.
+tests only **and** `feature_completeness_matrix.status: green` **and** a
+full-repo Static Quality Gate (`static-quality-gate`). No user-visible E2E for
+milestone accept.
 
 Actions:
 
@@ -114,14 +116,17 @@ Actions:
 - Orchestrate a minimal order (e.g. add → browse → list → delete).
 - Run under `campaign_drive: agent_auto` (reuse IT campaign mechanics) to green
   or **allowed** residual.
-- After suite green: matrix must be `green`; Experience from issues → **任务回顾**
-  (preview→confirm→write).
-- Load `milestone-integration-acceptance`.
+- After suite green: matrix must be `green`; run Project Work hygiene suite
+  (`full_gate` or composed lint/format/type_or_static) at full-repo scope;
+  record `quality_gate_run` (`for_stage: layer_b`, exit 0, `issue_count: 0`);
+  Experience from issues → **任务回顾** (preview→confirm→write).
+- Load `milestone-integration-acceptance` and `static-quality-gate`.
 
 Success criteria:
 
 - Suite green or allowed residual recorded.
 - Matrix `green`.
+- Static hygiene green (warnings count as failure).
 - Experience + 任务回顾 writeback done for covered tasks.
 - Milestone closeout does **not** require E2E.
 
@@ -132,6 +137,8 @@ Checkpoints:
   `milestone_it_task_review_unrecorded` when skipped.
 - `feature_completeness_matrix_missing` / `_incomplete` /
   `functional_residual_forbidden` / `feature_completeness_overclaim_green`.
+- `quality_gates_unconfigured` / `static_quality_gate_skipped` /
+  `static_quality_gate_failed` when hygiene missing or dirty.
 - Co-present Layer A then Layer B as separate labeled sections.
 
 Artifacts:
@@ -200,9 +207,10 @@ Rules:
 
 1. Layer A and Layer B stay two labeled sections (`acceptance_layers_fused`).
 2. Milestone delivery = user-invisible milestone IT only (no E2E) **plus**
-   `feature_completeness_matrix.status: green`.
+   `feature_completeness_matrix.status: green` **plus** full-repo Static
+   Quality Gate green (`static-quality-gate`).
 3. Layer B: preflight + Suite Plan; Experience + 任务回顾 after green; matrix
-   green; no functional residuals.
+   green; static hygiene green (`issue_count: 0`); no functional residuals.
 4. Final delivery may start after any Layer B green; completing it requires all
    feature-milestone matrices green.
 5. Path by project feature-milestone count (`e2e_direct` vs `full_unit_and_it`).
