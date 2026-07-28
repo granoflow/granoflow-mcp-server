@@ -34,8 +34,8 @@ granoflow_bundled_skill_reference(
 )
 ```
 
-Also load `project-lifecycle-progress-board` and
-`task-and-milestone-acceptance-layers`.
+Also load `project-lifecycle-progress-board`,
+`task-and-milestone-acceptance-layers`, and `static-quality-gate`.
 
 ## When Final Delivery May Start
 
@@ -81,7 +81,12 @@ Fail closed:
 
 ### Path A — `e2e_direct` (exactly one feature milestone)
 
-1. Confirm Layer B green for that milestone (or recorded residual).
+1. Confirm Layer B green for that milestone (or recorded residual), including
+   full-repo Static Quality Gate evidence (`quality_gate_run` `for_stage:
+layer_b`). Before claiming最终交付 complete, record
+   `for_stage: final_delivery` **or** reuse the Layer B run with
+   `code_unchanged_since: true` and matching commands
+   (`static-quality-gate.md`).
 2. Mark stage `integration_campaign` **waived** for this path:
    - Board evidence: `waived_single_milestone_project` (status `done` with that
      evidence, or `not_started` with `session_delivery.pre_e2e_path: e2e_direct`
@@ -99,13 +104,18 @@ Do **not** re-run portfolio unit + IT as a gate before E2E on this path.
 1. **Full unit tests** — entire unit/static suite. Fail closed
    `full_delivery_unit_suite_incomplete` if skipped or not green without
    residual.
-2. **All user-invisible integration tests** — project-wide suite via
+2. **Static Hygiene Suite** — re-run Project Work `full_gate` or composed
+   lint/format/type_or_static at **full** scope (`for_stage: final_delivery`,
+   or reuse latest Layer B evidence only when `code_unchanged_since: true`).
+   Fail as `static_quality_gate_skipped` / `static_quality_gate_failed` when
+   violated. This is separate from “unit tests green”.
+3. **All user-invisible integration tests** — project-wide suite via
    `granoflow-integration-test-campaign` / stage `integration_campaign`
    (`campaign_drive: agent_auto`). Under unattended schedule, this does **not**
    replace per-milestone Layer B already run in stage 5. Under interactive
    schedule, this stage **Must** include the deferred Layer B suites plus
    project IT (orchestrate, then execute).
-3. **Full-project E2E** — `integration_gate: complete`, then
+4. **Full-project E2E** — `integration_gate: complete`, then
    `granoflow-e2e-test-campaign` / stage `e2e_campaign`. Close only when
    authored `e2e` Case IDs are `executed` in `plan_case_implementation`
    (`--gate e2e_campaign`).
@@ -182,6 +192,8 @@ artifacts stay under `temp/**` as evidence pointers only.
 | `full_delivery_unit_suite_incomplete`    | Path B without green full unit suite                           |
 | `full_delivery_order_violation`          | Path B steps out of order                                      |
 | `full_delivery_session_fields_missing`   | Invalid / incomplete `session_delivery` when present           |
+| `static_quality_gate_skipped`            | Final delivery without hygiene run or valid Layer B reuse      |
+| `static_quality_gate_failed`             | Hygiene non-zero exit or `issue_count > 0`                     |
 | `full_delivery_milestone_e2e_required`   | Agent required user-visible E2E to close a milestone           |
 | `feature_completeness_matrix_missing`    | Feature milestone lacks matrix at final-delivery close         |
 | `feature_completeness_matrix_incomplete` | Feature milestone matrix not green at final-delivery close     |

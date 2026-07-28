@@ -4,7 +4,16 @@ Append to the base Delivery when `profiles` contains `software_development`:
 
 - actual behavior and code/API/schema/UI deltas;
 - compatibility, migration, rollback, and release status;
-- lint, format, type/static, tests, build, and runtime evidence;
+- lint, format, type/static, tests, build, and runtime evidence — including a
+  lint-clean Static Quality Gate block (`static-quality-gate.md`) as
+  `quality_gate_run` with `for_stage: layer_a`, commands equal to Project Work
+  `engineering.quality_gates` hygiene suite (`full_gate` or composed slots),
+  `exit_code: 0`, and `issue_count: 0` (warnings count as failure). Scope is
+  `full` unless Project Work sets `layer_a_scope: task_owned`. Lint with
+  `scripts/lint_quality_gate_run.py --gate layer_a --project-work …`. Fail as
+  `quality_gates_unconfigured`, `static_quality_gate_skipped`,
+  `static_quality_gate_failed`, `static_quality_gate_commands_mismatch`, or
+  `static_quality_gate_scope_invalid` when violated;
 - planned-versus-actual minimum-change budget reconciliation: required changes
   delivered, allowed touchpoints actually used, and protected surfaces checked;
 - every unplanned UI, code, API, schema, dependency, or architecture delta,

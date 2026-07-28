@@ -1116,9 +1116,20 @@ engineering:
     regression_thresholds: []
 
   quality_gates:
+    # Static Hygiene Suite (software init hard). Contract: static-quality-gate.md
+    # Prefer non-empty full_gate that includes lint+format+type/static, OR a
+    # non-empty composed union with type_or_static_check populated.
+    # Both empty => quality_gates_unconfigured (blocks automated implement).
+    # Examples (stack-specific; never hardcode one stack into Skills):
+    #   Flutter: full_gate: [flutter analyze] (+ format if separate)
+    #   Node: full_gate: [npm run check]
+    #   Python: type_or_static_check: [pyright .]; lint: [ruff check .]; …
     lint: []
     format_check: []
     type_or_static_check: []
+    # Layer A default scope. task_owned only with explicit large-repo basis.
+    # Layer B / final delivery always run scope: full.
+    layer_a_scope: full # full | task_owned
     unit_tests: []
     module_tests: []
     integration_tests: []
@@ -1174,7 +1185,14 @@ engineering:
     end_to_end_tests: []
     migration_tests: []
     failure_path_tests: []
+    # Preferred single entry that owns lint+format+type/static (+ tests when
+    # the repo already aggregates them). Satisfies Static Hygiene when non-empty.
     full_gate: []
+    # Bind the resolved hygiene suite (or full_gate) into these lists at init:
+    # task_completion → Layer A quality_gate_run
+    # milestone_acceptance → Layer B full-repo quality_gate_run
+    # project_completion → 最终交付 quality_gate_run (or reuse Layer B if
+    #   code_unchanged_since). Detail: static-quality-gate.md
     required_before:
       task_execution: []
       task_completion: []

@@ -43,7 +43,10 @@ page/control/state/copy/flow into Task Work **and** Project Work with no
   remain Planning decisions;
 - UI judgment and evidence;
 - API, compatibility, migration, authorization, and release impact;
-- lint, format, type/static analysis, tests, build, and runtime smoke gates;
+- lint, format, type/static analysis, tests, build, and runtime smoke gates
+  (Static Hygiene Suite locked in Project Work `engineering.quality_gates` per
+  `static-quality-gate.md`; Delivery/Layer B must produce `quality_gate_run`
+  evidence—not optional prose);
 - a Plan Design Gate package for every software Plan that will edit code (and
   for light `not_required` software edits), with
   `plan_design_gate_status: passed` before Readiness may pass—see

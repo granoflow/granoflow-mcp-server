@@ -124,9 +124,15 @@ Checklist (all must pass for software init):
    `knowledge_gap_reason` when `gap`); `linked` rows have valid
    `knowledge_ref` (`LIB-pub-*`). Optional:
    `lint_library_knowledge_refs.py --require-init-ready`
+8. Static Hygiene Suite locked per `static-quality-gate.md`: non-empty
+   `full_gate` **or** composed slots with non-empty `type_or_static_check`;
+   `required_before.task_completion` / `milestone_acceptance` /
+   `project_completion` bound to that suite. Optional:
+   `lint_quality_gate_run.py --project-work … --require-configured`
 
 Any failure → `init_ai_self_check_failed` (and the more specific code when
-known). Do not emit the pack or call confirm while self-check fails.
+known, including `quality_gates_unconfigured`). Do not emit the pack or call
+confirm while self-check fails.
 
 ## Acceptance Interaction
 

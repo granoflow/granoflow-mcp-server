@@ -111,8 +111,11 @@ the recommendation; interactive user confirm or unattended auto-adopt is
 confirmation; **then immediately** App `done` (see Universal task closeout).
 
 **Typical gates (software):** project context; structural forecast reconciled;
-UI Phase A when applicable; unit/static evidence; Implementation Design
-Fidelity (`implementation-design-fidelity`); task-scoped Plan reconciliation;
+UI Phase A when applicable; **Static Quality Gate** (`static-quality-gate.md`)
+with lint-clean `quality_gate_run` (`for_stage: layer_a`; scope `full` by
+default, or `task_owned` only when Project Work `layer_a_scope: task_owned`);
+unit evidence; Implementation Design Fidelity
+(`implementation-design-fidelity`); task-scoped Plan reconciliation;
 `plan_case_implementation` lint `--gate layer_a` green (every Plan Case ID
 bound—unit/widget implemented with on-disk `test_ref`; integration/e2e
 `scheduled_campaign`); `lint_plan_unit_policy.py --scan-tests` green (every
@@ -122,7 +125,8 @@ Delivery + `acceptance_report` HTML; Card Checkpoint; task readback `done`.
 Task-local IT may be **authored** here but **not executed** (Layer B runs
 them). Missing ledger rows fail as `plan_case_implementation_gap`; unit
 policy gaps fail as `unit_copy_assertion_forbidden` /
-`unit_operation_coverage_incomplete`.
+`unit_operation_coverage_incomplete`. Static hygiene skipped / issues remain →
+`static_quality_gate_skipped` / `static_quality_gate_failed`.
 
 **Does not mean:** the milestone’s integration suite passed, or that other
 matrix rows for sibling tasks are green.
@@ -136,12 +140,13 @@ only), the coordinator runs the **milestone-scoped** integration suite.
 (orchestration mechanics may reuse `granoflow-integration-test-campaign`).
 
 **What it is:** user-**invisible** acceptance via integration tests limited to
-**this milestone’s** features **plus** matrix `status: green`. Orchestrate for
-minimal steps (e.g. add / browse / list before delete). See
-`milestone-integration-acceptance.md`.
+**this milestone’s** features **plus** matrix `status: green` **plus** a
+full-repo Static Quality Gate run (`static-quality-gate.md`,
+`for_stage: layer_b`, `scope: full`). Orchestrate IT for minimal steps (e.g.
+add / browse / list before delete). See `milestone-integration-acceptance.md`.
 
-**Closeout:** when Layer B is confirmed (suite + matrix, interactive or
-unattended), the **same wave Must** checkbox every in-scope child
+**Closeout:** when Layer B is confirmed (suite + matrix + static hygiene,
+interactive or unattended), the **same wave Must** checkbox every in-scope child
 (`status=done`). Confirmed milestone acceptance **is** that all-child
 checkbox wave plus the Layer B artifact gates—not a separate oral OK.
 
@@ -215,6 +220,9 @@ deferral-copy gap scan is clean (`functional_residual_forbidden` otherwise).
 | `functional_residual_forbidden`          | Feature stub / deferral copy / functional gap labeled as residual    |
 | `feature_completeness_overclaim_green`   | Claimed Layer A/B/milestone/final green while matrix rows incomplete |
 | `acceptance_layers_fused`                | Layer A/B fused in user-facing closeout                              |
+| `quality_gates_unconfigured`             | Software Project Work missing locked hygiene suite                   |
+| `static_quality_gate_skipped`            | Layer A/B/final claimed without `quality_gate_run`                   |
+| `static_quality_gate_failed`             | Non-zero exit or `issue_count > 0` (warnings count as failure)       |
 
 ## Must Not
 

@@ -22,7 +22,7 @@ granoflow_bundled_skill_reference(
 )
 ```
 
-Also load `task-and-milestone-acceptance-layers`.
+Also load `task-and-milestone-acceptance-layers` and `static-quality-gate`.
 
 ## What Counts As Milestone Acceptance
 
@@ -33,6 +33,7 @@ Also load `task-and-milestone-acceptance-layers`.
 | Agent-driven run to green (or recorded **allowed** residual)                                              | Asking the user to “确认里程碑验收” as the acceptance mechanism |
 | Post-green writeback: Experience (from issues) + 任务回顾                                                 | Treating child `done` alone as milestone accepted               |
 | Milestone `feature_completeness_matrix.status: green`                                                     | Suite green while matrix rows stay `pending` / stubbed          |
+| Full-repo Static Quality Gate (`static-quality-gate.md`, `quality_gate_run` `for_stage: layer_b`)         | Skipping analyze/lint because unit/IT are green; warning debt   |
 
 User-visible Closing Summary / Residual Report may **notify** results; they do
 **not** replace the IT suite as the acceptance decision.
@@ -87,6 +88,8 @@ milestone_it_acceptance:
   suite_order: [<case_id>...]
   simplify_notes: <how steps were reduced>
   feature_completeness_matrix_status: ready | green | blocked
+  # Required before Layer B passed (full repo). Schema: static-quality-gate.md
+  quality_gate_run: null # granoflow_quality_gate_run_v1 when executed
 ```
 
 7. Confirm Milestone Work `feature_completeness_matrix` is at least `ready`
@@ -110,16 +113,22 @@ runs them via the Milestone IT Suite Plan.
    issue as an Experience candidate** (user-experience asset)—see Writeback.
 4. Suite green → set milestone `integration_readiness_status` evidence from IT
    results; also require `feature_completeness_matrix.status: green` (lint with
-   `scripts/lint_feature_completeness_matrix.py`). Layer B acceptance for
-   software = **IT suite passed** **and** matrix green for this milestone
-   scope (plus **allowed** residuals only: `blocked_external` / pixel manual /
-   external-device handoff). Functional stubs or “后续版本” deferral copy →
+   `scripts/lint_feature_completeness_matrix.py`). Run the Project Work Static
+   Hygiene Suite at **full repo** scope and record
+   `milestone_it_acceptance.quality_gate_run` (`for_stage: layer_b`,
+   `scope: full`, `exit_code: 0`, `issue_count: 0`). Lint with
+   `scripts/lint_quality_gate_run.py --gate layer_b --project-work …`. Layer B
+   acceptance for software = **IT suite passed** **and** matrix green **and**
+   static hygiene green (plus **allowed** residuals only: `blocked_external` /
+   pixel manual / external-device handoff). Analyzer warnings/issues are **not**
+   allowed residuals. Functional stubs or “后续版本” deferral copy →
    `functional_residual_forbidden` / `feature_completeness_overclaim_green`.
 5. Do **not** require the user to confirm “里程碑验收通过” for the IT decision.
    User confirmation remains only for true external/manual blockers or for
    archiving/closure actions that the App still gates separately.
    Unattended: AI self-recommend on Layer B **is** confirmation.
-6. Do **not** set `acceptance_status: passed` while matrix is not `green`.
+6. Do **not** set `acceptance_status: passed` while matrix is not `green` or
+   while `quality_gate_run` is missing / failed.
 7. **Same wave as Layer B confirmation:** run
    `lint_milestone_child_done.py --claim-passed` (with `--milestone-id` or
    `--tasks-json`) so every in-scope child is App `done`. Suite/matrix green
@@ -178,6 +187,7 @@ When finishing tasks and Layer B in one turn:
 - Order: add → browse → list → delete → …
 - Result: green / residual
 - Feature completeness matrix: green
+- Static quality gate: commands + exit 0 + issue_count 0 (full repo)
 - Experience / 任务回顾: links or pending confirmations
 ```
 
@@ -198,6 +208,10 @@ Fusing into one “全部完成” list → `acceptance_layers_fused`.
 | `functional_residual_forbidden`          | Feature stub/deferral labeled as Layer B residual                      |
 | `feature_completeness_overclaim_green`   | Suite green claimed while matrix rows incomplete                       |
 | `acceptance_layers_fused`                | Layer A/B fused in user-facing closeout                                |
+| `quality_gates_unconfigured`             | Project Work hygiene suite empty at Layer B                            |
+| `static_quality_gate_skipped`            | Layer B claimed without `quality_gate_run`                             |
+| `static_quality_gate_failed`             | Non-zero exit or `issue_count > 0`                                     |
+| `static_quality_gate_commands_mismatch`  | Run commands ≠ locked Project Work hygiene suite                       |
 
 ## Must Not
 
@@ -209,4 +223,6 @@ Fusing into one “全部完成” list → `acceptance_layers_fused`.
   Layer B when this reference applies.
 - Mark Layer B / `acceptance_status: passed` while
   `feature_completeness_matrix` is not `green`.
+- Mark Layer B passed while static hygiene was skipped or still has issues /
+  warnings (`issue_count > 0`).
 - Accept functional stubs or “后续版本” UI as Layer B residuals.
