@@ -15,6 +15,30 @@ delegate here instead of restating card rules. The public MCP tool name remains
 - `#card-draft`
 - `#note-card`
 
+## Card Allowlist (fail closed)
+
+Flow-driven Card create/update is allowed **only** for these themes with a
+stable `fact_id`:
+
+| Theme             | `kind` / id | Card policy                                               |
+| ----------------- | ----------- | --------------------------------------------------------- |
+| Reality Boundary  | `RB-*`      | Note + archived Cards via Knowledge materialization       |
+| Route UI Truth    | `UIT-*`     | Note + archived Cards via Knowledge materialization       |
+| Library Knowledge | `LIB-pub-*` | **Note-first**; Card only for a red-line after Assessment |
+
+**Generic Review Cards** (no `RB-` / `UIT-` / `LIB-pub-` id) are **not** created
+by default. Create them only when the user explicitly asks in the current turn
+(e.g. 「做卡片」「做复习卡」「create review cards」).
+
+When retrieval trigger, boundary, or active-recall worthiness is unclear →
+**do not create a Card**. Keep the fact in ledger, Experience, or Note links
+(`reference_only`). Prefer `use_existing_knowledge` over a second Note for the
+same `fact_id`.
+
+For allowlisted themes, the primary write path is Knowledge assessment →
+materialization with `defer_active_learning` (`archived_reference`). Do **not**
+use `create_note_cards` as the primary path for RB / UIT / LIB.
+
 ## Required Flow
 
 1. Confirm the target task exists and is not deleted. Project and inbox tasks are both eligible when the running App advertises inbox authoring; every operation remains linked to a task.
@@ -81,18 +105,26 @@ Do not infer confirmation from search, classification, prior general interest, o
 
 ## Review-Ending Authoring Session
 
-Task, daily, weekly, and monthly reviews use one shared Note/Card authoring
-session as their final interactive authoring stage. Review owners collect
-evidence and confirmed review content, then delegate here instead of drafting
-or applying cards independently.
+Task, daily, weekly, and monthly reviews may end with a shared Note/Card
+authoring session **only when**:
+
+- allowlisted theme candidates exist (`RB-*` / `UIT-*` / `LIB-pub-*` with a
+  Card-worthy red-line for LIB), **or**
+- the user explicitly requested review cards in this turn.
+
+Otherwise finish the review without proposing a Card set (Experience /
+Assessment / Note updates may still proceed). Review owners collect evidence
+and confirmed review content, then delegate here instead of drafting or
+applying cards independently.
 
 1. Finish the review discussion and any separately approved Experience or
    Knowledge assessment work first. Raw diary prose, an unreviewed task log, or
    an unapproved Experience is not Note/Card input.
-2. Gather every supported Note/Card candidate for the reviewed scope, including
-   relevant candidates deferred by earlier lifecycle checkpoints. Prefer a
-   small, strong set, but do not hide a candidate merely to shorten the
-   confirmation view.
+2. Gather allowlisted Note/Card candidates for the reviewed scope (plus
+   generic candidates **only** if the user explicitly requested cards),
+   including relevant allowlisted items deferred by earlier lifecycle
+   checkpoints. Prefer a small, strong set. Drop uncertain generic items
+   rather than inventing Cards.
 3. Run similarity search and the App-owned authoring preview in dry-run mode.
    Require `writesPerformed: false`, then show the complete planned Note/Card
    set together: stable operation id, create/link/update action, Note title and
@@ -116,16 +148,19 @@ or applying cards independently.
    Card, task-link, and `practiceReady: true` readback. Report failed or stale
    items separately and never retry them against a changed preview.
 
-### Unattended Review Boundary
+### Unattended Review Boundary (task retrospective cards only)
 
 An unattended review may complete all read-only evidence collection, quality
-checks, similarity searches, drafting, and App dry-run preview. Note/Card
-creation, linking, and modification always require genuine user judgment over
-the exact latest preview, so unattended authorization never applies them. Put
-this session at the end of the review, display the full dry-run set, record the
-operations as `deferred`, and wait for the user's open-ended edits and explicit
-approval. This is a required `subjective_acceptance` stop, not an unattended-run
-failure and not permission to omit the candidates.
+checks, similarity searches, drafting, and App dry-run preview for **task
+retrospective review cards** (learning load). Note/Card creation, linking, and
+modification for those cards require genuine user judgment over the exact latest
+preview, so unattended authorization does not apply them. Put this session at the
+end of the review, display the full dry-run set, record the operations as
+`deferred`, and wait for the user's open-ended edits and explicit approval.
+
+**RB/UIT anti-drift archived-reference cards** (`reality-boundary-cards.md`,
+`route-ui-truth-cards.md`) are **not** covered here — unattended **Must**
+auto-apply them per `unattended-card-truth-batch-gate.md`.
 
 ## Supported Actions
 
@@ -181,6 +216,28 @@ Do **not** copy visual/checklist detail back into Project Work—PW keeps
 inventory + short declared `ui_details` + `uit_fact_id` pointers
 (`product-truth-sot-layers.md`; `product_truth_dual_write_forbidden`).
 
+## Library Knowledge Themes（库级知识）
+
+When the work is **cross-project third-party library knowledge** keyed by
+package (`LIB-pub-<slug>`)—pitfalls, deprecation, platform traps, not API
+manuals—read
+[`library-knowledge-notes.md`](../granoflow-agent-workflow/references/library-knowledge-notes.md)
+(via `granoflow_bundled_skill_reference` from `granoflow-agent-workflow`).
+
+That reference owns `fact_id` (`LIB-pub-<slug>`), Note skeleton, Card
+admission (including AI self-discovered implementation fixes), Project Work
+`knowledge_ref` pointers, init search-first linking, and implementation
+ledger handoff. Write path is Knowledge assessment → materialization with
+`defer_active_learning` when a Card is warranted; API material stays
+`reference_only` without Cards.
+
+For `kind: library_knowledge`, the universal professional-term Card default
+in this skill **does not apply** to every API symbol—see override in
+`library-knowledge-notes.md` and `card-quality-defaults.md`.
+
+Do **not** copy library lesson lists into Project Work body—PW keeps
+`knowledge_ref` and short `selection_rationale` only.
+
 ## Knowledge And Source Fidelity
 
 First decide whether the material is durable knowledge worth active recall. Do not card plain activity logs, temporary status, secrets, weak speculation, or facts with no plausible future retrieval trigger.
@@ -188,6 +245,12 @@ First decide whether the material is durable knowledge worth active recall. Do n
 For established knowledge already present in a supplied book, specification, paper, official documentation, or project truth source, keep front/back wording faithful to that source—especially for examination use. Put analogy, examples, counterexamples, intuitive explanation, and helpful extension in the Note's `content`, not as an oversized Card answer.
 
 Treat skill names, open-source libraries, APIs, functions, methods, commands, protocols, schemas, tools, framework concepts, and domain-specific vocabulary as professional terms. Their note `content` must include a plain-language definition, an analogy, and a concrete usage example. This is a universal default, not an optional wrapper preference.
+
+**Exception — `kind: library_knowledge`:** per
+`granoflow-agent-workflow/library-knowledge-notes`, the Note **简介** satisfies
+the definition requirement; Cards are optional and lesson-scoped. API catalogs
+route `reference_only` (official links in the Note, no Cards). See also
+[Library Knowledge override](card-quality-defaults.md#library-knowledge-override).
 
 If no authoritative source is available, distinguish general knowledge from project-specific experience and label uncertainty rather than manufacturing a canonical answer.
 

@@ -1,0 +1,88 @@
+/* Granoflow canonical device shell — iPhone 17 Pro portrait (v1)
+ * Copy verbatim into Baseline / task prototypes. Do not restyle bezel geometry.
+ */
+.gf-device-shell--iphone-17-pro {
+  --gf-shell-bezel: #2b2b2e;
+  --gf-shell-screen: #000;
+  --gf-shell-island: #0a0a0a;
+  --gf-shell-home: rgba(255, 255, 255, 0.88);
+  --gf-shell-outer-radius: 55px;
+  --gf-shell-inner-radius: 47px;
+  --gf-shell-width: 402px;
+  --gf-shell-height: 874px;
+  --gf-shell-safe-top: 59px;
+  --gf-shell-safe-bottom: 34px;
+  box-sizing: border-box;
+  display: inline-flex;
+  justify-content: center;
+  padding: 12px;
+  background: linear-gradient(145deg, #3d3d40 0%, #1e1e20 100%);
+  border-radius: calc(var(--gf-shell-outer-radius) + 12px);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.gf-device-shell--iphone-17-pro *,
+.gf-device-shell--iphone-17-pro *::before,
+.gf-device-shell--iphone-17-pro *::after {
+  box-sizing: border-box;
+}
+
+.gf-device-shell--iphone-17-pro .gf-device-shell__bezel {
+  position: relative;
+  width: var(--gf-shell-width);
+  height: var(--gf-shell-height);
+  background: var(--gf-shell-bezel);
+  border-radius: var(--gf-shell-outer-radius);
+  padding: 10px;
+  overflow: hidden;
+}
+
+.gf-device-shell--iphone-17-pro .gf-device-shell__screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--gf-shell-screen);
+  border-radius: var(--gf-shell-inner-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gf-device-shell--iphone-17-pro .gf-device-shell__dynamic-island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 37px;
+  background: var(--gf-shell-island);
+  border-radius: 20px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.gf-device-shell--iphone-17-pro .gf-device-shell__content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--gf-shell-safe-top);
+  padding-bottom: var(--gf-shell-safe-bottom);
+  background: var(--surface, #fff);
+  color: var(--ink, #111);
+}
+
+.gf-device-shell--iphone-17-pro .gf-device-shell__home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 134px;
+  height: 5px;
+  background: var(--gf-shell-home);
+  border-radius: 3px;
+  z-index: 4;
+  pointer-events: none;
+}

@@ -634,6 +634,11 @@ fail closed `design_spec_wrong_artifact_type` for journey galleries and
 
 #### Round B — App Shell (after Spec selection)
 
+When iOS and/or macOS layout families bind `device_shell_profile_id`, load
+`device-shell-templates`, copy bundled CSS/frame assets with
+`copy_device_shell_assets.py`, and wrap Shell HTML in the canonical device
+frame before Preview Gate. Lint with `lint_device_shell.py`.
+
 **Convergence rule (hard):** every Shell option Must perfectly fit the selected
 Design Spec. Reusing Spec tokens/IA is mandatory. Introducing a new palette /
 typography / material seed that breaks Spec → fail closed `shell_spec_mismatch`.
@@ -901,6 +906,13 @@ For **user-visible** capabilities (TTS, push, camera, …), also maintain
 `probe_method`, `fallback`, `in_ship_bar`, and later `probe_by_platform`.
 Selection ≠ probed. Claiming full-platform support without probes fails closed
 as `third_party_capability_overclaim`.
+
+Also set `knowledge_ref`, `knowledge_link_status`, and when applicable
+`superseded_by` on each approved row per `library-knowledge-notes.md`. Project
+Work holds pointers only; cross-project lessons live in `LIB-pub-*` Notes.
+When a task or Analysis replaces a critical package, update approved rows,
+refresh `knowledge_ref`, mark the prior LIB Note `superseded_by`, and run
+change-impact fanout—do not paste lesson prose into Project Work body.
 
 ## Data Persistence And Structured Contracts
 

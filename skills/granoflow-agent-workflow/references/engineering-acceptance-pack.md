@@ -119,6 +119,11 @@ Checklist (all must pass for software init):
    `architecture.modules[]` entry with non-null `id` and `responsibility`
 5. Pack projection would not contradict YAML / companion SHA intent
 6. `visual_baseline.applicability` is `required` or `not_applicable` with basis
+7. Every `capability_critical: true` row in `dependencies.approved` has
+   `knowledge_link_status` in `linked`, `skeleton`, or `gap` (with
+   `knowledge_gap_reason` when `gap`); `linked` rows have valid
+   `knowledge_ref` (`LIB-pub-*`). Optional:
+   `lint_library_knowledge_refs.py --require-init-ready`
 
 Any failure → `init_ai_self_check_failed` (and the more specific code when
 known). Do not emit the pack or call confirm while self-check fails.

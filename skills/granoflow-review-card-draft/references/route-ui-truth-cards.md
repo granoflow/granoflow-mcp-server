@@ -192,18 +192,21 @@ route_ui_truth_not_applicable_reason: null
 
 Follow `granoflow-agent-workflow/references/unattended-card-truth-batch-gate.md`:
 
-1. Interactive batch: seed / `will_change` Knowledge apply + index upsert
+1. Unattended auto-apply: seed / `will_change` Knowledge preview→apply + index
+   upsert (`decision_authority: unattended_grant`)
 2. `lint_unattended_card_truth_ready.py --require-uit-index --require-field-media`
    (when card-back screenshots are in scope)
-3. Then unattended engineering + E2E + freshness vision
+3. Then engineering + E2E + freshness vision in the same continuity wave
 
-Unattended **Must not** apply UIT Notes/cards. Vision→fix may change code;
-new card prose still needs a later interactive batch.
+Unattended **Must** apply UIT Notes/cards when Plan/Delivery marks `gap` or
+`will_change`. Vision→fix may change code; refresh UIT card text in the same
+wave when screenshots or copy changed.
 
 ## Forbidden
 
 - Second Note for an existing `UIT-*`
 - Skipping stale vision for cost / “ask the user if vision is worth it”
-- Claiming unattended Delivery closed UIT truth without the Card-Truth Batch Gate
+- Claiming unattended Delivery closed UIT truth without App readback apply in
+  the same wave
 - Using embedding similarity instead of full index enumeration
 - Treating operational pixel-diff as the sole green light

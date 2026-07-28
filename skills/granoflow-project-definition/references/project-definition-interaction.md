@@ -359,6 +359,35 @@ Batch all such library choices in one communication when possible.
 Leaving a known critical capability without a named package is
 `capability_dependency_unselected` and blocks Project Work confirm / Done.
 
+## Library Knowledge Link Batch
+
+During Step 1, **immediately after** writing `dependencies.approved` rows (same
+pass—do not defer to the first coding task), link each package to cross-project
+Knowledge per `granoflow-agent-workflow/library-knowledge-notes`:
+
+1. Compute expected `LIB-pub-<slug>` from each `approved[].name`.
+2. Search App Knowledge (`granoflow_task_knowledge_pack`,
+   `granoflow_review_card_similar`) with `fact_id` + package keywords.
+3. **Hit** → set `knowledge_ref`, `knowledge_link_status: linked`; prefer
+   `use_existing_knowledge` on Assessment rather than duplicating the Note.
+4. **Miss** → create skeleton Note (简介 + registry/docs links); set
+   `knowledge_link_status: skeleton`. Do **not** create pitfall Cards at init.
+5. **Deferred search** → `knowledge_link_status: gap` with
+   `knowledge_gap_reason` (blocks `lint_library_knowledge_refs.py
+--require-init-ready`).
+
+Batch link/skeleton/gap summary with the dependency batch when possible.
+
+- Interactive: present link status per package when practical.
+- Unattended (explicit only): adopt search-first results under Mode Gate.
+
+Optional lint before pack emit / confirm:
+
+```bash
+python3 skills/granoflow-agent-workflow/scripts/lint_library_knowledge_refs.py \
+  --project-work <path> --require-init-ready
+```
+
 ## Data Persistence Recommendation Batch
 
 During Step 1, always recommend a `data_persistence` value. When the

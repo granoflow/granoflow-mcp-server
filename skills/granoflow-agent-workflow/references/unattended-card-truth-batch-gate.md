@@ -1,100 +1,128 @@
-# Unattended Card-Truth Batch Gate（交互批卡闸）
+# Card-Truth Readiness Gate（RB / UIT · 无人值守可落卡）
 
-Owner for splitting **interactive Knowledge/card writes** from **unattended
-engineering campaigns** after Reality Boundary (`RB-*`) and Route UI Truth
-(`UIT-*`) anti-drift.
+Owner for **Reality Boundary (`RB-*`)** and **Route UI Truth (`UIT-*`)**
+Knowledge/card writes during **unattended** engineering. These writes are
+**anti-drift obligations**, not taste gates — if code or UI changes while
+Notes/cards stay empty, truth drifts.
 
 Parent contracts: `unattended-interaction-contract.md`,
 `lifecycle-card-checkpoints.md`, `reality-boundary-cards.md`,
 `route-ui-truth-cards.md`, `long-task-run-continuity.md`.
 
-## Problem
+## Problem (old rule — revoked)
 
-Unattended **Must not** apply Note/Card / Knowledge materialization
-(`subjective_acceptance`). Delivery anti-drift **Must** update the same
-`fact_id` when Plan marks `will_change`. Claiming both “full unattended” and
-“RB/UIT truth closed” without a prior interactive batch is fail-closed
-dishonesty.
+Previously this gate split “interactive card apply” from unattended engineering.
+That caused **truth drift**: unattended Delivery changed code/UI but deferred
+RB/UIT apply, leaving Granoflow with zero cards while Task Work claimed
+`updated_on_delivery`.
 
-## Split claim (hard)
+**New rule:** unattended **Must** create and update RB/UIT Notes/cards in the
+same wave as the Plan/Delivery that changes the underlying truth.
 
-| Claim                                                      | Allowed when                                                                                                                                                 |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Unattended engineering campaign → E2E → `project_complete` | Card writes are either already applied, or deferred as Residual (`subjective_acceptance`) — **not** silently skipped while status says `updated_on_delivery` |
-| RB/UIT anti-drift Delivery closed                          | Interactive (or explicit batch grant) completed preview→apply for every `will_change` / seed fact_id in the same wave                                        |
+## What is still subjective (not RB/UIT)
 
-Do **not** tell the user “SoT guarantees unattended through Delivery including
-UIT/RB truth” unless the batch gate below is green.
+Task **retrospective review cards** (learning load, taste, legal nuance) remain
+`subjective_acceptance` under `granoflow-review-card-draft` § Unattended Review
+Boundary. Do not conflate those with RB/UIT archived-reference anti-drift
+cards.
 
-## Interactive Card-Truth Batch Gate
+## Unattended apply obligation (hard)
 
-Run **before** entering or continuing whole-project / milestone-wide /
-final-delivery **unattended** when the project uses RB and/or UIT indices.
+When `executionMode: unattended` (or explicit unattended declaration) and any
+of the following is true, **Must** run Knowledge assessment preview → apply and
+materialization preview → apply **without** waiting for a mid-run user pause:
+
+| Trigger         | When                                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| `gap`           | Plan/Delivery `*_index_review` marks a new `fact_id` with no index row                                        |
+| `will_change`   | Plan listed `will_change`; Delivery has verification evidence                                                 |
+| Greenfield seed | Project uses RB/UIT but index is empty — seed from product docs + Project Work pointers before deep Implement |
+
+Use `decision_authority: unattended_grant` on the apply path. App preview→apply
+readback is still required; skipping readback remains
+`card_truth_delivery_claim_without_apply`.
+
+**Must not** mark `updated_on_delivery`, `cards_updated: true`, or
+`card_truth_batch_gate.status: passed` without App readback note_id/card_ids.
+
+## Card-Truth Readiness Gate (capability + index integrity)
+
+Run at unattended entry and again before claiming RB/UIT Delivery closed. This
+gate checks **readiness**, not user batch approval.
 
 ### Gate steps
 
 1. **External Capability Inventory** (unattended contract): include
-   `window_capability` for E2E.
-2. **App capability**: Local HTTP advertises `review-note: field-media.upload`
-   when UIT screenshots must land on card backs. Missing → rebuild/restart App
-   or defer UIT media with resume condition (do not fake upload).
-3. **Seed / gap batch (interactive)**: For every first-wave or `gap` fact_id
-   without index `note_id`:
-   - Knowledge assessment preview → **user/batch approve** → apply
-   - Materialization preview → **user/batch approve** → apply
+   `window_capability` for E2E when UIT vision is in scope.
+2. **App capability**: Local HTTP reachable; when UIT card-back screenshots are
+   required, advertise `review-note: field-media.upload`. Missing →
+   `card_truth_batch_gate.status: blocked` with resume condition (rebuild/restart
+   App) — **not** silent defer while code keeps changing.
+3. **Auto seed / apply (unattended)**: For every `gap` / empty index row /
+   pending `will_change` without readback apply in this wave:
+   - Knowledge assessment preview → apply
+   - Materialization preview → apply
    - Upsert `reality_boundary_index` / `route_ui_truth_index` from readback
-4. **Pending `will_change` batch (interactive)**: If any open task Plan already
-   lists `will_change` that is not yet `updated_on_delivery`, finish those card
-   updates interactively (or park them — do not start unattended claiming they
-   are done).
-5. **Readiness lint** (same wave):
+4. **Readiness lint**:
 
    ```text
    python3 skills/granoflow-agent-workflow/scripts/lint_unattended_card_truth_ready.py \
      --snapshot path/to/project_snapshot.yaml \
      [--capabilities path/to/capabilities.json] \
      [--require-uit-index] \
+     [--require-rb-index] \
      [--require-field-media]
    ```
 
-6. **Then** enter unattended for solvable engineering + E2E + vision→fix.
-   Card apply remains forbidden until another interactive batch.
+5. **Then** continue solvable engineering + E2E + freshness-gated vision.
+   Further RB/UIT `will_change` in later tasks **Must** apply in those tasks'
+   Delivery waves — not parked for a separate interactive session.
 
 ### Machine fields (Task Work / SoT / campaign)
 
 ```yaml
 card_truth_batch_gate:
-  status: pending | passed | not_applicable | deferred
-  interactive_batch_completed_at: <ISO-8601|null>
+  status: pending | passed | not_applicable | blocked
+  unattended_apply_enabled: true
+  last_apply_at: <ISO-8601|null>
   uit_index_count: <int>
   rb_index_count: <int>
   field_media_capability: available | missing | not_required
-  deferred_fact_ids: [] # residual subjective_acceptance
+  blocked_fact_ids: [] # external/capability blockers only
   summary: <one line shown to user>
 ```
+
+Status meanings:
+
+- `passed` — indices + readback consistent with claimed Delivery; capabilities OK
+- `not_applicable` — project does not use RB/UIT indices
+- `blocked` — App/capability/external blocker; engineering may continue but
+  **Must not** claim RB/UIT Delivery closed
+- `pending` — apply not yet attempted for known gaps/changes in this wave
 
 Fail codes:
 
 - `card_truth_batch_gate_missing` — unattended whole-project/final-delivery
-  entered without gate status
-- `card_truth_batch_gate_blocked` — require-uit / field-media / empty index when
-  product claims UIT/RB truth
+  entered without gate status when RB/UIT is in scope
+- `card_truth_batch_gate_blocked` — require-uit / field-media / placeholder index
+  when product claims UIT/RB truth
 - `card_truth_delivery_claim_without_apply` — Delivery claimed
   `updated_on_delivery` / `cards_updated: true` without App readback apply in
-  this or a prior interactive batch
+  the same wave
 
-## Unattended behavior after gate
+## Unattended behavior (after readiness)
 
-| Work                                         | Unattended                                                                                                                       |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Code, IT, E2E, vision (freshness), fix loops | Auto                                                                                                                             |
-| Plan/Delivery `card_change_*_notice` display | Auto (notice, not approval)                                                                                                      |
-| New Note/Card / Knowledge apply              | **Forbidden** — preview → Residual                                                                                               |
-| Stale UIT vision fail                        | Enter fix (code/E2E); if fix needs new card text, park card update for next interactive batch                                    |
-| Final wording                                | `project_complete` with Residual for cards/`user_final_acceptance` **or** stop for interactive final acceptance — never conflate |
+| Work                                                | Unattended                                                                 |
+| --------------------------------------------------- | -------------------------------------------------------------------------- |
+| Code, IT, E2E, vision (freshness), fix loops        | Auto                                                                       |
+| RB/UIT seed (`gap`) / `will_change` apply           | **Auto** (preview→apply→index upsert)                                      |
+| Plan/Delivery `card_change_*_notice` display        | Auto (notice, not approval)                                                |
+| Task retrospective review cards                     | Defer (`subjective_acceptance`)                                            |
+| Stale UIT vision fail                               | Fix code/E2E **and** refresh UIT card text in same wave when `will_change` |
+| External-only block (App down, field-media missing) | `blocked` + Residual; do not fake apply                                    |
 
 ## GranoReader first-wave UIT
 
 Seed package: product repo `temp/uit-pilot/seed-notes.yaml` + `apply-seed.md`.
-Empty `route_ui_truth_index: []` means gate **not** passed for UIT truth claims
-until materialization readback fills rows.
+Empty `route_ui_truth_index: []` means unattended **Must** run seed apply
+before claiming UIT truth closed — not defer to a later interactive batch.

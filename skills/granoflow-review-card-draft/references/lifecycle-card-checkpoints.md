@@ -11,23 +11,27 @@ At each checkpoint:
 1. Re-read the latest task and linked cards, then search for similar cards when relevant.
 2. Use reliable existing cards as input to the current phase.
 3. Classify any material knowledge delta as link, update, create, unchanged, deferred, or conflict.
-4. Route every proposed write through the parent skill's preview and operation-level approval flow.
-5. Apply only approved operations and require App-owned `practiceReady: true` readback.
-6. Persist the checkpoint result in the phase document or node evidence.
-7. **Explicit change notice (hard):** The Agent **Must** show a user-visible
+4. **Allowlist:** create/update Cards only for `RB-*` / `UIT-*` / Card-worthy
+   `LIB-pub-*` (see parent skill Card Allowlist). Generic Card ideas without an
+   explicit user request → `deferred` (or Experience / ledger), never create.
+5. Route every proposed **allowlisted** write through the parent skill's
+   preview and operation-level approval flow.
+6. Apply only approved operations and require App-owned `practiceReady: true` readback.
+7. Persist the checkpoint result in the phase document or node evidence.
+8. **Explicit change notice (hard):** The Agent **Must** show a user-visible
    notice and record `card_change_plan_notice` (Plan / Task Work) or
    `card_change_delivery_notice` (Execution apply / Delivery) with
    `shown_to_user: true`. If any card create/update/archive is planned or
-   applied (Reality Boundary or **any** other review card kind), list every
-   item; Delivery applied writes **Must** set `cards_updated: true`. If zero
-   cards change, show **only** one confirmation line
-   (`none: true`, e.g. 「本次迭代无卡片变更」/「本次实施无卡片变更」)—no item
-   list. Missing notices fail closed as `card_change_plan_notice_missing` or
-   `card_change_delivery_notice_missing`. Reality Boundary details:
-   `reality-boundary-cards.md` Anti-Drift. Route UI Truth details:
-   `route-ui-truth-cards.md` Anti-Drift (freshness + auto vision). Unattended
-   whole-project runs that claim RB/UIT Delivery closed must pass
-   `unattended-card-truth-batch-gate` first.
+   applied (Reality Boundary, Route UI Truth, Library Knowledge, or an
+   explicitly requested generic card), list every item; Delivery applied
+   writes **Must** set `cards_updated: true`. If zero cards change, show
+   **only** one confirmation line (`none: true`, e.g. 「本次迭代无卡片变更」/
+   「本次实施无卡片变更」)—no item list. Missing notices fail closed as
+   `card_change_plan_notice_missing` or `card_change_delivery_notice_missing`.
+   Reality Boundary details: `reality-boundary-cards.md` Anti-Drift. Route UI
+   Truth details: `route-ui-truth-cards.md` Anti-Drift (freshness + auto
+   vision). Unattended whole-project runs that claim RB/UIT Delivery closed
+   must pass `unattended-card-truth-batch-gate` first.
 
 Before preview, validate every proposed Note: its body must contain at least
 one concrete example of the knowledge in use. If the knowledge is abstract,
@@ -79,9 +83,9 @@ For an older App that advertises `projectTaskRequired=true`, project tasks may u
 
 ## Phase Responsibilities
 
-- Task Work establishes the knowledge baseline during Analysis and reconciles decision boundaries, terminology, rules, and risks when Planning is triggered. A later Work Document version does not recreate unchanged knowledge.
-- Execution runs a checkpoint only on a material knowledge/card delta such as a correction, verified fact, confirmed rule change, or reusable experience.
-- Delivery reconciles cards with the actual result and records accepted, overturned, or deferred Work Document assumptions. Legacy Delivery may refer to Analysis/Plan assumptions.
-- Deferred Review performs final deduplication, quality audit, and evidence-backed experience capture; it is not the first bulk-card pass.
+- Task Work establishes the knowledge baseline during Analysis and reconciles decision boundaries, terminology, rules, and risks when Planning is triggered. A later Work Document version does not recreate unchanged knowledge. Prefer linking allowlisted themes; do not open a generic Card batch.
+- Execution runs a checkpoint only on a material knowledge/card delta such as a correction, verified fact, confirmed rule change, or reusable experience. **Must not** create generic Cards unless the user explicitly asked; allowlisted RB/UIT/LIB updates follow their theme contracts.
+- Delivery reconciles allowlisted cards with the actual result and records accepted, overturned, or deferred Work Document assumptions. Legacy Delivery may refer to Analysis/Plan assumptions.
+- Deferred Review performs final deduplication, quality audit, and evidence-backed experience capture; it is not a bulk generic-card pass. Card session only for allowlisted candidates or explicit user request.
 
-An unattended runner may read cards and record candidates, but it cannot infer operation approval. During a review, it must carry those candidates into the parent skill's final Review-Ending Authoring Session, run the App-owned dry-run preview, display the complete Note/Card set, and stop for genuine user editing and approval. It records proposed writes as `deferred` and continues safe work before that final stop when the task contract permits. A general unattended instruction never authorizes Note/Card creation, linking, or modification.
+An unattended runner may read cards and record **allowlisted** candidates, but it cannot infer operation approval. It **must not** invent generic Card write plans. During a review, carry allowlisted candidates into the parent skill's Review-Ending Authoring Session (when the allowlist/session gate permits), run the App-owned dry-run preview, display the complete Note/Card set, and stop for genuine user editing and approval. Record proposed writes as `deferred` and continue safe work before that final stop when the task contract permits. A general unattended instruction never authorizes Note/Card creation, linking, or modification.

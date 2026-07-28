@@ -1,0 +1,97 @@
+/* Granoflow canonical device shell — macOS Tahoe window (v1)
+ * Copy verbatim into Baseline / task prototypes. Do not restyle window chrome geometry.
+ */
+.gf-device-shell--macos-tahoe {
+  --gf-shell-window-bg: #ececec;
+  --gf-shell-titlebar-bg: linear-gradient(180deg, #f6f6f6 0%, #ebebeb 100%);
+  --gf-shell-border: rgba(0, 0, 0, 0.18);
+  --gf-shell-shadow: 0 22px 70px rgba(0, 0, 0, 0.22);
+  --gf-shell-radius: 10px;
+  --gf-shell-titlebar-height: 52px;
+  --gf-shell-width: 1280px;
+  --gf-shell-height: 800px;
+  --gf-traffic-red: #ff5f57;
+  --gf-traffic-yellow: #febc2e;
+  --gf-traffic-green: #28c840;
+  box-sizing: border-box;
+  display: inline-flex;
+  padding: 16px;
+  background: transparent;
+}
+
+.gf-device-shell--macos-tahoe *,
+.gf-device-shell--macos-tahoe *::before,
+.gf-device-shell--macos-tahoe *::after {
+  box-sizing: border-box;
+}
+
+.gf-device-shell--macos-tahoe .gf-device-shell__window {
+  width: var(--gf-shell-width);
+  height: var(--gf-shell-height);
+  background: var(--gf-shell-window-bg);
+  border: 1px solid var(--gf-shell-border);
+  border-radius: var(--gf-shell-radius);
+  box-shadow: var(--gf-shell-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gf-device-shell--macos-tahoe .gf-device-shell__titlebar {
+  height: var(--gf-shell-titlebar-height);
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 78px 1fr 78px;
+  align-items: center;
+  padding: 0 16px;
+  background: var(--gf-shell-titlebar-bg);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.gf-device-shell--macos-tahoe .gf-device-shell__traffic-lights {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gf-device-shell--macos-tahoe .gf-device-shell__traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 0.5px solid rgba(0, 0, 0, 0.12);
+}
+
+.gf-device-shell--macos-tahoe .gf-device-shell__traffic-light--close {
+  background: var(--gf-traffic-red);
+}
+
+.gf-device-shell--macos-tahoe .gf-device-shell__traffic-light--minimize {
+  background: var(--gf-traffic-yellow);
+}
+
+.gf-device-shell--macos-tahoe .gf-device-shell__traffic-light--zoom {
+  background: var(--gf-traffic-green);
+}
+
+.gf-device-shell--macos-tahoe .gf-device-shell__title {
+  text-align: center;
+  font:
+    600 13px/1.2 -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    system-ui,
+    sans-serif;
+  color: rgba(0, 0, 0, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gf-device-shell--macos-tahoe .gf-device-shell__content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface, #fff);
+  color: var(--ink, #111);
+}

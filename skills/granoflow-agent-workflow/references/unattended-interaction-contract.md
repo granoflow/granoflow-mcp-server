@@ -47,24 +47,31 @@ destructive Git, or impersonation.
 Inventing credentials, impersonating the user, or marking external work done
 without evidence remains forbidden.
 
-## Card-Truth Batch Gate (RB / UIT)
+## Card-Truth Readiness Gate (RB / UIT)
 
-Reality Boundary and Route UI Truth writes use Knowledge materialization and
-are **subjective_acceptance** — unattended **Must not** apply them.
+Reality Boundary and Route UI Truth writes use Knowledge materialization. They
+are **anti-drift obligations** — unattended **Must** apply them in the same wave
+as Plan `gap` / Delivery `will_change`, or truth drifts while code moves.
 
 Before whole-project / milestone-wide / final-delivery unattended when the
 project keeps `reality_boundary_index` and/or `route_ui_truth_index`:
 
-1. Complete an **interactive Card-Truth Batch** (preview→user/batch approve→
-   apply→index upsert) for seed gaps and any pending `will_change` card updates.
-2. Run `lint_unattended_card_truth_ready.py` (see
-   `unattended-card-truth-batch-gate.md`).
-3. Only then auto-run solvable engineering, E2E, and freshness-gated vision.
+1. Verify App/capability readiness (Local HTTP, `field-media.upload` when UIT
+   screenshots are required).
+2. **Auto-apply** seed gaps and pending `will_change` via assessment preview→
+   apply and materialization preview→apply (`decision_authority:
+unattended_grant` — no mid-run user pause).
+3. Upsert index rows from readback; run `lint_unattended_card_truth_ready.py`
+   (see `unattended-card-truth-batch-gate.md`).
+4. Continue solvable engineering, E2E, and freshness-gated vision.
 
-Do **not** claim “unattended Delivery closed UIT/RB truth” while card apply is
-still deferred. Engineering `project_complete` with Residual for cards /
-`user_final_acceptance` is allowed; conflating that with anti-drift closed is
-not (`card_truth_delivery_claim_without_apply`).
+Do **not** claim “unattended Delivery closed UIT/RB truth” without App readback
+apply in that wave (`card_truth_delivery_claim_without_apply`). External-only
+blockers (App unreachable, missing field-media) may set
+`card_truth_batch_gate.status: blocked` — not “defer because unattended.”
+
+Task **retrospective review cards** (learning/taste) remain
+`subjective_acceptance`; RB/UIT archived-reference cards do **not**.
 
 ## External Capability Inventory (ask early)
 
@@ -538,8 +545,9 @@ externally impossible but other ready work exists:
 `blocker_class` for deferred items:
 
 - `external_impossible`: proven external/human-only dependency;
-- `subjective_acceptance`: Note/Card or true taste/legal gate parked for the
-  residual report;
+- `subjective_acceptance`: task retrospective review cards, taste/legal gates —
+  **not** RB/UIT anti-drift archived-reference apply (those Must auto-apply in
+  unattended);
 
 `blocker_class: subjective_acceptance`
 

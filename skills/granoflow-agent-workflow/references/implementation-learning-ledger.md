@@ -69,6 +69,10 @@ implementation_learning_ledger:
       materiality: material
       review_status: pending | included_in_review | not_reusable
       task_review_revision: null
+      # When the event involves an approved third-party package (see
+      # library-knowledge-notes.md). Omit or null when not library-scoped.
+      target_library_ref: null # LIB-pub-<slug>
+      knowledge_action: none # update_note | add_card | contradict | supersede | none
   material_event_count: 0
   review_eligibility: not_required | required | included_in_review
   ledger_sha256: ""
@@ -112,6 +116,34 @@ Before Task Delivery:
 A successful final build or green test does not erase earlier material
 learning.
 
+## Library Knowledge Handoff
+
+When a `material` event involves a third-party package listed in Project Work
+`engineering.dependencies.approved` (or a direct replacement during a package
+change):
+
+1. Set `target_library_ref` to the matching `LIB-pub-<slug>` (normalize
+   `approved[].name` per `library-knowledge-notes.md`).
+2. Set `knowledge_action`:
+   - `update_note` — **default**; append or revise the Cross-project lessons
+     section after Experience promotion (including most AI self-discovered
+     fixes);
+   - `add_card` — only when the lesson is a cross-project **red-line** and
+     Knowledge Assessment approves; when unsure, use `update_note`;
+   - `contradict` — outcome evidence challenges an existing lesson;
+   - `supersede` — package abandoned for another; coordinate PW + Note
+     `superseded_by` fanout;
+   - `none` — material but not library-scoped.
+3. Deferred Task Review → Experience authoring → Knowledge Assessment →
+   materialization (Note-first). **Do not** skip preview/apply or write Cards
+   directly from Delivery. Generic non-LIB Cards stay off unless the user
+   explicitly requested them (Card Allowlist).
+4. API manuals and volatile syntax remain `reference_only` in the LIB Note—do
+   not create Cards for them even when the AI fixed a compile error.
+
+Before Delivery, any library-scoped material event without `target_library_ref`
+fails closed as `implementation_learning_library_ref_missing`.
+
 ## Deferred Review Handoff
 
 After task completion, `review_eligibility: required` automatically creates a
@@ -145,3 +177,4 @@ requirement.
 - `implementation_learning_digest_mismatch`
 - `implementation_learning_hidden_reasoning_forbidden`
 - `implementation_learning_incidental_noise_forbidden`
+- `implementation_learning_library_ref_missing`

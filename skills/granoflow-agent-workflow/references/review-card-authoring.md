@@ -18,9 +18,15 @@ instead.
 
 ## Worthiness Gate
 
+**When unsure, do not create a Card.** Prefer ledger, Experience, `taskReview`,
+or a Note link (`reference_only`). Follow the Card Allowlist in
+`granoflow-review-card-draft`: flow-driven Cards only for `RB-*` / `UIT-*` /
+red-line `LIB-pub-*`; generic Cards only on explicit user request.
+
 Create cards for durable knowledge, not only language learning. First decide
-whether the item is worth retaining, then classify it as the nearest knowledge
-shape:
+whether the item is worth retaining **and** allowlisted (or explicitly
+requested), then classify it as the nearest knowledge shape. Shape labels are
+classification only—they are **not** an open license to create Cards:
 
 - `language_learning`
 - `knowledge`
@@ -31,17 +37,18 @@ shape:
 - `security_principle`
 
 People, places, organizations, and professional terms introduced during a task
-can become knowledge cards when they matter to future work.
+may become Note content; they do **not** automatically authorize Cards outside
+the allowlist. Professional-term explanation rules do not override the
+allowlist.
 
 Use source quality as the first filter. A book citation, documentation page,
 paper, webpage, screenshot, or explicit local artifact is strong evidence that a
 point may be worth retaining. Still create a card only when the point is useful
 for future execution, understanding, risk checking, design, conversation, or
-decision-making.
+decision-making **and** the allowlist/user-request gate passes.
 
-When no source is present, create a card only for reusable decisions, repeated
-failure modes, project rules, concepts that affect future execution, or ideas
-the user explicitly wants to retain.
+When no source is present, create a card only for reusable allowlisted
+boundaries / red-lines, or ideas the user explicitly wants retained as Cards.
 
 ## Note And Card Tone
 

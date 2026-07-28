@@ -148,12 +148,14 @@ Then:
 
 ## Unattended
 
-RB card create/update uses the same Knowledge apply wall as UIT. Before
-whole-project unattended that claims RB Delivery closed, complete the
-interactive Card-Truth Batch Gate
-(`granoflow-agent-workflow/references/unattended-card-truth-batch-gate.md`)
-or defer RB writes as Residual — do not mark `updated_on_delivery` without
-apply readback.
+RB card create/update uses the same Knowledge apply path as UIT. Unattended
+**Must** apply preview→apply→index upsert for every Plan `gap` and Delivery
+`will_change` in the same wave (`decision_authority: unattended_grant`).
+Before claiming RB Delivery closed, run the Card-Truth Readiness Gate
+(`granoflow-agent-workflow/references/unattended-card-truth-batch-gate.md`) —
+**not** defer because the run is unattended. External-only blockers may set
+`card_truth_batch_gate.status: blocked`; do not mark `updated_on_delivery`
+without apply readback.
 
 ## Forbidden
 
@@ -162,7 +164,8 @@ apply readback.
   `archived_reference`)
 - Treating deck path /「未归类」as the location SoT
 - Carding journey steps or acceptance matrices as reality-boundary themes
-- Claiming unattended RB anti-drift Delivery closed without the Card-Truth Batch Gate
+- Claiming unattended RB anti-drift Delivery closed without App readback apply
+  in the same wave
 
 ## Anti-Drift Lifecycle (Task Analysis / Plan / Delivery)
 

@@ -278,6 +278,10 @@ and review.
   `user_visible_copy_boundary_violation`; checklist field
   `user_visible_copy_boundary_ok` +
   `lint_prototype_user_copy.py`).
+- When iOS and/or macOS layout families use `device_shell_profile_id`, Must
+  copy bundled frames and pass `lint_device_shell.py` (`device_shell_ok`;
+  `granoflow-project-definition/device-shell-templates`). Hand-drawn bezels →
+  `device_shell_profile_missing` / `device_shell_layout_mismatch`.
 - Post-Baseline task/milestone pages Must **embed locked Spec tokens**
   (`data-baseline-tokens="locked"`) and **reuse Shell chrome language** /
   `widgets.yaml` roles. Generic parallel phone frames →

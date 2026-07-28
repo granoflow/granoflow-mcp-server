@@ -2,6 +2,12 @@
 
 Use this contract after the Design Spec is selected.
 
+When iOS and/or macOS layout families apply, also load
+`device-shell-templates` and wrap every Shell layout in the bundled canonical
+device frame (`iphone_17_pro_portrait_v1`, `macos_tahoe_window_v1`). Device
+shells sit **outside** App Shell widgets; do not replace top/bottom bars with
+bezel chrome.
+
 ## Required orientations
 
 Derive Shell coverage from the confirmed `platform_support_matrix`.
@@ -71,4 +77,5 @@ Fail closed with:
 - `shell_bottom_navigation_missing`
 - `shell_widget_catalog_projection_invalid`
 - existing `shell_spec_mismatch`, `shell_spec_tokens_missing`,
-  `shell_wireframe_only`, and Shell candidate-count gates.
+  `shell_wireframe_only`, and Shell candidate-count gates;
+- `device_shell_*` when canonical frames apply (see `device-shell-templates`).

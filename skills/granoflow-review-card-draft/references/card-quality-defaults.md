@@ -98,4 +98,27 @@ For exam-like material, use the source's terminology and answer boundary on the 
 
 ## Worthiness
 
-Create a card only when there is a plausible future situation in which recalling it changes understanding, an answer, a decision, or an action. Prefer fewer, stronger cards. If the future retrieval trigger is unclear, leave the material in task review instead.
+Create a card only when there is a plausible future situation in which recalling
+it changes understanding, an answer, a decision, or an action. Prefer fewer,
+stronger cards. **If the future retrieval trigger is unclear, do not create a
+Card**—leave the material in task review, Experience, ledger, or a Note link.
+
+Also apply the parent skill **Card Allowlist**: flow-driven Cards only for
+`RB-*` / `UIT-*` / red-line `LIB-pub-*`; generic Cards only when the user
+explicitly requests them. The professional-term definition–analogy–example rule
+does **not** authorize Cards for arbitrary APIs or terms outside that allowlist.
+
+## Library Knowledge override
+
+When Note content includes `kind: library_knowledge` (see
+`granoflow-agent-workflow/library-knowledge-notes`):
+
+- The **简介** section satisfies the mandatory professional-term definition;
+  analogy and example are recommended for abstract lessons but **not** required
+  for every API symbol.
+- **Cards are optional and rare.** Create them only for cross-project red-line
+  lessons (pitfalls, abandoned approaches, platform traps) after Assessment—
+  including material fixes the implementing AI discovered without user
+  observation. When unsure, update the Note only.
+- Official API syntax, field catalogs, and version-specific signatures belong
+  in the Note **References** section with `reference_only` routing—**no Cards**.

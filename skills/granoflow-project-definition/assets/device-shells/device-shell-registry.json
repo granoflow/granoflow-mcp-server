@@ -1,0 +1,109 @@
+{
+  "schema": "granoflow.device_shell_registry",
+  "schemaVersion": 1,
+  "description": "Canonical HTML/CSS device shells for consistent prototype frames across agents.",
+  "defaults_by_layout_family": {
+    "mobile_portrait": "iphone_17_pro_portrait_v1",
+    "desktop_landscape": "macos_tahoe_window_v1",
+    "tablet_portrait": "ipad_pro_11_portrait_v1",
+    "tablet_landscape": "ipad_pro_11_landscape_v1"
+  },
+  "profiles": [
+    {
+      "id": "iphone_17_pro_portrait_v1",
+      "layout_family_id": "mobile_portrait",
+      "platform_ids": ["ios"],
+      "label": "iPhone 17 Pro · portrait",
+      "is_default_for_layout_family": true,
+      "reference_viewport": { "width": 402, "height": 874, "dpr": 3 },
+      "assets": {
+        "css": "iphone-17-pro-portrait/device-shell.css",
+        "frame_fragment": "iphone-17-pro-portrait/frame.html"
+      },
+      "required_attributes": {
+        "data-device-shell": "iphone_17_pro_portrait_v1",
+        "data-layout-family": "mobile_portrait"
+      }
+    },
+    {
+      "id": "android_phone_portrait_v1",
+      "layout_family_id": "mobile_portrait",
+      "platform_ids": ["android"],
+      "label": "Android phone · portrait",
+      "is_default_for_layout_family": false,
+      "reference_viewport": { "width": 412, "height": 915, "dpr": 3 },
+      "assets": {
+        "css": "android-phone-portrait/device-shell.css",
+        "frame_fragment": "android-phone-portrait/frame.html"
+      },
+      "required_attributes": {
+        "data-device-shell": "android_phone_portrait_v1",
+        "data-layout-family": "mobile_portrait"
+      }
+    },
+    {
+      "id": "ipad_pro_11_portrait_v1",
+      "layout_family_id": "tablet_portrait",
+      "platform_ids": ["ios"],
+      "label": "iPad Pro 11 · portrait",
+      "is_default_for_layout_family": true,
+      "reference_viewport": { "width": 834, "height": 1194, "dpr": 2 },
+      "assets": {
+        "css": "ipad-pro-11-portrait/device-shell.css",
+        "frame_fragment": "ipad-pro-11-portrait/frame.html"
+      },
+      "required_attributes": {
+        "data-device-shell": "ipad_pro_11_portrait_v1",
+        "data-layout-family": "tablet_portrait"
+      }
+    },
+    {
+      "id": "ipad_pro_11_landscape_v1",
+      "layout_family_id": "tablet_landscape",
+      "platform_ids": ["ios"],
+      "label": "iPad Pro 11 · landscape",
+      "is_default_for_layout_family": true,
+      "reference_viewport": { "width": 1194, "height": 834, "dpr": 2 },
+      "assets": {
+        "css": "ipad-pro-11-landscape/device-shell.css",
+        "frame_fragment": "ipad-pro-11-landscape/frame.html"
+      },
+      "required_attributes": {
+        "data-device-shell": "ipad_pro_11_landscape_v1",
+        "data-layout-family": "tablet_landscape"
+      }
+    },
+    {
+      "id": "macos_tahoe_window_v1",
+      "layout_family_id": "desktop_landscape",
+      "platform_ids": ["macos"],
+      "label": "macOS Tahoe · desktop window",
+      "is_default_for_layout_family": true,
+      "reference_viewport": { "width": 1280, "height": 800, "dpr": 2 },
+      "assets": {
+        "css": "macos-tahoe-window/device-shell.css",
+        "frame_fragment": "macos-tahoe-window/frame.html"
+      },
+      "required_attributes": {
+        "data-device-shell": "macos_tahoe_window_v1",
+        "data-layout-family": "desktop_landscape"
+      }
+    },
+    {
+      "id": "windows_11_window_v1",
+      "layout_family_id": "desktop_landscape",
+      "platform_ids": ["windows"],
+      "label": "Windows 11 · desktop window",
+      "is_default_for_layout_family": false,
+      "reference_viewport": { "width": 1280, "height": 800, "dpr": 1.5 },
+      "assets": {
+        "css": "windows-11-window/device-shell.css",
+        "frame_fragment": "windows-11-window/frame.html"
+      },
+      "required_attributes": {
+        "data-device-shell": "windows_11_window_v1",
+        "data-layout-family": "desktop_landscape"
+      }
+    }
+  ]
+}

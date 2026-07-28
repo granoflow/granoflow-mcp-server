@@ -545,6 +545,9 @@ Capability-critical libraries are selected in Project Definition Step 1
 depends on or would introduce a third-party library for a product capability:
 
 1. Read `dependencies.approved` (and admission rules) from Project Work.
+   For each package the task uses, read `knowledge_ref` and adopt linked
+   `LIB-pub-*` Notes through Task Analysis when they affect scope, risk, or
+   verification (`library-knowledge-notes.md`, `knowledge-distillation-workflow`).
 2. If the selected package is **unreasonable**—abandoned, missing required
    platform support, license conflict, cannot meet Outcome performance/size,
    or a clearly better maintained alternative exists for the same
@@ -552,7 +555,9 @@ depends on or would introduce a third-party library for a product capability:
    policy change. Do not silently swap libraries in code.
 3. Treat acceptance of the dependency revision as part of Analysis
    confirmation; update Project Work `dependencies.approved` in the same
-   task before Delivery. Introducing a new capability-critical library that
+   task before Delivery. Refresh `knowledge_ref` / `knowledge_link_status`
+   and coordinate LIB Note `superseded_by` when the package changes.
+   Introducing a new capability-critical library that
    was never selected fails closed as `capability_dependency_unselected`
    until Project Work is updated.
 4. Non-critical helper packages may be proposed in Plan without reopening

@@ -1,0 +1,125 @@
+/* Granoflow canonical device shell — Windows 11 window (v1) */
+.gf-device-shell--windows-11 {
+  --gf-shell-window-bg: #fafafa;
+  --gf-shell-titlebar-bg: #f3f3f3;
+  --gf-shell-border: rgba(0, 0, 0, 0.08);
+  --gf-shell-shadow: 0 18px 56px rgba(0, 0, 0, 0.18);
+  --gf-shell-radius: 8px;
+  --gf-shell-titlebar-height: 48px;
+  --gf-shell-width: 1280px;
+  --gf-shell-height: 800px;
+  box-sizing: border-box;
+  display: inline-flex;
+  padding: 16px;
+  background: transparent;
+}
+
+.gf-device-shell--windows-11 *,
+.gf-device-shell--windows-11 *::before,
+.gf-device-shell--windows-11 *::after {
+  box-sizing: border-box;
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__window {
+  width: var(--gf-shell-width);
+  height: var(--gf-shell-height);
+  background: var(--gf-shell-window-bg);
+  border: 1px solid var(--gf-shell-border);
+  border-radius: var(--gf-shell-radius);
+  box-shadow: var(--gf-shell-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__titlebar {
+  height: var(--gf-shell-titlebar-height);
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 0 0 0 16px;
+  background: var(--gf-shell-titlebar-bg);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__title {
+  text-align: center;
+  font:
+    600 12px/1.2 "Segoe UI Variable",
+    "Segoe UI",
+    system-ui,
+    sans-serif;
+  color: rgba(0, 0, 0, 0.78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 16px;
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__window-controls {
+  display: flex;
+  height: 100%;
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__window-control {
+  width: 46px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  position: relative;
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__window-control--close:hover {
+  background: #c42b1c;
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__window-control--minimize::before,
+.gf-device-shell--windows-11 .gf-device-shell__window-control--maximize::before,
+.gf-device-shell--windows-11 .gf-device-shell__window-control--close::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__window-control--minimize::before {
+  width: 10px;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__window-control--maximize::before {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.72);
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__window-control--close::before {
+  width: 12px;
+  height: 12px;
+  background:
+    linear-gradient(
+      45deg,
+      transparent 46%,
+      rgba(0, 0, 0, 0.72) 46%,
+      rgba(0, 0, 0, 0.72) 54%,
+      transparent 54%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 46%,
+      rgba(0, 0, 0, 0.72) 46%,
+      rgba(0, 0, 0, 0.72) 54%,
+      transparent 54%
+    );
+}
+
+.gf-device-shell--windows-11 .gf-device-shell__content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface, #fff);
+  color: var(--ink, #111);
+}

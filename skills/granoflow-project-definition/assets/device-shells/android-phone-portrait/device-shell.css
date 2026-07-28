@@ -1,0 +1,85 @@
+/* Granoflow canonical device shell — Android phone portrait (v1) */
+.gf-device-shell--android-phone {
+  --gf-shell-bezel: #1b1b1f;
+  --gf-shell-screen: #000;
+  --gf-shell-camera: #0d0d0f;
+  --gf-shell-nav: rgba(255, 255, 255, 0.72);
+  --gf-shell-outer-radius: 36px;
+  --gf-shell-inner-radius: 30px;
+  --gf-shell-width: 412px;
+  --gf-shell-height: 915px;
+  --gf-shell-safe-top: 36px;
+  --gf-shell-safe-bottom: 24px;
+  box-sizing: border-box;
+  display: inline-flex;
+  justify-content: center;
+  padding: 10px;
+  background: linear-gradient(160deg, #3a3a40 0%, #151518 100%);
+  border-radius: calc(var(--gf-shell-outer-radius) + 10px);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.26);
+}
+
+.gf-device-shell--android-phone *,
+.gf-device-shell--android-phone *::before,
+.gf-device-shell--android-phone *::after {
+  box-sizing: border-box;
+}
+
+.gf-device-shell--android-phone .gf-device-shell__bezel {
+  position: relative;
+  width: var(--gf-shell-width);
+  height: var(--gf-shell-height);
+  background: var(--gf-shell-bezel);
+  border-radius: var(--gf-shell-outer-radius);
+  padding: 8px;
+  overflow: hidden;
+}
+
+.gf-device-shell--android-phone .gf-device-shell__screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--gf-shell-screen);
+  border-radius: var(--gf-shell-inner-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gf-device-shell--android-phone .gf-device-shell__camera-hole {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  background: var(--gf-shell-camera);
+  border-radius: 50%;
+  z-index: 4;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+
+.gf-device-shell--android-phone .gf-device-shell__content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--gf-shell-safe-top);
+  padding-bottom: var(--gf-shell-safe-bottom);
+  background: var(--surface, #fff);
+  color: var(--ink, #111);
+}
+
+.gf-device-shell--android-phone .gf-device-shell__gesture-bar {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: var(--gf-shell-nav);
+  border-radius: 2px;
+  z-index: 4;
+  pointer-events: none;
+}

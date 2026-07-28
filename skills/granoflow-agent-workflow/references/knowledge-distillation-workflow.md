@@ -40,11 +40,19 @@ Do not ask only whether content is important. For every candidate, decide:
 4. Must a person actively recall it at the moment of action rather than search for it later?
 5. Can it stand alone with a clear boundary, and is it stable enough for its intended lifetime?
 
-The first three memory-card signals are reusable, decision-impacting, and active-recall. Standalone expression and relative stability are additional gates. Route the result as follows:
+The first three memory-card signals are reusable, decision-impacting, and active-recall. Standalone expression and relative stability are additional gates. **When unsure, do not materialize Cards**—keep Experience, ledger, or `reference_only` Note links.
 
-- `active_learning`: create one explanatory Note and one or more concise learning Cards when the user should actively remember it and learning budget exists.
-- `defer_active_learning`: create the Note plus an archived-reference Card when it deserves a durable Knowledge artifact but not current study load.
-- `system_managed`: prefer Checklist, Skill, Linter, Test, App Guard, or another enforceable control. Create the Note plus an archived-reference Card; never claim the rule is verified until approved control evidence reads back.
+Card materialization follows the **Card Allowlist** in
+`granoflow-review-card-draft`: flow-driven Cards only for `RB-*` / `UIT-*` /
+red-line `LIB-pub-*`. Generic (non-allowlisted) sources default to Experience,
+`reference_only`, or `use_existing_knowledge`; **do not** materialize Cards
+unless the user explicitly requested study cards in the current turn.
+
+Route the result as follows:
+
+- `active_learning`: create one explanatory Note and one or more concise learning Cards when the user should actively remember it, learning budget exists, **and** the source is allowlisted or the user explicitly requested cards.
+- `defer_active_learning`: create the Note plus an archived-reference Card when it deserves a durable Knowledge artifact but not current study load (default for RB / UIT; optional for LIB red-lines).
+- `system_managed`: prefer Checklist, Skill, Linter, Test, App Guard, or another enforceable control. Create the Note plus an archived-reference Card only when a Card still helps retrieval; never claim the rule is verified until approved control evidence reads back.
 - `reference_only`: keep searchable source material and create no Card for volatile APIs, version syntax, field catalogs, full policy text, commands, paths, or details best looked up.
 - `use_existing_knowledge`: link the existing Note/Card rather than duplicate it.
 
@@ -59,6 +67,32 @@ hidden after promotion. Its list entry receives a low-emphasis promoted marker
 and its detail links to the Knowledge Note.
 
 Knowledge may originate from Experience, Evidence, Task, Artifact, or an external reference. Project work may directly cite third-party-library concepts or other external Knowledge without first inventing an Experience.
+
+## Library Knowledge (`LIB-pub-*`)
+
+Cross-project third-party package lessons use **one Note per package** keyed by
+`LIB-pub-<slug>` (`library-knowledge-notes.md`). This is separate from RB/UIT
+(product truth) and from Project Work `selection_rationale`.
+
+- **Project Definition Step 1:** after `dependencies.approved`, search App
+  Knowledge (`granoflow_task_knowledge_pack`, `granoflow_review_card_similar`).
+  On hit → `use_existing_knowledge` + PW `knowledge_ref` / `knowledge_link_status: linked`.
+  On miss → skeleton Note (简介 + official links only); **do not** batch-create
+  pitfall Cards at init.
+- **Task Analysis:** read PW `knowledge_ref` for each capability-critical
+  package the task touches; adopt linked LIB Notes through the normal
+  `Granoflow References` flow when they change scope or risk.
+- **Implementation:** material ledger events with library scope set
+  `target_library_ref` and promote through Experience → Assessment → **update
+  the LIB Note** (`knowledge_action: update_note` by default). Cards
+  (`add_card`) only when the lesson is a cross-project red-line **and**
+  Assessment approves active recall (including AI self-discovered fixes).
+  When unsure, Note only—no Card.
+- **Do not** create project-specific duplicate Notes for the same package when
+  `LIB-pub-*` already exists. Do not create a framework mega-note (e.g. one
+  Note for all of Flutter).
+
+API manuals and volatile syntax route `reference_only` (Note link, no Card).
 
 ## Task Analysis Knowledge Pack
 

@@ -195,13 +195,15 @@ this checklist before deep Analysis / Implement waves that risk turn cutoff:
      `host_wake_unavailable_notice` that includes the **canonical resume
      prompt** (never a bare 「继续」 / “continue”) so a human or later host
      can re-enter on `next_step`.
-5. **Card-Truth Batch Gate (RB/UIT)** — When the project uses
-   `reality_boundary_index` and/or `route_ui_truth_index`, complete
-   `unattended-card-truth-batch-gate.md` in this wave (interactive seed /
-   pending `will_change` apply + `lint_unattended_card_truth_ready.py`) **or**
-   record `card_truth_batch_gate.status: deferred` with Residual fact_ids.
+5. **Card-Truth Readiness Gate (RB/UIT)** — When the project uses
+   `reality_boundary_index` and/or `route_ui_truth_index`, run
+   `unattended-card-truth-batch-gate.md` in this wave: verify App/capabilities,
+   **auto-apply** seed gaps and pending `will_change` (preview→apply→index
+   upsert), then `lint_unattended_card_truth_ready.py`. Set
+   `card_truth_batch_gate.status: blocked` only for external/capability blockers
+   — **not** because the run is unattended.
    Do not enter deep unattended Implement/E2E claiming UIT/RB Delivery closed
-   while the gate is `pending` / blocked.
+   while apply readback is missing.
 
 Skipping the SoT create/update on this entry fails closed as
 `project_sot_missing` / `long_run_plan_missing`. Asking solely to enable a

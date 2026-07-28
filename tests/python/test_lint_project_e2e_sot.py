@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for lint_project_e2e_sot.py."""
+"""Tests for lint_project_sot.py (legacy name: lint_project_e2e_sot)."""
 
 from __future__ import annotations
 
@@ -9,11 +9,11 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "skills" / "granoflow-agent-workflow" / "scripts" / "lint_project_e2e_sot.py"
+SCRIPT = ROOT / "skills" / "granoflow-project-sot" / "scripts" / "lint_project_sot.py"
 
 
 def load_module():
-    spec = importlib.util.spec_from_file_location("lint_project_e2e_sot", SCRIPT)
+    spec = importlib.util.spec_from_file_location("lint_project_sot_under_test", SCRIPT)
     assert spec and spec.loader
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -53,13 +53,13 @@ def _base(**overrides: object) -> dict:
 
 class LintProjectE2ESotTests(unittest.TestCase):
     def test_minimal_ok(self) -> None:
-        result = MOD.lint_project_e2e_sot(_base())
+        result = MOD.lint_project_sot(_base())
         self.assertTrue(result["ok"], result)
 
     def test_missing_stage_fails(self) -> None:
         data = _base()
         data["stages"] = data["stages"][:-1]
-        result = MOD.lint_project_e2e_sot(data)
+        result = MOD.lint_project_sot(data)
         self.assertFalse(result["ok"])
         self.assertTrue(
             any("missing stage" in e["detail"] for e in result["errors"]),
@@ -87,10 +87,10 @@ class LintProjectE2ESotTests(unittest.TestCase):
                 "override": None,
             },
         )
-        result = MOD.lint_project_e2e_sot(data)
+        result = MOD.lint_project_sot(data)
         self.assertFalse(result["ok"])
         codes = {e["code"] for e in result["errors"]}
-        self.assertIn("project_e2e_sot_next_step_unpinned", codes)
+        self.assertIn("project_sot_next_step_unpinned", codes)
 
     def test_pin_satisfied(self) -> None:
         data = _base(
@@ -114,7 +114,7 @@ class LintProjectE2ESotTests(unittest.TestCase):
                 "override": None,
             },
         )
-        result = MOD.lint_project_e2e_sot(data)
+        result = MOD.lint_project_sot(data)
         self.assertTrue(result["ok"], result)
 
     def test_cross_milestone_gap_blocks_stage_done(self) -> None:
@@ -127,7 +127,7 @@ class LintProjectE2ESotTests(unittest.TestCase):
             "cross_milestone_journey_check": "gap",
             "evidence_ref": [],
         }
-        result = MOD.lint_project_e2e_sot(data)
+        result = MOD.lint_project_sot(data)
         self.assertFalse(result["ok"])
         codes = {e["code"] for e in result["errors"]}
         self.assertIn("cross_milestone_journey_gap", codes)
@@ -141,7 +141,7 @@ class LintProjectE2ESotTests(unittest.TestCase):
             "coverage_matrix_check": "gap",
             "evidence_ref": [],
         }
-        result = MOD.lint_project_e2e_sot(data)
+        result = MOD.lint_project_sot(data)
         self.assertFalse(result["ok"])
         codes = {e["code"] for e in result["errors"]}
         self.assertIn("e2e_coverage_matrix_gap", codes)
@@ -156,7 +156,7 @@ class LintProjectE2ESotTests(unittest.TestCase):
             ],
             next_step={"work_item_id": "M1.T1.implement"},
         )
-        result = MOD.lint_project_e2e_sot(data)
+        result = MOD.lint_project_sot(data)
         self.assertFalse(result["ok"])
         self.assertTrue(
             any("per-task implement" in e["detail"] for e in result["errors"]),
@@ -174,7 +174,7 @@ class LintProjectE2ESotTests(unittest.TestCase):
                 }
             },
         )
-        result = MOD.lint_project_e2e_sot(data, require_digest_match=True)
+        result = MOD.lint_project_sot(data, require_digest_match=True)
         self.assertTrue(result["ok"], result)
 
     def test_require_digest_match_stale(self) -> None:
@@ -188,16 +188,16 @@ class LintProjectE2ESotTests(unittest.TestCase):
                 }
             },
         )
-        result = MOD.lint_project_e2e_sot(data, require_digest_match=True)
+        result = MOD.lint_project_sot(data, require_digest_match=True)
         self.assertFalse(result["ok"])
-        self.assertEqual(result["code"], "project_e2e_sot_stale")
+        self.assertEqual(result["code"], "project_sot_stale")
 
     def test_require_digest_match_missing_verification(self) -> None:
         data = _base(source_digests={"project_work": "digest-a"})
-        result = MOD.lint_project_e2e_sot(data, require_digest_match=True)
+        result = MOD.lint_project_sot(data, require_digest_match=True)
         self.assertFalse(result["ok"])
         codes = {e["code"] for e in result["errors"]}
-        self.assertIn("project_e2e_sot_stale", codes)
+        self.assertIn("project_sot_stale", codes)
 
     def test_parallel_batches_optional_ok(self) -> None:
         data = _base(
@@ -209,7 +209,7 @@ class LintProjectE2ESotTests(unittest.TestCase):
                 }
             ]
         )
-        result = MOD.lint_project_e2e_sot(data)
+        result = MOD.lint_project_sot(data)
         self.assertTrue(result["ok"], result)
 
     def test_parallel_batches_invalid_status(self) -> None:
@@ -222,7 +222,7 @@ class LintProjectE2ESotTests(unittest.TestCase):
                 }
             ]
         )
-        result = MOD.lint_project_e2e_sot(data)
+        result = MOD.lint_project_sot(data)
         self.assertFalse(result["ok"])
         self.assertTrue(
             any("parallel_batches" in e["detail"] for e in result["errors"]),

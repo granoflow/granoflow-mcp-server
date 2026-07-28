@@ -1,0 +1,70 @@
+/* Granoflow canonical device shell — iPad Pro 11 portrait (v1) */
+.gf-device-shell--ipad-pro-11-portrait {
+  --gf-shell-bezel: #2c2c2e;
+  --gf-shell-screen: #000;
+  --gf-shell-camera: #101012;
+  --gf-shell-outer-radius: 18px;
+  --gf-shell-inner-radius: 14px;
+  --gf-shell-width: 834px;
+  --gf-shell-height: 1194px;
+  --gf-shell-safe-top: 24px;
+  --gf-shell-safe-bottom: 20px;
+  box-sizing: border-box;
+  display: inline-flex;
+  justify-content: center;
+  padding: 14px;
+  background: linear-gradient(145deg, #4a4a4d 0%, #222224 100%);
+  border-radius: calc(var(--gf-shell-outer-radius) + 14px);
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.24);
+}
+
+.gf-device-shell--ipad-pro-11-portrait *,
+.gf-device-shell--ipad-pro-11-portrait *::before,
+.gf-device-shell--ipad-pro-11-portrait *::after {
+  box-sizing: border-box;
+}
+
+.gf-device-shell--ipad-pro-11-portrait .gf-device-shell__bezel {
+  position: relative;
+  width: var(--gf-shell-width);
+  height: var(--gf-shell-height);
+  background: var(--gf-shell-bezel);
+  border-radius: var(--gf-shell-outer-radius);
+  padding: 12px;
+  overflow: hidden;
+}
+
+.gf-device-shell--ipad-pro-11-portrait .gf-device-shell__screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--gf-shell-screen);
+  border-radius: var(--gf-shell-inner-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gf-device-shell--ipad-pro-11-portrait .gf-device-shell__camera {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: var(--gf-shell-camera);
+  border-radius: 50%;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.gf-device-shell--ipad-pro-11-portrait .gf-device-shell__content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--gf-shell-safe-top);
+  padding-bottom: var(--gf-shell-safe-bottom);
+  background: var(--surface, #fff);
+  color: var(--ink, #111);
+}

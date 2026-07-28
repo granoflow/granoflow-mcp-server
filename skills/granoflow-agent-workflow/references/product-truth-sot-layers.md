@@ -10,13 +10,14 @@ Related: `project-work-document-template.md`, `reality-boundary-cards.md`,
 
 ## Layers
 
-| Content                                                 | Authority                                                             | Project Work                                                  |
-| ------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Screen / journey inventory                              | PW `screen_coverage` / journey rows                                   | Keep short rows (id, title, journeys)                         |
-| Product-declared UI points (even if unimplemented)      | PW `ui_details` (declared)                                            | Keep short bullets + `source`; forbid screenshot-level essays |
-| Route “what it looks like now” + checklist + screenshot | UIT Note/cards + `route_ui_truth_index`                               | **No body prose**; optional `uit_fact_id: UIT-*` pointer      |
-| Status quo / boundary detail                            | RB Note/cards + `reality_boundary_index`                              | **No body prose**; optional `rb_fact_id: RB-*` pointer        |
-| Hard Gate “may we change code?”                         | `project_rules.yaml` / `project_snapshot.yaml` **one-line** summaries | Do not pile boundary essays into PW                           |
+| Content                                                 | Authority                                                             | Project Work                                                          |
+| ------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Screen / journey inventory                              | PW `screen_coverage` / journey rows                                   | Keep short rows (id, title, journeys)                                 |
+| Product-declared UI points (even if unimplemented)      | PW `ui_details` (declared)                                            | Keep short bullets + `source`; forbid screenshot-level essays         |
+| Route “what it looks like now” + checklist + screenshot | UIT Note/cards + `route_ui_truth_index`                               | **No body prose**; optional `uit_fact_id: UIT-*` pointer              |
+| Status quo / boundary detail                            | RB Note/cards + `reality_boundary_index`                              | **No body prose**; optional `rb_fact_id: RB-*` pointer                |
+| Cross-project library lessons (pitfalls, deprecation)   | `LIB-pub-*` Note (+ optional archived Cards)                          | **No body prose**; `knowledge_ref` + short `selection_rationale` only |
+| Hard Gate “may we change code?”                         | `project_rules.yaml` / `project_snapshot.yaml` **one-line** summaries | Do not pile boundary essays into PW                                   |
 
 ```text
 Product docs (evidence)

@@ -33,18 +33,22 @@ review, mood note, efficiency note, or daily journal, call
   task details.
 - Candidate Experience should capture durable lessons, decisions, repeated
   failure modes, unresolved risks, or reusable process details. Review Cards
-  require a later Knowledge assessment/materialization gate.
-- Every task, daily, weekly, or monthly review ends with the shared Note/Card
-  authoring session when supported candidates exist. Delegate it to
-  `granoflow-review-card-draft`: run a zero-write App preview, display every
-  planned Note and Card, allow unrestricted natural-language additions,
-  removals, rewrites, splits, merges, and partial selections, refresh the
-  preview after each change, and apply only operations freshly confirmed from
-  the latest displayed preview.
-- In unattended mode, finish all earlier safe review work before that final
-  session. The Agent may draft and dry-run the whole set, but it must wait for
-  genuine user approval and cannot treat unattended authorization as Note/Card
-  write approval.
+  require a later Knowledge assessment/materialization gate **and** the Card
+  Allowlist in `granoflow-review-card-draft` (RB / UIT / LIB, or explicit user
+  request for generic cards). When unsure, do not invent Cards.
+- A task, daily, weekly, or monthly review ends with the shared Note/Card
+  authoring session **only** when allowlisted candidates exist (`RB-*` /
+  `UIT-*` / Card-worthy `LIB-pub-*`) or the user explicitly requested cards.
+  Otherwise propose Experience / Knowledge Assessment without a Card batch.
+  When the session runs, delegate to `granoflow-review-card-draft`: zero-write
+  App preview, display every planned Note and Card, allow unrestricted
+  natural-language edits, refresh preview after each change, and apply only
+  operations freshly confirmed from the latest displayed preview.
+- In unattended mode, finish all earlier safe review work before any final
+  Card session. The Agent may draft and dry-run an allowlisted set, but it
+  must wait for genuine user approval and cannot treat unattended
+  authorization as Note/Card write approval. Do not invent generic Card
+  write plans under unattended mode.
 
 ## Milestone Focus For Every Periodic Review
 

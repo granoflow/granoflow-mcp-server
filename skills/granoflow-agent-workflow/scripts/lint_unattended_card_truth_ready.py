@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lint Unattended Card-Truth Batch Gate readiness (RB/UIT + field-media)."""
+"""Lint Card-Truth Readiness (RB/UIT + field-media) for unattended runs."""
 
 from __future__ import annotations
 
@@ -102,7 +102,7 @@ def lint_unattended_card_truth_ready(
             _err(
                 "card_truth_batch_gate_blocked",
                 "require-uit-index but route_ui_truth_index has no note_id rows "
-                "(run interactive UIT seed batch first)",
+                "(run unattended UIT seed apply + index upsert first)",
             )
         )
     if require_field_media:
@@ -131,7 +131,7 @@ def lint_unattended_card_truth_ready(
                 _err(
                     "card_truth_batch_gate_missing",
                     "card_truth_batch_gate.status required before unattended "
-                    "whole-project/final-delivery",
+                    "whole-project/final-delivery when RB/UIT is in scope",
                 )
             )
         elif gate_status not in {"passed", "not_applicable"}:

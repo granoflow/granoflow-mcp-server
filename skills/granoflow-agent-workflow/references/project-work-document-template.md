@@ -310,7 +310,20 @@ platform_support_matrix:
   layout_families:
     - id: mobile_portrait
       orientation: portrait # portrait | landscape | adaptive
-      reference_viewport: { width: 390, height: 844, dpr: 3 }
+      device_shell_profile_id: null # default iphone_17_pro_portrait_v1; android_phone_portrait_v1 when user picks Android
+      reference_viewport: { width: 402, height: 874, dpr: 3 }
+    - id: tablet_portrait
+      orientation: portrait
+      device_shell_profile_id: null # default ipad_pro_11_portrait_v1 when tablet supported
+      reference_viewport: { width: 834, height: 1194, dpr: 2 }
+    - id: tablet_landscape
+      orientation: landscape
+      device_shell_profile_id: null # default ipad_pro_11_landscape_v1 when tablet supported
+      reference_viewport: { width: 1194, height: 834, dpr: 2 }
+    - id: desktop_landscape
+      orientation: landscape
+      device_shell_profile_id: null # default macos_tahoe_window_v1; windows_11_window_v1 when user picks Windows
+      reference_viewport: { width: 1280, height: 800, dpr: 2 }
   platforms:
     - id: ios
       support_status: not_supported # supported | not_supported | deferred
@@ -751,6 +764,12 @@ engineering:
         security_policy: null
         size_or_runtime_cost: null
         owner: null
+        # Cross-project library Note pointer (see library-knowledge-notes.md).
+        # Init: search-first → link skeleton Note; do not batch-create pitfall Cards.
+        knowledge_ref: null # LIB-pub-<slug> when linked
+        knowledge_link_status: null # linked | skeleton | gap | superseded
+        superseded_by: null # LIB-pub-<slug> when this package was replaced
+        knowledge_gap_reason: null # required when knowledge_link_status: gap
     # Explicit empty list only when the product truly has no third-party
     # capability libraries beyond the stack itself—and state why in
     # no_capability_dependency_declaration.

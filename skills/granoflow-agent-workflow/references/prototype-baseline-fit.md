@@ -23,7 +23,10 @@ Skipping fails closed as `prototype_baseline_fit_unread`.
 Seeing Craft Gate prose or `derivedFrom` YAML alone does **not** count.
 
 Also load `user-visible-copy-boundary`, `prototype-expression-brainstorm`, and
-`prototype-serial-revision` per their own gates.
+`prototype-serial-revision` per their own gates. When the project binds
+`device_shell_profile_id` on a layout family, also load
+`granoflow-project-definition/device-shell-templates` and reuse the copied
+canonical frame (do not redraw bezels).
 
 ## Strict Fit (hard)
 
@@ -81,6 +84,7 @@ Record exact Baseline ids/SHA on every option package and in Task Work
 ```yaml
 craft_checklist:
   baseline_fit_ok: true # only after load + token embed + Shell language check + lint
+  device_shell_ok: true # when device_shell_profile_id applies; lint_device_shell.py ok
 ```
 
 Run

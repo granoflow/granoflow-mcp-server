@@ -99,6 +99,9 @@ high-risk feasibility.
 6. Read [project-artifact-workflows.md](references/project-artifact-workflows.md)
    for Design Spec/Shell, Preview Gate, widgets, and task Craft Gate / option
    sets.
+   6b. When `visual_baseline.applicability: required` and iOS and/or macOS layout
+   families apply, read [device-shell-templates.md](references/device-shell-templates.md)
+   before App Shell HTML and before any post-Baseline prototype HTML.
 7. Read [hard-constraints.md](references/hard-constraints.md) before Done or
    any `visualConfirmed=true` to verify thread-confirmed fail-closed rules.
 8. Read [product-spec-flow-decomposition.md](references/product-spec-flow-decomposition.md)
@@ -195,6 +198,10 @@ Actions:
    `dependencies.approved` (or explicit `no_capability_dependency_declaration`).
    Framework-only answers fail closed as `capability_dependency_unselected`
    when capabilities clearly need packages. Record `alternatives_considered`.
+   5a. **Link library Knowledge** for each `approved` row: search App for
+   `LIB-pub-<slug>` → set `knowledge_ref` and `knowledge_link_status`
+   (`linked`, `skeleton`, or `gap` with reason). Skeleton only at init—no
+   batch pitfall Cards. See `granoflow-agent-workflow/library-knowledge-notes`.
 6. Recommend `data_persistence`; if `none`, set `no_database_declaration`.
    Create `data_model` / `json_contracts` (`data-contracts.yaml`) /
    `constants_catalog` (`constants-catalog.yaml`) attachments when required.
@@ -315,7 +322,9 @@ widgets.
 **User selects** Shell options (interactive triad Preview Gate).
 
 Load
-[shell-orientation-widget-contract.md](references/shell-orientation-widget-contract.md).
+[shell-orientation-widget-contract.md](references/shell-orientation-widget-contract.md)
+and [device-shell-templates.md](references/device-shell-templates.md) when iOS
+and/or macOS layout families apply.
 Derive portrait/landscape requirements from `platform_support_matrix`. Every
 required orientation Must render both a top bar and a bottom navigation bar.
 After selection, promote those roles and all required variants to
@@ -324,6 +333,11 @@ After selection, promote those roles and all required variants to
 Actions:
 
 1. Invoke Skills with `phase: shell`.
+   1b. Copy bundled device shells into the prototype source directory with
+   `copy_device_shell_assets.py` (`--layout-families` for registry defaults,
+   or `--layout-bindings` when the user chose Android / Windows / iPad).
+   Wrap every Shell layout HTML in the canonical frame fragments; lint with
+   `lint_device_shell.py` before packaging.
 2. Shell Mode split:
    - **Interactive:** triad from `draw_visual_lots.py --kind shell --count 3
 --record` (chrome deck); each loads selected Spec tokens—`shell_match` +
@@ -351,6 +365,8 @@ Actions:
 Success criteria (when `visual_baseline.applicability: required`):
 
 - Baseline SHA readback; every required layout-family App Shell present.
+- Canonical device shells copied and lint-green when iOS/macOS profiles apply
+  (`device_shell_ok`).
 - Shell options consumed selected Spec tokens and were product-near (not
   wireframe-only).
 - `widgets.yaml` + `widgets_attachment` + registry SHA
