@@ -190,6 +190,11 @@ Actions:
    When product docs name durable IT fixture/corpus rules, fill
    `engineering.quality_gates.integration_test_special_requirements` (see
    `integration-test-special-requirements`); otherwise leave `[]`.
+   Lock the Static Hygiene Suite under `engineering.quality_gates` (`full_gate`
+   or composed `lint` / `format_check` / `type_or_static_check`) per
+   `granoflow-agent-workflow/static-quality-gate`; bind into
+   `required_before.task_completion` / `milestone_acceptance` /
+   `project_completion`. Empty hygiene ⇒ `quality_gates_unconfigured`.
 4. Lock `engineering.stack` and `stack_capability_profile` before any HTML baseline
    work. Interactive: wait; unattended: adopt.
 5. Complete **capability-critical third-party library selection** under

@@ -473,3 +473,29 @@ Acceptance Pack)—do not treat it as an optional soft reminder. Record the exac
 source and keep unresolved defaults blocked when no reliable standard exists. In
 interactive mode, include these rule recommendations in a decision batch and
 wait; in unattended mode, adopt them.
+
+### Static Hygiene Suite (software hard)
+
+Before Engineering Acceptance Pack emit / `granoflow_project_work_confirm`,
+software projects **Must** lock executable static hygiene commands under
+`engineering.quality_gates` per `static-quality-gate.md`:
+
+1. Prefer a repository `full_gate` that already includes lint + format +
+   type/static (e.g. `npm run check`). Verify composition before labeling it
+   the hygiene suite.
+2. Else fill `type_or_static_check` (required in composed mode) plus `lint` /
+   `format_check` with the stack's official tools (Flutter → `flutter
+analyze`; TS → `tsc`/eslint/prettier; Python → pyright/ruff; etc.).
+3. Set `layer_a_scope: full` unless the user opts into `task_owned` for a
+   large monorepo (record basis).
+4. Copy the resolved hygiene command set into
+   `required_before.task_completion`, `required_before.milestone_acceptance`,
+   and `required_before.project_completion`.
+
+Empty `full_gate` and empty hygiene slots → `quality_gates_unconfigured`.
+Optional preflight:
+
+```text
+python3 skills/granoflow-agent-workflow/scripts/lint_quality_gate_run.py \
+  --project-work <project-work.yaml> --require-configured
+```
