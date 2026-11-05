@@ -9,9 +9,14 @@ Publish npm `latest` only from `main`.
 - `develop` is for active integration and may be unstable.
 - `main` is the release branch users should associate with npm `latest`.
 - Before publishing, merge or fast-forward the intended `develop` commit into
-  `main`, then run this checklist on `main`.
+  `main`, then run this checklist on `main`. Push the candidate to remote
+  `main` and read back its exact SHA before npm or Registry publication.
 - Do not run `npm publish --access public` from `develop` unless the user
   explicitly overrides this policy for an emergency release.
+
+Before invoking a wrapper, check the flags and side effects of every step
+against the authorized scope. The MCP write-tool `code: "dry_run"` result
+described below does not establish that the release wrapper is read-only.
 
 ## 1. Source State
 
@@ -67,11 +72,9 @@ Verify:
 - no obsolete `dist/cli.*` files are present.
 - no local config, token, recovery code, or temporary file is present.
 
-Remove the generated `.tgz` after inspection unless you intentionally need it:
-
-```bash
-rm -f granoflow-mcp-server-*.tgz
-```
+`npm pack --dry-run` does not create a tarball. If a separate packaging step
+created an obsolete `.tgz`, move that artifact to the system Trash after confirming
+its exact path and retention needs.
 
 ## 4. Local MCP Smoke
 
@@ -148,22 +151,38 @@ Publish only after all previous checks pass:
 npm publish --access public
 ```
 
-If npm requires two-factor authentication, provide an OTP through the command
-line without printing it in logs. Do not paste OTPs or recovery codes into issue
-reports, docs, screenshots, or chat transcripts.
-
-Before asking the user for a new OTP, check for repo-local private `.npm*.txt`
-files such as `.npm_recovery_codes.txt`. If one exists, read the code inside a
-shell-local variable and pass it to npm without echoing it:
+Before publishing or retrying, read back remote `main` and the exact npm version:
 
 ```bash
-code_file=.npm_recovery_codes.txt
-otp="$(grep -Eo '[[:alnum:]-]+' "$code_file" | head -n 1)"
-npm publish --access public --otp="$otp"
+git rev-parse HEAD
+git ls-remote --exit-code --heads origin refs/heads/main
+npm view @granoflow/mcp-server@<version> version --json
 ```
 
-Treat recovery codes as single-use. Do not commit, display, summarize, or quote
-their contents.
+Require the remote SHA to match the candidate. An existing exact npm version
+means skip publication and continue verification. Only `E404` establishes an
+absent version; authentication, connection or malformed responses require
+inspection before retrying. Before resuming Registry publication, read back its
+exact version, active/latest state and npm identity, then skip already-current
+metadata. The wrapper does not automate Registry publication.
+
+On actual npm `EOTP`, check repo-local private `.npm*.txt` files before asking
+for an OTP. Recovery files use one code per line; blank lines and `#` comments
+are ignored. Read a code only into a shell-local variable and pass it through
+the child environment without printing it. Mark that line `# USED` only after
+npm confirms success. A failed publish preserves it; if its result is ambiguous,
+read back npm before retrying. Missing usable codes require a user OTP. Never
+paste codes, tokens or child error output into logs, docs, screenshots or chat.
+
+The wrapper implements this through `scripts/release-npm-publish.sh` and injects
+the token through npm's config environment without writing project npm config.
+`NPM_OTP` is an optional explicitly supplied OTP; it is used only after `EOTP`
+and only when no usable private recovery code is available.
+
+`--dry-run` can switch/create local branches, query a remote when a local branch
+is missing, and open pages with `--open-platforms`. It skips fetch, merge,
+preflight, push and npm publication. `--skip-push` still requires the exact
+candidate SHA on remote `main`.
 
 ## 9. Post-Publish Verification
 

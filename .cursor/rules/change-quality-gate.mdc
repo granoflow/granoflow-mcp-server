@@ -20,10 +20,10 @@ test tables. Do not invent tests that only freeze wording.
 ## Forbidden
 
 - Fake acceptance matrices that only restate documentation sentences.
-- Locking `SKILL.md` / `references/**` prose with snapshot/`toContain` tests (see `skill-testing.mdc`).
+- Locking `SKILL.md` / `references/**` prose with snapshot/`toContain` tests.
 
 ## Still do
 
-- Analyze and confirm approach before large edits when the user wants planning.
+- Follow the [shared first-write confirmation rule](/Users/will/code/skills/workspace/workspace-global.md#实施前确认-prompt) for its scope, timing, and task record.
 - Name files to touch and the outcome for each todo.
 - For **behavioral** code: prefer tests that exercise real inputs/outputs; run the gate after edits; use timeouts and non-interactive flags.

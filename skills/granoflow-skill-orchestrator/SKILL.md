@@ -2,7 +2,7 @@
 name: granoflow-skill-orchestrator
 description: >-
   Audit and recommend optimizations for bundled Granoflow MCP skills using the
-  skill-polish family safely: default is read-only report + human confirm before
+  skill-polish family safely: default scans skills without modifying them and writes audit reports, with human confirm before
   any polish/validate apply. Activate with "orchestrate MCP skills", "audit
   granoflow skills", or "skill polish plan for this MCP". Not a product task
   orchestrator and not Initialize Granoflow.
@@ -10,7 +10,8 @@ description: >-
 
 # Granoflow Skill Orchestrator
 
-Coordinates **read-only** quality inventory of `skills/*` in this MCP server,
+Inventories `skills/*` without modifying those inputs, and writes JSON/Markdown
+audit reports (by default under `temp/`) in this MCP server,
 then proposes a recommendation plan. Uses `skill-polish` / `skill-validate` /
 `skill-steward` / `skill-authoring` **only when appropriate and after human
 confirmation**. Default: report only — no skill rewrites.
@@ -52,7 +53,7 @@ confirmation**. Default: report only — no skill rewrites.
 
 ## Workflow
 
-### 1. Inventory + audit (read-only)
+### 1. Inventory skills and write reports
 
 ```bash
 python3 skills/granoflow-skill-orchestrator/scripts/mcp_skill_orchestrate.py
@@ -83,7 +84,7 @@ Success criteria:
 
 Checkpoints:
 
-- Preview Gate: clickable `file://` links to the report when possible.
+- Preview Gate: clickable absolute-path Markdown links to the report when possible.
 
 ### 3. After human confirmation — execute narrowly
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* global console, process */
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 
 const args = new Set(process.argv.slice(2));
 const skipCheck = args.has("--skip-check");
@@ -117,6 +117,15 @@ if (!skipPack) {
       files.every((file) => !file.path.includes("/__pycache__/") && !file.path.endsWith(".pyc")),
       "package excludes Python bytecode caches",
     );
+    for (const { name } of readdirSync("skills", { withFileTypes: true }).filter((entry) =>
+      entry.isDirectory(),
+    )) {
+      record(fileNames.has(`skills/${name}/SKILL.md`), `package contains skill: ${name}`);
+    }
+    record(
+      files.every((file) => !/(^|\/)(?:\.local-ai|docs-temp|\.env(?:\.|$)|\.npm)/.test(file.path)),
+      "package excludes private release and local files",
+    );
     record(!fileNames.has("dist/cli.js"), "package does not contain obsolete dist/cli.js");
   } catch (error) {
     record(false, "npm pack --dry-run --json failed", error instanceof Error ? error.message : "");
@@ -134,7 +143,6 @@ const scanTargets = [
   "src/api.ts",
   "docs/user-install-demo.md",
   "docs/directory-listings.md",
-  "skills/granoflow-agent-workflow/SKILL.md",
 ];
 const existingScanTargets = scanTargets.filter((target) => existsSync(target));
 const obsoleteCliHits = [];
@@ -162,33 +170,38 @@ if (existsSync("docs/release-checklist.md")) {
   );
 }
 
-const workflowSkillPath = "skills/granoflow-agent-workflow/SKILL.md";
-const workflowSkillAgentsPath = "skills/granoflow-agent-workflow/agents/openai.yaml";
-if (existsSync(workflowSkillPath)) {
-  const skillText = readFileSync(workflowSkillPath, "utf8");
+function frontmatterDescription(block) {
+  const match = /^description:[ \t]*(.*)((?:\r?\n[ \t]+[^\n]*)*)/m.exec(block);
+  if (!match) return "";
+  let value = match[1].trim();
+  if (/^[>|][+-]?$/.test(value)) {
+    value = match[2]
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .join(" ")
+      .trim();
+  } else if (/^(["']).*\1$/.test(value)) {
+    value = value.slice(1, -1).trim();
+  }
+  return value;
+}
+
+const skillDirectories = readdirSync("skills", { withFileTypes: true }).filter((entry) =>
+  entry.isDirectory(),
+);
+for (const { name } of skillDirectories) {
+  const path = `skills/${name}/SKILL.md`;
+  const content = existsSync(path) ? readFileSync(path, "utf8") : "";
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content)?.[1] || "";
+  const skillName = /^name:\s*(.+)$/m.exec(frontmatter)?.[1]?.trim();
+  const description = frontmatterDescription(frontmatter);
   record(
-    /^---\nname: granoflow-agent-workflow\n/m.test(skillText) &&
-      /^description: .+/m.test(skillText),
-    "Granoflow agent workflow skill has required frontmatter",
+    skillName === name && Boolean(description) && description.length <= 1024,
+    `skill frontmatter is valid: ${name}`,
   );
-  record(
-    /## Trigger Conditions/.test(skillText) &&
-      /## Connection First/.test(skillText) &&
-      /## Completing Tasks/.test(skillText) &&
-      /## User Dissatisfaction/.test(skillText) &&
-      /Success criteria:/.test(skillText),
-    "Granoflow agent workflow skill carries triggers, workflow branches, and success criteria",
-  );
-  record(
-    /wrapper skill/.test(skillText) &&
-      /Polite disagreement receives the same care as angry feedback/.test(skillText),
-    "Granoflow agent workflow skill covers wrapper-skill feedback guidance",
-  );
-} else {
-  record(false, "Granoflow agent workflow skill exists");
 }
 record(
-  existsSync(workflowSkillAgentsPath),
+  existsSync("skills/granoflow-agent-workflow/agents/openai.yaml"),
   "Granoflow agent workflow skill has agents/openai.yaml metadata",
 );
 

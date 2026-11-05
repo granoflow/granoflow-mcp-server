@@ -6,6 +6,19 @@ import { describe, expect, it } from "vitest";
 const execFileAsync = promisify(execFile);
 
 describe("release preflight script", () => {
+  it("runs isolated Git/npm release behavior fixtures without credentials or network", async () => {
+    const { stdout } = await execFileAsync(
+      process.execPath,
+      [
+        "--test",
+        "tests/release/release-wrapper.node-test.mjs",
+        "tests/release/release-preflight.node-test.mjs",
+      ],
+      { timeout: 60000 },
+    );
+    expect(stdout).toMatch(/fail 0/);
+  }, 60000);
+
   it("runs lightweight checks without invoking npm check or pack", async () => {
     const { stdout, stderr } = await execFileAsync(process.execPath, [
       "scripts/release-preflight.mjs",

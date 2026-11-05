@@ -5,13 +5,10 @@ description: Use when releasing Granoflow MCP to npm and validating cross-platfo
 
 # Granoflow Release All Platforms
 
-Maintainer one-shot release flow for `@granoflow/mcp-server`（Granoflow MCP 全平台发布）:
-
-1. merge `develop` → `main`,
-2. commit and push `main`,
-3. return to the source branch,
-4. run npm publish,
-5. surface cross-platform MCP directory verification steps.
+Maintainer entrypoint for releasing `@granoflow/mcp-server` and verifying
+cross-platform MCP directory listings. The
+[release checklist](../../docs/release-checklist.md) owns the release policy,
+preflight gates, and 2FA procedure.
 
 ## Keyword
 
@@ -26,89 +23,36 @@ Maintainer one-shot release flow for `@granoflow/mcp-server`（Granoflow MCP 全
 - Dry-run or partial release (`--dry-run`, `--skip-publish`, `--skip-push`, `--open-platforms`).
 - Maintainer needs the cross-platform MCP directory checklist after npm publish.
 
-## Prerequisites
+## Before a release
 
-- Current branch should be `develop` with a clean worktree.
-- `.env` exists at repo root with at least `NPM_TOKEN`.
-- `package.json` version incremented per release policy.
+Read the [release checklist](../../docs/release-checklist.md) and confirm the
+authorized candidate, release scope, and intended remote. Verify the clean
+worktree and version. The required sequence is push `main`, read back its exact
+candidate SHA, then publish npm, then verify or update the Registry.
 
-## Workflow
+## Release wrapper behavior
 
-Read `docs/release-checklist.md` before starting.
+`npm run release:platforms` invokes `scripts/release-all-platforms.mjs`.
 
-### 1. Preflight and branch state
-
-Actions:
-
-- Confirm clean worktree, version bump, and `.env` contract.
-- Choose release mode (standard, dry-run, skip-publish, skip-push, open-platforms).
-
-Success criteria:
-
-- Release command matches intent; dry-run and skip modes do not accidentally publish or push.
-
-Checkpoints:
-
-- Stop if worktree is dirty or `NPM_TOKEN` is missing.
-- Stop if version was not incremented per release policy.
-
-### 2. Merge develop → main and push
-
-Actions:
-
-- Run `npm run release:platforms` (or a variant with flags below).
-
-Success criteria:
-
-- `main` contains the intended release commit; remote updated when push is enabled.
-
-Checkpoints:
-
-- `--skip-push` leaves the merge local only for verification.
-- Script returns to the source branch after merge per release policy.
-
-### 3. npm publish
-
-Actions:
-
-- Script runs `release:preflight` then publishes when publish is not skipped.
-
-Success criteria:
-
-- Package published to npm registry with the intended version (unless explicitly skipped).
-
-Checkpoints:
-
-- `--skip-publish` completes merge and push only.
-- Supply `NPM_OTP` in `.env` when 2FA requires it; leave empty and re-run for manual OTP entry.
-
-### 4. Cross-platform directory verification
-
-Actions:
-
-- Use `--open-platforms` to open major directory pages for manual verification.
-- Follow the checklist for Glama, mcp.so, mcpservers.org, official MCP Registry, Awesome MCP Servers / Smithery.
-
-Success criteria:
-
-- Maintainer has actionable entries for each platform that still requires manual submission.
-
-Checkpoints:
-
-- Unless platform-specific account scripts exist, all non-npm platforms remain manual UI submission.
-
-## Commands
-
-- `npm run release:platforms`
-  - Standard release: merge `develop` → `main`, run `release:preflight`, publish npm, push `main`, return to source branch.
-- `npm run release:platforms -- --dry-run`
-  - Preflight only; no push or publish.
-- `npm run release:platforms -- --skip-publish`
-  - Merge and push only; no npm publish.
-- `npm run release:platforms -- --skip-push`
-  - Merge without push; useful for local verification.
-- `npm run release:platforms -- --open-platforms`
-  - Open major platform pages after pre-publish for manual verification.
+- The default path fetches, checks out the source branch, fast-forwards `main`,
+  and runs preflight. It reads the remote SHA, pushes only if needed, then
+  requires an exact remote SHA readback before any npm operation.
+- It reads the exact npm version before publishing; an existing version skips
+  publication. Unknown remote/npm state stops retries. After npm success it
+  reads back that version and requires npm `latest` to match the candidate.
+  The checklist also covers fresh npx and published-package verification.
+- `--dry-run` retains branch switching and restoration. A missing local branch
+  can cause remote lookup and local branch creation. It skips fetch, merge,
+  preflight, push and npm publish. `--open-platforms` can still open pages.
+  This is an execution preview with side effects; review scope before use.
+- `--skip-publish` leaves Git updates and preflight enabled.
+- `--skip-push` requires the candidate already exists on remote `main` before
+  npm can proceed; it does not bypass the SHA readback.
+- The original branch is restored on success and failure when Git permits.
+  An interrupted process or restoration failure requires local inspection.
+- The wrapper prints manual Registry/directory follow-up; it does not publish
+  Registry metadata. Before retrying that stage, read back the exact version,
+  active/latest state and npm package identity, and skip it when already current.
 
 ## `.env` contract
 
@@ -119,16 +63,13 @@ Create `.env` at repo root (local only — never commit):
 - `RELEASE_SOURCE_BRANCH`
 - `RELEASE_TARGET_BRANCH`
 - `RELEASE_REMOTE`
-- `NPM_OTP` (leave empty and re-run when manual OTP entry is needed)
+- `NPM_OTP` (optional wrapper input; follow the release checklist for 2FA)
 
 ## Release scope
 
-This skill implements:
-
-- npm publish mainline
-- Other MCP platform release entry hints and verification checklist
-
-Unless platform account scripts exist, Glama, mcp.so, mcpservers.org, official MCP Registry, and Awesome MCP Servers / Smithery require manual submission in their respective UIs.
+The wrapper publishes to npm and prints directory follow-up steps. Use the
+release checklist to determine which directory updates are authorized and
+what to verify on each platform.
 
 ## Success Criteria
 
@@ -136,8 +77,3 @@ Unless platform account scripts exist, Glama, mcp.so, mcpservers.org, official M
 - npm package published unless explicitly skipped.
 - Cross-platform checklist surfaced for manual follow-up.
 - Maintainer returned to the expected branch with an observable release outcome.
-
-## References
-
-- Read `docs/release-checklist.md` before any release — preflight, static gates, publish steps, and directory verification.
-- Script: `scripts/release-all-platforms.mjs` (invoked via `npm run release:platforms`).
