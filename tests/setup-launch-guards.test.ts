@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mkdir } from "node:fs/promises";
 import { installSetupTestLifecycle } from "./setup-test-harness.js";
 import { tempPaths } from "./setup-test-harness.js";
@@ -8,7 +8,32 @@ import { openGranoflowApp } from "../src/setup.js";
 
 installSetupTestLifecycle();
 
+const nativePlatform = Object.getOwnPropertyDescriptor(process, "platform")!;
+beforeEach(() => {
+  // These command fixtures exercise the macOS launch contract on every CI host.
+  Object.defineProperty(process, "platform", { ...nativePlatform, value: "darwin" });
+});
+afterEach(() => {
+  Object.defineProperty(process, "platform", nativePlatform);
+});
+
 describe("setup-launch-guards", () => {
+  it("rejects unsupported hosts before probing or launching an app", async () => {
+    Object.defineProperty(process, "platform", { ...nativePlatform, value: "linux" });
+    let called = false;
+    const result = await openGranoflowApp(
+      { dryRun: false },
+      {
+        runCommand: async () => {
+          called = true;
+          throw new Error("Unsupported hosts must not execute app commands");
+        },
+      },
+    );
+    expect(result).toMatchObject({ ok: false, dryRun: false });
+    expect(called).toBe(false);
+  });
+
   it("previews opening the installed Granoflow app by default", async () => {
     const result = await openGranoflowApp(
       {
